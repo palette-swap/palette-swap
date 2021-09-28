@@ -10,6 +10,18 @@ struct Player
 
 };
 
+struct GridPosition 
+{
+	ivec2 position;
+};
+
+struct TileMap
+{
+	// row-major order
+	// TODO: Instead of using whole textures, reference a sprite sheet texture and index for it
+	vector<vector<TEXTURE_ASSET_ID>> tiles;
+};
+
 // Turtles and pebbles have a hard shell
 struct HardShell
 {

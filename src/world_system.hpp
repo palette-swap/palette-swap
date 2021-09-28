@@ -58,6 +58,9 @@ private:
 	float next_fish_spawn;
 	Entity player_salmon;
 
+	// Grid constants
+	const int gridSize = 128;
+
 	// music references
 	Mix_Music* background_music;
 	Mix_Chunk* salmon_dead_sound;
