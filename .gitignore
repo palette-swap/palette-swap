@@ -12,7 +12,6 @@
 *.exe
 *.db
 *.pdb
-*.lib
 *.ipch
 *.mp4
 *.suo
