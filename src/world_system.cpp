@@ -253,7 +253,7 @@ void WorldSystem::handle_collisions() {
 
 		// For now, we are only interested in collisions that involve the salmon
 		if (registry.players.has(entity)) {
-			Player& player = registry.players.get(entity);
+			//Player& player = registry.players.get(entity);
 
 			// Checking Player - HardShell collisions
 			if (registry.hardShells.has(entity_other)) {

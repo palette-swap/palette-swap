@@ -1,6 +1,4 @@
-#version 330 
-#extension GL_ARB_explicit_uniform_location : require
-#extension GL_ARB_explicit_attrib_location : require
+#version 330
 
 // Input attributes
 in vec3 in_position;
@@ -10,8 +8,8 @@ out vec3 vcolor;
 out vec2 vpos;
 
 // Application data
-layout(location = 0) uniform mat3 transform;
-layout(location = 1) uniform mat3 projection;
+uniform mat3 transform;
+uniform mat3 projection;
 
 void main()
 {

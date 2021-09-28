@@ -1,6 +1,4 @@
 #version 330
-#extension GL_ARB_explicit_uniform_location : require
-#extension GL_ARB_explicit_attrib_location : require
 
 // !!! Simple shader for colouring basic meshes
 
@@ -8,8 +6,8 @@
 in vec3 in_position;
 
 // Application data
-layout(location = 0) uniform mat3 transform;
-layout(location = 1) uniform mat3 projection;
+uniform mat3 transform;
+uniform mat3 projection;
 
 void main()
 {

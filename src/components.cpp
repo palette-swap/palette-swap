@@ -16,8 +16,10 @@ float death_timer_counter_ms = 3000;
 // (modified to also read vertex color and omit uv and normals)
 bool Mesh::loadFromOBJFile(std::string obj_path, std::vector<ColoredVertex>& out_vertices, std::vector<uint16_t>& out_vertex_indices, vec2& out_size)
 {
-	// disable warnings about fscanf and fopen
+	// disable warnings about fscanf and fopen on Windows
+#ifdef _MSC_VER
 	#pragma warning(disable:4996)
+#endif
 
 	printf("Loading OBJ file %s...\n", obj_path.c_str());
 	// Note, normal and UV indices are currently not used

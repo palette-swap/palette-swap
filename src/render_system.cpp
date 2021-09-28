@@ -4,12 +4,10 @@
 
 #include "tiny_ecs_registry.hpp"
 
-const uint TRANSFORM_LOCATION = 0;
-const uint PROJECTION_LOCATION = 1;
-
 void RenderSystem::drawTexturedMesh(Entity entity,
-	const mat3& projection) {
-	Motion& motion = registry.motions.get(entity);
+									const mat3 &projection)
+{
+	Motion &motion = registry.motions.get(entity);
 	// Transformation code, see Rendering and Transformation in the template
 	// specification for more info Incrementally updates transformation matrix,
 	// thus ORDER IS IMPORTANT
@@ -20,7 +18,7 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 	// of transformations
 
 	assert(registry.renderRequests.has(entity));
-	const RenderRequest& render_request = registry.renderRequests.get(entity);
+	const RenderRequest &render_request = registry.renderRequests.get(entity);
 
 	const GLuint used_effect_enum = (GLuint)render_request.used_effect;
 	assert(used_effect_enum != (GLuint)EFFECT_ASSET_ID::EFFECT_COUNT);
@@ -49,14 +47,14 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 
 		glEnableVertexAttribArray(in_position_loc);
 		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE,
-			sizeof(TexturedVertex), (void*)0);
+							  sizeof(TexturedVertex), (void *)0);
 		gl_has_errors();
 
 		glEnableVertexAttribArray(in_texcoord_loc);
 		glVertexAttribPointer(
 			in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex),
-			(void*)sizeof(
-				vec3));  // note the stride to skip the preceeding vertex position
+			(void *)sizeof(
+				vec3)); // note the stride to skip the preceeding vertex position
 		// Enabling and binding texture to slot 0
 		glActiveTexture(GL_TEXTURE0);
 		gl_has_errors();
@@ -76,12 +74,12 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 
 		glEnableVertexAttribArray(in_position_loc);
 		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE,
-			sizeof(ColoredVertex), (void*)0);
+							  sizeof(ColoredVertex), (void *)0);
 		gl_has_errors();
 
 		glEnableVertexAttribArray(in_color_loc);
 		glVertexAttribPointer(in_color_loc, 3, GL_FLOAT, GL_FALSE,
-			sizeof(ColoredVertex), (void*)sizeof(vec3));
+							  sizeof(ColoredVertex), (void *)sizeof(vec3));
 		gl_has_errors();
 
 		if (render_request.used_effect == EFFECT_ASSET_ID::SALMON)
@@ -95,15 +93,15 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 			gl_has_errors();
 		}
 	}
-	else {
+	else
+	{
 		assert(false && "Type of render request not supported");
 	}
 
 	// Getting uniform locations for glUniform* calls
 	GLint color_uloc = glGetUniformLocation(program, "fcolor");
-	const vec3 color = registry.colors.has(entity) ?
-		registry.colors.get(entity) : vec3(1);
-	glUniform3fv(color_uloc, 1, (float*)&color);
+	const vec3 color = registry.colors.has(entity) ? registry.colors.get(entity) : vec3(1);
+	glUniform3fv(color_uloc, 1, (float *)&color);
 	gl_has_errors();
 
 	// Get number of indices from index buffer, which has elements uint16_t
@@ -117,8 +115,10 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 	GLint currProgram;
 	glGetIntegerv(GL_CURRENT_PROGRAM, &currProgram);
 	// Setting uniform values to the currently bound program
-	glUniformMatrix3fv(TRANSFORM_LOCATION, 1, GL_FALSE, (float*)&transform.mat);
-	glUniformMatrix3fv(PROJECTION_LOCATION, 1, GL_FALSE, (float*)&projection);
+	GLuint transform_loc = glGetUniformLocation(currProgram, "transform");
+	glUniformMatrix3fv(transform_loc, 1, GL_FALSE, (float *)&transform.mat);
+	GLuint projection_loc = glGetUniformLocation(currProgram, "projection");
+	glUniformMatrix3fv(projection_loc, 1, GL_FALSE, (float *)&projection);
 	gl_has_errors();
 	// Drawing of num_indices/3 triangles specified in the index buffer
 	glDrawElements(GL_TRIANGLES, num_indices, GL_UNSIGNED_SHORT, nullptr);
@@ -127,7 +127,8 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 
 // draw the intermediate texture to the screen, with some distortion to simulate
 // water
-void RenderSystem::drawToScreen() {
+void RenderSystem::drawToScreen()
+{
 	// Setting shaders
 	// get the water texture, sprite mesh, and program
 	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::WATER]);
@@ -159,14 +160,14 @@ void RenderSystem::drawToScreen() {
 	GLuint time_uloc = glGetUniformLocation(water_program, "time");
 	GLuint dead_timer_uloc = glGetUniformLocation(water_program, "darken_screen_factor");
 	glUniform1f(time_uloc, (float)(glfwGetTime() * 10.0f));
-	ScreenState& screen = registry.screenStates.get(screen_state_entity);
+	ScreenState &screen = registry.screenStates.get(screen_state_entity);
 	glUniform1f(dead_timer_uloc, screen.darken_screen_factor);
 	gl_has_errors();
 	// Set the vertex position and vertex texture coordinates (both stored in the
 	// same VBO)
 	GLint in_position_loc = glGetAttribLocation(water_program, "in_position");
 	glEnableVertexAttribArray(in_position_loc);
-	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (void*)0);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (void *)0);
 	gl_has_errors();
 
 	// Bind our texture in Texture Unit 0
@@ -177,14 +178,15 @@ void RenderSystem::drawToScreen() {
 	// Draw
 	glDrawElements(
 		GL_TRIANGLES, 3, GL_UNSIGNED_SHORT,
-		nullptr);  // one triangle = 3 vertices; nullptr indicates that there is
-				   // no offset from the bound index buffer
+		nullptr); // one triangle = 3 vertices; nullptr indicates that there is
+				  // no offset from the bound index buffer
 	gl_has_errors();
 }
 
 // Render our game world
 // http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-14-render-to-texture/
-void RenderSystem::draw() {
+void RenderSystem::draw()
+{
 	// Getting size of window
 	int w, h;
 	glfwGetFramebufferSize(window, &w, &h);
@@ -200,14 +202,16 @@ void RenderSystem::draw() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_DEPTH_TEST);  // native OpenGL does not work with a depth buffer
-							   // and alpha blending, one would have to sort
-							   // sprites back to front
+	glDisable(GL_DEPTH_TEST); // native OpenGL does not work with a depth buffer
+							  // and alpha blending, one would have to sort
+							  // sprites back to front
 	gl_has_errors();
 	mat3 projection_2D = createProjectionMatrix();
 	// Draw all textured meshes that have a position and size component
-	for (Entity entity : registry.renderRequests.entities) {
-		if (!registry.motions.has(entity)) continue;
+	for (Entity entity : registry.renderRequests.entities)
+	{
+		if (!registry.motions.has(entity))
+			continue;
 		// Note, its not very efficient to access elements indirectly via the entity
 		// albeit iterating through all Sprites in sequence. A good point to optimize
 		drawTexturedMesh(entity, projection_2D);
@@ -221,7 +225,8 @@ void RenderSystem::draw() {
 	gl_has_errors();
 }
 
-mat3 RenderSystem::createProjectionMatrix() {
+mat3 RenderSystem::createProjectionMatrix()
+{
 	// Fake projection matrix, scales with respect to window coordinates
 	float left = 0.f;
 	float top = 0.f;
@@ -236,5 +241,5 @@ mat3 RenderSystem::createProjectionMatrix() {
 	float sy = 2.f / (top - bottom);
 	float tx = -(right + left) / (right - left);
 	float ty = -(top + bottom) / (top - bottom);
-	return { {sx, 0.f, 0.f}, {0.f, sy, 0.f}, {tx, ty, 1.f} };
+	return {{sx, 0.f, 0.f}, {0.f, sy, 0.f}, {tx, ty, 1.f}};
 }
