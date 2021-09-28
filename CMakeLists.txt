@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1)
-project(salmon)
+project(palette-swap)
 
 # Set c++11
 # https://stackoverflow.com/questions/10851247/how-to-activate-c-11-in-cmake

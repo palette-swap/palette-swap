@@ -18,8 +18,8 @@ struct GridPosition
 struct TileMap
 {
 	// row-major order
-	// TODO: Instead of using whole textures, reference a sprite sheet texture and index for it
-	vector<vector<TEXTURE_ASSET_ID>> tiles;
+	// offset within a texture coordinate
+	vector<vector<vec2>> tiles;
 };
 
 // Turtles and pebbles have a hard shell
