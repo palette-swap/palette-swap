@@ -224,8 +224,8 @@ void WorldSystem::restart_game() {
 	registry.list_all_components();
 
 	// Create a new salmon
-	player_salmon = createSalmon(renderer, { 100, 200 });
-	registry.colors.insert(player_salmon, {1, 0.8f, 0.8f});
+	player_entity = createPlayer(renderer, { 1, 2 }, gridSize);
+	registry.colors.insert(player_entity, {1, 0.8f, 0.8f});
 
 	// !! TODO A3: Enable static pebbles on the ground
 	// Create pebbles on the floor for reference
@@ -305,6 +305,41 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		glfwGetWindowSize(window, &w, &h);
 
         restart_game();
+	}
+
+	// Moving
+	if (action == GLFW_RELEASE)
+	{
+		switch (key) {
+		case GLFW_KEY_UP:
+		{
+			registry.gridPositions.get(player_entity).position.y -= 1;
+			// TODO: Replace this with animated motion
+			registry.motions.get(player_entity).position.y -= gridSize;
+			break;
+		}
+		case GLFW_KEY_DOWN:
+		{
+			registry.gridPositions.get(player_entity).position.y += 1;
+			// TODO: Replace this with animated motion
+			registry.motions.get(player_entity).position.y += gridSize;
+			break;
+		}
+		case GLFW_KEY_LEFT:
+		{
+			registry.gridPositions.get(player_entity).position.x -= 1;
+			// TODO: Replace this with animated motion
+			registry.motions.get(player_entity).position.x -= gridSize;
+			break;
+		}
+		case GLFW_KEY_RIGHT:
+		{
+			registry.gridPositions.get(player_entity).position.x += 1;
+			// TODO: Replace this with animated motion
+			registry.motions.get(player_entity).position.x += gridSize;
+			break;
+		}
+		}
 	}
 
 	// Debugging
