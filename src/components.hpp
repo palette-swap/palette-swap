@@ -16,12 +16,6 @@ struct HardShell
 
 };
 
-// Fish and Salmon have a soft shell
-struct SoftShell
-{
-
-};
-
 // All data relevant to the shape and motion of entities
 struct Motion {
 	vec2 position = { 0, 0 };

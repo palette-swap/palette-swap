@@ -27,10 +27,6 @@ WorldSystem::~WorldSystem() {
 	// Destroy music components
 	if (background_music != nullptr)
 		Mix_FreeMusic(background_music);
-	if (salmon_dead_sound != nullptr)
-		Mix_FreeChunk(salmon_dead_sound);
-	if (salmon_eat_sound != nullptr)
-		Mix_FreeChunk(salmon_eat_sound);
 	Mix_CloseAudio();
 
 	// Destroy all created components
@@ -100,14 +96,12 @@ GLFWwindow* WorldSystem::create_window(int width, int height) {
 	}
 
 	background_music = Mix_LoadMUS(audio_path("overworld.wav").c_str());
+	// Example left to demonstrate loading of WAV instead of MUS, need to check difference
 	salmon_dead_sound = Mix_LoadWAV(audio_path("salmon_dead.wav").c_str());
-	salmon_eat_sound = Mix_LoadWAV(audio_path("salmon_eat.wav").c_str());
 
-	if (background_music == nullptr || salmon_dead_sound == nullptr || salmon_eat_sound == nullptr) {
-		fprintf(stderr, "Failed to load sounds\n %s\n %s\n %s\n make sure the data directory is present",
-			audio_path("overworld.wav").c_str(),
-			audio_path("salmon_dead.wav").c_str(),
-			audio_path("salmon_eat.wav").c_str());
+	if (background_music == nullptr) {
+		fprintf(stderr, "Failed to load sounds\n %s\n make sure the data directory is present",
+			audio_path("overworld.wav").c_str());
 		return nullptr;
 	}
 
@@ -192,7 +186,6 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	// reduce window brightness if any of the present salmons is dying
 	screen.darken_screen_factor = 1 - min_counter_ms / 3000;
 
-	// !!! TODO A1: update LightUp timers and remove if time drops below zero, similar to the death counter
 
 	return true;
 }

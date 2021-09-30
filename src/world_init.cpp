@@ -47,7 +47,6 @@ Entity createFish(RenderSystem* renderer, vec2 position)
 	motion.scale = vec2({ -FISH_BB_WIDTH, FISH_BB_HEIGHT });
 
 	// Create an (empty) Fish component to be able to refer to all fish
-	registry.softShells.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{ TEXTURE_ASSET_ID::FISH,

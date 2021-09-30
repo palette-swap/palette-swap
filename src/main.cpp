@@ -13,7 +13,7 @@
 
 using Clock = std::chrono::high_resolution_clock;
 
-// Currently configured to render a 10x10 tile grid
+// Currently configured to render a 10x10 tile grid of each tile 128 pixels
 const int window_width_px = 1280;
 const int window_height_px = 896;
 
@@ -58,8 +58,6 @@ int main()
 		world.handle_collisions();
 
 		renderer.draw();
-
-		// TODO A2: you can implement the debug freeze here but other places are possible too.
 	}
 
 	return EXIT_SUCCESS;
