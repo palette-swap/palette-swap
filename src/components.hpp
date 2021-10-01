@@ -16,12 +16,6 @@ struct HardShell
 
 };
 
-// Fish and Salmon have a soft shell
-struct SoftShell
-{
-
-};
-
 // All data relevant to the shape and motion of entities
 struct Motion {
 	vec2 position = { 0, 0 };
@@ -113,7 +107,8 @@ struct Mesh
 enum class TEXTURE_ASSET_ID {
 	FISH = 0,
 	TURTLE = FISH + 1,
-	TEXTURE_COUNT = TURTLE + 1
+	PALADIN = TURTLE + 1,
+	TEXTURE_COUNT = PALADIN + 1
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 
