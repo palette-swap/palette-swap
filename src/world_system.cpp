@@ -14,7 +14,7 @@ const size_t MAX_FISH = 0;
 const size_t TURTLE_DELAY_MS = 2000 * 3;
 const size_t FISH_DELAY_MS = 5000 * 3;
 
-// Create the fish world
+// Create the world
 WorldSystem::WorldSystem()
 	: points(0)
 	, next_turtle_spawn(0.f)
@@ -253,7 +253,26 @@ bool WorldSystem::is_over() const {
 
 // On key callback
 void WorldSystem::on_key(int key, int, int action, int mod) {
+	int position_change = 128;
+	Motion& motion = registry.motions.get(player);
 
+	if (action != GLFW_RELEASE) {
+		if (key == GLFW_KEY_RIGHT) {
+			motion.position += vec2(position_change, 0);
+		}
+
+		if (key == GLFW_KEY_LEFT) {
+			motion.position += vec2(-position_change, 0);
+		}
+
+		if (key == GLFW_KEY_UP) {
+			motion.position += vec2(0, -position_change);
+		}
+
+		if (key == GLFW_KEY_DOWN) {
+			motion.position += vec2(0, position_change);
+		}
+	}
 
 	// Resetting game
 	if (action == GLFW_RELEASE && key == GLFW_KEY_R) {

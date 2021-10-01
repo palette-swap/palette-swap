@@ -6,7 +6,7 @@ Entity createPlayer(RenderSystem* renderer, vec2 pos)
 	auto entity = Entity();
 
 	// Store a reference to the potentially re-used mesh object
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SALMON);
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
 	registry.meshPtrs.emplace(entity, &mesh);
 
 	// Setting initial motion values
@@ -15,46 +15,19 @@ Entity createPlayer(RenderSystem* renderer, vec2 pos)
 	motion.angle = 0.f;
 	motion.velocity = { 0.f, 0.f };
 	motion.scale = mesh.original_size * 150.f;
-	motion.scale.x *= -1; // point front to the right
+	motion.scale.x *= 1; // Keep original orientation
 
-	// Create and (empty) Salmon component to be able to refer to all turtles
+	// Create and (empty) player component to be able to refer to other enttities
 	registry.players.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
-		{ TEXTURE_ASSET_ID::TEXTURE_COUNT, // TEXTURE_COUNT indicates that no txture is needed
-			EFFECT_ASSET_ID::SALMON,
-			GEOMETRY_BUFFER_ID::SALMON });
-
-	return entity;
-}
-
-Entity createFish(RenderSystem* renderer, vec2 position)
-{
-	// Reserve en entity
-	auto entity = Entity();
-
-	// Store a reference to the potentially re-used mesh object
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
-
-	// Initialize the position, scale, and physics components
-	auto& motion = registry.motions.emplace(entity);
-	motion.angle = 0.f;
-	motion.velocity = { -50, 0 };
-	motion.position = position;
-
-	// Setting initial values, scale is negative to make it face the opposite way
-	motion.scale = vec2({ -FISH_BB_WIDTH, FISH_BB_HEIGHT });
-
-	// Create an (empty) Fish component to be able to refer to all fish
-	registry.renderRequests.insert(
-		entity,
-		{ TEXTURE_ASSET_ID::FISH,
+		{ TEXTURE_ASSET_ID::PALADIN, // TEXTURE_COUNT indicates that no txture is needed
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE });
 
 	return entity;
 }
+
 
 Entity createTurtle(RenderSystem* renderer, vec2 position)
 {
@@ -106,24 +79,3 @@ Entity createLine(vec2 position, vec2 scale)
 	return entity;
 }
 
-Entity createPebble(vec2 pos, vec2 size)
-{
-	auto entity = Entity();
-
-	// Setting initial motion values
-	Motion& motion = registry.motions.emplace(entity);
-	motion.position = pos;
-	motion.angle = 0.f;
-	motion.velocity = { 0.f, 0.f };
-	motion.scale = size;
-
-	// Create and (empty) Salmon component to be able to refer to all turtles
-	registry.players.emplace(entity);
-	registry.renderRequests.insert(
-		entity,
-		{ TEXTURE_ASSET_ID::TEXTURE_COUNT, // TEXTURE_COUNT indicates that no txture is needed
-			EFFECT_ASSET_ID::PEBBLE,
-			GEOMETRY_BUFFER_ID::PEBBLE });
-
-	return entity;
-}
