@@ -138,3 +138,14 @@ struct RenderRequest {
 	GEOMETRY_BUFFER_ID used_geometry = GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 };
 
+// Simple 3-state state machine for enemy AI: IDEL, ACTIVE, FLINCHED.
+enum class ENEMY_STATE_ID {
+	IDLE = 0,
+	ACTIVE = IDLE + 1,
+	FLINCHED = ACTIVE + 1
+};
+
+// Structure to store enemy state.
+struct EnemyState {
+	ENEMY_STATE_ID current_state = ENEMY_STATE_ID::IDLE;
+};
