@@ -2,7 +2,9 @@
 #include "ai_system.hpp"
 #include "components.hpp"
 
-// Depends on Turn System
+
+
+// Depends on Turn System from Nathan.
 
 bool isPlayerTurn() {
 	// TODO
@@ -13,7 +15,9 @@ void switchToPlayerTurn() {
 	// TODO
 }
 
-// Depends on Map System.
+
+
+// Depends on Map System from Yan.
 
 bool isPlayerSpotted(uint radius)
 {
@@ -53,6 +57,9 @@ void fleePlayer()
 	// TODO
 }
 
+
+
+// AI logic
 
 void AISystem::step(float elapsed_ms)
 {
