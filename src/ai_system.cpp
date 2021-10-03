@@ -121,7 +121,8 @@ void AISystem::step(float elapsed_ms)
 			break;
 
 		default:
-			printf("Should never happen.\n"); exit(1);
+			printf("Should never happen.\n");
+			throw std::runtime_error("Invalid Enemy State");
 		}
 	}
 
