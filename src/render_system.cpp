@@ -29,8 +29,8 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 	gl_has_errors();
 
 	assert(render_request.used_geometry != GEOMETRY_BUFFER_ID::GEOMETRY_COUNT);
-	const GLuint vbo = vertex_buffers[(GLuint)render_request.used_geometry];
-	const GLuint ibo = index_buffers[(GLuint)render_request.used_geometry];
+	const GLuint vbo = vertex_buffers.at((int)render_request.used_geometry);
+	const GLuint ibo = index_buffers.at((int)render_request.used_geometry);
 
 	// Setting vertex and index buffers
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -61,7 +61,7 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 
 		assert(registry.renderRequests.has(entity));
 		GLuint texture_id =
-			texture_gl_handles[(GLuint)registry.renderRequests.get(entity).used_texture];
+			texture_gl_handles.at((GLuint)registry.renderRequests.get(entity).used_texture);
 
 		glBindTexture(GL_TEXTURE_2D, texture_id);
 		gl_has_errors();
@@ -130,8 +130,6 @@ void RenderSystem::drawToScreen()
 	gl_has_errors();
 	const GLuint water_program = effects[(GLuint)EFFECT_ASSET_ID::WATER];
 	// Set clock
-	GLuint time_uloc = glGetUniformLocation(water_program, "time");
-	GLuint dead_timer_uloc = glGetUniformLocation(water_program, "darken_screen_factor");
 	GLint time_uloc = glGetUniformLocation(water_program, "time");
 	GLint dead_timer_uloc = glGetUniformLocation(water_program, "darken_screen_factor");
 	glUniform1f(time_uloc, (float)(glfwGetTime() * 10.0f));

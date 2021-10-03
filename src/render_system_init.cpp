@@ -64,8 +64,8 @@ void RenderSystem::initializeGlTextures()
 
     for(uint i = 0; i < texture_paths.size(); i++)
     {
-        const std::string& path = texture_paths[i];
-        ivec2& dimensions = texture_dimensions[i];
+        const std::string& path = texture_paths.at(i);
+        ivec2& dimensions = texture_dimensions.at(i);
 
         stbi_uc* data;
         data  = stbi_load(path.c_str(), &dimensions.x, &dimensions.y, nullptr, 4);
@@ -76,7 +76,7 @@ void RenderSystem::initializeGlTextures()
             fprintf(stderr, "%s", message.c_str());
             assert(false);
         }
-        glBindTexture(GL_TEXTURE_2D, texture_gl_handles[i]);
+        glBindTexture(GL_TEXTURE_2D, texture_gl_handles.at(i));
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, dimensions.x, dimensions.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -90,11 +90,11 @@ void RenderSystem::initializeGlEffects()
 {
 	for(uint i = 0; i < effect_paths.size(); i++)
 	{
-		const std::string vertex_shader_name = effect_paths[i] + ".vs.glsl";
-		const std::string fragment_shader_name = effect_paths[i] + ".fs.glsl";
+		const std::string vertex_shader_name = effect_paths.at(i) + ".vs.glsl";
+		const std::string fragment_shader_name = effect_paths.at(i) + ".fs.glsl";
 
-		bool is_valid = loadEffectFromFile(vertex_shader_name, fragment_shader_name, effects[i]);
-		assert(is_valid && (GLuint)effects[i] != 0);
+		bool is_valid = loadEffectFromFile(vertex_shader_name, fragment_shader_name, effects.at(i));
+		assert(is_valid && (GLuint)effects.at(i) != 0);
 	}
 }
 
@@ -102,12 +102,12 @@ void RenderSystem::initializeGlEffects()
 template <class T>
 void RenderSystem::bindVBOandIBO(GEOMETRY_BUFFER_ID gid, std::vector<T> vertices, std::vector<uint16_t> indices)
 {
-	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers[(uint)gid]);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers.at((uint)gid));
 	glBufferData(GL_ARRAY_BUFFER,
 		sizeof(vertices[0]) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
 	gl_has_errors();
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffers[(uint)gid]);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffers.at((uint)gid));
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER,
 		sizeof(indices[0]) * indices.size(), indices.data(), GL_STATIC_DRAW);
 	gl_has_errors();
@@ -115,19 +115,19 @@ void RenderSystem::bindVBOandIBO(GEOMETRY_BUFFER_ID gid, std::vector<T> vertices
 
 void RenderSystem::initializeGlMeshes()
 {
-	for (uint i = 0; i < mesh_paths.size(); i++)
+	for (const auto& path: mesh_paths)
 	{
 		// Initialize meshes
-		GEOMETRY_BUFFER_ID geom_index = mesh_paths[i].first;
-		std::string name = mesh_paths[i].second;
+		Mesh& mesh = meshes.at((int) path.first);
+		std::string name = path.second;
 		Mesh::loadFromOBJFile(name, 
-			meshes[(int)geom_index].vertices,
-			meshes[(int)geom_index].vertex_indices,
-			meshes[(int)geom_index].original_size);
+			mesh.vertices,
+			mesh.vertex_indices,
+			mesh.original_size);
 
-		bindVBOandIBO(geom_index,
-			meshes[(int)geom_index].vertices, 
-			meshes[(int)geom_index].vertex_indices);
+		bindVBOandIBO(path.first,
+			mesh.vertices,
+			mesh.vertex_indices);
 	}
 }
 
@@ -179,10 +179,10 @@ void RenderSystem::initializeGlGeometryBuffers()
 		pebble_indices.push_back((uint16_t)((i + 1) % NUM_TRIANGLES));
 		pebble_indices.push_back((uint16_t)NUM_TRIANGLES);
 	}
-	int geom_index = (int)GEOMETRY_BUFFER_ID::PEBBLE;
-	meshes[geom_index].vertices = pebble_vertices;
-	meshes[geom_index].vertex_indices = pebble_indices;
-	bindVBOandIBO(GEOMETRY_BUFFER_ID::PEBBLE, meshes[geom_index].vertices, meshes[geom_index].vertex_indices);
+	Mesh& pebble = meshes.at((int)GEOMETRY_BUFFER_ID::PEBBLE);
+	pebble.vertices = pebble_vertices;
+	pebble.vertex_indices = pebble_indices;
+	bindVBOandIBO(GEOMETRY_BUFFER_ID::PEBBLE, pebble.vertices, pebble.vertex_indices);
 
 	//////////////////////////////////
 	// Initialize debug line
@@ -203,9 +203,9 @@ void RenderSystem::initializeGlGeometryBuffers()
 	// Two triangles
 	line_indices = {0, 1, 3, 1, 2, 3};
 	
-	geom_index = (int)GEOMETRY_BUFFER_ID::DEBUG_LINE;
-	meshes[geom_index].vertices = line_vertices;
-	meshes[geom_index].vertex_indices = line_indices;
+	Mesh& line = meshes.at((int)GEOMETRY_BUFFER_ID::DEBUG_LINE);
+	line.vertices = line_vertices;
+	line.vertex_indices = line_indices;
 	bindVBOandIBO(GEOMETRY_BUFFER_ID::DEBUG_LINE, line_vertices, line_indices);
 
 	///////////////////////////////////////////////////////
