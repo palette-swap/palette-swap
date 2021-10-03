@@ -54,14 +54,11 @@ private:
 	// Game state
 	RenderSystem* renderer = nullptr;
 	float current_speed = 0;
-	float next_turtle_spawn = 0;
-	float next_fish_spawn = 0;
 	Entity player;
 
 	// music references
 	Mix_Music* background_music = nullptr;
 	Mix_Chunk* salmon_dead_sound = nullptr;
-	Mix_Chunk* salmon_eat_sound = nullptr;
 
 	// C++ random number generator
 	std::default_random_engine rng;
