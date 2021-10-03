@@ -179,10 +179,10 @@ void RenderSystem::initializeGlGeometryBuffers()
 		pebble_indices.push_back((uint16_t)((i + 1) % NUM_TRIANGLES));
 		pebble_indices.push_back((uint16_t)NUM_TRIANGLES);
 	}
-	int geom_index = (int)GEOMETRY_BUFFER_ID::PEBBLE;
+	int geom_index = (int)GEOMETRY_BUFFER_ID::LINE;
 	meshes[geom_index].vertices = pebble_vertices;
 	meshes[geom_index].vertex_indices = pebble_indices;
-	bindVBOandIBO(GEOMETRY_BUFFER_ID::PEBBLE, meshes[geom_index].vertices, meshes[geom_index].vertex_indices);
+	bindVBOandIBO(GEOMETRY_BUFFER_ID::LINE, meshes[geom_index].vertices, meshes[geom_index].vertex_indices);
 
 	//////////////////////////////////
 	// Initialize debug line

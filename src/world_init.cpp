@@ -29,7 +29,9 @@ Entity createPlayer(RenderSystem* renderer, vec2 pos)
 }
 
 
-Entity createTurtle(RenderSystem* renderer, vec2 position)
+// Repurposed into general createEnemy
+// TODO: add additional inputs to specify enemy type, current default is slug
+Entity createEnemy(RenderSystem* renderer, vec2 position)
 {
 	auto entity = Entity();
 
@@ -37,20 +39,20 @@ Entity createTurtle(RenderSystem* renderer, vec2 position)
 	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
 	registry.meshPtrs.emplace(entity, &mesh);
 
-	// Initialize the motion
+	// TODO: Add additional components associated with enemy instance
+	// TODO: Change motion component based on grid system
 	auto& motion = registry.motions.emplace(entity);
 	motion.angle = 0.f;
-	motion.velocity = { -100.f, 0.f };
+	motion.velocity = { 0.f, 0.f };
 	motion.position = position;
 
 	// Setting initial values, scale is negative to make it face the opposite way
-	motion.scale = vec2({ -TURTLE_BB_WIDTH, TURTLE_BB_HEIGHT });
+	motion.scale = mesh.original_size * 150.f;
 
-	// Create and (empty) Turtle component to be able to refer to all turtles
-	registry.hardShells.emplace(entity);
+	// TODO: Switch out basic enemy type based on input (Currently Defaulted to Slug)
 	registry.renderRequests.insert(
 		entity,
-		{ TEXTURE_ASSET_ID::TURTLE,
+		{ TEXTURE_ASSET_ID::SLUG,
 		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE });
 
@@ -65,7 +67,7 @@ Entity createLine(vec2 position, vec2 scale)
 	registry.renderRequests.insert(
 		entity,
 		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
-		 EFFECT_ASSET_ID::PEBBLE,
+		 EFFECT_ASSET_ID::LINE,
 		 GEOMETRY_BUFFER_ID::DEBUG_LINE });
 
 	// Create motion
