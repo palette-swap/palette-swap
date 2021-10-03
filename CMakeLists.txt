@@ -11,6 +11,11 @@ set (CMAKE_CXX_STANDARD 14)
 # nice hierarchichal structure in MSVC
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+# https://stackoverflow.com/questions/40779571/adding-crt-secure-no-warnings-definition-using-cmake
+if(MSVC)
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+endif()
+
 #Find OS
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set(IS_OS_MAC 1)
@@ -67,6 +72,25 @@ set_target_properties(${PROJECT_NAME} PROPERTIES ENABLE_EXPORTS 0)
 # External header-only libraries in the ext/
 target_include_directories(${PROJECT_NAME} PUBLIC ext/stb_image/)
 target_include_directories(${PROJECT_NAME} PUBLIC ext/gl3w)
+
+
+
+# Disable VS Error checking on ext folder
+# Idea sourced from https://stackoverflow.com/questions/1005901/how-to-set-path-environment-variable-using-cmake-and-visual-studio-to-run-test
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.user.props" [=[
+<?xml version="1.0" encoding="utf-8"?> 
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <CAExcludePath>"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools";$(ProjectDir)ext;$(CAExcludePath)</CAExcludePath>
+  </PropertyGroup>
+</Project>
+]=])
+
+set_target_properties(
+    ${PROJECT_NAME}
+    PROPERTIES
+        VS_USER_PROPS "${PROJECT_NAME}.user.props"
+) 
 
 # Find OpenGL
 find_package(OpenGL REQUIRED)
