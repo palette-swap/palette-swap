@@ -1,0 +1,2 @@
+Checks: '-clang-diagnostic-pragma-pack,boost-*,bugprone-*,cert-*,clang-analyzer-*,concurrency-*,cppcoreguidelines-*,hicpp-*,llvm-*,misc-*,modernize-*,performance-*,portability-*,readability-*,-*-magic-numbers,-*-macro-usage, -modernize-use-trailing-return-type, -*-uppercase-literal-suffix, -*-vararg, -*-union-access, -*-owning-memory,-cert-msc32-c,-cert-msc51-cpp,-cert-err34-c,-hicpp-signed-bitwise, -readability-isolate-declaration, -readability-convert-member-functions-to-static'
+FormatStyle: 'file'
