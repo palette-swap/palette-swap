@@ -15,13 +15,6 @@ struct GridPosition
 	ivec2 position;
 };
 
-struct TileMap
-{
-	// row-major order
-	// offset within a texture coordinate
-	vector<vector<vec2>> tiles;
-};
-
 // Turtles and pebbles have a hard shell
 struct HardShell
 {

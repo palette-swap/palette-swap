@@ -14,7 +14,6 @@ public:
 	// TODO: A1 add a LightUp component
 	ComponentContainer<DeathTimer> deathTimers;
 	ComponentContainer<GridPosition> gridPositions;
-	ComponentContainer<TileMap> tileMaps;
 	ComponentContainer<Motion> motions;
 	ComponentContainer<Collision> collisions;
 	ComponentContainer<Player> players;
@@ -33,7 +32,6 @@ public:
 		// TODO: A1 add a LightUp component
 		registry_list.push_back(&deathTimers);
 		registry_list.push_back(&gridPositions);
-		registry_list.push_back(&tileMaps);
 		registry_list.push_back(&motions);
 		registry_list.push_back(&collisions);
 		registry_list.push_back(&players);

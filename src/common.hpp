@@ -18,8 +18,6 @@
 #include <glm/mat3x3.hpp>           // mat3
 using namespace glm;
 
-using std::vector;
-
 #include "tiny_ecs.hpp"
 
 // Simple utility functions to avoid mistyping directory name
