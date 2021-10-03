@@ -1,6 +1,10 @@
 // internal
 #include "render_system.hpp"
 #include <SDL.h>
+#pragma warning(push)
+#pragma warning(disable:4201) // nameless struct; glm only uses it if it exists
+#include <glm/gtc/type_ptr.hpp> // Allows nice passing of values to GL functions
+#pragma warning(pop)
 
 #include "tiny_ecs_registry.hpp"
 
@@ -74,7 +78,7 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 	// Getting uniform locations for glUniform* calls
 	GLint color_uloc = glGetUniformLocation(program, "fcolor");
 	const vec3 color = registry.colors.has(entity) ? registry.colors.get(entity) : vec3(1);
-	glUniform3fv(color_uloc, 1, (float *)&color);
+	glUniform3fv(color_uloc, 1, glm::value_ptr(color));
 	gl_has_errors();
 
 	// Get number of indices from index buffer, which has elements uint16_t
@@ -88,10 +92,10 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 	GLint currProgram;
 	glGetIntegerv(GL_CURRENT_PROGRAM, &currProgram);
 	// Setting uniform values to the currently bound program
-	GLuint transform_loc = glGetUniformLocation(currProgram, "transform");
-	glUniformMatrix3fv(transform_loc, 1, GL_FALSE, (float *)&transform.mat);
-	GLuint projection_loc = glGetUniformLocation(currProgram, "projection");
-	glUniformMatrix3fv(projection_loc, 1, GL_FALSE, (float *)&projection);
+	GLint transform_loc = glGetUniformLocation(currProgram, "transform");
+	glUniformMatrix3fv(transform_loc, 1, GL_FALSE, glm::value_ptr(transform.mat));
+	GLint projection_loc = glGetUniformLocation(currProgram, "projection");
+	glUniformMatrix3fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
 	gl_has_errors();
 	// Drawing of num_indices/3 triangles specified in the index buffer
 	glDrawElements(GL_TRIANGLES, num_indices, GL_UNSIGNED_SHORT, nullptr);
