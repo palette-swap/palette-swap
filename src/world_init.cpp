@@ -1,7 +1,7 @@
 #include "world_init.hpp"
 #include "tiny_ecs_registry.hpp"
 
-Entity createPlayer(RenderSystem* renderer, vec2 gridPos, int gridSize)
+Entity createSalmon(RenderSystem* renderer, vec2 pos)
 {
 	auto entity = Entity();
 
@@ -9,13 +9,9 @@ Entity createPlayer(RenderSystem* renderer, vec2 gridPos, int gridSize)
 	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SALMON);
 	registry.meshPtrs.emplace(entity, &mesh);
 
-	// Setting initial grid values
-	GridPosition& gridPosition = registry.gridPositions.emplace(entity);
-	gridPosition.position = gridPos;
-
 	// Setting initial motion values
 	Motion& motion = registry.motions.emplace(entity);
-	motion.position = gridPos * float(gridSize);
+	motion.position = pos;
 	motion.angle = 0.f;
 	motion.velocity = { 0.f, 0.f };
 	motion.scale = mesh.original_size * 150.f;

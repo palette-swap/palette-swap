@@ -56,7 +56,7 @@ private:
 	float current_speed;
 	float next_turtle_spawn;
 	float next_fish_spawn;
-	Entity player_entity;
+	Entity player_salmon;
 
 	// Grid constants
 	const int gridSize = 128;
