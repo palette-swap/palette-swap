@@ -11,9 +11,7 @@ const float TURTLE_BB_WIDTH = 0.4f * 300.f;
 const float TURTLE_BB_HEIGHT = 0.4f * 202.f;
 
 // the player
-Entity createSalmon(RenderSystem* renderer, vec2 pos);
-// the prey
-Entity createFish(RenderSystem* renderer, vec2 position);
+Entity createPlayer(RenderSystem* renderer, vec2 pos);
 // the enemy
 Entity createTurtle(RenderSystem* renderer, vec2 position);
 // a red line for debugging purposes
