@@ -10,6 +10,11 @@ struct Player
 
 };
 
+struct GridPosition 
+{
+	ivec2 position;
+};
+
 // Turtles and pebbles have a hard shell
 struct HardShell
 {
