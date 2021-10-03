@@ -14,7 +14,7 @@ Entity createPlayer(RenderSystem* renderer, vec2 pos)
 	motion.position = pos;
 	motion.angle = 0.f;
 	motion.velocity = { 0.f, 0.f };
-	motion.scale = mesh.original_size * 150.f;
+	motion.scale = mesh.original_size * 100.f;
 	motion.scale.x *= 1; // Keep original orientation
 
 	// Create and (empty) player component to be able to refer to other enttities
@@ -47,7 +47,7 @@ Entity createEnemy(RenderSystem* renderer, vec2 position)
 	motion.position = position;
 
 	// Setting initial values, scale is negative to make it face the opposite way
-	motion.scale = mesh.original_size * 150.f;
+	motion.scale = mesh.original_size * 100.f;
 
 	// TODO: Switch out basic enemy type based on input (Currently Defaulted to Slug)
 	registry.renderRequests.insert(
