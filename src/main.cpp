@@ -14,8 +14,8 @@
 using Clock = std::chrono::high_resolution_clock;
 
 // Currently configured to render a 10x10 tile grid of each tile 128 pixels
-const int window_width_px = 1280;
-const int window_height_px = 896;
+const int window_width_px = 1920;
+const int window_height_px = 1080;
 
 // Entry point
 int main()

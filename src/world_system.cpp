@@ -207,10 +207,31 @@ void WorldSystem::restart_game() {
 	// Debugging for memory/component leaks
 	registry.list_all_components();
 
-	// Create a new Player instance
-	player = createPlayer(renderer, { 640, 448 });
+	// Generate the levels
+	map = generateMap(renderer);
+
+	int screen_width, screen_height;
+	glfwGetFramebufferSize(window, &screen_width, &screen_height);
+	vec2 middle = { screen_width / 2, screen_height / 2 };
+
+	MapGenerator & mapGenerator = registry.mapGenerator.get(map);
+	const MapGenerator::mapping& mapping = mapGenerator.currentMap();
+	vec2 topLeftCorner = middle - vec2(TILE_SIZE* ROOM_SIZE* MAP_SIZE / 2, TILE_SIZE* ROOM_SIZE* MAP_SIZE / 2);
+	for (int row = 0; row < mapping.size(); row++) {
+		for (int col = 0; col < mapping[0].size(); col++) {
+			vec2 position = topLeftCorner + vec2(col * TILE_SIZE * ROOM_SIZE, row * TILE_SIZE * ROOM_SIZE);
+			createRoom(renderer, position, mapping[row][col]);
+		}
+	}
+
+	vec2 pppp = middle + vec2(TILE_SIZE / 2, TILE_SIZE / 2);
+
+	// Create a new Player instance and shift player onto a tile
+	player = createPlayer(renderer, middle + vec2(TILE_SIZE / 2, TILE_SIZE / 2 + TILE_SIZE));
 	registry.colors.insert(player, {1, 0.8f, 0.8f});
 
+	// TODO: remove the hard-coded position
+	registry.mapPositions.emplace(player, uvec2(55, 56));
 }
 
 // Compute collisions between entities
@@ -252,25 +273,23 @@ bool WorldSystem::is_over() const {
 }
 
 // On key callback
-void WorldSystem::on_key(int key, int, int action, int mod) {
-	int position_change = 128;
-	Motion& motion = registry.motions.get(player);
+void WorldSystem::on_key(int key, int, int action, int mod) {	
 
 	if (action != GLFW_RELEASE) {
 		if (key == GLFW_KEY_RIGHT) {
-			motion.position += vec2(position_change, 0);
+			movePlayer(Direction::Right);
 		}
 
 		if (key == GLFW_KEY_LEFT) {
-			motion.position += vec2(-position_change, 0);
+			movePlayer(Direction::Left);
 		}
 
 		if (key == GLFW_KEY_UP) {
-			motion.position += vec2(0, -position_change);
+			movePlayer(Direction::Up);
 		}
 
 		if (key == GLFW_KEY_DOWN) {
-			motion.position += vec2(0, position_change);
+			movePlayer(Direction::Down);
 		}
 	}
 
@@ -300,6 +319,46 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		printf("Current speed = %f\n", current_speed);
 	}
 	current_speed = fmax(0.f, current_speed);
+}
+
+void WorldSystem::movePlayer(Direction direction) {
+	MapPosition& mapPos = registry.mapPositions.get(player);
+	// TODO: this should be removed once we only use MapPosition
+	Motion& motion = registry.motions.get(player);
+	MapGenerator& mapGenerator = registry.mapGenerator.get(map);
+
+	if (direction == Direction::Left && mapPos.position.x > 0) {
+		uvec2 newPos = uvec2(mapPos.position.x - 1, mapPos.position.y);
+		if (mapGenerator.walkable(newPos))
+		{
+			mapPos.position = newPos;
+			motion.position += vec2(-TILE_SIZE, 0);
+		}
+	}
+	else if (direction == Direction::Up && mapPos.position.y > 0) {
+		uvec2 newPos = uvec2(mapPos.position.x, mapPos.position.y - 1);
+		if (mapGenerator.walkable(newPos))
+		{
+			mapPos.position = newPos;
+			motion.position += vec2(0, -TILE_SIZE);
+		}
+	}
+	else if (direction == Direction::Right && mapPos.position.x < ROOM_SIZE * TILE_SIZE - 1) {
+		uvec2 newPos = uvec2(mapPos.position.x + 1, mapPos.position.y);
+		if (mapGenerator.walkable(newPos))
+		{
+			mapPos.position = newPos;
+			motion.position += vec2(TILE_SIZE, 0);
+		}
+	}
+	else if (direction == Direction::Down && mapPos.position.y < ROOM_SIZE * TILE_SIZE - 1) {
+		uvec2 newPos = uvec2(mapPos.position.x, mapPos.position.y + 1);
+		if (mapGenerator.walkable(newPos))
+		{
+			mapPos.position = newPos;
+			motion.position += vec2(0, TILE_SIZE);
+		}
+	}
 }
 
 void WorldSystem::on_mouse_move(vec2 mouse_position) {

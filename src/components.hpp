@@ -2,7 +2,10 @@
 #include "common.hpp"
 #include <vector>
 #include <unordered_map>
+#include <array>
 #include "../ext/stb_image/stb_image.h"
+
+#include <predefined_room.hpp>
 
 // Player component
 struct Player
@@ -104,11 +107,13 @@ struct Mesh
  * enums there are, and as a default value to represent uninitialized fields.
  */
 
-enum class TEXTURE_ASSET_ID {
+enum class TEXTURE_ASSET_ID : uint8_t {
 	FISH = 0,
 	TURTLE = FISH + 1,
 	PALADIN = TURTLE + 1,
-	TEXTURE_COUNT = PALADIN + 1
+	WALKABLE1 = PALADIN + 1,
+	WALL1 = WALKABLE1 + 1,
+	TEXTURE_COUNT = WALL1 + 1
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 
@@ -118,19 +123,28 @@ enum class EFFECT_ASSET_ID {
 	SALMON = PEBBLE + 1,
 	TEXTURED = SALMON + 1,
 	WATER = TEXTURED + 1,
-	EFFECT_COUNT = WATER + 1
+	TILE_MAP = WATER + 1,
+	EFFECT_COUNT = TILE_MAP + 1
 };
 const int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 
-enum class GEOMETRY_BUFFER_ID {
+
+enum class GEOMETRY_BUFFER_ID : uint8_t {
 	SALMON = 0,
 	SPRITE = SALMON + 1,
 	PEBBLE = SPRITE + 1,
 	DEBUG_LINE = PEBBLE + 1,
 	SCREEN_TRIANGLE = DEBUG_LINE + 1,
-	GEOMETRY_COUNT = SCREEN_TRIANGLE + 1
+
+	// Note: Keep ROOM at the bottom because of hacky implementation,
+	// this is somewhat hacky, this is actually a single geometry related to a room, but
+	// we don't want to update the Enum every time we add a new room. It's numRoom - 1
+	// because we want to bind vertex buffer for each room but not for the ROOM enum, it's
+	// just a placeholder to tell us it's a room geometry, which geometry will be defined
+	// by the room struct
+	ROOM = SCREEN_TRIANGLE + 1,
+	GEOMETRY_COUNT = ROOM + 1
 };
-const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 
 struct RenderRequest {
 	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
@@ -138,3 +152,83 @@ struct RenderRequest {
 	GEOMETRY_BUFFER_ID used_geometry = GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 };
 
+// Represent four directions, that could have many uses, e.g. moving player
+enum class Direction : uint8_t {
+	Left,
+	Up,
+	Right,
+	Down,
+};
+
+// Represents the position on the world map,
+// top left is (0,0) bottom right is (99,99)
+// TODO: with this, we probably won't need position from
+// Motion, the rendered postion can be calculate from MapPosition
+struct MapPosition {
+	uvec2 position;
+	MapPosition(uvec2 pos) : position(pos) {};
+};
+
+/**
+* Map-related resources
+*/
+
+// RoomType is just a uint8_t
+using RoomType = uint8_t;
+
+// Each tile is 32x32 pixels
+static constexpr float TILE_SIZE = 32.f;
+// Each room is 10x10 tiles
+static constexpr int ROOM_SIZE = 10;
+// Each map is 10x10 rooms
+static constexpr int MAP_SIZE = 10;
+
+struct Room {
+	// use 0xff to indicate uninitialized value
+	// this can have potential bug if we have up to 255 rooms, but we probably won't...
+	RoomType type = 0xff;
+};
+
+// Manages and store the generated maps
+struct MapGenerator {
+private:
+	int currentLevel = -1;
+public:
+	using mapping = std::array<std::array<RoomType, ROOM_SIZE>, ROOM_SIZE>;
+
+	// the (procedural) generated levels, each level contains a full map(max 10*10 rooms)
+	std::vector<mapping> levels;
+
+	void generatorLevels();
+	const mapping& currentMap();
+
+	// Check if a position on the map is walkable for the player
+	bool walkable(uvec2 pos);
+};
+
+// TileMapVertex used for vertex buffers, we need a separate tile_texture because we want
+// to be able to specify different textures for a room
+struct TileMapVertex
+{
+	vec3 position;
+	vec2 texcoord;
+
+	// each tile texture corresponds to a 32*32 png
+	// TODO: modify this once we support texture atlas
+	float tile_texture = 0;
+};
+
+static constexpr int numRoom = 3;
+static constexpr std::array<std::array<std::array<RoomType, 10>, 10>, numRoom> roomLayouts = {
+    room_left_right_1,
+    room_top_down_1,
+	room_all_direction_1,
+};
+const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT + numRoom - 1;
+
+// TODO: This will probably overflow the supported number of textures at some point, replace this once we support
+// texture atlas
+static constexpr int num_tile_textures = 2;
+static constexpr TEXTURE_ASSET_ID tile_textures[2] = { TEXTURE_ASSET_ID::WALKABLE1, TEXTURE_ASSET_ID::WALL1 };
+
+static const std::set<uint8_t> WalkableTiles = { 0 };

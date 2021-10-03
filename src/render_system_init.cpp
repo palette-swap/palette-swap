@@ -80,6 +80,9 @@ void RenderSystem::initializeGlTextures()
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, dimensions.x, dimensions.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		// This might be useful for some pictures, will leave it here for reference
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		gl_has_errors();
         stbi_image_free(data);
     }
@@ -100,7 +103,7 @@ void RenderSystem::initializeGlEffects()
 
 // One could merge the following two functions as a template function...
 template <class T>
-void RenderSystem::bindVBOandIBO(GEOMETRY_BUFFER_ID gid, std::vector<T> vertices, std::vector<uint16_t> indices)
+void RenderSystem::bindVBOandIBO(uint gid, std::vector<T> vertices, std::vector<uint16_t> indices)
 {
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers[(uint)gid]);
 	glBufferData(GL_ARRAY_BUFFER,
@@ -125,10 +128,71 @@ void RenderSystem::initializeGlMeshes()
 			meshes[(int)geom_index].vertex_indices,
 			meshes[(int)geom_index].original_size);
 
-		bindVBOandIBO(geom_index,
+		bindVBOandIBO((uint)geom_index,
 			meshes[(int)geom_index].vertices, 
 			meshes[(int)geom_index].vertex_indices);
 	}
+}
+
+void RenderSystem::initializeRoomVertices(uint8_t roomType)
+{
+	////////////////////////////
+	// Initialize TileMap
+	// Vertices of a 4*4 room is defined as follows, don't try to understand this, it's not efficient at all
+	/**
+		0           2 6         8                 
+			+----------------------                 
+			|       -/3|       -/ | 9               
+			|    --/   |    --/   |                 
+			|  -/      |7 -/      |                 
+			|-/4      5|-/10      |11         
+	      1 |--------14-----------|                 
+		  12|       --15 18    20-| 21              
+			|   ---/   |     /--  |                 
+			|--/       |19/--     |                 
+		  13/---------------------+ 23              
+			16        17   22             
+	*/
+	// TODO: Optimize this, there's quite a bit duplicated vertices(a total of 600 vertices),
+	// eventually we want to reach 11*11 vertices.
+	const int totalVertices = ROOM_SIZE * ROOM_SIZE * 2 * 3;
+	float fraction = 1.f / ROOM_SIZE;
+	std::vector<TileMapVertex> tilemap_vertices(totalVertices);
+
+
+	for (int i = 0; i < totalVertices; i += 6) {
+		int row = i / (6 * ROOM_SIZE);
+		int col = (i % (6 * ROOM_SIZE)) / 6;
+
+		tilemap_vertices[i + 0].position = { fraction * (col - ROOM_SIZE / 2), fraction * (ROOM_SIZE / 2 - row), 0.f };
+		tilemap_vertices[i + 1].position = { fraction * (col - ROOM_SIZE / 2), fraction * (ROOM_SIZE / 2 - row - 1), 0.f };
+		tilemap_vertices[i + 2].position = { fraction * (col - ROOM_SIZE / 2 + 1), fraction * (ROOM_SIZE / 2 - row), 0.f };
+		tilemap_vertices[i + 3].position = { fraction * (col - ROOM_SIZE / 2 + 1), fraction * (ROOM_SIZE / 2 - row), 0.f };
+		tilemap_vertices[i + 4].position = { fraction * (col - ROOM_SIZE / 2), fraction * (ROOM_SIZE / 2 - row - 1), 0.f };
+		tilemap_vertices[i + 5].position = { fraction * (col - ROOM_SIZE / 2 + 1), fraction * (ROOM_SIZE / 2 - row - 1), 0.f };
+
+		tilemap_vertices[i + 0].texcoord = { 0.f, 1.f };
+		tilemap_vertices[i + 1].texcoord = { 0.f, 0.f };
+		tilemap_vertices[i + 2].texcoord = { 1.f, 1.f };
+		tilemap_vertices[i + 3].texcoord = { 1.f, 1.f };
+		tilemap_vertices[i + 4].texcoord = { 0.f, 0.f };
+		tilemap_vertices[i + 5].texcoord = { 1.f, 0.f };
+
+		// The Room somehow was read upside down, so using ROOM_SIZE - row - 1 to reverse that, should
+		// investigate why later...
+		tilemap_vertices[i + 0].tile_texture = (float)(roomLayouts[roomType][ROOM_SIZE - row - 1][col]);
+		tilemap_vertices[i + 1].tile_texture = (float)(roomLayouts[roomType][ROOM_SIZE - row - 1][col]);
+		tilemap_vertices[i + 2].tile_texture = (float)(roomLayouts[roomType][ROOM_SIZE - row - 1][col]);
+		tilemap_vertices[i + 3].tile_texture = (float)(roomLayouts[roomType][ROOM_SIZE - row - 1][col]);
+		tilemap_vertices[i + 4].tile_texture = (float)(roomLayouts[roomType][ROOM_SIZE - row - 1][col]);
+		tilemap_vertices[i + 5].tile_texture = (float)(roomLayouts[roomType][ROOM_SIZE - row - 1][col]);
+	}
+
+	std::vector<uint16_t> tilemap_indices(totalVertices);
+	for (int i = 0; i < totalVertices; i++) {
+		tilemap_indices[i] = static_cast<uint16_t>(i);
+	}
+	bindVBOandIBO(geometry_count - numRoom + roomType, tilemap_vertices, tilemap_indices);
 }
 
 void RenderSystem::initializeGlGeometryBuffers()
@@ -156,7 +220,11 @@ void RenderSystem::initializeGlGeometryBuffers()
 
 	// Counterclockwise as it's the default opengl front winding direction.
 	const std::vector<uint16_t> textured_indices = { 0, 3, 1, 1, 3, 2 };
-	bindVBOandIBO(GEOMETRY_BUFFER_ID::SPRITE, textured_vertices, textured_indices);
+	bindVBOandIBO((uint)GEOMETRY_BUFFER_ID::SPRITE, textured_vertices, textured_indices);
+
+	for (uint8_t i = 0; i < numRoom; i++) {
+		initializeRoomVertices(i);
+	}
 
 	////////////////////////
 	// Initialize pebble
@@ -182,7 +250,7 @@ void RenderSystem::initializeGlGeometryBuffers()
 	int geom_index = (int)GEOMETRY_BUFFER_ID::PEBBLE;
 	meshes[geom_index].vertices = pebble_vertices;
 	meshes[geom_index].vertex_indices = pebble_indices;
-	bindVBOandIBO(GEOMETRY_BUFFER_ID::PEBBLE, meshes[geom_index].vertices, meshes[geom_index].vertex_indices);
+	bindVBOandIBO((uint)GEOMETRY_BUFFER_ID::PEBBLE, meshes[geom_index].vertices, meshes[geom_index].vertex_indices);
 
 	//////////////////////////////////
 	// Initialize debug line
@@ -206,7 +274,7 @@ void RenderSystem::initializeGlGeometryBuffers()
 	geom_index = (int)GEOMETRY_BUFFER_ID::DEBUG_LINE;
 	meshes[geom_index].vertices = line_vertices;
 	meshes[geom_index].vertex_indices = line_indices;
-	bindVBOandIBO(GEOMETRY_BUFFER_ID::DEBUG_LINE, line_vertices, line_indices);
+	bindVBOandIBO((uint)GEOMETRY_BUFFER_ID::DEBUG_LINE, line_vertices, line_indices);
 
 	///////////////////////////////////////////////////////
 	// Initialize screen triangle (yes, triangle, not quad; its more efficient).
@@ -217,7 +285,7 @@ void RenderSystem::initializeGlGeometryBuffers()
 
 	// Counterclockwise as it's the default opengl front winding direction.
 	const std::vector<uint16_t> screen_indices = { 0, 1, 2 };
-	bindVBOandIBO(GEOMETRY_BUFFER_ID::SCREEN_TRIANGLE, screen_vertices, screen_indices);
+	bindVBOandIBO((uint)GEOMETRY_BUFFER_ID::SCREEN_TRIANGLE, screen_vertices, screen_indices);
 }
 
 RenderSystem::~RenderSystem()

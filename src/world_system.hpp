@@ -45,6 +45,10 @@ private:
 	// restart level
 	void restart_game();
 
+	// move the player one unit in the given direction,
+	// if the tile is blocked by a wall, player won't move
+	void movePlayer(Direction direction);
+
 	// OpenGL window handle
 	GLFWwindow* window;
 
@@ -57,6 +61,8 @@ private:
 	float next_turtle_spawn;
 	float next_fish_spawn;
 	Entity player;
+
+	Entity map;
 
 	// music references
 	Mix_Music* background_music;

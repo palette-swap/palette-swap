@@ -29,8 +29,13 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 	gl_has_errors();
 
 	assert(render_request.used_geometry != GEOMETRY_BUFFER_ID::GEOMETRY_COUNT);
-	const GLuint vbo = vertex_buffers[(GLuint)render_request.used_geometry];
-	const GLuint ibo = index_buffers[(GLuint)render_request.used_geometry];
+	int vbo_ibo_offset = 0;
+	if (render_request.used_geometry == GEOMETRY_BUFFER_ID::ROOM) {
+		vbo_ibo_offset = registry.rooms.get(entity).type;
+	}
+
+	const GLuint vbo = vertex_buffers[(GLuint)render_request.used_geometry + vbo_ibo_offset];
+	const GLuint ibo = index_buffers[(GLuint)render_request.used_geometry + vbo_ibo_offset];
 
 	// Setting vertex and index buffers
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -65,6 +70,46 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 
 		glBindTexture(GL_TEXTURE_2D, texture_id);
 		gl_has_errors();
+	}
+	else if (render_request.used_effect == EFFECT_ASSET_ID::TILE_MAP)
+	{
+		GLint in_position_loc = glGetAttribLocation(program, "in_position");
+		GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
+		GLint tile_index_loc = glGetAttribLocation(program, "tile_index");
+
+		gl_has_errors();
+		assert(in_texcoord_loc >= 0);
+
+		glEnableVertexAttribArray(in_position_loc);
+		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE,
+			sizeof(TileMapVertex), (void*)0);
+		gl_has_errors();
+
+		glEnableVertexAttribArray(in_texcoord_loc);
+		glVertexAttribPointer(
+			in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TileMapVertex),
+			(void*)sizeof(
+				vec3)); // note the stride to skip the preceeding vertex position
+
+		// Pass in the tile indexes
+		glEnableVertexAttribArray(tile_index_loc);
+		glVertexAttribPointer(
+			tile_index_loc, 1, GL_FLOAT, GL_FALSE, sizeof(TileMapVertex),
+			(void*)(sizeof(vec3) + sizeof(vec2)));
+
+		// Currently we pass in all tiles included, this can be inefficient and can
+		// overflow the texture limit, some ways to optimize
+		// 1. Pass in certian tiles based on camera position
+		// 2. (Preferred) Use a sprite sheet(tilemap atlas), access multiple tiles for
+		// a single load
+		int samplers[num_tile_textures];
+		for (int i = 0; i < num_tile_textures; i++) {
+			glBindTextureUnit(i, texture_gl_handles[(GLuint)tile_textures[i]]);
+			samplers[i] = i;
+		}
+
+		auto textures_loc = glGetUniformLocation(program, "tile_textures");
+		glUniform1iv(textures_loc, num_tile_textures, samplers);
 	}
 	else
 	{
