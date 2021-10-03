@@ -112,7 +112,8 @@ struct Mesh
 enum class TEXTURE_ASSET_ID {
 	PALADIN = 0,
 	SLUG = PALADIN + 1,
-	TEXTURE_COUNT = SLUG + 1
+	ARROW = SLUG + 1,
+	TEXTURE_COUNT = ARROW + 1
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 
