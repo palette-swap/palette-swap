@@ -26,7 +26,7 @@ public:
 
 	// constructor that adds all containers for looping over them
 	// IMPORTANT: Don't forget to add any newly added containers!
-	ECSRegistry()
+	ECSRegistry() noexcept
 	{
 		// TODO: A1 add a LightUp component
 		registry_list.push_back(&deathTimers);

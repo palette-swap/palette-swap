@@ -21,9 +21,7 @@ bool collides(const Motion& motion1, const Motion& motion2)
 	const vec2 my_bonding_box = get_bounding_box(motion2) / 2.f;
 	const float my_r_squared = dot(my_bonding_box, my_bonding_box);
 	const float r_squared = max(other_r_squared, my_r_squared);
-	if (dist_squared < r_squared)
-		return true;
-	return false;
+	return dist_squared < r_squared;
 }
 
 void PhysicsSystem::step(float elapsed_ms, float window_width_px, float window_height_px)
@@ -45,8 +43,9 @@ void PhysicsSystem::step(float elapsed_ms, float window_width_px, float window_h
 		Entity entity_i = motion_container.entities[i];
 		for(uint j = 0; j<motion_container.components.size(); j++) // i+1
 		{
-			if (i == j)
+			if (i == j) {
 				continue;
+			}
 
 			Motion& motion_j = motion_container.components[j];
 			if (collides(motion_i, motion_j))

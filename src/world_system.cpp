@@ -16,17 +16,16 @@ const size_t FISH_DELAY_MS = 5000 * 3;
 
 // Create the world
 WorldSystem::WorldSystem()
-	: points(0)
-	, next_turtle_spawn(0.f)
-	, next_fish_spawn(0.f) {
+	: points(0) {
 	// Seeding rng with random device
 	rng = std::default_random_engine(std::random_device()());
 }
 
 WorldSystem::~WorldSystem() {
 	// Destroy music components
-	if (background_music != nullptr)
+	if (background_music != nullptr) {
 		Mix_FreeMusic(background_music);
+	}
 	Mix_CloseAudio();
 
 	// Destroy all created components
@@ -41,7 +40,7 @@ namespace {
 	void glfw_err_cb(int error, const char *desc) {
 		fprintf(stderr, "%d: %s", error, desc);
 	}
-}
+} // namespace
 
 // World initialization
 // Note, this has a lot of OpenGL specific things, could be moved to the renderer
@@ -49,7 +48,7 @@ GLFWwindow* WorldSystem::create_window(int width, int height) {
 	///////////////////////////////////////
 	// Initialize GLFW
 	glfwSetErrorCallback(glfw_err_cb);
-	if (!glfwInit()) {
+	if (glfwInit() == GLFW_FALSE) {
 		fprintf(stderr, "Failed to initialize GLFW");
 		return nullptr;
 	}
@@ -78,8 +77,8 @@ GLFWwindow* WorldSystem::create_window(int width, int height) {
 	// Input is handled using GLFW, for more info see
 	// http://www.glfw.org/docs/latest/input_guide.html
 	glfwSetWindowUserPointer(window, this);
-	auto key_redirect = [](GLFWwindow* wnd, int _0, int _1, int _2, int _3) { ((WorldSystem*)glfwGetWindowUserPointer(wnd))->on_key(_0, _1, _2, _3); };
-	auto cursor_pos_redirect = [](GLFWwindow* wnd, double _0, double _1) { ((WorldSystem*)glfwGetWindowUserPointer(wnd))->on_mouse_move({ _0, _1 }); };
+	auto key_redirect = [](GLFWwindow* wnd, int _0, int _1, int _2, int _3) { static_cast<WorldSystem*>(glfwGetWindowUserPointer(wnd))->on_key(_0, _1, _2, _3); };
+	auto cursor_pos_redirect = [](GLFWwindow* wnd, double _0, double _1) { static_cast<WorldSystem * >(glfwGetWindowUserPointer(wnd))->on_mouse_move({ _0, _1 }); };
 	glfwSetKeyCallback(window, key_redirect);
 	glfwSetCursorPosCallback(window, cursor_pos_redirect);
 
@@ -130,8 +129,9 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	glfwSetWindowTitle(window, title_ss.str().c_str());
 
 	// Remove debug info from the last step
-	while (registry.debugComponents.entities.size() > 0)
-	    registry.remove_all_components_of(registry.debugComponents.entities.back());
+	while (!registry.debugComponents.entities.empty()) {
+		registry.remove_all_components_of(registry.debugComponents.entities.back());
+	}
 
 	// Removing out of screen entities
 	auto& motions_registry = registry.motions;
@@ -201,8 +201,9 @@ void WorldSystem::restart_game() {
 
 	// Remove all entities that we created
 	// All that have a motion, we could also iterate over all fish, turtles, ... but that would be more cumbersome
-	while (registry.motions.entities.size() > 0)
-	    registry.remove_all_components_of(registry.motions.entities.back());
+	while (!registry.motions.entities.empty()) {
+		registry.remove_all_components_of(registry.motions.entities.back());
+	}
 
 	// Debugging for memory/component leaks
 	registry.list_all_components();
@@ -252,7 +253,7 @@ bool WorldSystem::is_over() const {
 }
 
 // On key callback
-void WorldSystem::on_key(int key, int, int action, int mod) {
+void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod) {
 	int position_change = 128;
 	Motion& motion = registry.motions.get(player);
 
@@ -284,26 +285,23 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 
 	// Debugging
 	if (key == GLFW_KEY_D) {
-		if (action == GLFW_RELEASE)
-			debugging.in_debug_mode = false;
-		else
-			debugging.in_debug_mode = true;
+		debugging.in_debug_mode = action != GLFW_RELEASE;
 	}
 
 	// Control the current speed with `<` `>`
-	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_COMMA) {
+	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_COMMA) {
 		current_speed -= 0.1f;
 		printf("Current speed = %f\n", current_speed);
 	}
-	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_PERIOD) {
+	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_PERIOD) {
 		current_speed += 0.1f;
 		printf("Current speed = %f\n", current_speed);
 	}
 	current_speed = fmax(0.f, current_speed);
 }
 
-void WorldSystem::on_mouse_move(vec2 mouse_position) {
+void WorldSystem::on_mouse_move(vec2 pos) {
 
 
-	(vec2)mouse_position; // dummy to avoid compiler warning
+	(vec2)pos; // dummy to avoid compiler warning
 }

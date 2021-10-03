@@ -24,7 +24,7 @@ class RenderSystem {
 	// Associated id with .obj path
 	const std::vector < std::pair<GEOMETRY_BUFFER_ID, std::string>> mesh_paths =
 	{
-		  std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::SALMON, mesh_path("salmon.obj"))
+		{ GEOMETRY_BUFFER_ID::SALMON, mesh_path("salmon.obj") }
 		  // specify meshes of other assets here
 	};
 

@@ -35,7 +35,7 @@ bool RenderSystem::init(int width, int height, GLFWwindow* window_arg)
 	// https://stackoverflow.com/questions/36672935/why-retina-screen-coordinate-value-is-twice-the-value-of-pixel-value
 	int fb_width, fb_height;
 	glfwGetFramebufferSize(window, &fb_width, &fb_height);
-	screen_scale = static_cast<float>(fb_width) / width;
+	screen_scale = static_cast<float>(fb_width) / static_cast<float>(width);
 	(int)height; // dummy to avoid warning
 
 	// ASK(Camilo): Setup error callback. This can not be done in mac os, so do not enable
@@ -68,9 +68,9 @@ void RenderSystem::initializeGlTextures()
         ivec2& dimensions = texture_dimensions[i];
 
         stbi_uc* data;
-        data  = stbi_load(path.c_str(), &dimensions.x, &dimensions.y, NULL, 4);
+        data  = stbi_load(path.c_str(), &dimensions.x, &dimensions.y, nullptr, 4);
 
-        if (data == NULL)
+        if (data == nullptr)
         {
 			const std::string message = "Could not load the file " + path + ".";
             fprintf(stderr, "%s", message.c_str());
@@ -231,16 +231,17 @@ RenderSystem::~RenderSystem()
 	glDeleteRenderbuffers(1, &off_screen_render_buffer_depth);
 	gl_has_errors();
 
-	for(uint i = 0; i < effect_count; i++) {
-		glDeleteProgram(effects[i]);
+	for(const auto effect: effects) {
+		glDeleteProgram(effect);
 	}
 	// delete allocated resources
 	glDeleteFramebuffers(1, &frame_buffer);
 	gl_has_errors();
 
 	// remove all entities created by the render system
-	while (registry.renderRequests.entities.size() > 0)
-	    registry.remove_all_components_of(registry.renderRequests.entities.back());
+	while (!registry.renderRequests.entities.empty()) {
+		registry.remove_all_components_of(registry.renderRequests.entities.back());
+	}
 }
 
 // Initialize the screen texture from a standard sprite
@@ -249,11 +250,11 @@ bool RenderSystem::initScreenTexture()
 	registry.screenStates.emplace(screen_state_entity);
 
 	int width, height;
-	glfwGetFramebufferSize(const_cast<GLFWwindow*>(window), &width, &height);
+	glfwGetFramebufferSize(window, &width, &height);
 
 	glGenTextures(1, &off_screen_render_buffer_color);
 	glBindTexture(GL_TEXTURE_2D, off_screen_render_buffer_color);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	gl_has_errors();
@@ -314,8 +315,8 @@ bool loadEffectFromFile(
 	std::string fs_str = fs_ss.str();
 	const char* vs_src = vs_str.c_str();
 	const char* fs_src = fs_str.c_str();
-	GLsizei vs_len = (GLsizei)vs_str.size();
-	GLsizei fs_len = (GLsizei)fs_str.size();
+	auto vs_len = (GLsizei)vs_str.size();
+	auto fs_len = (GLsizei)fs_str.size();
 
 	GLuint vertex = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vertex, 1, &vs_src, &vs_len);

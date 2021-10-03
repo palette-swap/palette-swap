@@ -25,7 +25,7 @@ bool gl_has_errors()
 {
 	GLenum error = glGetError();
 
-	if (error == GL_NO_ERROR) return false;
+	if (error == GL_NO_ERROR) { return false; }
 
 	while (error != GL_NO_ERROR)
 	{
@@ -46,6 +46,9 @@ bool gl_has_errors()
 			break;
 		case GL_INVALID_FRAMEBUFFER_OPERATION:
 			error_str = "INVALID_FRAMEBUFFER_OPERATION";
+			break;
+		default:
+			error_str = "INVALID_ERROR_CODE";
 			break;
 		}
 

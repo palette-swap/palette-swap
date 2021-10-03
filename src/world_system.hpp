@@ -39,29 +39,29 @@ public:
 	bool is_over()const;
 private:
 	// Input callback functions
-	void on_key(int key, int, int action, int mod);
+	void on_key(int key, int /*scancode*/, int action, int mod);
 	void on_mouse_move(vec2 pos);
 
 	// restart level
 	void restart_game();
 
 	// OpenGL window handle
-	GLFWwindow* window;
+	GLFWwindow* window = nullptr;
 
 	// Number of fish eaten by the salmon, displayed in the window title
 	unsigned int points;
 
 	// Game state
-	RenderSystem* renderer;
-	float current_speed;
-	float next_turtle_spawn;
-	float next_fish_spawn;
+	RenderSystem* renderer = nullptr;
+	float current_speed = 0;
+	float next_turtle_spawn = 0;
+	float next_fish_spawn = 0;
 	Entity player;
 
 	// music references
-	Mix_Music* background_music;
-	Mix_Chunk* salmon_dead_sound;
-	Mix_Chunk* salmon_eat_sound;
+	Mix_Music* background_music = nullptr;
+	Mix_Chunk* salmon_dead_sound = nullptr;
+	Mix_Chunk* salmon_eat_sound = nullptr;
 
 	// C++ random number generator
 	std::default_random_engine rng;
