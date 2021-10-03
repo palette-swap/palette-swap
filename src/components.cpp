@@ -35,55 +35,55 @@ bool Mesh::loadFromOBJFile(const std::string& obj_path, std::vector<ColoredVerte
 	}
 
 	while (true) {
-		char lineHeader[128];
+		char line_header[128];
 		// read the first word of the line
-		int res = fscanf(file, "%s", lineHeader);
+		int res = fscanf(file, "%s", line_header);
 		if (res == EOF) {
 			break; // EOF = End Of File. Quit the loop.
 		}
 
-		if (strcmp((char*) lineHeader, "v") == 0) {
+		if (strcmp((char*) line_header, "v") == 0) {
 			ColoredVertex vertex;
 			fscanf(file, "%f %f %f %f %f %f\n", &vertex.position.x, &vertex.position.y, &vertex.position.z,
 				                                &vertex.color.x, &vertex.color.y, &vertex.color.z);
 			out_vertices.push_back(vertex);
 		}
-		else if (strcmp((char*) lineHeader, "vt") == 0) {
+		else if (strcmp((char*) line_header, "vt") == 0) {
 			glm::vec2 uv;
 			fscanf(file, "%f %f\n", &uv.x, &uv.y);
 			uv.y = -uv.y; // Invert V coordinate since we will only use DDS texture, which are inverted. Remove if you want to use TGA or BMP loaders.
 			out_uvs.push_back(uv);
 		}
-		else if (strcmp((char*) lineHeader, "vn") == 0) {
+		else if (strcmp((char*) line_header, "vn") == 0) {
 			glm::vec3 normal;
 			fscanf(file, "%f %f %f\n", &normal.x, &normal.y, &normal.z);
 			out_normals.push_back(normal);
 		}
-		else if (strcmp((char*) lineHeader, "f") == 0) {
+		else if (strcmp((char*) line_header, "f") == 0) {
 			std::string vertex1, vertex2, vertex3;
-			unsigned int vertexIndex[3], normalIndex[3]; // , uvIndex[3]
-			//int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertexIndex[0], &uvIndex[0], &normalIndex[0], &vertexIndex[1], &uvIndex[1], &normalIndex[1], &vertexIndex[2], &uvIndex[2], &normalIndex[2]);
-			int matches = fscanf(file, "%d//%d %d//%d %d//%d\n", &vertexIndex[0], &normalIndex[0], &vertexIndex[1], &normalIndex[1], &vertexIndex[2], &normalIndex[2]);
+			unsigned int vertex_index[3], normal_index[3]; // , uvIndex[3]
+			//int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertex_index[0], &uvIndex[0], &normal_index[0], &vertex_index[1], &uvIndex[1], &normal_index[1], &vertex_index[2], &uvIndex[2], &normal_index[2]);
+			int matches = fscanf(file, "%d//%d %d//%d %d//%d\n", &vertex_index[0], &normal_index[0], &vertex_index[1], &normal_index[1], &vertex_index[2], &normal_index[2]);
 			if (matches != 6) {
 				printf("File can't be read by our simple parser :-( Try exporting with other options\n");
 				fclose(file);
 				return false;
 			}
 			// -1 since .obj starts counting at 1 and OpenGL starts at 0
-			out_vertex_indices.push_back((uint16_t)vertexIndex[0] - 1);
-			out_vertex_indices.push_back((uint16_t)vertexIndex[1] - 1);
-			out_vertex_indices.push_back((uint16_t)vertexIndex[2] - 1);
+			out_vertex_indices.push_back((uint16_t)vertex_index[0] - 1);
+			out_vertex_indices.push_back((uint16_t)vertex_index[1] - 1);
+			out_vertex_indices.push_back((uint16_t)vertex_index[2] - 1);
 			//out_uv_indices.push_back(uvIndex[0] - 1);
 			//out_uv_indices.push_back(uvIndex[1] - 1);
 			//out_uv_indices.push_back(uvIndex[2] - 1);
-			out_normal_indices.push_back((uint16_t)normalIndex[0] - 1);
-			out_normal_indices.push_back((uint16_t)normalIndex[1] - 1);
-			out_normal_indices.push_back((uint16_t)normalIndex[2] - 1);
+			out_normal_indices.push_back((uint16_t)normal_index[0] - 1);
+			out_normal_indices.push_back((uint16_t)normal_index[1] - 1);
+			out_normal_indices.push_back((uint16_t)normal_index[2] - 1);
 		}
 		else {
 			// Probably a comment, eat up the rest of the line
-			char stupidBuffer[1000];
-			fgets((char*) stupidBuffer, 1000, file);
+			char stupid_buffer[1000];
+			fgets((char*) stupid_buffer, 1000, file);
 		}
 	}
 	fclose(file);

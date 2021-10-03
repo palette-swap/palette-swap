@@ -1,2 +1,13 @@
 Checks: '-clang-diagnostic-pragma-pack,boost-*,bugprone-*,cert-*,clang-analyzer-*,concurrency-*,cppcoreguidelines-*,hicpp-*,llvm-*,misc-*,modernize-*,performance-*,portability-*,readability-*,-*-magic-numbers,-*-macro-usage, -modernize-use-trailing-return-type, -*-uppercase-literal-suffix, -*-vararg, -*-union-access, -*-owning-memory,-cert-msc32-c,-cert-msc51-cpp,-cert-err34-c,-hicpp-signed-bitwise, -readability-isolate-declaration, -readability-convert-member-functions-to-static'
+CheckOptions: 
+  - { key: readability-identifier-naming.NamespaceCase,          value: lower_case }
+  - { key: readability-identifier-naming.ClassCase,              value: CamelCase }
+  - { key: readability-identifier-naming.TypeAliasSuffix,        value: _t         }
+  - { key: readability-identifier-naming.PrivateMemberSuffix,    value: _          }
+  - { key: readability-identifier-naming.StructCase,             value: lower_case }
+  - { key: readability-identifier-naming.FunctionCase,           value: lower_case }
+  - { key: readability-identifier-naming.VariableCase,           value: lower_case }
+  - { key: readability-identifier-naming.GlobalConstantCase,  	 value: lower_case }
+  - { key: readability-identifier-naming.TemplateParameterCase,  value: CamelCase }
+  - { key: readability-identifier-naming.MacroDefinitionCase,  value: UPPER_CASE }
 FormatStyle: 'file'
