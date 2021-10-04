@@ -222,7 +222,6 @@ void WorldSystem::handle_collisions() {
 			if (registry.hittables.has(entity_other)) {
 				registry.motions.get(entity).velocity = { 0, 0 };
 			}
-
 		}
 	}
 
@@ -306,7 +305,6 @@ void WorldSystem::on_mouse_move(vec2 mouse_position) {
 		// Calculates arrow angle based on position of mouse
 		arrow_motion.angle = atan2(eucl_diff.x, -eucl_diff.y);
 	}
-
 }
 
 // Fires arrow at a preset speed if it has not been fired already
@@ -318,7 +316,7 @@ void WorldSystem::on_mouse_click(int button, int action, int mods) {
 			Motion& arrow_motion = registry.motions.get(player_arrow);
 
 			// TODO: Can optimize calculation here potentially
-			arrow_motion.velocity = vec2(sin(arrow_motion.angle) * projectile_speed, -cos(arrow_motion.angle) * projectile_speed) ;
+			arrow_motion.velocity = {sin(arrow_motion.angle) * projectile_speed, -cos(arrow_motion.angle) * projectile_speed};
 		}
 	}
 }
