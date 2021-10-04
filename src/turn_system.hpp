@@ -1,20 +1,19 @@
 #pragma once
-
 #include <deque>
 
 #include "tiny_ecs_registry.hpp"
 #include "common.hpp"
 
-using namespace std;
+
 
 class TurnSystem
 {
 public:
 
 	Entity getActiveUnit();
-	deque<Entity> getUnitPositionInQueue(Entity unit);
-	bool executeUnitAction();
-	bool completeUnitAction();
+	std::deque<Entity> getUnitPositionInQueue(Entity unit);
+	bool executeUnitAction(Entity unit);
+	bool completeUnitAction(Entity unit);
 	bool addUnitToQueue(Entity unit);
 	bool removeUnitFromQueue(Entity unit);
 	
@@ -26,7 +25,7 @@ public:
 		FINISHED
 	};
 
-	QUEUE_STATE _queueState = QUEUE_STATE::IDLE;
+	QUEUE_STATE queueState = QUEUE_STATE::IDLE;
 
 	TurnSystem() 
 	{
@@ -34,6 +33,6 @@ public:
 
 private:
 	
-	deque<Entity> _unitQueue;
+	std::deque<Entity> unitQueue;
 
 };
