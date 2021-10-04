@@ -14,13 +14,12 @@ Entity createPlayer(RenderSystem* renderer, vec2 pos)
 	motion.angle = 0.f;
 	motion.velocity = { 0.f, 0.f };
 	motion.scale = mesh.original_size * 100.f;
-	motion.scale.x *= 1; // Keep original orientation
 
 	// Create and (empty) player component to be able to refer to other enttities
 	registry.players.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
-		{ TEXTURE_ASSET_ID::PALADIN, // TEXTURE_COUNT indicates that no txture is needed
+		{ TEXTURE_ASSET_ID::PALADIN,
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE });
 
@@ -44,8 +43,11 @@ Entity createEnemy(RenderSystem* renderer, vec2 position)
 	motion.velocity = { 0.f, 0.f };
 	motion.position = position;
 
-	// Setting initial values, scale is negative to make it face the opposite way
+	// Setting initial values for enemy
 	motion.scale = mesh.original_size * 100.f;
+
+	// Indicates enemy is hittable by objects
+	registry.hittables.emplace(entity);
 
 	// TODO: Switch out basic enemy type based on input (Currently Defaulted to Slug)
 	registry.renderRequests.insert(
@@ -53,6 +55,7 @@ Entity createEnemy(RenderSystem* renderer, vec2 position)
 		{ TEXTURE_ASSET_ID::SLUG,
 		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE });
+
 
 	return entity;
 }
@@ -69,13 +72,16 @@ Entity createArrow(RenderSystem* renderer, vec2 position)
 	motion.position = position;
 	motion.angle = 0.f;
 	motion.velocity = { 0.f, 0.f };
-	motion.scale = mesh.original_size * 100.f;
-	motion.scale.x *= 1; // Keep original orientation
+	motion.scale = mesh.original_size * 50.f;
 
 	// Create and (empty) player component to be able to refer to other enttities
 	registry.players.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::ARROW, 
+			EFFECT_ASSET_ID::TEXTURED,
+			GEOMETRY_BUFFER_ID::SPRITE });
 
-	registry.debugComponents.emplace(entity);
 	return entity;
 }
 
