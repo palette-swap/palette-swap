@@ -51,7 +51,7 @@ bool RenderSystem::init(int width, int height, GLFWwindow* window_arg)
 	gl_has_errors();
 
 	initScreenTexture();
-    initializeGlTextures();
+	initializeGlTextures();
 	initializeGlEffects();
 	initializeGlGeometryBuffers();
 
@@ -60,36 +60,33 @@ bool RenderSystem::init(int width, int height, GLFWwindow* window_arg)
 
 void RenderSystem::initializeGlTextures()
 {
-    glGenTextures((GLsizei)texture_gl_handles.size(), texture_gl_handles.data());
+	glGenTextures((GLsizei)texture_gl_handles.size(), texture_gl_handles.data());
 
-    for(uint i = 0; i < texture_paths.size(); i++)
-    {
-        const std::string& path = texture_paths.at(i);
-        ivec2& dimensions = texture_dimensions.at(i);
+	for (uint i = 0; i < texture_paths.size(); i++) {
+		const std::string& path = texture_paths.at(i);
+		ivec2& dimensions = texture_dimensions.at(i);
 
-        stbi_uc* data;
-        data  = stbi_load(path.c_str(), &dimensions.x, &dimensions.y, nullptr, 4);
+		stbi_uc* data;
+		data = stbi_load(path.c_str(), &dimensions.x, &dimensions.y, nullptr, 4);
 
-        if (data == nullptr)
-        {
+		if (data == nullptr) {
 			const std::string message = "Could not load the file " + path + ".";
-            fprintf(stderr, "%s", message.c_str());
-            assert(false);
-        }
-        glBindTexture(GL_TEXTURE_2D, texture_gl_handles.at(i));
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, dimensions.x, dimensions.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			fprintf(stderr, "%s", message.c_str());
+			assert(false);
+		}
+		glBindTexture(GL_TEXTURE_2D, texture_gl_handles.at(i));
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, dimensions.x, dimensions.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		gl_has_errors();
-        stbi_image_free(data);
-    }
+		stbi_image_free(data);
+	}
 	gl_has_errors();
 }
 
 void RenderSystem::initializeGlEffects()
 {
-	for(uint i = 0; i < effect_paths.size(); i++)
-	{
+	for (uint i = 0; i < effect_paths.size(); i++) {
 		const std::string vertex_shader_name = effect_paths.at(i) + ".vs.glsl";
 		const std::string fragment_shader_name = effect_paths.at(i) + ".fs.glsl";
 
@@ -103,31 +100,23 @@ template <class T>
 void RenderSystem::bind_vbo_and_ibo(GEOMETRY_BUFFER_ID gid, std::vector<T> vertices, std::vector<uint16_t> indices)
 {
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers.at((uint)gid));
-	glBufferData(GL_ARRAY_BUFFER,
-		sizeof(vertices[0]) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices[0]) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
 	gl_has_errors();
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffers.at((uint)gid));
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-		sizeof(indices[0]) * indices.size(), indices.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices[0]) * indices.size(), indices.data(), GL_STATIC_DRAW);
 	gl_has_errors();
 }
 
 void RenderSystem::initializeGlMeshes()
 {
-	for (const auto& path: mesh_paths)
-	{
+	for (const auto& path : mesh_paths) {
 		// Initialize meshes
-		Mesh& mesh = meshes.at((int) path.first);
+		Mesh& mesh = meshes.at((int)path.first);
 		std::string name = path.second;
-		Mesh::loadFromOBJFile(name, 
-			mesh.vertices,
-			mesh.vertex_indices,
-			mesh.original_size);
+		Mesh::loadFromOBJFile(name, mesh.vertices, mesh.vertex_indices, mesh.original_size);
 
-		bind_vbo_and_ibo(path.first,
-			mesh.vertices,
-			mesh.vertex_indices);
+		bind_vbo_and_ibo(path.first, mesh.vertices, mesh.vertex_indices);
 	}
 }
 
@@ -145,10 +134,10 @@ void RenderSystem::initializeGlGeometryBuffers()
 	// Initialize sprite
 	// The position corresponds to the center of the texture.
 	std::vector<TexturedVertex> textured_vertices(4);
-	textured_vertices[0].position = { -1.f/2, +1.f/2, 0.f };
-	textured_vertices[1].position = { +1.f/2, +1.f/2, 0.f };
-	textured_vertices[2].position = { +1.f/2, -1.f/2, 0.f };
-	textured_vertices[3].position = { -1.f/2, -1.f/2, 0.f };
+	textured_vertices[0].position = { -1.f / 2, +1.f / 2, 0.f };
+	textured_vertices[1].position = { +1.f / 2, +1.f / 2, 0.f };
+	textured_vertices[2].position = { +1.f / 2, -1.f / 2, 0.f };
+	textured_vertices[3].position = { -1.f / 2, -1.f / 2, 0.f };
 	textured_vertices[0].texcoord = { 0.f, 1.f };
 	textured_vertices[1].texcoord = { 1.f, 1.f };
 	textured_vertices[2].texcoord = { 1.f, 0.f };
@@ -190,19 +179,19 @@ void RenderSystem::initializeGlGeometryBuffers()
 	std::vector<uint16_t> line_indices;
 
 	constexpr float depth = 0.5f;
-	constexpr vec3 red = { 0.8,0.1,0.1 };
+	constexpr vec3 red = { 0.8, 0.1, 0.1 };
 
 	// Corner points
 	line_vertices = {
-		{{-0.5,-0.5, depth}, red},
-		{{-0.5, 0.5, depth}, red},
-		{{ 0.5, 0.5, depth}, red},
-		{{ 0.5,-0.5, depth}, red},
+		{ { -0.5, -0.5, depth }, red },
+		{ { -0.5, 0.5, depth }, red },
+		{ { 0.5, 0.5, depth }, red },
+		{ { 0.5, -0.5, depth }, red },
 	};
 
 	// Two triangles
-	line_indices = {0, 1, 3, 1, 2, 3};
-	
+	line_indices = { 0, 1, 3, 1, 2, 3 };
+
 	Mesh& line = meshes.at((int)GEOMETRY_BUFFER_ID::DEBUG_LINE);
 	line.vertices = line_vertices;
 	line.vertex_indices = line_indices;
@@ -231,7 +220,7 @@ RenderSystem::~RenderSystem()
 	glDeleteRenderbuffers(1, &off_screen_render_buffer_depth);
 	gl_has_errors();
 
-	for(const auto effect: effects) {
+	for (const auto effect : effects) {
 		glDeleteProgram(effect);
 	}
 	// delete allocated resources
@@ -277,8 +266,7 @@ bool gl_compile_shader(GLuint shader)
 	gl_has_errors();
 	GLint success = 0;
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-	if (success == GL_FALSE)
-	{
+	if (success == GL_FALSE) {
 		GLint log_len;
 		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &log_len);
 		std::vector<char> log(log_len);
@@ -294,14 +282,12 @@ bool gl_compile_shader(GLuint shader)
 	return true;
 }
 
-bool loadEffectFromFile(
-	const std::string& vs_path, const std::string& fs_path, GLuint& out_program)
+bool loadEffectFromFile(const std::string& vs_path, const std::string& fs_path, GLuint& out_program)
 {
 	// Opening files
 	std::ifstream vs_is(vs_path);
 	std::ifstream fs_is(fs_path);
-	if (!vs_is.good() || !fs_is.good())
-	{
+	if (!vs_is.good() || !fs_is.good()) {
 		fprintf(stderr, "Failed to load shader files %s, %s", vs_path.c_str(), fs_path.c_str());
 		assert(false);
 		return false;
@@ -325,14 +311,12 @@ bool loadEffectFromFile(
 	gl_has_errors();
 
 	// Compiling
-	if (!gl_compile_shader(vertex))
-	{
+	if (!gl_compile_shader(vertex)) {
 		fprintf(stderr, "Vertex compilation failed");
 		assert(false);
 		return false;
 	}
-	if (!gl_compile_shader(fragment))
-	{
+	if (!gl_compile_shader(fragment)) {
 		fprintf(stderr, "Vertex compilation failed");
 		assert(false);
 		return false;
@@ -345,12 +329,10 @@ bool loadEffectFromFile(
 	glLinkProgram(out_program);
 	gl_has_errors();
 
-
 	{
 		GLint is_linked = GL_FALSE;
 		glGetProgramiv(out_program, GL_LINK_STATUS, &is_linked);
-		if (is_linked == GL_FALSE)
-		{
+		if (is_linked == GL_FALSE) {
 			GLint log_len;
 			glGetProgramiv(out_program, GL_INFO_LOG_LENGTH, &log_len);
 			std::vector<char> log(log_len);
@@ -373,4 +355,3 @@ bool loadEffectFromFile(
 
 	return true;
 }
-

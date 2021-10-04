@@ -1,24 +1,19 @@
 #pragma once
-#include "common.hpp"
-#include <vector>
-#include <unordered_map>
 #include "../ext/stb_image/stb_image.h"
+#include "common.hpp"
+#include <unordered_map>
+#include <vector>
 
 // Player component
-struct Player
-{
-
+struct Player {
 };
 
-struct GridPosition 
-{
+struct GridPosition {
 	ivec2 position;
 };
 
 // Turtles and pebbles have a hard shell
-struct HardShell
-{
-
+struct HardShell {
 };
 
 // All data relevant to the shape and motion of entities
@@ -30,8 +25,7 @@ struct Motion {
 };
 
 // Stucture to store collision information
-struct Collision
-{
+struct Collision {
 	// Note, the first object is stored in the ECS container.entities
 	Entity other; // the second object involved in the collision
 	Collision(Entity& other) { this->other = other; };
@@ -42,45 +36,41 @@ struct Debug {
 	bool in_debug_mode = 0;
 	bool in_freeze_mode = 0;
 };
-extern Debug debugging;
 
 // Sets the brightness of the screen
-struct ScreenState
-{
+struct ScreenState {
 	float darken_screen_factor = -1;
 };
 
 // A struct to refer to debugging graphics in the ECS
-struct DebugComponent
-{
+struct DebugComponent {
 	// Note, an empty struct has size 1
 };
 
 // A timer that will be associated to dying salmon
-struct DeathTimer
-{
+struct DeathTimer {
 	float counter_ms = 3000;
 };
 
 // Single Vertex Buffer element for non-textured meshes (coloured.vs.glsl & salmon.vs.glsl)
-struct ColoredVertex
-{
+struct ColoredVertex {
 	vec3 position = { 0, 0, 0 };
 	vec3 color = { 0, 0, 0 };
 };
 
 // Single Vertex Buffer element for textured sprites (textured.vs.glsl)
-struct TexturedVertex
-{
+struct TexturedVertex {
 	vec3 position;
 	vec2 texcoord;
 };
 
 // Mesh datastructure for storing vertex and index buffers
-struct Mesh
-{
-	static bool loadFromOBJFile(const std::string& obj_path, std::vector<ColoredVertex>& out_vertices, std::vector<uint16_t>& out_vertex_indices, vec2& out_size);
-	vec2 original_size = {1,1};
+struct Mesh {
+	static bool loadFromOBJFile(const std::string& obj_path,
+								std::vector<ColoredVertex>& out_vertices,
+								std::vector<uint16_t>& out_vertex_indices,
+								vec2& out_size);
+	vec2 original_size = { 1, 1 };
 	std::vector<ColoredVertex> vertices;
 	std::vector<uint16_t> vertex_indices;
 };
@@ -109,19 +99,10 @@ struct Mesh
  * enums there are, and as a default value to represent uninitialized fields.
  */
 
-enum class TEXTURE_ASSET_ID {
-	PALADIN = 0,
-	SLUG = PALADIN + 1,
-	TEXTURE_COUNT = SLUG + 1
-};
+enum class TEXTURE_ASSET_ID { PALADIN = 0, SLUG = PALADIN + 1, TEXTURE_COUNT = SLUG + 1 };
 constexpr int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 
-enum class EFFECT_ASSET_ID {
-	LINE = 0,
-	TEXTURED = LINE + 1,
-	WATER = TEXTURED + 1,
-	EFFECT_COUNT = WATER + 1
-};
+enum class EFFECT_ASSET_ID { LINE = 0, TEXTURED = LINE + 1, WATER = TEXTURED + 1, EFFECT_COUNT = WATER + 1 };
 constexpr int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 
 enum class GEOMETRY_BUFFER_ID {
@@ -141,11 +122,7 @@ struct RenderRequest {
 };
 
 // Simple 3-state state machine for enemy AI: IDEL, ACTIVE, FLINCHED.
-enum class ENEMY_STATE_ID {
-	IDLE = 0,
-	ACTIVE = IDLE + 1,
-	FLINCHED = ACTIVE + 1
-};
+enum class ENEMY_STATE_ID { IDLE = 0, ACTIVE = IDLE + 1, FLINCHED = ACTIVE + 1 };
 
 // Structure to store enemy state.
 struct EnemyState {

@@ -22,30 +22,25 @@ class RenderSystem {
 
 	// Make sure these paths remain in sync with the associated enumerators.
 	// Associated id with .obj path
-	const std::vector < std::pair<GEOMETRY_BUFFER_ID, std::string>> mesh_paths =
-	{
+	const std::vector<std::pair<GEOMETRY_BUFFER_ID, std::string>> mesh_paths = {
 		{ GEOMETRY_BUFFER_ID::SALMON, mesh_path("salmon.obj") }
-		  // specify meshes of other assets here
+		// specify meshes of other assets here
 	};
 
 	// Make sure these paths remain in sync with the associated enumerators.
-	const std::array<std::string, texture_count> texture_paths = {
-			textures_path("Paladin_A01.png"),
-			textures_path("Slug.png")};
+	const std::array<std::string, texture_count> texture_paths
+		= { textures_path("Paladin_A01.png"), textures_path("Slug.png") };
 
 	std::array<GLuint, effect_count> effects;
 	// Make sure these paths remain in sync with the associated enumerators.
-	const std::array<std::string, effect_count> effect_paths = {
-		shader_path("line"),
-		shader_path("textured"),
-		shader_path("water") };
+	const std::array<std::string, effect_count> effect_paths
+		= { shader_path("line"), shader_path("textured"), shader_path("water") };
 
 	std::array<GLuint, geometry_count> vertex_buffers;
 	std::array<GLuint, geometry_count> index_buffers;
 	std::array<Mesh, geometry_count> meshes;
 
 public:
-
 	// Initialize the window
 	bool init(int width, int height, GLFWwindow* window);
 
@@ -80,8 +75,8 @@ private:
 
 	// Window handle
 	GLFWwindow* window;
-	float screen_scale;  // Screen to pixel coordinates scale factor (for apple
-						 // retina display?)
+	float screen_scale; // Screen to pixel coordinates scale factor (for apple
+						// retina display?)
 
 	// Screen texture handles
 	GLuint frame_buffer;
@@ -91,5 +86,4 @@ private:
 	Entity screen_state_entity;
 };
 
-bool loadEffectFromFile(
-	const std::string& vs_path, const std::string& fs_path, GLuint& out_program);
+bool loadEffectFromFile(const std::string& vs_path, const std::string& fs_path, GLuint& out_program);

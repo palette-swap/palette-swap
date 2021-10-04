@@ -8,14 +8,16 @@
 #include <iostream>
 #include <sstream>
 
-
 // Very, VERY simple OBJ loader from https://github.com/opengl-tutorials/ogl tutorial 7
 // (modified to also read vertex color and omit uv and normals)
-bool Mesh::loadFromOBJFile(const std::string& obj_path, std::vector<ColoredVertex>& out_vertices, std::vector<uint16_t>& out_vertex_indices, vec2& out_size)
+bool Mesh::loadFromOBJFile(const std::string& obj_path,
+						   std::vector<ColoredVertex>& out_vertices,
+						   std::vector<uint16_t>& out_vertex_indices,
+						   vec2& out_size)
 {
 	// disable warnings about fscanf and fopen on Windows
 #ifdef _MSC_VER
-	#pragma warning(disable:4996)
+#pragma warning(disable : 4996)
 #endif
 
 	printf("Loading OBJ file %s...\n", obj_path.c_str());
@@ -39,28 +41,29 @@ bool Mesh::loadFromOBJFile(const std::string& obj_path, std::vector<ColoredVerte
 			break; // EOF = End Of File. Quit the loop.
 		}
 
-		if (strcmp((char*) line_header.data(), "v") == 0) {
+		if (strcmp((char*)line_header.data(), "v") == 0) {
 			ColoredVertex vertex;
 			fscanf(file, "%f %f %f %f %f %f\n", &vertex.position.x, &vertex.position.y, &vertex.position.z,
-				                                &vertex.color.x, &vertex.color.y, &vertex.color.z);
+				   &vertex.color.x, &vertex.color.y, &vertex.color.z);
 			out_vertices.push_back(vertex);
-		}
-		else if (strcmp((char*) line_header.data(), "vt") == 0) {
+		} else if (strcmp((char*)line_header.data(), "vt") == 0) {
 			glm::vec2 uv;
 			fscanf(file, "%f %f\n", &uv.x, &uv.y);
-			uv.y = -uv.y; // Invert V coordinate since we will only use DDS texture, which are inverted. Remove if you want to use TGA or BMP loaders.
+			uv.y = -uv.y; // Invert V coordinate since we will only use DDS texture, which are inverted. Remove if you
+						  // want to use TGA or BMP loaders.
 			out_uvs.push_back(uv);
-		}
-		else if (strcmp((char*) line_header.data(), "vn") == 0) {
+		} else if (strcmp((char*)line_header.data(), "vn") == 0) {
 			glm::vec3 normal;
 			fscanf(file, "%f %f %f\n", &normal.x, &normal.y, &normal.z);
 			out_normals.push_back(normal);
-		}
-		else if (strcmp((char*) line_header.data(), "f") == 0) {
+		} else if (strcmp((char*)line_header.data(), "f") == 0) {
 			std::string vertex1, vertex2, vertex3;
 			uvec3 vertex_index, normal_index; // , uvIndex[3]
-			//int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertex_index[0], &uvIndex[0], &normal_index[0], &vertex_index[1], &uvIndex[1], &normal_index[1], &vertex_index[2], &uvIndex[2], &normal_index[2]);
-			int matches = fscanf(file, "%d//%d %d//%d %d//%d\n", &vertex_index[0], &normal_index[0], &vertex_index[1], &normal_index[1], &vertex_index[2], &normal_index[2]);
+			// int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertex_index[0], &uvIndex[0],
+			// &normal_index[0], &vertex_index[1], &uvIndex[1], &normal_index[1], &vertex_index[2], &uvIndex[2],
+			// &normal_index[2]);
+			int matches = fscanf(file, "%d//%d %d//%d %d//%d\n", &vertex_index[0], &normal_index[0], &vertex_index[1],
+								 &normal_index[1], &vertex_index[2], &normal_index[2]);
 			if (matches != 6) {
 				printf("File can't be read by our simple parser :-( Try exporting with other options\n");
 				fclose(file);
@@ -70,30 +73,28 @@ bool Mesh::loadFromOBJFile(const std::string& obj_path, std::vector<ColoredVerte
 			out_vertex_indices.push_back((uint16_t)vertex_index[0] - 1);
 			out_vertex_indices.push_back((uint16_t)vertex_index[1] - 1);
 			out_vertex_indices.push_back((uint16_t)vertex_index[2] - 1);
-			//out_uv_indices.push_back(uvIndex[0] - 1);
-			//out_uv_indices.push_back(uvIndex[1] - 1);
-			//out_uv_indices.push_back(uvIndex[2] - 1);
+			// out_uv_indices.push_back(uvIndex[0] - 1);
+			// out_uv_indices.push_back(uvIndex[1] - 1);
+			// out_uv_indices.push_back(uvIndex[2] - 1);
 			out_normal_indices.push_back((uint16_t)normal_index[0] - 1);
 			out_normal_indices.push_back((uint16_t)normal_index[1] - 1);
 			out_normal_indices.push_back((uint16_t)normal_index[2] - 1);
-		}
-		else {
+		} else {
 			// Probably a comment, eat up the rest of the line
-		std::array<char, 1000> stupid_buffer = {};
+			std::array<char, 1000> stupid_buffer = {};
 			fgets(stupid_buffer.data(), 1000, file);
 		}
 	}
 	fclose(file);
 
 	// Compute bounds of the mesh
-	vec3 max_position = { -99999,-99999,-99999 };
-	vec3 min_position = { 99999,99999,99999 };
-	for (ColoredVertex& pos : out_vertices)
-	{
+	vec3 max_position = { -99999, -99999, -99999 };
+	vec3 min_position = { 99999, 99999, 99999 };
+	for (ColoredVertex& pos : out_vertices) {
 		max_position = glm::max(max_position, pos.position);
 		min_position = glm::min(min_position, pos.position);
 	}
-	min_position.z = 0;// don't scale z direction
+	min_position.z = 0; // don't scale z direction
 	max_position.z = 1;
 	vec3 size3d = max_position - min_position;
 	out_size = size3d;
