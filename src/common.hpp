@@ -50,3 +50,6 @@ struct Transform {
 };
 
 bool gl_has_errors();
+
+static constexpr int window_width_px = 1920;
+static constexpr int window_height_px = 1080;

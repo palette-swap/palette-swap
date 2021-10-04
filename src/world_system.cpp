@@ -125,8 +125,6 @@ void WorldSystem::init(RenderSystem* renderer_arg)
 bool WorldSystem::step(float elapsed_ms_since_last_update)
 {
 	// Get the screen dimensions
-	// int screen_width, screen_height;
-	// glfwGetFramebufferSize(window, &screen_width, &screen_height);
 
 	// Updating window title with points
 	std::stringstream title_ss;
@@ -199,9 +197,7 @@ void WorldSystem::restart_game()
 	// Generate the levels
 	map = generateMap(renderer);
 
-	int screen_width, screen_height;
-	glfwGetFramebufferSize(window, &screen_width, &screen_height);
-	vec2 middle = { screen_width / 2, screen_height / 2 };
+	vec2 middle = { window_width_px / 2, window_height_px / 2 };
 
 	MapGenerator& mapGenerator = registry.mapGenerator.get(map);
 	const MapGenerator::mapping& mapping = mapGenerator.currentMap();

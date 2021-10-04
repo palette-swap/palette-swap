@@ -154,10 +154,8 @@ void RenderSystem::drawToScreen()
 	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::WATER]);
 	gl_has_errors();
 	// Clearing backbuffer
-	int w, h;
-	glfwGetFramebufferSize(window, &w, &h);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, w, h);
+	glViewport(0, 0, window_width_px, window_height_px);
 	glDepthRange(0, 10);
 	glClearColor(1.f, 0, 0, 1.0);
 	glClearDepth(1.f);
@@ -206,15 +204,11 @@ void RenderSystem::drawToScreen()
 // http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-14-render-to-texture/
 void RenderSystem::draw()
 {
-	// Getting size of window
-	int w, h;
-	glfwGetFramebufferSize(window, &w, &h);
-
 	// First render to the custom framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
 	gl_has_errors();
 	// Clearing backbuffer
-	glViewport(0, 0, w, h);
+	glViewport(0, 0, window_width_px, window_height_px);
 	glDepthRange(0.00001, 10);
 	glClearColor(0.5, 0.5, 0.5, 1.0);
 	glClearDepth(1.f);
@@ -250,11 +244,9 @@ mat3 RenderSystem::createProjectionMatrix()
 	float left = 0.f;
 	float top = 0.f;
 
-	int w, h;
-	glfwGetFramebufferSize(window, &w, &h);
 	gl_has_errors();
-	float right = (float)w / screen_scale;
-	float bottom = (float)h / screen_scale;
+	float right = (float)window_width_px / screen_scale;
+	float bottom = (float)window_height_px / screen_scale;
 
 	float sx = 2.f / (right - left);
 	float sy = 2.f / (top - bottom);

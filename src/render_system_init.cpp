@@ -33,9 +33,7 @@ bool RenderSystem::init(int width, int height, GLFWwindow* window_arg)
 
 	// For some high DPI displays (ex. Retina Display on Macbooks)
 	// https://stackoverflow.com/questions/36672935/why-retina-screen-coordinate-value-is-twice-the-value-of-pixel-value
-	int fb_width, fb_height;
-	glfwGetFramebufferSize(window, &fb_width, &fb_height);
-	screen_scale = static_cast<float>(fb_width) / static_cast<float>(width);
+	screen_scale = static_cast<float>(window_width_px) / static_cast<float>(width);
 	(int)height; // dummy to avoid warning
 
 	// ASK(Camilo): Setup error callback. This can not be done in mac os, so do not enable
@@ -309,12 +307,9 @@ bool RenderSystem::initScreenTexture()
 {
 	registry.screenStates.emplace(screen_state_entity);
 
-	int width, height;
-	glfwGetFramebufferSize(window, &width, &height);
-
 	glGenTextures(1, &off_screen_render_buffer_color);
 	glBindTexture(GL_TEXTURE_2D, off_screen_render_buffer_color);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, window_width_px, window_height_px, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	gl_has_errors();
@@ -322,7 +317,7 @@ bool RenderSystem::initScreenTexture()
 	glGenRenderbuffers(1, &off_screen_render_buffer_depth);
 	glBindRenderbuffer(GL_RENDERBUFFER, off_screen_render_buffer_depth);
 	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, off_screen_render_buffer_color, 0);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, window_width_px, window_height_px);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, off_screen_render_buffer_depth);
 	gl_has_errors();
 
