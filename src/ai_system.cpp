@@ -6,12 +6,12 @@
 
 // Depends on Turn System from Nathan.
 
-bool isPlayerTurn() {
+bool AISystem::is_player_turn() {
 	// TODO
 	return true;
 }
 
-void switchToPlayerTurn() {
+void AISystem::switch_to_player_turn() {
 	// TODO
 }
 
@@ -19,40 +19,40 @@ void switchToPlayerTurn() {
 
 // Depends on Map System from Yan.
 
-bool isPlayerSpotted(uint radius)
+bool AISystem::is_player_spotted(uint /*radius*/)
 {
 	// TODO
 	return true;
 }
 
-bool isPlayerReachable()
+bool AISystem::is_player_reachable()
 {
 	// TODO
 	return true;
 }
 
-bool isAfraid()
+bool AISystem::is_afraid()
 {
 	// TODO
 	return true;
 }
 
-void animateAlert()
+void AISystem::animate_alert()
 {
 	// TODO
 }
 
-void approachPlayer()
+void AISystem::approach_player()
 {
 	// TODO
 }
 
-void attackPlayer()
+void AISystem::attack_player()
 {
 	// TODO
 }
 
-void fleePlayer()
+void AISystem::flee_player()
 {
 	// TODO
 }
@@ -61,61 +61,61 @@ void fleePlayer()
 
 // AI logic
 
-void AISystem::step(float elapsed_ms)
+void AISystem::step(float /*elapsed_ms*/)
 {
-	if (isPlayerTurn())
+	if (is_player_turn())
 	{
 		return;
 	}
 
-	for (EnemyState& enemyState : registry.enemyStates.components) {
+	for (EnemyState& enemy_state : registry.enemyStates.components) {
 
-		switch (enemyState.current_state)
+		switch (enemy_state.current_state)
 		{
 		case ENEMY_STATE_ID::IDLE:
 
-			if (isPlayerSpotted(5))
+			if (is_player_spotted(5))
 			{
-				animateAlert();
-				enemyState.current_state = ENEMY_STATE_ID::ACTIVE;
+				animate_alert();
+				enemy_state.current_state = ENEMY_STATE_ID::ACTIVE;
 			}
 
 			break;
 
 		case ENEMY_STATE_ID::ACTIVE:
 
-			if (isPlayerSpotted(7))
+			if (is_player_spotted(7))
 			{
-				if (isPlayerReachable())
+				if (is_player_reachable())
 				{
-					attackPlayer();
+					attack_player();
 				}
 				else
 				{
-					approachPlayer();
+					approach_player();
 				}
 
-				if (isAfraid())
+				if (is_afraid())
 				{
-					enemyState.current_state = ENEMY_STATE_ID::FLINCHED;
+					enemy_state.current_state = ENEMY_STATE_ID::FLINCHED;
 				}
 			}
 			else
 			{
-				enemyState.current_state = ENEMY_STATE_ID::IDLE;
+				enemy_state.current_state = ENEMY_STATE_ID::IDLE;
 			}
 
 			break;
 
 		case ENEMY_STATE_ID::FLINCHED:
 
-			if (isPlayerSpotted(9))
+			if (is_player_spotted(9))
 			{
-				fleePlayer();
+				flee_player();
 			}
 			else
 			{
-				enemyState.current_state = ENEMY_STATE_ID::IDLE;
+				enemy_state.current_state = ENEMY_STATE_ID::IDLE;
 			}
 
 			break;
@@ -126,5 +126,5 @@ void AISystem::step(float elapsed_ms)
 		}
 	}
 
-	switchToPlayerTurn();
+	switch_to_player_turn();
 }

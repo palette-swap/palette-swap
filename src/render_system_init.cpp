@@ -100,7 +100,7 @@ void RenderSystem::initializeGlEffects()
 
 // One could merge the following two functions as a template function...
 template <class T>
-void RenderSystem::bindVBOandIBO(GEOMETRY_BUFFER_ID gid, std::vector<T> vertices, std::vector<uint16_t> indices)
+void RenderSystem::bind_vbo_and_ibo(GEOMETRY_BUFFER_ID gid, std::vector<T> vertices, std::vector<uint16_t> indices)
 {
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers.at((uint)gid));
 	glBufferData(GL_ARRAY_BUFFER,
@@ -125,7 +125,7 @@ void RenderSystem::initializeGlMeshes()
 			mesh.vertex_indices,
 			mesh.original_size);
 
-		bindVBOandIBO(path.first,
+		bind_vbo_and_ibo(path.first,
 			mesh.vertices,
 			mesh.vertex_indices);
 	}
@@ -156,17 +156,17 @@ void RenderSystem::initializeGlGeometryBuffers()
 
 	// Counterclockwise as it's the default opengl front winding direction.
 	const std::vector<uint16_t> textured_indices = { 0, 3, 1, 1, 3, 2 };
-	bindVBOandIBO(GEOMETRY_BUFFER_ID::SPRITE, textured_vertices, textured_indices);
+	bind_vbo_and_ibo(GEOMETRY_BUFFER_ID::SPRITE, textured_vertices, textured_indices);
 
 	////////////////////////
 	// Initialize pebble
 	std::vector<ColoredVertex> pebble_vertices;
 	std::vector<uint16_t> pebble_indices;
 	constexpr float z = -0.1f;
-	constexpr int NUM_TRIANGLES = 62;
+	constexpr int num_triangles = 62;
 
-	for (int i = 0; i < NUM_TRIANGLES; i++) {
-		const float t = float(i) * M_PI * 2.f / float(NUM_TRIANGLES - 1);
+	for (int i = 0; i < num_triangles; i++) {
+		const float t = float(i) * M_PI * 2.f / float(num_triangles - 1);
 		pebble_vertices.push_back({});
 		pebble_vertices.back().position = { 0.5 * cos(t), 0.5 * sin(t), z };
 		pebble_vertices.back().color = { 0.8, 0.8, 0.8 };
@@ -174,15 +174,15 @@ void RenderSystem::initializeGlGeometryBuffers()
 	pebble_vertices.push_back({});
 	pebble_vertices.back().position = { 0, 0, 0 };
 	pebble_vertices.back().color = { 0.8, 0.8, 0.8 };
-	for (int i = 0; i < NUM_TRIANGLES; i++) {
+	for (int i = 0; i < num_triangles; i++) {
 		pebble_indices.push_back((uint16_t)i);
-		pebble_indices.push_back((uint16_t)((i + 1) % NUM_TRIANGLES));
-		pebble_indices.push_back((uint16_t)NUM_TRIANGLES);
+		pebble_indices.push_back((uint16_t)((i + 1) % num_triangles));
+		pebble_indices.push_back((uint16_t)num_triangles);
 	}
 	int geom_index = (int)GEOMETRY_BUFFER_ID::LINE;
 	meshes[geom_index].vertices = pebble_vertices;
 	meshes[geom_index].vertex_indices = pebble_indices;
-	bindVBOandIBO(GEOMETRY_BUFFER_ID::LINE, meshes[geom_index].vertices, meshes[geom_index].vertex_indices);
+	bind_vbo_and_ibo(GEOMETRY_BUFFER_ID::LINE, meshes[geom_index].vertices, meshes[geom_index].vertex_indices);
 
 	//////////////////////////////////
 	// Initialize debug line
@@ -206,7 +206,7 @@ void RenderSystem::initializeGlGeometryBuffers()
 	Mesh& line = meshes.at((int)GEOMETRY_BUFFER_ID::DEBUG_LINE);
 	line.vertices = line_vertices;
 	line.vertex_indices = line_indices;
-	bindVBOandIBO(GEOMETRY_BUFFER_ID::DEBUG_LINE, line_vertices, line_indices);
+	bind_vbo_and_ibo(GEOMETRY_BUFFER_ID::DEBUG_LINE, line_vertices, line_indices);
 
 	///////////////////////////////////////////////////////
 	// Initialize screen triangle (yes, triangle, not quad; its more efficient).
@@ -217,7 +217,7 @@ void RenderSystem::initializeGlGeometryBuffers()
 
 	// Counterclockwise as it's the default opengl front winding direction.
 	const std::vector<uint16_t> screen_indices = { 0, 1, 2 };
-	bindVBOandIBO(GEOMETRY_BUFFER_ID::SCREEN_TRIANGLE, screen_vertices, screen_indices);
+	bind_vbo_and_ibo(GEOMETRY_BUFFER_ID::SCREEN_TRIANGLE, screen_vertices, screen_indices);
 }
 
 RenderSystem::~RenderSystem()

@@ -189,12 +189,12 @@ void WorldSystem::restart_game() {
 	registry.list_all_components();
 
 	// Create a new Player instance
-	player = createPlayer(renderer, { 640, 448 });
+	player = create_player(renderer, { 640, 448 });
 	registry.colors.insert(player, { 1, 1, 1 });
 
 	// Creates a single enemy instance, (TODO: needs to be updated with position based on grid)
 	// Also requires naming scheme for randomly generated enemies, for later reference
-	Entity enemy = createEnemy(renderer, { 680,600 });
+	Entity enemy = create_enemy(renderer, { 680,600 });
 	registry.colors.insert(enemy, { 1, 1, 1});
 	
 }
@@ -202,11 +202,11 @@ void WorldSystem::restart_game() {
 // Compute collisions between entities
 void WorldSystem::handle_collisions() {
 	// Loop over all collisions detected by the physics system
-	auto& collisionsRegistry = registry.collisions; 
-	for (uint i = 0; i < collisionsRegistry.components.size(); i++) {
+	auto& collisions_registry = registry.collisions; 
+	for (uint i = 0; i < collisions_registry.components.size(); i++) {
 		// The entity and its collider
-		Entity entity = collisionsRegistry.entities[i];
-		Entity entity_other = collisionsRegistry.components[i].other;
+		Entity entity = collisions_registry.entities[i];
+		Entity entity_other = collisions_registry.components[i].other;
 
 		// For now, we are only interested in collisions that involve the salmon
 		if (registry.players.has(entity)) {

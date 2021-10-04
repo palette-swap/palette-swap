@@ -6,11 +6,11 @@
 
 
 // the player
-Entity createPlayer(RenderSystem* renderer, vec2 pos);
+Entity create_player(RenderSystem* renderer, vec2 pos);
 // the enemy
-Entity createEnemy(RenderSystem* renderer, vec2 position);
+Entity create_enemy(RenderSystem* renderer, vec2 position);
 // a red line for debugging purposes
-Entity createLine(vec2 position, vec2 size);
+Entity create_line(vec2 position, vec2 size);
 
 
 

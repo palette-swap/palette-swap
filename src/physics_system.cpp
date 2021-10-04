@@ -24,7 +24,7 @@ bool collides(const Motion& motion1, const Motion& motion2)
 	return dist_squared < r_squared;
 }
 
-void PhysicsSystem::step(float elapsed_ms, float window_width_px, float window_height_px)
+void PhysicsSystem::step(float elapsed_ms, float /*window_width_px*/, float /*window_height_px*/)
 {
 
 	auto& motion_registry = registry.motions;
@@ -77,9 +77,9 @@ void PhysicsSystem::step(float elapsed_ms, float window_width_px, float window_h
 			const vec2 bonding_box = get_bounding_box(motion_i);
 			float radius = sqrt(dot(bonding_box/2.f, bonding_box/2.f));
 			vec2 line_scale1 = { motion_i.scale.x / 10, 2*radius };
-			Entity line1 = createLine(motion_i.position, line_scale1);
+			/*Entity line1 = */create_line(motion_i.position, line_scale1);
 			vec2 line_scale2 = { 2*radius, motion_i.scale.x / 10};
-			Entity line2 = createLine(motion_i.position, line_scale2);
+			/*Entity line2 = */create_line(motion_i.position, line_scale2);
 
 		}
 	}

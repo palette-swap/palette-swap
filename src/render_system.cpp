@@ -106,12 +106,12 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 	GLsizei num_indices = size / sizeof(uint16_t);
 	// GLsizei num_triangles = num_indices / 3;
 
-	GLint currProgram;
-	glGetIntegerv(GL_CURRENT_PROGRAM, &currProgram);
+	GLint curr_program;
+	glGetIntegerv(GL_CURRENT_PROGRAM, &curr_program);
 	// Setting uniform values to the currently bound program
-	GLint transform_loc = glGetUniformLocation(currProgram, "transform");
+	GLint transform_loc = glGetUniformLocation(curr_program, "transform");
 	glUniformMatrix3fv(transform_loc, 1, GL_FALSE, glm::value_ptr(transform.mat));
-	GLint projection_loc = glGetUniformLocation(currProgram, "projection");
+	GLint projection_loc = glGetUniformLocation(curr_program, "projection");
 	glUniformMatrix3fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
 	gl_has_errors();
 	// Drawing of num_indices/3 triangles specified in the index buffer
@@ -200,7 +200,7 @@ void RenderSystem::draw()
 							  // and alpha blending, one would have to sort
 							  // sprites back to front
 	gl_has_errors();
-	mat3 projection_2D = createProjectionMatrix();
+	mat3 projection_2d = createProjectionMatrix();
 	// Draw all textured meshes that have a position and size component
 	for (Entity entity : registry.renderRequests.entities)
 	{
@@ -209,7 +209,7 @@ void RenderSystem::draw()
 		}
 		// Note, its not very efficient to access elements indirectly via the entity
 		// albeit iterating through all Sprites in sequence. A good point to optimize
-		drawTexturedMesh(entity, projection_2D);
+		drawTexturedMesh(entity, projection_2d);
 	}
 
 	// Truely render to the screen

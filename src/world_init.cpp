@@ -1,7 +1,7 @@
 #include "world_init.hpp"
 #include "tiny_ecs_registry.hpp"
 
-Entity createPlayer(RenderSystem* renderer, vec2 pos)
+Entity create_player(RenderSystem* renderer, vec2 pos)
 {
 	auto entity = Entity();
 
@@ -29,9 +29,9 @@ Entity createPlayer(RenderSystem* renderer, vec2 pos)
 }
 
 
-// Repurposed into general createEnemy
+// Repurposed into general create_enemy
 // TODO: add additional inputs to specify enemy type, current default is slug
-Entity createEnemy(RenderSystem* renderer, vec2 position)
+Entity create_enemy(RenderSystem* renderer, vec2 position)
 {
 	auto entity = Entity();
 
@@ -59,7 +59,7 @@ Entity createEnemy(RenderSystem* renderer, vec2 position)
 	return entity;
 }
 
-Entity createLine(vec2 position, vec2 scale)
+Entity create_line(vec2 position, vec2 scale)
 {
 	Entity entity = Entity();
 
