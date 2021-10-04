@@ -6,7 +6,7 @@ in vec2 texcoord;
 in float tex_index;
 
 // Application data
-uniform sampler2D tile_textures[2];
+uniform sampler2D tile_textures[3];
 
 // Output color
 layout(location = 0) out  vec4 color;
