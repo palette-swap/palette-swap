@@ -21,7 +21,8 @@ Entity create_player(RenderSystem* renderer, vec2 pos)
 	registry.players.emplace(entity);
 	registry.renderRequests.insert(entity,
 								   { TEXTURE_ASSET_ID::PALADIN, // TEXTURE_COUNT indicates that no txture is needed
-									 EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE });
+									 EFFECT_ASSET_ID::TEXTURED,
+									 GEOMETRY_BUFFER_ID::SPRITE });
 
 	return entity;
 }
@@ -81,31 +82,29 @@ Entity createRoom(RenderSystem* renderer, vec2 position, RoomType roomType)
 	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
 	registry.meshPtrs.emplace(entity, &mesh);
 
-	Motion & pos = registry.motions.emplace(entity);
+	Motion& pos = registry.motions.emplace(entity);
 	pos.position = position;
 	pos.angle = 0.f;
 	pos.scale = { TILE_SIZE * ROOM_SIZE, TILE_SIZE * ROOM_SIZE };
 
-	Room & room = registry.rooms.emplace(entity);
+	Room& room = registry.rooms.emplace(entity);
 	room.type = roomType;
 
 	registry.renderRequests.insert(
-		entity,
-		{ TEXTURE_ASSET_ID::WALKABLE1,
-		 EFFECT_ASSET_ID::TILE_MAP,
-		 GEOMETRY_BUFFER_ID::ROOM});
+		entity, { TEXTURE_ASSET_ID::WALKABLE1, EFFECT_ASSET_ID::TILE_MAP, GEOMETRY_BUFFER_ID::ROOM });
 
 	return entity;
 }
 
 // (procedural) generate the maps
-Entity generateMap(RenderSystem* renderer) {
+Entity generateMap(RenderSystem* renderer)
+{
 	auto entity = Entity();
 
 	// We should only have a single map generator
 	assert(registry.mapGenerator.size() == 0);
 
-	MapGenerator & mapGenerator = registry.mapGenerator.emplace(entity);
+	MapGenerator& mapGenerator = registry.mapGenerator.emplace(entity);
 	mapGenerator.generatorLevels();
 
 	return entity;

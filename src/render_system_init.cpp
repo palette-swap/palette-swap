@@ -79,8 +79,8 @@ void RenderSystem::initializeGlTextures()
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		// This might be useful for some pictures, will leave it here for reference
-		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		gl_has_errors();
 		stbi_image_free(data);
 	}
@@ -99,8 +99,7 @@ void RenderSystem::initializeGlEffects()
 }
 
 // One could merge the following two functions as a template function...
-template <class T>
-void RenderSystem::bind_vbo_and_ibo(uint gid, std::vector<T> vertices, std::vector<uint16_t> indices)
+template <class T> void RenderSystem::bind_vbo_and_ibo(uint gid, std::vector<T> vertices, std::vector<uint16_t> indices)
 {
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers.at((uint)gid));
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices[0]) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
@@ -119,7 +118,7 @@ void RenderSystem::initializeGlMeshes()
 		std::string name = path.second;
 		Mesh::loadFromOBJFile(name, mesh.vertices, mesh.vertex_indices, mesh.original_size);
 
-		bind_vbo_and_ibo((uint) path.first, mesh.vertices, mesh.vertex_indices);
+		bind_vbo_and_ibo((uint)path.first, mesh.vertices, mesh.vertex_indices);
 	}
 }
 
@@ -129,18 +128,18 @@ void RenderSystem::initializeRoomVertices(uint8_t roomType)
 	// Initialize TileMap
 	// Vertices of a 4*4 room is defined as follows, don't try to understand this, it's not efficient at all
 	/**
-		0           2 6         8                 
-			+----------------------                 
-			|       -/3|       -/ | 9               
-			|    --/   |    --/   |                 
-			|  -/      |7 -/      |                 
-			|-/4      5|-/10      |11         
-	      1 |--------14-----------|                 
-		  12|       --15 18    20-| 21              
-			|   ---/   |     /--  |                 
-			|--/       |19/--     |                 
-		  13/---------------------+ 23              
-			16        17   22             
+		0           2 6         8
+			+----------------------
+			|       -/3|       -/ | 9
+			|    --/   |    --/   |
+			|  -/      |7 -/      |
+			|-/4      5|-/10      |11
+		  1 |--------14-----------|
+		  12|       --15 18    20-| 21
+			|   ---/   |     /--  |
+			|--/       |19/--     |
+		  13/---------------------+ 23
+			16        17   22
 	*/
 	// TODO: Optimize this, there's quite a bit duplicated vertices(a total of 600 vertices),
 	// eventually we want to reach 11*11 vertices.
@@ -148,17 +147,21 @@ void RenderSystem::initializeRoomVertices(uint8_t roomType)
 	float fraction = 1.f / ROOM_SIZE;
 	std::vector<TileMapVertex> tilemap_vertices(totalVertices);
 
-
 	for (int i = 0; i < totalVertices; i += 6) {
 		int row = i / (6 * ROOM_SIZE);
 		int col = (i % (6 * ROOM_SIZE)) / 6;
 
 		tilemap_vertices[i + 0].position = { fraction * (col - ROOM_SIZE / 2), fraction * (ROOM_SIZE / 2 - row), 0.f };
-		tilemap_vertices[i + 1].position = { fraction * (col - ROOM_SIZE / 2), fraction * (ROOM_SIZE / 2 - row - 1), 0.f };
-		tilemap_vertices[i + 2].position = { fraction * (col - ROOM_SIZE / 2 + 1), fraction * (ROOM_SIZE / 2 - row), 0.f };
-		tilemap_vertices[i + 3].position = { fraction * (col - ROOM_SIZE / 2 + 1), fraction * (ROOM_SIZE / 2 - row), 0.f };
-		tilemap_vertices[i + 4].position = { fraction * (col - ROOM_SIZE / 2), fraction * (ROOM_SIZE / 2 - row - 1), 0.f };
-		tilemap_vertices[i + 5].position = { fraction * (col - ROOM_SIZE / 2 + 1), fraction * (ROOM_SIZE / 2 - row - 1), 0.f };
+		tilemap_vertices[i + 1].position
+			= { fraction * (col - ROOM_SIZE / 2), fraction * (ROOM_SIZE / 2 - row - 1), 0.f };
+		tilemap_vertices[i + 2].position
+			= { fraction * (col - ROOM_SIZE / 2 + 1), fraction * (ROOM_SIZE / 2 - row), 0.f };
+		tilemap_vertices[i + 3].position
+			= { fraction * (col - ROOM_SIZE / 2 + 1), fraction * (ROOM_SIZE / 2 - row), 0.f };
+		tilemap_vertices[i + 4].position
+			= { fraction * (col - ROOM_SIZE / 2), fraction * (ROOM_SIZE / 2 - row - 1), 0.f };
+		tilemap_vertices[i + 5].position
+			= { fraction * (col - ROOM_SIZE / 2 + 1), fraction * (ROOM_SIZE / 2 - row - 1), 0.f };
 
 		tilemap_vertices[i + 0].texcoord = { 0.f, 1.f };
 		tilemap_vertices[i + 1].texcoord = { 0.f, 0.f };
@@ -240,7 +243,6 @@ void RenderSystem::initializeGlGeometryBuffers()
 	line.vertices = pebble_vertices;
 	line.vertex_indices = pebble_indices;
 	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::DEBUG_LINE, pebble_vertices, pebble_indices);
-
 
 	//////////////////////////////////
 	// Initialize debug line

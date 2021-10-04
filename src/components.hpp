@@ -118,7 +118,6 @@ enum class EFFECT_ASSET_ID {
 };
 constexpr int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 
-
 enum class GEOMETRY_BUFFER_ID : uint8_t {
 	SALMON = 0,
 	SPRITE = SALMON + 1,
@@ -156,12 +155,13 @@ enum class Direction : uint8_t {
 // Motion, the rendered postion can be calculate from MapPosition
 struct MapPosition {
 	uvec2 position;
-	MapPosition(uvec2 pos) : position(pos) {};
+	MapPosition(uvec2 pos)
+		: position(pos) {};
 };
 
 /**
-* Map-related resources
-*/
+ * Map-related resources
+ */
 
 // RoomType is just a uint8_t
 using RoomType = uint8_t;
@@ -183,6 +183,7 @@ struct Room {
 struct MapGenerator {
 private:
 	int currentLevel = -1;
+
 public:
 	using mapping = std::array<std::array<RoomType, ROOM_SIZE>, ROOM_SIZE>;
 
@@ -198,8 +199,7 @@ public:
 
 // TileMapVertex used for vertex buffers, we need a separate tile_texture because we want
 // to be able to specify different textures for a room
-struct TileMapVertex
-{
+struct TileMapVertex {
 	vec3 position;
 	vec2 texcoord;
 
@@ -210,8 +210,8 @@ struct TileMapVertex
 
 static constexpr int numRoom = 3;
 static constexpr std::array<std::array<std::array<RoomType, 10>, 10>, numRoom> roomLayouts = {
-    room_left_right_1,
-    room_top_down_1,
+	room_left_right_1,
+	room_top_down_1,
 	room_all_direction_1,
 };
 const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT + numRoom - 1;

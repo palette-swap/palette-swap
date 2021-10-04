@@ -101,7 +101,8 @@ GLFWwindow* WorldSystem::create_window(int width, int height)
 	salmon_dead_sound = Mix_LoadWAV(audio_path("salmon_dead.wav").c_str());
 
 	if (background_music == nullptr) {
-		fprintf(stderr, "Failed to load sounds\n %s\n make sure the data directory is present",
+		fprintf(stderr,
+				"Failed to load sounds\n %s\n make sure the data directory is present",
 				audio_path("overworld.wav").c_str());
 		return nullptr;
 	}
@@ -202,9 +203,9 @@ void WorldSystem::restart_game()
 	glfwGetFramebufferSize(window, &screen_width, &screen_height);
 	vec2 middle = { screen_width / 2, screen_height / 2 };
 
-	MapGenerator & mapGenerator = registry.mapGenerator.get(map);
+	MapGenerator& mapGenerator = registry.mapGenerator.get(map);
 	const MapGenerator::mapping& mapping = mapGenerator.currentMap();
-	vec2 topLeftCorner = middle - vec2(TILE_SIZE* ROOM_SIZE* MAP_SIZE / 2, TILE_SIZE* ROOM_SIZE* MAP_SIZE / 2);
+	vec2 topLeftCorner = middle - vec2(TILE_SIZE * ROOM_SIZE * MAP_SIZE / 2, TILE_SIZE * ROOM_SIZE * MAP_SIZE / 2);
 	for (int row = 0; row < mapping.size(); row++) {
 		for (int col = 0; col < mapping[0].size(); col++) {
 			vec2 position = topLeftCorner + vec2(col * TILE_SIZE * ROOM_SIZE, row * TILE_SIZE * ROOM_SIZE);
@@ -216,7 +217,7 @@ void WorldSystem::restart_game()
 
 	// Create a new Player instance and shift player onto a tile
 	player = create_player(renderer, middle + vec2(TILE_SIZE / 2, TILE_SIZE / 2 + TILE_SIZE));
-	registry.colors.insert(player, {1, 0.8f, 0.8f});
+	registry.colors.insert(player, { 1, 0.8f, 0.8f });
 
 	// TODO: remove the hard-coded position
 	registry.mapPositions.emplace(player, uvec2(55, 56));
@@ -307,7 +308,8 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 	current_speed = fmax(0.f, current_speed);
 }
 
-void WorldSystem::movePlayer(Direction direction) {
+void WorldSystem::movePlayer(Direction direction)
+{
 	MapPosition& mapPos = registry.mapPositions.get(player);
 	// TODO: this should be removed once we only use MapPosition
 	Motion& motion = registry.motions.get(player);
@@ -315,37 +317,29 @@ void WorldSystem::movePlayer(Direction direction) {
 
 	if (direction == Direction::Left && mapPos.position.x > 0) {
 		uvec2 newPos = uvec2(mapPos.position.x - 1, mapPos.position.y);
-		if (mapGenerator.walkable(newPos))
-		{
+		if (mapGenerator.walkable(newPos)) {
 			mapPos.position = newPos;
 			motion.position += vec2(-TILE_SIZE, 0);
 		}
-	}
-	else if (direction == Direction::Up && mapPos.position.y > 0) {
+	} else if (direction == Direction::Up && mapPos.position.y > 0) {
 		uvec2 newPos = uvec2(mapPos.position.x, mapPos.position.y - 1);
-		if (mapGenerator.walkable(newPos))
-		{
+		if (mapGenerator.walkable(newPos)) {
 			mapPos.position = newPos;
 			motion.position += vec2(0, -TILE_SIZE);
 		}
-	}
-	else if (direction == Direction::Right && mapPos.position.x < ROOM_SIZE * TILE_SIZE - 1) {
+	} else if (direction == Direction::Right && mapPos.position.x < ROOM_SIZE * TILE_SIZE - 1) {
 		uvec2 newPos = uvec2(mapPos.position.x + 1, mapPos.position.y);
-		if (mapGenerator.walkable(newPos))
-		{
+		if (mapGenerator.walkable(newPos)) {
 			mapPos.position = newPos;
 			motion.position += vec2(TILE_SIZE, 0);
 		}
-	}
-	else if (direction == Direction::Down && mapPos.position.y < ROOM_SIZE * TILE_SIZE - 1) {
+	} else if (direction == Direction::Down && mapPos.position.y < ROOM_SIZE * TILE_SIZE - 1) {
 		uvec2 newPos = uvec2(mapPos.position.x, mapPos.position.y + 1);
-		if (mapGenerator.walkable(newPos))
-		{
+		if (mapGenerator.walkable(newPos)) {
 			mapPos.position = newPos;
 			motion.position += vec2(0, TILE_SIZE);
 		}
 	}
 }
 
-void WorldSystem::on_mouse_move(vec2 /*mouse_position*/) {
-}
+void WorldSystem::on_mouse_move(vec2 /*mouse_position*/) { }

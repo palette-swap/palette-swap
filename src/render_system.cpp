@@ -67,8 +67,7 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 
 		glBindTexture(GL_TEXTURE_2D, texture_id);
 		gl_has_errors();
-	}
-	else if (render_request.used_effect == EFFECT_ASSET_ID::LINE) {
+	} else if (render_request.used_effect == EFFECT_ASSET_ID::LINE) {
 		GLint in_position_loc = glGetAttribLocation(program, "in_position");
 		GLint in_color_loc = glGetAttribLocation(program, "in_color");
 		gl_has_errors();
@@ -81,9 +80,7 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 		glVertexAttribPointer(in_color_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), (void*)sizeof(vec3));
 		gl_has_errors();
 		// Consider handling drawing of player here
-	}
-	else if (render_request.used_effect == EFFECT_ASSET_ID::TILE_MAP)
-	{
+	} else if (render_request.used_effect == EFFECT_ASSET_ID::TILE_MAP) {
 		GLint in_position_loc = glGetAttribLocation(program, "in_position");
 		GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
 		GLint tile_index_loc = glGetAttribLocation(program, "tile_index");
@@ -92,21 +89,17 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 		assert(in_texcoord_loc >= 0);
 
 		glEnableVertexAttribArray(in_position_loc);
-		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE,
-			sizeof(TileMapVertex), (void*)0);
+		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(TileMapVertex), (void*)0);
 		gl_has_errors();
 
 		glEnableVertexAttribArray(in_texcoord_loc);
-		glVertexAttribPointer(
-			in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TileMapVertex),
-			(void*)sizeof(
-				vec3)); // note the stride to skip the preceeding vertex position
+		glVertexAttribPointer(in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TileMapVertex),
+							  (void*)sizeof(vec3)); // note the stride to skip the preceeding vertex position
 
 		// Pass in the tile indexes
 		glEnableVertexAttribArray(tile_index_loc);
-		glVertexAttribPointer(
-			tile_index_loc, 1, GL_FLOAT, GL_FALSE, sizeof(TileMapVertex),
-			(void*)(sizeof(vec3) + sizeof(vec2)));
+		glVertexAttribPointer(tile_index_loc, 1, GL_FLOAT, GL_FALSE, sizeof(TileMapVertex),
+							  (void*)(sizeof(vec3) + sizeof(vec2)));
 
 		// Currently we pass in all tiles included, this can be inefficient and can
 		// overflow the texture limit, some ways to optimize
@@ -121,9 +114,7 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 
 		auto textures_loc = glGetUniformLocation(program, "tile_textures");
 		glUniform1iv(textures_loc, num_tile_textures, samplers);
-	}
-	else
-	{
+	} else {
 		assert(false && "Type of render request not supported");
 	}
 
