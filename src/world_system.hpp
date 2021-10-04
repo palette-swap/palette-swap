@@ -4,8 +4,8 @@
 #include "common.hpp"
 
 // stlib
-#include <vector>
 #include <random>
+#include <vector>
 
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
@@ -15,10 +15,9 @@
 
 // Container for all our entities and game logic. Individual rendering / update is
 // deferred to the relative update() methods
-class WorldSystem
-{
+class WorldSystem {
 public:
-	WorldSystem();
+	WorldSystem(Debug& debugging);
 
 	// Creates a window
 	GLFWwindow* create_window(int width, int height);
@@ -36,11 +35,12 @@ public:
 	void handle_collisions();
 
 	// Should the game be over ?
-	bool is_over()const;
+	bool is_over() const;
+
 private:
 	// Input callback functions
-	void on_key(int key, int, int action, int mod);
-	void on_mouse_move(vec2 pos);
+	void on_key(int key, int /*scancode*/, int action, int mod);
+	void on_mouse_move(vec2 /*mouse_position*/);
 
 	// restart level
 	void restart_game();
@@ -50,24 +50,22 @@ private:
 	void movePlayer(Direction direction);
 
 	// OpenGL window handle
-	GLFWwindow* window;
+	GLFWwindow* window = nullptr;
 
 	// Number of fish eaten by the salmon, displayed in the window title
 	unsigned int points;
 
 	// Game state
-	RenderSystem* renderer;
-	float current_speed;
-	float next_turtle_spawn;
-	float next_fish_spawn;
+	RenderSystem* renderer = nullptr;
+	float current_speed = 0;
 	Entity player;
+	Debug& debugging;
 
 	Entity map;
 
 	// music references
-	Mix_Music* background_music;
-	Mix_Chunk* salmon_dead_sound;
-	Mix_Chunk* salmon_eat_sound;
+	Mix_Music* background_music = nullptr;
+	Mix_Chunk* salmon_dead_sound = nullptr;
 
 	// C++ random number generator
 	std::default_random_engine rng;
