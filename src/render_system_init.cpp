@@ -120,7 +120,7 @@ void RenderSystem::initializeGlMeshes()
 	}
 }
 
-void RenderSystem::initializeRoomVertices(uint8_t roomType)
+void RenderSystem::initialize_room_vertices(uint8_t roomType)
 {
 	////////////////////////////
 	// Initialize TileMap
@@ -141,11 +141,11 @@ void RenderSystem::initializeRoomVertices(uint8_t roomType)
 	*/
 	// TODO: Optimize this, there's quite a bit duplicated vertices(a total of 600 vertices),
 	// eventually we want to reach 11*11 vertices.
-	const int totalVertices = ROOM_SIZE * ROOM_SIZE * 2 * 3;
+	const int total_vertices = ROOM_SIZE * ROOM_SIZE * 2 * 3;
 	float fraction = 1.f / ROOM_SIZE;
-	std::vector<TileMapVertex> tilemap_vertices(totalVertices);
+	std::vector<TileMapVertex> tilemap_vertices(total_vertices);
 
-	for (int i = 0; i < totalVertices; i += 6) {
+	for (int i = 0; i < total_vertices; i += 6) {
 		int row = i / (6 * ROOM_SIZE);
 		int col = (i % (6 * ROOM_SIZE)) / 6;
 
@@ -170,16 +170,16 @@ void RenderSystem::initializeRoomVertices(uint8_t roomType)
 
 		// The Room somehow was read upside down, so using ROOM_SIZE - row - 1 to reverse that, should
 		// investigate why later...
-		tilemap_vertices[i + 0].tile_texture = (float)(room_layouts[roomType][ROOM_SIZE - row - 1][col]);
-		tilemap_vertices[i + 1].tile_texture = (float)(room_layouts[roomType][ROOM_SIZE - row - 1][col]);
-		tilemap_vertices[i + 2].tile_texture = (float)(room_layouts[roomType][ROOM_SIZE - row - 1][col]);
-		tilemap_vertices[i + 3].tile_texture = (float)(room_layouts[roomType][ROOM_SIZE - row - 1][col]);
-		tilemap_vertices[i + 4].tile_texture = (float)(room_layouts[roomType][ROOM_SIZE - row - 1][col]);
-		tilemap_vertices[i + 5].tile_texture = (float)(room_layouts[roomType][ROOM_SIZE - row - 1][col]);
+		tilemap_vertices[i + 0].tile_texture = (float)(room_layouts.at(roomType).at(ROOM_SIZE - row - 1).at(col));
+		tilemap_vertices[i + 1].tile_texture = (float)(room_layouts.at(roomType).at(ROOM_SIZE - row - 1).at(col));
+		tilemap_vertices[i + 2].tile_texture = (float)(room_layouts.at(roomType).at(ROOM_SIZE - row - 1).at(col));
+		tilemap_vertices[i + 3].tile_texture = (float)(room_layouts.at(roomType).at(ROOM_SIZE - row - 1).at(col));
+		tilemap_vertices[i + 4].tile_texture = (float)(room_layouts.at(roomType).at(ROOM_SIZE - row - 1).at(col));
+		tilemap_vertices[i + 5].tile_texture = (float)(room_layouts.at(roomType).at(ROOM_SIZE - row - 1).at(col));
 	}
 
-	std::vector<uint16_t> tilemap_indices(totalVertices);
-	for (int i = 0; i < totalVertices; i++) {
+	std::vector<uint16_t> tilemap_indices(total_vertices);
+	for (int i = 0; i < total_vertices; i++) {
 		tilemap_indices[i] = static_cast<uint16_t>(i);
 	}
 	bind_vbo_and_ibo(geometry_count - numRoom + roomType, tilemap_vertices, tilemap_indices);
@@ -213,7 +213,7 @@ void RenderSystem::initializeGlGeometryBuffers()
 	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::SPRITE, textured_vertices, textured_indices);
 
 	for (uint8_t i = 0; i < numRoom; i++) {
-		initializeRoomVertices(i);
+		initialize_room_vertices(i);
 	}
 
 	////////////////////////

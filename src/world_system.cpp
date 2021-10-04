@@ -11,15 +11,15 @@
 // Game configuration
 
 // Create the world
-WorldSystem::WorldSystem(Debug& debugging)
+WorldSystem::WorldSystem(Debug& debugging, std::shared_ptr<MapGeneratorSystem> map)
 	: points(0)
 	, debugging(debugging)
 {
 	// Seeding rng with random device
 	rng = std::default_random_engine(std::random_device()());
 
-	// Instantiate MapGenerator class
-	mapGenerator = std::make_unique<MapGenerator>();
+	// Instantiate MapGeneratorSystem class
+	mapGenerator = std::move(map);
 }
 
 WorldSystem::~WorldSystem()
@@ -202,7 +202,7 @@ void WorldSystem::restart_game()
 
 	vec2 middle = { window_width_px / 2, window_height_px / 2 };
 
-	const MapGenerator::mapping& mapping = mapGenerator->currentMap();
+	const MapGeneratorSystem::mapping& mapping = mapGenerator->currentMap();
 	vec2 top_left_corner = middle - vec2(TILE_SIZE * ROOM_SIZE * MAP_SIZE / 2, TILE_SIZE * ROOM_SIZE * MAP_SIZE / 2);
 	for (size_t row = 0; row < mapping.size(); row++) {
 		for (size_t col = 0; col < mapping[0].size(); col++) {
@@ -266,19 +266,19 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 {
 	if (action != GLFW_RELEASE) {
 		if (key == GLFW_KEY_RIGHT) {
-			movePlayer(Direction::Right);
+			move_player(Direction::Right);
 		}
 
 		if (key == GLFW_KEY_LEFT) {
-			movePlayer(Direction::Left);
+			move_player(Direction::Left);
 		}
 
 		if (key == GLFW_KEY_UP) {
-			movePlayer(Direction::Up);
+			move_player(Direction::Up);
 		}
 
 		if (key == GLFW_KEY_DOWN) {
-			movePlayer(Direction::Down);
+			move_player(Direction::Down);
 		}
 	}
 
@@ -307,7 +307,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 	current_speed = fmax(0.f, current_speed);
 }
 
-void WorldSystem::movePlayer(Direction direction)
+void WorldSystem::move_player(Direction direction)
 {
 	MapPosition& map_pos = registry.mapPositions.get(player);
 	// TODO: this should be removed once we only use map_position
