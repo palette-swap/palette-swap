@@ -8,7 +8,7 @@
  * this number is the tile id that uniquely identifies a specific tile texture(see
  * tile_textures in components.hpp)
  * 
- * Each room has an id that uniquely identifies the room, see roomLayouts in common.hpp
+ * Each room has an id that uniquely identifies the room, see room_layouts in common.hpp
 */
 
 // 0
@@ -54,7 +54,7 @@ static constexpr std::array<std::array<uint8_t, 10>, 10> room_all_direction_1 = 
 };
 
 // Statically defined rooms, associate room layout to room id
-static constexpr std::array<std::array<std::array<RoomType, 10>, 10>, 3> roomLayouts = {
+static constexpr std::array<std::array<std::array<uint8_t, 10>, 10>, 3> room_layouts = {
 	room_left_right_1,
 	room_top_down_1,
 	room_all_direction_1,

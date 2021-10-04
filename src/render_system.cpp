@@ -10,14 +10,20 @@
 
 void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 {
-	Motion& motion = registry.motions.get(entity);
-	// Transformation code, see Rendering and Transformation in the template
-	// specification for more info Incrementally updates transformation matrix,
-	// thus ORDER IS IMPORTANT
 	Transform transform;
-	transform.translate(motion.position);
-	transform.rotate(motion.angle);
-	transform.scale(motion.scale);
+	if (registry.mapPositions.has(entity)) {
+		MapPosition& map_position = registry.mapPositions.get(entity);
+		transform.translate(map_position_to_screen_position(map_position.position));
+		transform.scale(map_position.scale);
+	} else {
+		Motion& motion = registry.motions.get(entity);
+		// Transformation code, see Rendering and Transformation in the template
+		// specification for more info Incrementally updates transformation matrix,
+		// thus ORDER IS IMPORTANT
+		transform.translate(motion.position);
+		transform.rotate(motion.angle);
+		transform.scale(motion.scale);
+	}
 
 	assert(registry.renderRequests.has(entity));
 	const RenderRequest& render_request = registry.renderRequests.get(entity);
@@ -222,7 +228,7 @@ void RenderSystem::draw()
 	mat3 projection_2d = createProjectionMatrix();
 	// Draw all textured meshes that have a position and size component
 	for (Entity entity : registry.renderRequests.entities) {
-		if (!registry.motions.has(entity)) {
+		if (!registry.motions.has(entity) && !registry.mapPositions.has(entity)) {
 			continue;
 		}
 		// Note, its not very efficient to access elements indirectly via the entity

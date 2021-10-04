@@ -9,7 +9,7 @@ const float ROOM_SPRITE_WIDTH = 32.f;
 const float ROOM_SPRITE_HEIGHT = 32.f;
 
 // the player
-Entity create_player(RenderSystem* renderer, vec2 pos);
+Entity create_player(RenderSystem* renderer, uvec2 pos);
 // the enemy
 Entity create_enemy(RenderSystem* renderer, vec2 position);
 // a red line for debugging purposes

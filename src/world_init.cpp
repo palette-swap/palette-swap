@@ -1,7 +1,7 @@
 #include "world_init.hpp"
 #include "tiny_ecs_registry.hpp"
 
-Entity create_player(RenderSystem* renderer, vec2 pos)
+Entity create_player(RenderSystem* renderer, uvec2 pos)
 {
 	auto entity = Entity();
 
@@ -9,16 +9,9 @@ Entity create_player(RenderSystem* renderer, vec2 pos)
 	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
 	registry.meshPtrs.emplace(entity, &mesh);
 
-	// Setting initial motion values
-	Motion& motion = registry.motions.emplace(entity);
-	motion.position = pos;
-	motion.angle = 0.f;
-	motion.velocity = { 0.f, 0.f };
-	motion.scale = { TILE_SIZE, TILE_SIZE };
-	motion.scale.x *= 1; // Keep original orientation
-
 	// Create and (empty) player component to be able to refer to other enttities
 	registry.players.emplace(entity);
+	registry.mapPositions.emplace(entity, pos, vec2(TILE_SIZE, TILE_SIZE));
 	registry.renderRequests.insert(entity,
 								   { TEXTURE_ASSET_ID::PALADIN, // TEXTURE_COUNT indicates that no txture is needed
 									 EFFECT_ASSET_ID::TEXTURED,

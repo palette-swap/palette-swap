@@ -14,5 +14,5 @@ layout(location = 0) out  vec4 color;
 void main()
 {
     int index = int(tex_index);
-	color = texture(tile_textures[index], vec2(texcoord.x, texcoord.y));
+	color = vec4(1.0,1.0,1.0, 1.0) * texture(tile_textures[index], vec2(texcoord.x, texcoord.y));
 }

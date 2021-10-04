@@ -156,8 +156,14 @@ enum class Direction : uint8_t {
 // Motion, the rendered postion can be calculate from MapPosition
 struct MapPosition {
 	uvec2 position;
-	MapPosition(uvec2 pos)
-		: position(pos) {};
+	// represent if the object needs to be scale
+	vec2 scale;
+	MapPosition(uvec2 pos, vec2 scaling)
+	{
+		assert(pos.x < 99 && pos.y < 99);
+		position = pos;
+		scale = scaling;
+	};
 };
 
 struct Room {

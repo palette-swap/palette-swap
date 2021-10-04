@@ -170,12 +170,12 @@ void RenderSystem::initializeRoomVertices(uint8_t roomType)
 
 		// The Room somehow was read upside down, so using ROOM_SIZE - row - 1 to reverse that, should
 		// investigate why later...
-		tilemap_vertices[i + 0].tile_texture = (float)(roomLayouts[roomType][ROOM_SIZE - row - 1][col]);
-		tilemap_vertices[i + 1].tile_texture = (float)(roomLayouts[roomType][ROOM_SIZE - row - 1][col]);
-		tilemap_vertices[i + 2].tile_texture = (float)(roomLayouts[roomType][ROOM_SIZE - row - 1][col]);
-		tilemap_vertices[i + 3].tile_texture = (float)(roomLayouts[roomType][ROOM_SIZE - row - 1][col]);
-		tilemap_vertices[i + 4].tile_texture = (float)(roomLayouts[roomType][ROOM_SIZE - row - 1][col]);
-		tilemap_vertices[i + 5].tile_texture = (float)(roomLayouts[roomType][ROOM_SIZE - row - 1][col]);
+		tilemap_vertices[i + 0].tile_texture = (float)(room_layouts[roomType][ROOM_SIZE - row - 1][col]);
+		tilemap_vertices[i + 1].tile_texture = (float)(room_layouts[roomType][ROOM_SIZE - row - 1][col]);
+		tilemap_vertices[i + 2].tile_texture = (float)(room_layouts[roomType][ROOM_SIZE - row - 1][col]);
+		tilemap_vertices[i + 3].tile_texture = (float)(room_layouts[roomType][ROOM_SIZE - row - 1][col]);
+		tilemap_vertices[i + 4].tile_texture = (float)(room_layouts[roomType][ROOM_SIZE - row - 1][col]);
+		tilemap_vertices[i + 5].tile_texture = (float)(room_layouts[roomType][ROOM_SIZE - row - 1][col]);
 	}
 
 	std::vector<uint16_t> tilemap_indices(totalVertices);

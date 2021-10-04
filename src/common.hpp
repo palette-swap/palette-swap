@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 // stlib
 #include <fstream> // stdout, stderr..
@@ -71,3 +71,40 @@ static constexpr uint8_t numRoom = 3;
 // texture atlas
 static constexpr uint8_t num_tile_textures = 2;
 static const std::set<uint8_t> WalkableTiles = { 0 };
+
+// Some ASCII art to explain... It's basically coordinate system conversion
+// TODO: This might need to be in the camera system after it's added
+/**
+* (0,0)            3200*3200
+  ┌─────────────────────────────────────┐
+  │                                     │
+  │                                     │
+  │                                     │
+  │                                     │
+  │                                     │
+  │        1920*1080                    │
+  │        ┌────────────────────┐       │
+  │        │                    │       │
+  │        │                    │       │
+  │        │                    │       │
+  │        │                    │       │
+  │        │                    │       │
+  │        └────────────────────┘       │
+  │                                     │
+  │                                     │
+  │                                     │
+  │                                     │
+  │                                     │
+  │                                     │
+  └─────────────────────────────────────┘
+                                         (3200, 3200)
+                                         (1920, 1080)
+                                         (99,99)
+*/
+inline vec2 map_position_to_screen_position(uvec2 pos)
+{
+	vec2 top_left_corner
+		= vec2((window_width_px - TILE_SIZE * ROOM_SIZE * MAP_SIZE) / 2, (window_height_px - TILE_SIZE * ROOM_SIZE * MAP_SIZE) / 2);
+	vec2 ret = vec2(pos.x * 32 + top_left_corner.x, pos.y * 32 + top_left_corner.y);
+	return vec2(pos.x * 32 + top_left_corner.x, pos.y * 32 + top_left_corner.y) + vec2(TILE_SIZE / 2, TILE_SIZE / 2);
+}

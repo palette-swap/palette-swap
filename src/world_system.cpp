@@ -206,17 +206,20 @@ void WorldSystem::restart_game()
 	vec2 top_left_corner = middle - vec2(TILE_SIZE * ROOM_SIZE * MAP_SIZE / 2, TILE_SIZE * ROOM_SIZE * MAP_SIZE / 2);
 	for (size_t row = 0; row < mapping.size(); row++) {
 		for (size_t col = 0; col < mapping[0].size(); col++) {
-			vec2 position = top_left_corner + vec2(col * TILE_SIZE * ROOM_SIZE, row * TILE_SIZE * ROOM_SIZE);
+			vec2 position = top_left_corner +
+				vec2(TILE_SIZE * ROOM_SIZE / 2, TILE_SIZE * ROOM_SIZE / 2) +
+				vec2(col * TILE_SIZE * ROOM_SIZE, row * TILE_SIZE * ROOM_SIZE);
 			createRoom(renderer, position, mapping.at(row).at(col));
 		}
 	}
 
+	// a random starting position... probably need to update this
+	vec2 player_starting_point = uvec2(51, 51);
 	// Create a new Player instance and shift player onto a tile
-	player = create_player(renderer, middle + vec2(TILE_SIZE / 2, TILE_SIZE / 2 + TILE_SIZE));
+	player = create_player(renderer, player_starting_point);
+
 	registry.colors.insert(player, { 1, 0.8f, 0.8f });
 
-	// TODO: remove the hard-coded position
-	registry.mapPositions.emplace(player, uvec2(55, 56));
 
 	// Creates a single enemy instance, (TODO: needs to be updated with position based on grid)
 	// Also requires naming scheme for randomly generated enemies, for later reference
@@ -308,31 +311,26 @@ void WorldSystem::movePlayer(Direction direction)
 {
 	MapPosition& map_pos = registry.mapPositions.get(player);
 	// TODO: this should be removed once we only use map_position
-	Motion& motion = registry.motions.get(player);
 
 	if (direction == Direction::Left && map_pos.position.x > 0) {
 		uvec2 new_pos = uvec2(map_pos.position.x - 1, map_pos.position.y);
 		if (mapGenerator->walkable(new_pos)) {
 			map_pos.position = new_pos;
-			motion.position += vec2(-TILE_SIZE, 0);
 		}
 	} else if (direction == Direction::Up && map_pos.position.y > 0) {
 		uvec2 new_pos = uvec2(map_pos.position.x, map_pos.position.y - 1);
 		if (mapGenerator->walkable(new_pos)) {
 			map_pos.position = new_pos;
-			motion.position += vec2(0, -TILE_SIZE);
 		}
 	} else if (direction == Direction::Right && map_pos.position.x < ROOM_SIZE * TILE_SIZE - 1) {
 		uvec2 new_pos = uvec2(map_pos.position.x + 1, map_pos.position.y);
 		if (mapGenerator->walkable(new_pos)) {
 			map_pos.position = new_pos;
-			motion.position += vec2(TILE_SIZE, 0);
 		}
 	} else if (direction == Direction::Down && map_pos.position.y < ROOM_SIZE * TILE_SIZE - 1) {
 		uvec2 new_pos = uvec2(map_pos.position.x, map_pos.position.y + 1);
 		if (mapGenerator->walkable(new_pos)) {
 			map_pos.position = new_pos;
-			motion.position += vec2(0, TILE_SIZE);
 		}
 	}
 }
