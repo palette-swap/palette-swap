@@ -8,8 +8,6 @@ private:
 	int currentLevel = -1;
 
 public:
-	MapGenerator() {};
-	~MapGenerator();
 
 	using mapping = std::array<std::array<RoomType, ROOM_SIZE>, ROOM_SIZE>;
 

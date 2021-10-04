@@ -1,4 +1,5 @@
 #include "map_generator.hpp"
+#include "predefined_room.hpp"
 
 // TODO: we want this eventually be procedural generated
 void MapGenerator::generateLevels()
@@ -19,7 +20,3 @@ bool MapGenerator::walkable(uvec2 pos)
 	uint8_t tileIndex = (roomLayouts[roomIndex])[pos.y % 10][pos.x % 10];
 	return WalkableTiles.find(tileIndex) != WalkableTiles.end();
 }
-
-MapGenerator::MapGenerator() { }
-
-MapGenerator::~MapGenerator() { }
