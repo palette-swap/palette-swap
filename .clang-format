@@ -6,5 +6,5 @@ IndentWidth: 4
 ContinuationIndentWidth: 4
 AlignAfterOpenBracket: Align
 BinPackParameters: false
-BinPackArguments: true
+BinPackArguments: false
 ColumnLimit: 120

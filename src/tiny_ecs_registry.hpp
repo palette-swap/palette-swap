@@ -11,7 +11,6 @@ class ECSRegistry {
 public:
 	// Manually created list of all components this game has
 	ComponentContainer<DeathTimer> deathTimers;
-	ComponentContainer<GridPosition> gridPositions;
 	ComponentContainer<Motion> motions;
 	ComponentContainer<Collision> collisions;
 	ComponentContainer<Player> players;
@@ -21,6 +20,8 @@ public:
 	ComponentContainer<HardShell> hardShells;
 	ComponentContainer<DebugComponent> debugComponents;
 	ComponentContainer<vec3> colors;
+	ComponentContainer<Room> rooms;
+	ComponentContainer<MapPosition> mapPositions;
 	ComponentContainer<EnemyState> enemyStates;
 
 	// constructor that adds all containers for looping over them
@@ -29,7 +30,6 @@ public:
 	{
 		// TODO: A1 add a LightUp component
 		registry_list.push_back(&deathTimers);
-		registry_list.push_back(&gridPositions);
 		registry_list.push_back(&motions);
 		registry_list.push_back(&collisions);
 		registry_list.push_back(&players);
@@ -39,6 +39,8 @@ public:
 		registry_list.push_back(&hardShells);
 		registry_list.push_back(&debugComponents);
 		registry_list.push_back(&colors);
+		registry_list.push_back(&rooms);
+		registry_list.push_back(&mapPositions);
 		registry_list.push_back(&enemyStates);
 	}
 

@@ -10,19 +10,19 @@
 #include "physics_system.hpp"
 #include "render_system.hpp"
 #include "world_system.hpp"
+#include "map_generator_system.hpp"
 
 using Clock_t = std::chrono::high_resolution_clock;
-
-// Currently configured to render a 10x10 tile grid of each tile 128 pixels
-const int window_width_px = 1280;
-const int window_height_px = 896;
 
 // Entry point
 int main()
 {
+	// Map system
+	std::shared_ptr<MapGeneratorSystem> map = std::make_shared<MapGeneratorSystem>();
+
 	// Global systems
 	Debug debugging;
-	WorldSystem world(debugging);
+	WorldSystem world(debugging, map);
 	RenderSystem renderer;
 	PhysicsSystem physics(debugging);
 	AISystem ai;

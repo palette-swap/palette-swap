@@ -28,24 +28,31 @@ class RenderSystem {
 	};
 
 	// Make sure these paths remain in sync with the associated enumerators.
-	const std::array<std::string, texture_count> texture_paths
-		= { textures_path("Paladin_A01.png"), textures_path("Slug.png") };
+	const std::array<std::string, texture_count> texture_paths = { textures_path("Paladin_A01.png"),
+																   textures_path("Slug.png"),
+																   textures_path("walkable_1.png"),
+																   textures_path("wall_1.png"),
+																   textures_path("window_1.png"), };
 
 	std::array<GLuint, effect_count> effects;
 	// Make sure these paths remain in sync with the associated enumerators.
 	const std::array<std::string, effect_count> effect_paths
-		= { shader_path("line"), shader_path("textured"), shader_path("water") };
+		= { shader_path("line"), shader_path("textured"), shader_path("water"), shader_path("tilemap") };
 
 	std::array<GLuint, geometry_count> vertex_buffers;
 	std::array<GLuint, geometry_count> index_buffers;
 	std::array<Mesh, geometry_count> meshes;
 
+	// initialize all predefined rooms, based on roomtype
+	void initialize_room_vertices(RoomType roomType);
+
 public:
 	// Initialize the window
 	bool init(int width, int height, GLFWwindow* window);
 
-	template <class T>
-	void bind_vbo_and_ibo(GEOMETRY_BUFFER_ID gid, std::vector<T> vertices, std::vector<uint16_t> indices);
+	// Modified first argument to gid, which doesn't change behavior and is reasonable,
+	// it also helps the room geometry hack to work...
+	template <class T> void bind_vbo_and_ibo(uint gid, std::vector<T> vertices, std::vector<uint16_t> indices);
 
 	void initializeGlTextures();
 

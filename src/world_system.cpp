@@ -11,12 +11,15 @@
 // Game configuration
 
 // Create the world
-WorldSystem::WorldSystem(Debug& debugging)
+WorldSystem::WorldSystem(Debug& debugging, std::shared_ptr<MapGeneratorSystem> map)
 	: points(0)
 	, debugging(debugging)
 {
 	// Seeding rng with random device
 	rng = std::default_random_engine(std::random_device()());
+
+	// Instantiate MapGeneratorSystem class
+	mapGenerator = std::move(map);
 }
 
 WorldSystem::~WorldSystem()
@@ -101,7 +104,8 @@ GLFWwindow* WorldSystem::create_window(int width, int height)
 	salmon_dead_sound = Mix_LoadWAV(audio_path("salmon_dead.wav").c_str());
 
 	if (background_music == nullptr) {
-		fprintf(stderr, "Failed to load sounds\n %s\n make sure the data directory is present",
+		fprintf(stderr,
+				"Failed to load sounds\n %s\n make sure the data directory is present",
 				audio_path("overworld.wav").c_str());
 		return nullptr;
 	}
@@ -124,8 +128,6 @@ void WorldSystem::init(RenderSystem* renderer_arg)
 bool WorldSystem::step(float elapsed_ms_since_last_update)
 {
 	// Get the screen dimensions
-	// int screen_width, screen_height;
-	// glfwGetFramebufferSize(window, &screen_width, &screen_height);
 
 	// Updating window title with points
 	std::stringstream title_ss;
@@ -195,9 +197,29 @@ void WorldSystem::restart_game()
 	// Debugging for memory/component leaks
 	registry.list_all_components();
 
-	// Create a new Player instance
-	player = create_player(renderer, { 640, 448 });
-	registry.colors.insert(player, { 1, 1, 1 });
+	// Generate the levels
+	mapGenerator->generateLevels();
+
+	vec2 middle = { window_width_px / 2, window_height_px / 2 };
+
+	const MapGeneratorSystem::mapping& mapping = mapGenerator->currentMap();
+	vec2 top_left_corner = middle - vec2(TILE_SIZE * ROOM_SIZE * MAP_SIZE / 2, TILE_SIZE * ROOM_SIZE * MAP_SIZE / 2);
+	for (size_t row = 0; row < mapping.size(); row++) {
+		for (size_t col = 0; col < mapping[0].size(); col++) {
+			vec2 position = top_left_corner +
+				vec2(TILE_SIZE * ROOM_SIZE / 2, TILE_SIZE * ROOM_SIZE / 2) +
+				vec2(col * TILE_SIZE * ROOM_SIZE, row * TILE_SIZE * ROOM_SIZE);
+			createRoom(renderer, position, mapping.at(row).at(col));
+		}
+	}
+
+	// a random starting position... probably need to update this
+	vec2 player_starting_point = uvec2(51, 51);
+	// Create a new Player instance and shift player onto a tile
+	player = create_player(renderer, player_starting_point);
+
+	registry.colors.insert(player, { 1, 0.8f, 0.8f });
+
 
 	// Creates a single enemy instance, (TODO: needs to be updated with position based on grid)
 	// Also requires naming scheme for randomly generated enemies, for later reference
@@ -242,24 +264,21 @@ bool WorldSystem::is_over() const { return bool(glfwWindowShouldClose(window)); 
 // On key callback
 void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 {
-	int position_change = 64;
-	Motion& motion = registry.motions.get(player);
-
 	if (action != GLFW_RELEASE) {
 		if (key == GLFW_KEY_RIGHT) {
-			motion.position += vec2(position_change, 0);
+			move_player(Direction::Right);
 		}
 
 		if (key == GLFW_KEY_LEFT) {
-			motion.position += vec2(-position_change, 0);
+			move_player(Direction::Left);
 		}
 
 		if (key == GLFW_KEY_UP) {
-			motion.position += vec2(0, -position_change);
+			move_player(Direction::Up);
 		}
 
 		if (key == GLFW_KEY_DOWN) {
-			motion.position += vec2(0, position_change);
+			move_player(Direction::Down);
 		}
 	}
 
@@ -288,8 +307,32 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 	current_speed = fmax(0.f, current_speed);
 }
 
-void WorldSystem::on_mouse_move(vec2 pos)
+void WorldSystem::move_player(Direction direction)
 {
+	MapPosition& map_pos = registry.mapPositions.get(player);
+	// TODO: this should be removed once we only use map_position
 
-	(vec2) pos; // dummy to avoid compiler warning
+	if (direction == Direction::Left && map_pos.position.x > 0) {
+		uvec2 new_pos = uvec2(map_pos.position.x - 1, map_pos.position.y);
+		if (mapGenerator->walkable(new_pos)) {
+			map_pos.position = new_pos;
+		}
+	} else if (direction == Direction::Up && map_pos.position.y > 0) {
+		uvec2 new_pos = uvec2(map_pos.position.x, map_pos.position.y - 1);
+		if (mapGenerator->walkable(new_pos)) {
+			map_pos.position = new_pos;
+		}
+	} else if (direction == Direction::Right && map_pos.position.x < ROOM_SIZE * TILE_SIZE - 1) {
+		uvec2 new_pos = uvec2(map_pos.position.x + 1, map_pos.position.y);
+		if (mapGenerator->walkable(new_pos)) {
+			map_pos.position = new_pos;
+		}
+	} else if (direction == Direction::Down && map_pos.position.y < ROOM_SIZE * TILE_SIZE - 1) {
+		uvec2 new_pos = uvec2(map_pos.position.x, map_pos.position.y + 1);
+		if (mapGenerator->walkable(new_pos)) {
+			map_pos.position = new_pos;
+		}
+	}
 }
+
+void WorldSystem::on_mouse_move(vec2 /*mouse_position*/) { }

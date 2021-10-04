@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 // stlib
 #include <fstream> // stdout, stderr..
@@ -50,3 +50,61 @@ struct Transform {
 };
 
 bool gl_has_errors();
+
+// Window sizes
+static constexpr int window_width_px = 1920;
+static constexpr int window_height_px = 1080;
+
+// Map constants
+// Each tile is 32x32 pixels
+static constexpr float TILE_SIZE = 32.f;
+// Each room is 10x10 tiles
+static constexpr int ROOM_SIZE = 10;
+// Each map is 10x10 rooms
+static constexpr int MAP_SIZE = 10;
+// RoomType is just a uint8_t
+using RoomType = uint8_t;
+
+static constexpr uint8_t numRoom = 3;
+
+// TODO: This will probably overflow the supported number of textures at some point, replace this once we support
+// texture atlas
+static constexpr uint8_t num_tile_textures = 3;
+static const std::set<uint8_t> walkable_tiles = { 0 };
+
+// Some ASCII art to explain... It's basically coordinate system conversion
+// TODO: This might need to be in the camera system after it's added
+/**
+* (0,0)            3200*3200
+  ┌─────────────────────────────────────┐
+  │                                     │
+  │                                     │
+  │                                     │
+  │                                     │
+  │                                     │
+  │        1920*1080                    │
+  │        ┌────────────────────┐       │
+  │        │                    │       │
+  │        │                    │       │
+  │        │                    │       │
+  │        │                    │       │
+  │        │                    │       │
+  │        └────────────────────┘       │
+  │                                     │
+  │                                     │
+  │                                     │
+  │                                     │
+  │                                     │
+  │                                     │
+  └─────────────────────────────────────┘
+                                         (3200, 3200)
+                                         (1920, 1080)
+                                         (99,99)
+*/
+inline vec2 map_position_to_screen_position(uvec2 pos)
+{
+	vec2 top_left_corner
+		= vec2((window_width_px - TILE_SIZE * ROOM_SIZE * MAP_SIZE) / 2, (window_height_px - TILE_SIZE * ROOM_SIZE * MAP_SIZE) / 2);
+	vec2 ret = vec2(pos.x * 32 + top_left_corner.x, pos.y * 32 + top_left_corner.y);
+	return vec2(pos.x * 32 + top_left_corner.x, pos.y * 32 + top_left_corner.y) + vec2(TILE_SIZE / 2, TILE_SIZE / 2);
+}

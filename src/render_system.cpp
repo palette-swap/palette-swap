@@ -10,14 +10,20 @@
 
 void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 {
-	Motion& motion = registry.motions.get(entity);
-	// Transformation code, see Rendering and Transformation in the template
-	// specification for more info Incrementally updates transformation matrix,
-	// thus ORDER IS IMPORTANT
 	Transform transform;
-	transform.translate(motion.position);
-	transform.rotate(motion.angle);
-	transform.scale(motion.scale);
+	if (registry.mapPositions.has(entity)) {
+		MapPosition& map_position = registry.mapPositions.get(entity);
+		transform.translate(map_position_to_screen_position(map_position.position));
+		transform.scale(map_position.scale);
+	} else {
+		Motion& motion = registry.motions.get(entity);
+		// Transformation code, see Rendering and Transformation in the template
+		// specification for more info Incrementally updates transformation matrix,
+		// thus ORDER IS IMPORTANT
+		transform.translate(motion.position);
+		transform.rotate(motion.angle);
+		transform.scale(motion.scale);
+	}
 
 	assert(registry.renderRequests.has(entity));
 	const RenderRequest& render_request = registry.renderRequests.get(entity);
@@ -31,8 +37,13 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 	gl_has_errors();
 
 	assert(render_request.used_geometry != GEOMETRY_BUFFER_ID::GEOMETRY_COUNT);
-	const GLuint vbo = vertex_buffers.at((int)render_request.used_geometry);
-	const GLuint ibo = index_buffers.at((int)render_request.used_geometry);
+	int vbo_ibo_offset = 0;
+	if (render_request.used_geometry == GEOMETRY_BUFFER_ID::ROOM) {
+		vbo_ibo_offset = registry.rooms.get(entity).type;
+	}
+
+	const GLuint vbo = vertex_buffers.at((int)render_request.used_geometry + vbo_ibo_offset);
+	const GLuint ibo = index_buffers.at((int)render_request.used_geometry + vbo_ibo_offset);
 
 	// Setting vertex and index buffers
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -75,6 +86,40 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 		glVertexAttribPointer(in_color_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), (void*)sizeof(vec3));
 		gl_has_errors();
 		// Consider handling drawing of player here
+	} else if (render_request.used_effect == EFFECT_ASSET_ID::TILE_MAP) {
+		GLint in_position_loc = glGetAttribLocation(program, "in_position");
+		GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
+		GLint tile_index_loc = glGetAttribLocation(program, "tile_index");
+
+		gl_has_errors();
+		assert(in_texcoord_loc >= 0);
+
+		glEnableVertexAttribArray(in_position_loc);
+		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(TileMapVertex), (void*)0);
+		gl_has_errors();
+
+		glEnableVertexAttribArray(in_texcoord_loc);
+		glVertexAttribPointer(in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TileMapVertex),
+							  (void*)sizeof(vec3)); // note the stride to skip the preceeding vertex position
+
+		// Pass in the tile indexes
+		glEnableVertexAttribArray(tile_index_loc);
+		glVertexAttribPointer(tile_index_loc, 1, GL_FLOAT, GL_FALSE, sizeof(TileMapVertex),
+							  (void*)(sizeof(vec3) + sizeof(vec2)));
+
+		// Currently we pass in all tiles included, this can be inefficient and can
+		// overflow the texture limit, some ways to optimize
+		// 1. Pass in certian tiles based on camera position
+		// 2. (Preferred) Use a sprite sheet(tilemap atlas), access multiple tiles for
+		// a single load
+		int samplers[num_tile_textures];
+		for (int i = 0; i < num_tile_textures; i++) {
+			glBindTextureUnit(i, texture_gl_handles[(GLuint)tile_textures[i]]);
+			samplers[i] = i;
+		}
+
+		auto textures_loc = glGetUniformLocation(program, "tile_textures");
+		glUniform1iv(textures_loc, num_tile_textures, samplers);
 	} else {
 		assert(false && "Type of render request not supported");
 	}
@@ -115,10 +160,8 @@ void RenderSystem::drawToScreen()
 	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::WATER]);
 	gl_has_errors();
 	// Clearing backbuffer
-	int w, h;
-	glfwGetFramebufferSize(window, &w, &h);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, w, h);
+	glViewport(0, 0, window_width_px, window_height_px);
 	glDepthRange(0, 10);
 	glClearColor(1.f, 0, 0, 1.0);
 	glClearDepth(1.f);
@@ -167,15 +210,11 @@ void RenderSystem::drawToScreen()
 // http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-14-render-to-texture/
 void RenderSystem::draw()
 {
-	// Getting size of window
-	int w, h;
-	glfwGetFramebufferSize(window, &w, &h);
-
 	// First render to the custom framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
 	gl_has_errors();
 	// Clearing backbuffer
-	glViewport(0, 0, w, h);
+	glViewport(0, 0, window_width_px, window_height_px);
 	glDepthRange(0.00001, 10);
 	glClearColor(0.5, 0.5, 0.5, 1.0);
 	glClearDepth(1.f);
@@ -189,7 +228,7 @@ void RenderSystem::draw()
 	mat3 projection_2d = createProjectionMatrix();
 	// Draw all textured meshes that have a position and size component
 	for (Entity entity : registry.renderRequests.entities) {
-		if (!registry.motions.has(entity)) {
+		if (!registry.motions.has(entity) && !registry.mapPositions.has(entity)) {
 			continue;
 		}
 		// Note, its not very efficient to access elements indirectly via the entity
@@ -211,11 +250,9 @@ mat3 RenderSystem::createProjectionMatrix()
 	float left = 0.f;
 	float top = 0.f;
 
-	int w, h;
-	glfwGetFramebufferSize(window, &w, &h);
 	gl_has_errors();
-	float right = (float)w / screen_scale;
-	float bottom = (float)h / screen_scale;
+	float right = (float)window_width_px / screen_scale;
+	float bottom = (float)window_height_px / screen_scale;
 
 	float sx = 2.f / (right - left);
 	float sy = 2.f / (top - bottom);

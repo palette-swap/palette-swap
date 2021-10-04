@@ -6,18 +6,20 @@
 // stlib
 #include <random>
 #include <vector>
+#include <memory>
 
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
 #include <SDL_mixer.h>
 
 #include "render_system.hpp"
+#include "map_generator_system.hpp"
 
 // Container for all our entities and game logic. Individual rendering / update is
 // deferred to the relative update() methods
 class WorldSystem {
 public:
-	WorldSystem(Debug& debugging);
+	WorldSystem(Debug& debugging, std::shared_ptr<MapGeneratorSystem> map);
 
 	// Creates a window
 	GLFWwindow* create_window(int width, int height);
@@ -40,10 +42,14 @@ public:
 private:
 	// Input callback functions
 	void on_key(int key, int /*scancode*/, int action, int mod);
-	void on_mouse_move(vec2 pos);
+	void on_mouse_move(vec2 /*mouse_position*/);
 
 	// restart level
 	void restart_game();
+
+	// move the player one unit in the given direction,
+	// if the tile is blocked by a wall, player won't move
+	void move_player(Direction direction);
 
 	// OpenGL window handle
 	GLFWwindow* window = nullptr;
@@ -64,4 +70,6 @@ private:
 	// C++ random number generator
 	std::default_random_engine rng;
 	std::uniform_real_distribution<float> uniform_dist; // number between 0..1
+
+	std::shared_ptr<MapGeneratorSystem> mapGenerator;
 };
