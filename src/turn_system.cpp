@@ -5,18 +5,18 @@
 
 Entity TurnSystem::getActiveUnit()
 {
-	return _unitQueue.front();
+	return unitQueue.front();
 }
 
 deque<Entity> TurnSystem::getUnitPositionInQueue(Entity unit)
 {
-	return std::find(_unitQueue.begin(), _unitQueue.end(), unit);
+	return std::find(unitQueue.begin(), unitQueue.end(), unit);
 }
 
 bool TurnSystem::addUnitToQueue(Entity unit)
 {
-	if (getUnitPositionInQueue(unit) != _unitQueue.end()) {
-		_unitQueue.push_back(unit);
+	if (getUnitPositionInQueue(unit) == unitQueue.end()) {
+		unitQueue.push_back(unit);
 		return true;
 	}
 	else return false;
@@ -24,28 +24,29 @@ bool TurnSystem::addUnitToQueue(Entity unit)
 
 bool TurnSystem::removeUnitFromQueue(Entity unit)
 {
-	_unitQueue.erase(getUnitPositionInQueue(unit));
+	unitQueue.erase(getUnitPositionInQueue(unit));
 	return true;
 }
 
-bool TurnSystem::executeUnitAction()
+bool TurnSystem::executeUnitAction(Entity unit)
 {
-	if (_queueState == QUEUE_STATE::IDLE) {
-		_queueState = QUEUE_STATE::EXECUTING;
+	if (getActiveUnit() == unit && queueState == QUEUE_STATE::IDLE) {
+		queueState = QUEUE_STATE::EXECUTING;
 		return true;
 	}
 	return false;
 	
 }
 
-bool TurnSystem::completeUnitAction()
+bool TurnSystem::completeUnitAction(Entity unit)
 {
-	if (_queueState == QUEUE_STATE::EXECUTING || _queueState == QUEUE_STATE::IDLE) {
-		_queueState == QUEUE_STATE::FINISHED;
+	if ((queueState == QUEUE_STATE::EXECUTING || queueState == QUEUE_STATE::IDLE)
+				&& getActiveUnit() == unit) {
+		queueState == QUEUE_STATE::FINISHED;
 		// Perform post-execution actions
-		_unitQueue.push_back(_unitQueue.front());
-		_unitQueue.pop_front();
-		_queueState == QUEUE_STATE::IDLE;
+		unitQueue.push_back(unitQueue.front());
+		unitQueue.pop_front();
+		queueState == QUEUE_STATE::IDLE;
 		return true;
 	}
 	return false;
