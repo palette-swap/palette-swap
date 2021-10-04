@@ -103,9 +103,9 @@ struct Mesh {
 enum class TEXTURE_ASSET_ID : uint8_t {
 	PALADIN = 0,
 	SLUG = PALADIN + 1,
-	WALKABLE1 = SLUG + 1,
-	WALL1 = WALKABLE1 + 1,
-	TEXTURE_COUNT = WALL1 + 1
+	WALKABLE_1 = SLUG + 1,
+	WALL_1 = WALKABLE_1 + 1,
+	TEXTURE_COUNT = WALL_1 + 1
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 
@@ -183,7 +183,7 @@ struct TileMapVertex {
 	float tile_texture = 0;
 };
 
-static constexpr TEXTURE_ASSET_ID tile_textures[2] = { TEXTURE_ASSET_ID::WALKABLE1, TEXTURE_ASSET_ID::WALL1 };
+static constexpr TEXTURE_ASSET_ID tile_textures[num_tile_textures] = { TEXTURE_ASSET_ID::WALKABLE_1, TEXTURE_ASSET_ID::WALL_1 };
 
 // Simple 3-state state machine for enemy AI: IDEL, ACTIVE, FLINCHED.
 enum class ENEMY_STATE_ID { IDLE = 0, ACTIVE = IDLE + 1, FLINCHED = ACTIVE + 1 };

@@ -18,5 +18,5 @@ bool MapGeneratorSystem::walkable(uvec2 pos)
 {
 	uint8_t room_index = currentMap().at(pos.y / 10).at(pos.x / 10);
 	uint8_t tile_index = room_layouts.at(room_index).at(pos.y % 10).at(pos.x % 10);
-	return WalkableTiles.find(tile_index) != WalkableTiles.end();
+	return walkable_tiles.find(tile_index) != walkable_tiles.end();
 }

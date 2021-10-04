@@ -84,7 +84,7 @@ Entity createRoom(RenderSystem* renderer, vec2 position, RoomType roomType)
 	room.type = roomType;
 
 	registry.renderRequests.insert(
-		entity, { TEXTURE_ASSET_ID::WALKABLE1, EFFECT_ASSET_ID::TILE_MAP, GEOMETRY_BUFFER_ID::ROOM });
+		entity, { TEXTURE_ASSET_ID::TEXTURE_COUNT, EFFECT_ASSET_ID::TILE_MAP, GEOMETRY_BUFFER_ID::ROOM });
 
 	return entity;
 }
