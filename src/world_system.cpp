@@ -11,8 +11,8 @@
 // Game configuration
 
 // Create the world
-WorldSystem::WorldSystem()
-	: points(0) {
+WorldSystem::WorldSystem(Debug& debugging)
+	: points(0), debugging(debugging) {
 	// Seeding rng with random device
 	rng = std::default_random_engine(std::random_device()());
 }

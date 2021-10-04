@@ -24,6 +24,11 @@ bool collides(const Motion& motion1, const Motion& motion2)
 	return dist_squared < r_squared;
 }
 
+PhysicsSystem::PhysicsSystem(const Debug& debugging)
+	: debugging(debugging)
+{
+}
+
 void PhysicsSystem::step(float elapsed_ms, float /*window_width_px*/, float /*window_height_px*/)
 {
 

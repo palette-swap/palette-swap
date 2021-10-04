@@ -21,9 +21,10 @@ const int window_height_px = 896;
 int main()
 {
 	// Global systems
-	WorldSystem world;
+	Debug debugging;
+	WorldSystem world(debugging);
 	RenderSystem renderer;
-	PhysicsSystem physics;
+	PhysicsSystem physics(debugging);
 	AISystem ai;
 
 	// Initializing window

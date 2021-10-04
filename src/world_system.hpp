@@ -18,7 +18,7 @@
 class WorldSystem
 {
 public:
-	WorldSystem();
+	WorldSystem(Debug& debugging);
 
 	// Creates a window
 	GLFWwindow* create_window(int width, int height);
@@ -55,6 +55,7 @@ private:
 	RenderSystem* renderer = nullptr;
 	float current_speed = 0;
 	Entity player;
+	Debug& debugging;
 
 	// music references
 	Mix_Music* background_music = nullptr;
