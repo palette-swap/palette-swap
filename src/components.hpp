@@ -134,6 +134,7 @@ enum class GEOMETRY_BUFFER_ID : uint8_t {
 	ROOM = SCREEN_TRIANGLE + 1,
 	GEOMETRY_COUNT = ROOM + 1
 };
+const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT + numRoom - 1;
 
 struct RenderRequest {
 	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
@@ -159,45 +160,13 @@ struct MapPosition {
 		: position(pos) {};
 };
 
-/**
- * Map-related resources
- */
-
-// RoomType is just a uint8_t
-using RoomType = uint8_t;
-
-// Each tile is 32x32 pixels
-static constexpr float TILE_SIZE = 32.f;
-// Each room is 10x10 tiles
-static constexpr int ROOM_SIZE = 10;
-// Each map is 10x10 rooms
-static constexpr int MAP_SIZE = 10;
-
 struct Room {
 	// use 0xff to indicate uninitialized value
 	// this can have potential bug if we have up to 255 rooms, but we probably won't...
 	RoomType type = 0xff;
 };
 
-// Manages and store the generated maps
-struct MapGenerator {
-private:
-	int currentLevel = -1;
-
-public:
-	using mapping = std::array<std::array<RoomType, ROOM_SIZE>, ROOM_SIZE>;
-
-	// the (procedural) generated levels, each level contains a full map(max 10*10 rooms)
-	std::vector<mapping> levels;
-
-	void generatorLevels();
-	const mapping& currentMap();
-
-	// Check if a position on the map is walkable for the player
-	bool walkable(uvec2 pos);
-};
-
-// TileMapVertex used for vertex buffers, we need a separate tile_texture because we want
+// For TileMap vertex buffers, we need a separate tile_texture float because we want
 // to be able to specify different textures for a room
 struct TileMapVertex {
 	vec3 position;
@@ -208,20 +177,7 @@ struct TileMapVertex {
 	float tile_texture = 0;
 };
 
-static constexpr int numRoom = 3;
-static constexpr std::array<std::array<std::array<RoomType, 10>, 10>, numRoom> roomLayouts = {
-	room_left_right_1,
-	room_top_down_1,
-	room_all_direction_1,
-};
-const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT + numRoom - 1;
-
-// TODO: This will probably overflow the supported number of textures at some point, replace this once we support
-// texture atlas
-static constexpr int num_tile_textures = 2;
 static constexpr TEXTURE_ASSET_ID tile_textures[2] = { TEXTURE_ASSET_ID::WALKABLE1, TEXTURE_ASSET_ID::WALL1 };
-
-static const std::set<uint8_t> WalkableTiles = { 0 };
 
 // Simple 3-state state machine for enemy AI: IDEL, ACTIVE, FLINCHED.
 enum class ENEMY_STATE_ID { IDLE = 0, ACTIVE = IDLE + 1, FLINCHED = ACTIVE + 1 };

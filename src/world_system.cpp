@@ -17,6 +17,9 @@ WorldSystem::WorldSystem(Debug& debugging)
 {
 	// Seeding rng with random device
 	rng = std::default_random_engine(std::random_device()());
+
+	// Instantiate MapGenerator class
+	mapGenerator = std::make_unique<MapGenerator>();
 }
 
 WorldSystem::~WorldSystem()
@@ -195,21 +198,18 @@ void WorldSystem::restart_game()
 	registry.list_all_components();
 
 	// Generate the levels
-	map = generateMap(renderer);
+	mapGenerator->generateLevels();
 
 	vec2 middle = { window_width_px / 2, window_height_px / 2 };
 
-	MapGenerator& mapGenerator = registry.mapGenerator.get(map);
-	const MapGenerator::mapping& mapping = mapGenerator.currentMap();
-	vec2 topLeftCorner = middle - vec2(TILE_SIZE * ROOM_SIZE * MAP_SIZE / 2, TILE_SIZE * ROOM_SIZE * MAP_SIZE / 2);
-	for (int row = 0; row < mapping.size(); row++) {
-		for (int col = 0; col < mapping[0].size(); col++) {
-			vec2 position = topLeftCorner + vec2(col * TILE_SIZE * ROOM_SIZE, row * TILE_SIZE * ROOM_SIZE);
-			createRoom(renderer, position, mapping[row][col]);
+	const MapGenerator::mapping& mapping = mapGenerator->currentMap();
+	vec2 top_left_corner = middle - vec2(TILE_SIZE * ROOM_SIZE * MAP_SIZE / 2, TILE_SIZE * ROOM_SIZE * MAP_SIZE / 2);
+	for (size_t row = 0; row < mapping.size(); row++) {
+		for (size_t col = 0; col < mapping[0].size(); col++) {
+			vec2 position = top_left_corner + vec2(col * TILE_SIZE * ROOM_SIZE, row * TILE_SIZE * ROOM_SIZE);
+			createRoom(renderer, position, mapping.at(row).at(col));
 		}
 	}
-
-	vec2 pppp = middle + vec2(TILE_SIZE / 2, TILE_SIZE / 2);
 
 	// Create a new Player instance and shift player onto a tile
 	player = create_player(renderer, middle + vec2(TILE_SIZE / 2, TILE_SIZE / 2 + TILE_SIZE));
@@ -306,33 +306,32 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 
 void WorldSystem::movePlayer(Direction direction)
 {
-	MapPosition& mapPos = registry.mapPositions.get(player);
-	// TODO: this should be removed once we only use MapPosition
+	MapPosition& map_pos = registry.mapPositions.get(player);
+	// TODO: this should be removed once we only use map_position
 	Motion& motion = registry.motions.get(player);
-	MapGenerator& mapGenerator = registry.mapGenerator.get(map);
 
-	if (direction == Direction::Left && mapPos.position.x > 0) {
-		uvec2 newPos = uvec2(mapPos.position.x - 1, mapPos.position.y);
-		if (mapGenerator.walkable(newPos)) {
-			mapPos.position = newPos;
+	if (direction == Direction::Left && map_pos.position.x > 0) {
+		uvec2 new_pos = uvec2(map_pos.position.x - 1, map_pos.position.y);
+		if (mapGenerator->walkable(new_pos)) {
+			map_pos.position = new_pos;
 			motion.position += vec2(-TILE_SIZE, 0);
 		}
-	} else if (direction == Direction::Up && mapPos.position.y > 0) {
-		uvec2 newPos = uvec2(mapPos.position.x, mapPos.position.y - 1);
-		if (mapGenerator.walkable(newPos)) {
-			mapPos.position = newPos;
+	} else if (direction == Direction::Up && map_pos.position.y > 0) {
+		uvec2 new_pos = uvec2(map_pos.position.x, map_pos.position.y - 1);
+		if (mapGenerator->walkable(new_pos)) {
+			map_pos.position = new_pos;
 			motion.position += vec2(0, -TILE_SIZE);
 		}
-	} else if (direction == Direction::Right && mapPos.position.x < ROOM_SIZE * TILE_SIZE - 1) {
-		uvec2 newPos = uvec2(mapPos.position.x + 1, mapPos.position.y);
-		if (mapGenerator.walkable(newPos)) {
-			mapPos.position = newPos;
+	} else if (direction == Direction::Right && map_pos.position.x < ROOM_SIZE * TILE_SIZE - 1) {
+		uvec2 new_pos = uvec2(map_pos.position.x + 1, map_pos.position.y);
+		if (mapGenerator->walkable(new_pos)) {
+			map_pos.position = new_pos;
 			motion.position += vec2(TILE_SIZE, 0);
 		}
-	} else if (direction == Direction::Down && mapPos.position.y < ROOM_SIZE * TILE_SIZE - 1) {
-		uvec2 newPos = uvec2(mapPos.position.x, mapPos.position.y + 1);
-		if (mapGenerator.walkable(newPos)) {
-			mapPos.position = newPos;
+	} else if (direction == Direction::Down && map_pos.position.y < ROOM_SIZE * TILE_SIZE - 1) {
+		uvec2 new_pos = uvec2(map_pos.position.x, map_pos.position.y + 1);
+		if (mapGenerator->walkable(new_pos)) {
+			map_pos.position = new_pos;
 			motion.position += vec2(0, TILE_SIZE);
 		}
 	}

@@ -21,7 +21,6 @@ public:
 	ComponentContainer<DebugComponent> debugComponents;
 	ComponentContainer<vec3> colors;
 	ComponentContainer<Room> rooms;
-	ComponentContainer<MapGenerator> mapGenerator;
 	ComponentContainer<MapPosition> mapPositions;
 	ComponentContainer<EnemyState> enemyStates;
 
@@ -41,7 +40,6 @@ public:
 		registry_list.push_back(&debugComponents);
 		registry_list.push_back(&colors);
 		registry_list.push_back(&rooms);
-		registry_list.push_back(&mapGenerator);
 		registry_list.push_back(&mapPositions);
 		registry_list.push_back(&enemyStates);
 	}

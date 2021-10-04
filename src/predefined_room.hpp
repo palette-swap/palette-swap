@@ -1,3 +1,5 @@
+#pragma once
+
 #include <array>
 
 /**
@@ -6,8 +8,10 @@
  * this number is the tile id that uniquely identifies a specific tile texture(see
  * tile_textures in components.hpp)
  * 
+ * Each room has an id that uniquely identifies the room, see roomLayouts in common.hpp
 */
 
+// 0
 static constexpr std::array<std::array<uint8_t, 10>,10> room_left_right_1 = {
     1,1,1,1,1,1,1,1,1,1,
     1,0,0,0,0,0,0,0,0,1,
@@ -21,6 +25,7 @@ static constexpr std::array<std::array<uint8_t, 10>,10> room_left_right_1 = {
     1,1,1,1,1,1,1,1,1,1,
 };
 
+// 1
 static constexpr std::array<std::array<uint8_t, 10>, 10> room_top_down_1 = {
     1,1,1,0,0,0,0,1,1,1,
     1,0,0,0,0,0,0,0,0,1,
@@ -34,6 +39,7 @@ static constexpr std::array<std::array<uint8_t, 10>, 10> room_top_down_1 = {
     1,1,1,0,0,0,0,1,1,1,
 };
 
+// 2
 static constexpr std::array<std::array<uint8_t, 10>, 10> room_all_direction_1 = {
     1,1,1,0,0,0,0,1,1,1,
     1,0,0,0,0,0,0,0,0,1,
@@ -45,6 +51,13 @@ static constexpr std::array<std::array<uint8_t, 10>, 10> room_all_direction_1 = 
     1,0,0,0,0,0,0,0,0,1,
     1,0,0,0,0,0,0,0,0,1,
     1,1,1,0,0,0,0,1,1,1,
+};
+
+// Statically defined rooms, associate room layout to room id
+static constexpr std::array<std::array<std::array<RoomType, 10>, 10>, 3> roomLayouts = {
+	room_left_right_1,
+	room_top_down_1,
+	room_all_direction_1,
 };
 
 // We also define some static maps, this should be eventually replaced with procedural generation

@@ -51,5 +51,23 @@ struct Transform {
 
 bool gl_has_errors();
 
+// Window sizes
 static constexpr int window_width_px = 1920;
 static constexpr int window_height_px = 1080;
+
+// Map constants
+// Each tile is 32x32 pixels
+static constexpr float TILE_SIZE = 32.f;
+// Each room is 10x10 tiles
+static constexpr int ROOM_SIZE = 10;
+// Each map is 10x10 rooms
+static constexpr int MAP_SIZE = 10;
+// RoomType is just a uint8_t
+using RoomType = uint8_t;
+
+static constexpr uint8_t numRoom = 3;
+
+// TODO: This will probably overflow the supported number of textures at some point, replace this once we support
+// texture atlas
+static constexpr uint8_t num_tile_textures = 2;
+static const std::set<uint8_t> WalkableTiles = { 0 };

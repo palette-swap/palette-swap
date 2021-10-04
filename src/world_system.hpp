@@ -12,6 +12,7 @@
 #include <SDL_mixer.h>
 
 #include "render_system.hpp"
+#include "map_generator.hpp"
 
 // Container for all our entities and game logic. Individual rendering / update is
 // deferred to the relative update() methods
@@ -61,8 +62,6 @@ private:
 	Entity player;
 	Debug& debugging;
 
-	Entity map;
-
 	// music references
 	Mix_Music* background_music = nullptr;
 	Mix_Chunk* salmon_dead_sound = nullptr;
@@ -70,4 +69,6 @@ private:
 	// C++ random number generator
 	std::default_random_engine rng;
 	std::uniform_real_distribution<float> uniform_dist; // number between 0..1
+
+	std::unique_ptr<MapGenerator> mapGenerator;
 };

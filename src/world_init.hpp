@@ -17,7 +17,3 @@ Entity create_line(vec2 position, vec2 size);
 
 // Creates a room on the current world map
 Entity createRoom(RenderSystem* renderer, vec2 position, RoomType roomType);
-
-// Generates the levels, should be called at the beginning of the game,
-// might want to pass in a seed in the future
-Entity generateMap(RenderSystem* renderer);

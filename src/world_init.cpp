@@ -95,17 +95,3 @@ Entity createRoom(RenderSystem* renderer, vec2 position, RoomType roomType)
 
 	return entity;
 }
-
-// (procedural) generate the maps
-Entity generateMap(RenderSystem* renderer)
-{
-	auto entity = Entity();
-
-	// We should only have a single map generator
-	assert(registry.mapGenerator.size() == 0);
-
-	MapGenerator& mapGenerator = registry.mapGenerator.emplace(entity);
-	mapGenerator.generatorLevels();
-
-	return entity;
-}
