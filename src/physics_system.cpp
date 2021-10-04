@@ -21,12 +21,15 @@ bool collides(const Motion& motion1, const Motion& motion2)
 	const vec2 my_bonding_box = get_bounding_box(motion2) / 2.f;
 	const float my_r_squared = dot(my_bonding_box, my_bonding_box);
 	const float r_squared = max(other_r_squared, my_r_squared);
-	if (dist_squared < r_squared)
-		return true;
-	return false;
+	return dist_squared < r_squared;
 }
 
-void PhysicsSystem::step(float elapsed_ms, float window_width_px, float window_height_px)
+PhysicsSystem::PhysicsSystem(const Debug& debugging)
+	: debugging(debugging)
+{
+}
+
+void PhysicsSystem::step(float elapsed_ms, float /*window_width_px*/, float /*window_height_px*/)
 {
 
 	auto& motion_registry = registry.motions;
@@ -45,8 +48,9 @@ void PhysicsSystem::step(float elapsed_ms, float window_width_px, float window_h
 		Entity entity_i = motion_container.entities[i];
 		for(uint j = 0; j<motion_container.components.size(); j++) // i+1
 		{
-			if (i == j)
+			if (i == j) {
 				continue;
+			}
 
 			Motion& motion_j = motion_container.components[j];
 			if (collides(motion_i, motion_j))
@@ -62,7 +66,7 @@ void PhysicsSystem::step(float elapsed_ms, float window_width_px, float window_h
 
 
 	// you may need the following quantities to compute wall positions
-	(float)window_width_px; (float)window_height_px;
+	// (float)window_width_px; (float)window_height_px;
 
 
 	// debugging of bounding boxes
@@ -72,15 +76,15 @@ void PhysicsSystem::step(float elapsed_ms, float window_width_px, float window_h
 		for (uint i = 0; i < size_before_adding_new; i++)
 		{
 			Motion& motion_i = motion_container.components[i];
-			Entity entity_i = motion_container.entities[i];
+			// Entity entity_i = motion_container.entities[i];
 
 			// visualize the radius with two axis-aligned lines
 			const vec2 bonding_box = get_bounding_box(motion_i);
 			float radius = sqrt(dot(bonding_box/2.f, bonding_box/2.f));
 			vec2 line_scale1 = { motion_i.scale.x / 10, 2*radius };
-			Entity line1 = createLine(motion_i.position, line_scale1);
+			/*Entity line1 = */create_line(motion_i.position, line_scale1);
 			vec2 line_scale2 = { 2*radius, motion_i.scale.x / 10};
-			Entity line2 = createLine(motion_i.position, line_scale2);
+			/*Entity line2 = */create_line(motion_i.position, line_scale2);
 
 		}
 	}

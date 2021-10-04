@@ -18,7 +18,7 @@
 class WorldSystem
 {
 public:
-	WorldSystem();
+	WorldSystem(Debug& debugging);
 
 	// Creates a window
 	GLFWwindow* create_window(int width, int height);
@@ -39,26 +39,27 @@ public:
 	bool is_over()const;
 private:
 	// Input callback functions
-	void on_key(int key, int, int action, int mod);
+	void on_key(int key, int /*scancode*/, int action, int mod);
 	void on_mouse_move(vec2 pos);
 
 	// restart level
 	void restart_game();
 
 	// OpenGL window handle
-	GLFWwindow* window;
+	GLFWwindow* window = nullptr;
 
 	// Number of fish eaten by the salmon, displayed in the window title
 	unsigned int points;
 
 	// Game state
-	RenderSystem* renderer;
-	float current_speed;
+	RenderSystem* renderer = nullptr;
+	float current_speed = 0;
 	Entity player;
+	Debug& debugging;
 
 	// music references
-	Mix_Music* background_music;
-	Mix_Chunk* salmon_dead_sound;
+	Mix_Music* background_music = nullptr;
+	Mix_Chunk* salmon_dead_sound = nullptr;
 
 	// C++ random number generator
 	std::default_random_engine rng;

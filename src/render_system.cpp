@@ -1,6 +1,10 @@
 // internal
 #include "render_system.hpp"
 #include <SDL.h>
+#pragma warning(push)
+#pragma warning(disable:4201) // nameless struct; glm only uses it if it exists
+#include <glm/gtc/type_ptr.hpp> // Allows nice passing of values to GL functions
+#pragma warning(pop)
 
 #include "tiny_ecs_registry.hpp"
 
@@ -20,17 +24,17 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 	assert(registry.renderRequests.has(entity));
 	const RenderRequest &render_request = registry.renderRequests.get(entity);
 
-	const GLuint used_effect_enum = (GLuint)render_request.used_effect;
+	const auto used_effect_enum = (GLuint)render_request.used_effect;
 	assert(used_effect_enum != (GLuint)EFFECT_ASSET_ID::EFFECT_COUNT);
-	const GLuint program = (GLuint)effects[used_effect_enum];
+	const auto program = (GLuint)effects.at(used_effect_enum);
 
 	// Setting shaders
 	glUseProgram(program);
 	gl_has_errors();
 
 	assert(render_request.used_geometry != GEOMETRY_BUFFER_ID::GEOMETRY_COUNT);
-	const GLuint vbo = vertex_buffers[(GLuint)render_request.used_geometry];
-	const GLuint ibo = index_buffers[(GLuint)render_request.used_geometry];
+	const GLuint vbo = vertex_buffers.at((int)render_request.used_geometry);
+	const GLuint ibo = index_buffers.at((int)render_request.used_geometry);
 
 	// Setting vertex and index buffers
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -47,7 +51,7 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 
 		glEnableVertexAttribArray(in_position_loc);
 		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE,
-							  sizeof(TexturedVertex), (void *)0);
+							  sizeof(TexturedVertex), nullptr);
 		gl_has_errors();
 
 		glEnableVertexAttribArray(in_texcoord_loc);
@@ -61,7 +65,7 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 
 		assert(registry.renderRequests.has(entity));
 		GLuint texture_id =
-			texture_gl_handles[(GLuint)registry.renderRequests.get(entity).used_texture];
+			texture_gl_handles.at((GLuint)registry.renderRequests.get(entity).used_texture);
 
 		glBindTexture(GL_TEXTURE_2D, texture_id);
 		gl_has_errors();
@@ -91,7 +95,7 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 	// Getting uniform locations for glUniform* calls
 	GLint color_uloc = glGetUniformLocation(program, "fcolor");
 	const vec3 color = registry.colors.has(entity) ? registry.colors.get(entity) : vec3(1);
-	glUniform3fv(color_uloc, 1, (float *)&color);
+	glUniform3fv(color_uloc, 1, glm::value_ptr(color));
 	gl_has_errors();
 
 	// Get number of indices from index buffer, which has elements uint16_t
@@ -102,13 +106,13 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 	GLsizei num_indices = size / sizeof(uint16_t);
 	// GLsizei num_triangles = num_indices / 3;
 
-	GLint currProgram;
-	glGetIntegerv(GL_CURRENT_PROGRAM, &currProgram);
+	GLint curr_program;
+	glGetIntegerv(GL_CURRENT_PROGRAM, &curr_program);
 	// Setting uniform values to the currently bound program
-	GLuint transform_loc = glGetUniformLocation(currProgram, "transform");
-	glUniformMatrix3fv(transform_loc, 1, GL_FALSE, (float *)&transform.mat);
-	GLuint projection_loc = glGetUniformLocation(currProgram, "projection");
-	glUniformMatrix3fv(projection_loc, 1, GL_FALSE, (float *)&projection);
+	GLint transform_loc = glGetUniformLocation(curr_program, "transform");
+	glUniformMatrix3fv(transform_loc, 1, GL_FALSE, glm::value_ptr(transform.mat));
+	GLint projection_loc = glGetUniformLocation(curr_program, "projection");
+	glUniformMatrix3fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
 	gl_has_errors();
 	// Drawing of num_indices/3 triangles specified in the index buffer
 	glDrawElements(GL_TRIANGLES, num_indices, GL_UNSIGNED_SHORT, nullptr);
@@ -147,8 +151,8 @@ void RenderSystem::drawToScreen()
 	gl_has_errors();
 	const GLuint water_program = effects[(GLuint)EFFECT_ASSET_ID::WATER];
 	// Set clock
-	GLuint time_uloc = glGetUniformLocation(water_program, "time");
-	GLuint dead_timer_uloc = glGetUniformLocation(water_program, "darken_screen_factor");
+	GLint time_uloc = glGetUniformLocation(water_program, "time");
+	GLint dead_timer_uloc = glGetUniformLocation(water_program, "darken_screen_factor");
 	glUniform1f(time_uloc, (float)(glfwGetTime() * 10.0f));
 	ScreenState &screen = registry.screenStates.get(screen_state_entity);
 	glUniform1f(dead_timer_uloc, screen.darken_screen_factor);
@@ -157,7 +161,7 @@ void RenderSystem::drawToScreen()
 	// same VBO)
 	GLint in_position_loc = glGetAttribLocation(water_program, "in_position");
 	glEnableVertexAttribArray(in_position_loc);
-	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (void *)0);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), nullptr);
 	gl_has_errors();
 
 	// Bind our texture in Texture Unit 0
@@ -196,15 +200,16 @@ void RenderSystem::draw()
 							  // and alpha blending, one would have to sort
 							  // sprites back to front
 	gl_has_errors();
-	mat3 projection_2D = createProjectionMatrix();
+	mat3 projection_2d = createProjectionMatrix();
 	// Draw all textured meshes that have a position and size component
 	for (Entity entity : registry.renderRequests.entities)
 	{
-		if (!registry.motions.has(entity))
+		if (!registry.motions.has(entity)) {
 			continue;
+		}
 		// Note, its not very efficient to access elements indirectly via the entity
 		// albeit iterating through all Sprites in sequence. A good point to optimize
-		drawTexturedMesh(entity, projection_2D);
+		drawTexturedMesh(entity, projection_2d);
 	}
 
 	// Truely render to the screen

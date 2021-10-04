@@ -24,7 +24,7 @@ class RenderSystem {
 	// Associated id with .obj path
 	const std::vector < std::pair<GEOMETRY_BUFFER_ID, std::string>> mesh_paths =
 	{
-		  std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::SALMON, mesh_path("salmon.obj"))
+		{ GEOMETRY_BUFFER_ID::SALMON, mesh_path("salmon.obj") }
 		  // specify meshes of other assets here
 	};
 
@@ -45,11 +45,12 @@ class RenderSystem {
 	std::array<Mesh, geometry_count> meshes;
 
 public:
+
 	// Initialize the window
 	bool init(int width, int height, GLFWwindow* window);
 
 	template <class T>
-	void bindVBOandIBO(GEOMETRY_BUFFER_ID gid, std::vector<T> vertices, std::vector<uint16_t> indices);
+	void bind_vbo_and_ibo(GEOMETRY_BUFFER_ID gid, std::vector<T> vertices, std::vector<uint16_t> indices);
 
 	void initializeGlTextures();
 
