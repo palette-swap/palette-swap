@@ -65,8 +65,8 @@ struct DeathTimer
 // Single Vertex Buffer element for non-textured meshes (coloured.vs.glsl & salmon.vs.glsl)
 struct ColoredVertex
 {
-	vec3 position;
-	vec3 color;
+	vec3 position = { 0, 0, 0 };
+	vec3 color = { 0, 0, 0 };
 };
 
 // Single Vertex Buffer element for textured sprites (textured.vs.glsl)

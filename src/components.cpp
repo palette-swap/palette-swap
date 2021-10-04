@@ -32,33 +32,33 @@ bool Mesh::loadFromOBJFile(const std::string& obj_path, std::vector<ColoredVerte
 	}
 
 	while (true) {
-		char line_header[128];
+		std::array<char, 128> line_header = {};
 		// read the first word of the line
-		int res = fscanf(file, "%s", line_header);
+		int res = fscanf(file, "%s", line_header.data());
 		if (res == EOF) {
 			break; // EOF = End Of File. Quit the loop.
 		}
 
-		if (strcmp((char*) line_header, "v") == 0) {
+		if (strcmp((char*) line_header.data(), "v") == 0) {
 			ColoredVertex vertex;
 			fscanf(file, "%f %f %f %f %f %f\n", &vertex.position.x, &vertex.position.y, &vertex.position.z,
 				                                &vertex.color.x, &vertex.color.y, &vertex.color.z);
 			out_vertices.push_back(vertex);
 		}
-		else if (strcmp((char*) line_header, "vt") == 0) {
+		else if (strcmp((char*) line_header.data(), "vt") == 0) {
 			glm::vec2 uv;
 			fscanf(file, "%f %f\n", &uv.x, &uv.y);
 			uv.y = -uv.y; // Invert V coordinate since we will only use DDS texture, which are inverted. Remove if you want to use TGA or BMP loaders.
 			out_uvs.push_back(uv);
 		}
-		else if (strcmp((char*) line_header, "vn") == 0) {
+		else if (strcmp((char*) line_header.data(), "vn") == 0) {
 			glm::vec3 normal;
 			fscanf(file, "%f %f %f\n", &normal.x, &normal.y, &normal.z);
 			out_normals.push_back(normal);
 		}
-		else if (strcmp((char*) line_header, "f") == 0) {
+		else if (strcmp((char*) line_header.data(), "f") == 0) {
 			std::string vertex1, vertex2, vertex3;
-			unsigned int vertex_index[3], normal_index[3]; // , uvIndex[3]
+			uvec3 vertex_index, normal_index; // , uvIndex[3]
 			//int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertex_index[0], &uvIndex[0], &normal_index[0], &vertex_index[1], &uvIndex[1], &normal_index[1], &vertex_index[2], &uvIndex[2], &normal_index[2]);
 			int matches = fscanf(file, "%d//%d %d//%d %d//%d\n", &vertex_index[0], &normal_index[0], &vertex_index[1], &normal_index[1], &vertex_index[2], &normal_index[2]);
 			if (matches != 6) {
@@ -79,8 +79,8 @@ bool Mesh::loadFromOBJFile(const std::string& obj_path, std::vector<ColoredVerte
 		}
 		else {
 			// Probably a comment, eat up the rest of the line
-			char stupid_buffer[1000];
-			fgets((char*) stupid_buffer, 1000, file);
+		std::array<char, 1000> stupid_buffer = {};
+			fgets(stupid_buffer.data(), 1000, file);
 		}
 	}
 	fclose(file);

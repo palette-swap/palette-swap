@@ -66,7 +66,7 @@ void PhysicsSystem::step(float elapsed_ms, float /*window_width_px*/, float /*wi
 
 
 	// you may need the following quantities to compute wall positions
-	(float)window_width_px; (float)window_height_px;
+	// (float)window_width_px; (float)window_height_px;
 
 
 	// debugging of bounding boxes
@@ -76,7 +76,7 @@ void PhysicsSystem::step(float elapsed_ms, float /*window_width_px*/, float /*wi
 		for (uint i = 0; i < size_before_adding_new; i++)
 		{
 			Motion& motion_i = motion_container.components[i];
-			Entity entity_i = motion_container.entities[i];
+			// Entity entity_i = motion_container.entities[i];
 
 			// visualize the radius with two axis-aligned lines
 			const vec2 bonding_box = get_bounding_box(motion_i);
