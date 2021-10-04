@@ -2,16 +2,15 @@
 #include "render_system.hpp"
 #include <SDL.h>
 #pragma warning(push)
-#pragma warning(disable:4201) // nameless struct; glm only uses it if it exists
+#pragma warning(disable : 4201) // nameless struct; glm only uses it if it exists
 #include <glm/gtc/type_ptr.hpp> // Allows nice passing of values to GL functions
 #pragma warning(pop)
 
 #include "tiny_ecs_registry.hpp"
 
-void RenderSystem::drawTexturedMesh(Entity entity,
-									const mat3 &projection)
+void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 {
-	Motion &motion = registry.motions.get(entity);
+	Motion& motion = registry.motions.get(entity);
 	// Transformation code, see Rendering and Transformation in the template
 	// specification for more info Incrementally updates transformation matrix,
 	// thus ORDER IS IMPORTANT
@@ -20,9 +19,8 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 	transform.rotate(motion.angle);
 	transform.scale(motion.scale);
 
-
 	assert(registry.renderRequests.has(entity));
-	const RenderRequest &render_request = registry.renderRequests.get(entity);
+	const RenderRequest& render_request = registry.renderRequests.get(entity);
 
 	const auto used_effect_enum = (GLuint)render_request.used_effect;
 	assert(used_effect_enum != (GLuint)EFFECT_ASSET_ID::EFFECT_COUNT);
@@ -42,53 +40,42 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 	gl_has_errors();
 
 	// Input data location as in the vertex buffer
-	if (render_request.used_effect == EFFECT_ASSET_ID::TEXTURED)
-	{
+	if (render_request.used_effect == EFFECT_ASSET_ID::TEXTURED) {
 		GLint in_position_loc = glGetAttribLocation(program, "in_position");
 		GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
 		gl_has_errors();
 		assert(in_texcoord_loc >= 0);
 
 		glEnableVertexAttribArray(in_position_loc);
-		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE,
-							  sizeof(TexturedVertex), nullptr);
+		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), nullptr);
 		gl_has_errors();
 
 		glEnableVertexAttribArray(in_texcoord_loc);
-		glVertexAttribPointer(
-			in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex),
-			(void *)sizeof(
-				vec3)); // note the stride to skip the preceeding vertex position
+		glVertexAttribPointer(in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex),
+							  (void*)sizeof(vec3)); // note the stride to skip the preceeding vertex position
 		// Enabling and binding texture to slot 0
 		glActiveTexture(GL_TEXTURE0);
 		gl_has_errors();
 
 		assert(registry.renderRequests.has(entity));
-		GLuint texture_id =
-			texture_gl_handles.at((GLuint)registry.renderRequests.get(entity).used_texture);
+		GLuint texture_id = texture_gl_handles.at((GLuint)registry.renderRequests.get(entity).used_texture);
 
 		glBindTexture(GL_TEXTURE_2D, texture_id);
 		gl_has_errors();
-	}
-	else if (render_request.used_effect == EFFECT_ASSET_ID::LINE)
-	{
+	} else if (render_request.used_effect == EFFECT_ASSET_ID::LINE) {
 		GLint in_position_loc = glGetAttribLocation(program, "in_position");
 		GLint in_color_loc = glGetAttribLocation(program, "in_color");
 		gl_has_errors();
 
 		glEnableVertexAttribArray(in_position_loc);
-		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE,
-			sizeof(ColoredVertex), (void*)0);
+		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), (void*)0);
 		gl_has_errors();
 
 		glEnableVertexAttribArray(in_color_loc);
-		glVertexAttribPointer(in_color_loc, 3, GL_FLOAT, GL_FALSE,
-			sizeof(ColoredVertex), (void*)sizeof(vec3));
+		glVertexAttribPointer(in_color_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), (void*)sizeof(vec3));
 		gl_has_errors();
 		// Consider handling drawing of player here
-	}
-	else
-	{
+	} else {
 		assert(false && "Type of render request not supported");
 	}
 
@@ -154,7 +141,7 @@ void RenderSystem::drawToScreen()
 	GLint time_uloc = glGetUniformLocation(water_program, "time");
 	GLint dead_timer_uloc = glGetUniformLocation(water_program, "darken_screen_factor");
 	glUniform1f(time_uloc, (float)(glfwGetTime() * 10.0f));
-	ScreenState &screen = registry.screenStates.get(screen_state_entity);
+	ScreenState& screen = registry.screenStates.get(screen_state_entity);
 	glUniform1f(dead_timer_uloc, screen.darken_screen_factor);
 	gl_has_errors();
 	// Set the vertex position and vertex texture coordinates (both stored in the
@@ -170,10 +157,9 @@ void RenderSystem::drawToScreen()
 	glBindTexture(GL_TEXTURE_2D, off_screen_render_buffer_color);
 	gl_has_errors();
 	// Draw
-	glDrawElements(
-		GL_TRIANGLES, 3, GL_UNSIGNED_SHORT,
-		nullptr); // one triangle = 3 vertices; nullptr indicates that there is
-				  // no offset from the bound index buffer
+	glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_SHORT,
+				   nullptr); // one triangle = 3 vertices; nullptr indicates that there is
+							 // no offset from the bound index buffer
 	gl_has_errors();
 }
 
@@ -202,8 +188,7 @@ void RenderSystem::draw()
 	gl_has_errors();
 	mat3 projection_2d = createProjectionMatrix();
 	// Draw all textured meshes that have a position and size component
-	for (Entity entity : registry.renderRequests.entities)
-	{
+	for (Entity entity : registry.renderRequests.entities) {
 		if (!registry.motions.has(entity)) {
 			continue;
 		}
@@ -236,5 +221,5 @@ mat3 RenderSystem::createProjectionMatrix()
 	float sy = 2.f / (top - bottom);
 	float tx = -(right + left) / (right - left);
 	float ty = -(top + bottom) / (top - bottom);
-	return {{sx, 0.f, 0.f}, {0.f, sy, 0.f}, {tx, ty, 1.f}};
+	return { { sx, 0.f, 0.f }, { 0.f, sy, 0.f }, { tx, ty, 1.f } };
 }

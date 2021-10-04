@@ -4,8 +4,8 @@
 #include "common.hpp"
 
 // stlib
-#include <vector>
 #include <random>
+#include <vector>
 
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
@@ -15,8 +15,7 @@
 
 // Container for all our entities and game logic. Individual rendering / update is
 // deferred to the relative update() methods
-class WorldSystem
-{
+class WorldSystem {
 public:
 	WorldSystem(Debug& debugging);
 
@@ -36,7 +35,8 @@ public:
 	void handle_collisions();
 
 	// Should the game be over ?
-	bool is_over()const;
+	bool is_over() const;
+
 private:
 	// Input callback functions
 	void on_key(int key, int /*scancode*/, int action, int mod);
