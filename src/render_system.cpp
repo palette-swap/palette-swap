@@ -113,8 +113,12 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 		// 2. (Preferred) Use a sprite sheet(tilemap atlas), access multiple tiles for
 		// a single load
 		int samplers[num_tile_textures];
-		for (int i = 0; i < num_tile_textures; i++) {
-			glBindTextureUnit(i, texture_gl_handles[(GLuint)tile_textures[i]]);
+		for (int i = 0; i < num_tile_textures; i++)
+		{
+			// Maintenance Note:
+			// To support OpenGL 3.3, glBindTextureUnit (OpenGL 4.5 feature) is replaced by glActiveTexture + glBindTexture.
+			glActiveTexture(GL_TEXTURE0 + i);
+			glBindTexture(GL_TEXTURE_2D, texture_gl_handles[(GLuint)tile_textures[i]]);
 			samplers[i] = i;
 		}
 
@@ -125,10 +129,13 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 	}
 
 	// Getting uniform locations for glUniform* calls
-	GLint color_uloc = glGetUniformLocation(program, "fcolor");
-	const vec3 color = registry.colors.has(entity) ? registry.colors.get(entity) : vec3(1);
-	glUniform3fv(color_uloc, 1, glm::value_ptr(color));
-	gl_has_errors();
+	if (registry.colors.has(entity))
+	{
+		GLint color_uloc = glGetUniformLocation(program, "fcolor");
+		const vec3 color = registry.colors.get(entity);
+		glUniform3fv(color_uloc, 1, glm::value_ptr(color));
+		gl_has_errors();
+	}
 
 	// Get number of indices from index buffer, which has elements uint16_t
 	GLint size = 0;
