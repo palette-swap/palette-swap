@@ -10,6 +10,8 @@ const float room_sprite_height = 32.f;
 
 // the player
 Entity create_player(RenderSystem* renderer, uvec2 pos);
+// the camera
+Entity create_camera(vec2 pos, vec2 size, ivec2 central);
 // the enemy
 Entity create_enemy(RenderSystem* renderer, vec2 position);
 // a red line for debugging purposes

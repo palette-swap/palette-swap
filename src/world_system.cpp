@@ -217,8 +217,11 @@ void WorldSystem::restart_game()
 	vec2 player_starting_point = uvec2(51, 51);
 	// Create a new Player instance and shift player onto a tile
 	player = create_player(renderer, player_starting_point);
-
 	registry.colors.insert(player, { 1, 0.8f, 0.8f });
+
+	// create camera instance
+	camera = create_camera(
+		{ (player_starting_point.x - 20), (player_starting_point.y - 20)}, { 23, 23 }, player_starting_point);
 
 
 	// Creates a single enemy instance, (TODO: needs to be updated with position based on grid)

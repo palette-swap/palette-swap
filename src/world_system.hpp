@@ -61,6 +61,7 @@ private:
 	RenderSystem* renderer = nullptr;
 	float current_speed = 0;
 	Entity player;
+	Entity camera;
 	Debug& debugging;
 
 	// music references
