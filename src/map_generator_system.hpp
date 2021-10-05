@@ -18,8 +18,15 @@ public:
 	void generate_levels();
 
 	// Get the current level mapping
-	const Mapping& current_map();
+	const Mapping& current_map() const;
+
+	// Check if a position is within the bounds of the current level
+	bool is_on_map(uvec2 pos) const;
 
 	// Check if a position on the map is walkable for the player
-	bool walkable(uvec2 pos);
+	bool walkable(uvec2 pos) const;
+
+	// Computes the shortest path from start to the first element of end that it encounters via BFS
+	// Returns the path, or an empty vector if no path was found
+	std::vector<uvec2> shortest_path(uvec2 start, std::vector<uvec2> end) const;
 };
