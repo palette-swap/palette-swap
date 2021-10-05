@@ -6,13 +6,13 @@ Entity create_player(RenderSystem* renderer, uvec2 pos)
 	auto entity = Entity();
 
 	// Store a reference to the potentially re-used mesh object
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	Mesh& mesh = renderer->get_mesh(GEOMETRY_BUFFER_ID::SPRITE);
 	registry.meshPtrs.emplace(entity, &mesh);
 
 	// Create and (empty) player component to be able to refer to other enttities
 	registry.players.emplace(entity);
-	registry.mapPositions.emplace(entity, pos, vec2(TILE_SIZE, TILE_SIZE));
-	registry.renderRequests.insert(entity,
+	registry.map_positions.emplace(entity, pos, vec2(tile_size, tile_size));
+	registry.render_requests.insert(entity,
 								   { TEXTURE_ASSET_ID::PALADIN, // TEXTURE_COUNT indicates that no txture is needed
 									 EFFECT_ASSET_ID::TEXTURED,
 									 GEOMETRY_BUFFER_ID::SPRITE });
@@ -27,7 +27,7 @@ Entity create_enemy(RenderSystem* renderer, vec2 position)
 	auto entity = Entity();
 
 	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	Mesh& mesh = renderer->get_mesh(GEOMETRY_BUFFER_ID::SPRITE);
 	registry.meshPtrs.emplace(entity, &mesh);
 
 	// TODO: Add additional components associated with enemy instance
@@ -41,7 +41,7 @@ Entity create_enemy(RenderSystem* renderer, vec2 position)
 	motion.scale = mesh.original_size * 100.f;
 
 	// TODO: Switch out basic enemy type based on input (Currently Defaulted to Slug)
-	registry.renderRequests.insert(entity,
+	registry.render_requests.insert(entity,
 								   { TEXTURE_ASSET_ID::SLUG, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE });
 
 	return entity;
@@ -52,7 +52,7 @@ Entity create_line(vec2 position, vec2 scale)
 	Entity entity = Entity();
 
 	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
-	registry.renderRequests.insert(
+	registry.render_requests.insert(
 		entity, { TEXTURE_ASSET_ID::TEXTURE_COUNT, EFFECT_ASSET_ID::LINE, GEOMETRY_BUFFER_ID::DEBUG_LINE });
 
 	// Create motion
@@ -62,28 +62,28 @@ Entity create_line(vec2 position, vec2 scale)
 	motion.position = position;
 	motion.scale = scale;
 
-	registry.debugComponents.emplace(entity);
+	registry.debug_components.emplace(entity);
 	return entity;
 }
 
 // Creates a room entity, with room type referencing to the predefined room
-Entity createRoom(RenderSystem* renderer, vec2 position, RoomType roomType)
+Entity create_room(RenderSystem* renderer, vec2 position, RoomType roomType)
 {
 	auto entity = Entity();
 
 	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	Mesh& mesh = renderer->get_mesh(GEOMETRY_BUFFER_ID::SPRITE);
 	registry.meshPtrs.emplace(entity, &mesh);
 
 	Motion& pos = registry.motions.emplace(entity);
 	pos.position = position;
 	pos.angle = 0.f;
-	pos.scale = { TILE_SIZE * ROOM_SIZE, TILE_SIZE * ROOM_SIZE };
+	pos.scale = { tile_size * room_size, tile_size * room_size };
 
 	Room& room = registry.rooms.emplace(entity);
 	room.type = roomType;
 
-	registry.renderRequests.insert(
+	registry.render_requests.insert(
 		entity, { TEXTURE_ASSET_ID::TEXTURE_COUNT, EFFECT_ASSET_ID::TILE_MAP, GEOMETRY_BUFFER_ID::ROOM });
 
 	return entity;

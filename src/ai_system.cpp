@@ -63,7 +63,7 @@ void AISystem::step(float /*elapsed_ms*/)
 		return;
 	}
 
-	for (EnemyState& enemy_state : registry.enemyStates.components) {
+	for (EnemyState& enemy_state : registry.enemy_states.components) {
 
 		switch (enemy_state.current_state) {
 		case ENEMY_STATE_ID::IDLE:
