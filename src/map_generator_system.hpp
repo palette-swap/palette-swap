@@ -5,23 +5,20 @@
 // Manages and store the generated maps
 class MapGeneratorSystem {
 private:
-	int currentLevel = -1;
-
-public:
-	MapGeneratorSystem() = default;
-	~MapGeneratorSystem() = default;
-
-	using mapping = std::array<std::array<RoomType, ROOM_SIZE>, ROOM_SIZE>;
+	int current_level = -1;
+	using Mapping = std::array<std::array<RoomType, room_size>, room_size>;
 
 	// the (procedural) generated levels, each level contains a full map(max 10*10 rooms)
-	std::vector<mapping> levels;
+	std::vector<Mapping> levels;
+
+public:
 
 	// Generates the levels, should be called at the beginning of the game,
 	// might want to pass in a seed in the future
-	void generateLevels();
+	void generate_levels();
 
 	// Get the current level mapping
-	const mapping& currentMap();
+	const Mapping& current_map();
 
 	// Check if a position on the map is walkable for the player
 	bool walkable(uvec2 pos);

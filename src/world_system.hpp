@@ -4,16 +4,16 @@
 #include "common.hpp"
 
 // stlib
+#include <memory>
 #include <random>
 #include <vector>
-#include <memory>
 
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
 #include <SDL_mixer.h>
 
-#include "render_system.hpp"
 #include "map_generator_system.hpp"
+#include "render_system.hpp"
 
 // Container for all our entities and game logic. Individual rendering / update is
 // deferred to the relative update() methods
@@ -71,5 +71,5 @@ private:
 	std::default_random_engine rng;
 	std::uniform_real_distribution<float> uniform_dist; // number between 0..1
 
-	std::shared_ptr<MapGeneratorSystem> mapGenerator;
+	std::shared_ptr<MapGeneratorSystem> map_generator;
 };

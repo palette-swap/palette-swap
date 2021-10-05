@@ -10,7 +10,7 @@
 
 // Very, VERY simple OBJ loader from https://github.com/opengl-tutorials/ogl tutorial 7
 // (modified to also read vertex color and omit uv and normals)
-bool Mesh::loadFromOBJFile(const std::string& obj_path,
+bool Mesh::load_from_obj_file(const std::string& obj_path,
 						   std::vector<ColoredVertex>& out_vertices,
 						   std::vector<uint16_t>& out_vertex_indices,
 						   vec2& out_size)

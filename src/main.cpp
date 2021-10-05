@@ -7,12 +7,12 @@
 
 // internal
 #include "ai_system.hpp"
+#include "map_generator_system.hpp"
 #include "physics_system.hpp"
 #include "render_system.hpp"
 #include "world_system.hpp"
-#include "map_generator_system.hpp"
 
-using Clock_t = std::chrono::high_resolution_clock;
+using Clock = std::chrono::high_resolution_clock;
 
 // Entry point
 int main()
@@ -41,14 +41,14 @@ int main()
 	world.init(&renderer);
 
 	// variable timestep loop
-	auto t = Clock_t::now();
+	auto t = Clock::now();
 	while (!world.is_over()) {
 		// Processes system messages, if this wasn't present the window would become
 		// unresponsive
 		glfwPollEvents();
 
 		// Calculating elapsed times in milliseconds from the previous iteration
-		auto now = Clock_t::now();
+		auto now = Clock::now();
 		float elapsed_ms = (float)(std::chrono::duration_cast<std::chrono::microseconds>(now - t)).count() / 1000;
 		t = now;
 

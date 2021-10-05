@@ -57,15 +57,15 @@ static constexpr int window_height_px = 1080;
 
 // Map constants
 // Each tile is 32x32 pixels
-static constexpr float TILE_SIZE = 32.f;
+static constexpr float tile_size = 32.f;
 // Each room is 10x10 tiles
-static constexpr int ROOM_SIZE = 10;
+static constexpr int room_size = 10;
 // Each map is 10x10 rooms
-static constexpr int MAP_SIZE = 10;
+static constexpr int map_size = 10;
 // RoomType is just a uint8_t
 using RoomType = uint8_t;
 
-static constexpr uint8_t numRoom = 3;
+static constexpr uint8_t num_room = 3;
 
 // TODO: This will probably overflow the supported number of textures at some point, replace this once we support
 // texture atlas
