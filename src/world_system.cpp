@@ -204,6 +204,7 @@ void WorldSystem::restart_game() {
 	
 }
 
+
 // Compute collisions between entities
 void WorldSystem::handle_collisions() {
 	// Loop over all collisions detected by the physics system
@@ -219,6 +220,7 @@ void WorldSystem::handle_collisions() {
 			//Example of how system currently handles collisions with a certain type of entity, 
 			//Currently, arrows can hit anything with a hittable component 
 			//TODO: rename hittable container type 
+			//TODO: resolve with arrow 
 			if (registry.hittables.has(entity_other)) {
 				registry.motions.get(entity).velocity = { 0, 0 };
 			}
@@ -315,7 +317,7 @@ void WorldSystem::on_mouse_click(int button, int action, int mods) {
 			player_arrow_fired = true;
 			Motion& arrow_motion = registry.motions.get(player_arrow);
 
-			// TODO: Can optimize calculation here potentially
+			// TODO: Add better arrow physics potentially?
 			arrow_motion.velocity = {sin(arrow_motion.angle) * projectile_speed, -cos(arrow_motion.angle) * projectile_speed};
 		}
 	}
