@@ -104,7 +104,6 @@ static const std::set<uint8_t> walkable_tiles = { 0 };
 inline vec2 map_position_to_screen_position(uvec2 pos)
 {
 	vec2 top_left_corner
-		= vec2((window_width_px - tile_size * room_size * map_size) / 2, (window_height_px - tile_size * room_size * map_size) / 2);
-	vec2 ret = vec2(pos.x * 32 + top_left_corner.x, pos.y * 32 + top_left_corner.y);
-	return ret + vec2(tile_size / 2, tile_size / 2);
+		= vec2((window_width_px - TILE_SIZE * ROOM_SIZE * MAP_SIZE) / 2, (window_height_px - TILE_SIZE * ROOM_SIZE * MAP_SIZE) / 2);
+	return vec2(pos.x * 32 + top_left_corner.x, pos.y * 32 + top_left_corner.y) + vec2(TILE_SIZE / 2, TILE_SIZE / 2);
 }
