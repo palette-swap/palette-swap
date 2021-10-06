@@ -5,7 +5,6 @@ Entity create_player(RenderSystem* renderer, uvec2 pos)
 {
 	auto entity = Entity();
 
-
 	// Create and (empty) player component to be able to refer to other enttities
 	registry.players.emplace(entity);
 	registry.map_positions.emplace(entity, pos, vec2(tile_size, tile_size));
@@ -59,9 +58,6 @@ Entity create_enemy(RenderSystem* renderer, uvec2 position)
 Entity create_arrow(RenderSystem* renderer, vec2 position)
 {
 	auto entity = Entity();
-
-	// Store a reference to the potentially re-used mesh object
-	Mesh& mesh = renderer->get_mesh(GEOMETRY_BUFFER_ID::SPRITE);
 
 	// Setting initial motion values
 	Motion& motion = registry.motions.emplace(entity);

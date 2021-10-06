@@ -19,7 +19,7 @@ public:
 	ComponentContainer<Room> rooms;
 	ComponentContainer<MapPosition> map_positions;
 	ComponentContainer<EnemyState> enemy_states;
-  ComponentContainer<Hittable> hittables;
+	ComponentContainer<Hittable> hittables;
 	ComponentContainer<ActiveProjectile> active_projectiles;
 	ComponentContainer<ResolvedProjectile> resolved_projectiles;
 

@@ -108,6 +108,5 @@ inline vec2 map_position_to_screen_position(uvec2 pos)
 	return vec2(pos.x * 32 + top_left_corner.x, pos.y * 32 + top_left_corner.y) + vec2(tile_size / 2, tile_size / 2);
 }
 
-inline vec2 approx_screen_position_to_map_position(vec2 pos) {
-
-}
+// TODO: Write function for approximating map position based on screen position (To find corresponding square)
+inline vec2 approx_screen_position_to_map_position(vec2 pos) { return vec2(0, 0); }
