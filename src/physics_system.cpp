@@ -97,5 +97,20 @@ void PhysicsSystem::step(float elapsed_ms, float window_width_px, float window_h
 
 		}
 	}
-
 }
+
+
+// TODO: Check for collisisons between projectiles and hittables
+//void PhysicsSystem::checkProjectileCollisions() {
+//	// Check for collisions between all moving entities
+//	ComponentContainer<Motion>& motion_container = registry.motions;
+//	for (uint i = 0; i < motion_container.components.size(); i++)
+//	{
+//		Motion& motion_i = motion_container.components[i];
+//		Entity entity_i = motion_container.entities[i];
+//		for (uint j = 0; j < motion_container.components.size(); j++) // i+1
+//		{
+//			}
+//		}
+//	}
+//}
