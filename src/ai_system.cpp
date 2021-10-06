@@ -4,67 +4,56 @@
 
 // Depends on Turn System from Nathan.
 
-bool AISystem::is_player_turn()
-{
+bool AISystem::is_player_turn() {
 	// TODO
 	return true;
 }
 
-void AISystem::switch_to_player_turn()
-{
+void AISystem::switch_to_player_turn() {
 	// TODO
 }
 
 // Depends on Map System from Yan.
 
-bool AISystem::is_player_spotted(uint /*radius*/)
-{
+bool AISystem::is_player_spotted(uint radius) {
 	// TODO
 	return true;
 }
 
-bool AISystem::is_player_reachable()
-{
+bool AISystem::is_player_reachable() {
 	// TODO
 	return true;
 }
 
-bool AISystem::is_afraid()
-{
+bool AISystem::is_afraid() {
 	// TODO
 	return true;
 }
 
-void AISystem::animate_alert()
-{
+void AISystem::animate_alert() {
 	// TODO
 }
 
-void AISystem::approach_player()
-{
+void AISystem::approach_player() {
 	// TODO
 }
 
-void AISystem::attack_player()
-{
+void AISystem::attack_player() {
 	// TODO
 }
 
-void AISystem::flee_player()
-{
+void AISystem::flee_player() {
 	// TODO
 }
 
 // AI logic
 
 AISystem::AISystem(std::shared_ptr<MapGeneratorSystem> map_generator)
-	: map_generator(std::move(map_generator))
-{
+	: map_generator(std::move(map_generator)) {
 }
 
-void AISystem::step(float /*elapsed_ms*/)
-{
-	if (is_player_turn()) {
+void AISystem::step(float /*elapsed_ms*/, bool& isPlayerTurn) {
+	if (isPlayerTurn) {
 		return;
 	}
 
@@ -114,5 +103,5 @@ void AISystem::step(float /*elapsed_ms*/)
 		}
 	}
 
-	switch_to_player_turn();
+	isPlayerTurn = !isPlayerTurn;
 }

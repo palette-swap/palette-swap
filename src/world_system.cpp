@@ -266,7 +266,8 @@ bool WorldSystem::is_over() const { return bool(glfwWindowShouldClose(window)); 
 // On key callback
 void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 {
-	if (action != GLFW_RELEASE) {
+	if (isPlayerTurn && action != GLFW_RELEASE) {
+
 		if (key == GLFW_KEY_RIGHT) {
 			move_player(Direction::Right);
 		}
@@ -282,6 +283,8 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		if (key == GLFW_KEY_DOWN) {
 			move_player(Direction::Down);
 		}
+
+		isPlayerTurn = !isPlayerTurn;
 	}
 
 	// Resetting game

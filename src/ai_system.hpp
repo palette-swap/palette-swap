@@ -12,7 +12,7 @@ public:
 
 	AISystem(std::shared_ptr<MapGeneratorSystem> map_generator);
 
-	void step(float /*elapsed_ms*/);
+	void step(float /*elapsed_ms*/, bool& isPlayerTurn);
 
 	// Depends on Turn System from Nathan.
 
@@ -21,7 +21,8 @@ public:
 	void switch_to_player_turn();
 
 	// Depends on Map System from Yan.
-	bool is_player_spotted(uint /*radius*/);
+
+	bool is_player_spotted(uint radius);
 
 	bool is_player_reachable();
 

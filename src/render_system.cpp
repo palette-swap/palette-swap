@@ -258,12 +258,17 @@ void RenderSystem::draw()
 mat3 RenderSystem::create_projection_matrix()
 {
 	// Fake projection matrix, scales with respect to window coordinates
-	float left = 0.f;
-	float top = 0.f;
 
-	gl_has_errors();
-	float right = (float)window_width_px / screen_scale;
-	float bottom = (float)window_height_px / screen_scale;
+	MapPosition& map_position = registry.map_positions.get(registry.players.entities[0]);
+	vec2 screen_position = map_position_to_screen_position(map_position.position);
+
+	float zoom = 1.f;
+
+	float left = (screen_position.x - window_width_px * zoom / 2);
+	float right = (screen_position.x + window_width_px * zoom / 2);
+
+	float top = (screen_position.y - window_height_px * zoom / 2);
+	float bottom = (screen_position.y + window_height_px * zoom / 2);
 
 	float sx = 2.f / (right - left);
 	float sy = 2.f / (top - bottom);
