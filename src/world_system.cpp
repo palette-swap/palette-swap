@@ -10,7 +10,7 @@
 
 // Game configuration
 bool player_arrow_fired = false;
-const size_t projectile_speed = 80;
+const size_t projectile_speed = 5;
 
 // Create the world
 WorldSystem::WorldSystem(Debug& debugging, std::shared_ptr<MapGeneratorSystem> map)
@@ -86,12 +86,12 @@ GLFWwindow* WorldSystem::create_window(int width, int height)
 	auto cursor_pos_redirect = [](GLFWwindow* wnd, double _0, double _1) {
 		static_cast<WorldSystem*>(glfwGetWindowUserPointer(wnd))->on_mouse_move({ _0, _1 });
 	};
-	//auto mouse_click_redirect = [](GLFWwindow* wnd, int _0, int _1, int _2) {
-	//	static_cast<WorldSystem*>(glfwGetWindowUserPointer(wnd))->on_mouse_click(_0, _1, _2);
-	//};
+	auto mouse_click_redirect = [](GLFWwindow* wnd, int _0, int _1, int _2) {
+		static_cast<WorldSystem*>(glfwGetWindowUserPointer(wnd))->on_mouse_click(_0, _1, _2);
+	};
 	glfwSetKeyCallback(window, key_redirect);
 	glfwSetCursorPosCallback(window, cursor_pos_redirect);
-	//glfwSetMouseButtonCallback(window, mouse_click_redirect);
+	glfwSetMouseButtonCallback(window, mouse_click_redirect);
 
 	//////////////////////////////////////
 	// Loading music and sounds with SDL
@@ -238,7 +238,8 @@ void WorldSystem::restart_game()
 	player_arrow = create_arrow(renderer, player_location);
 	// Creates a single enemy instance, (TODO: needs to be updated with position based on grid)
 	// Also requires naming scheme for randomly generated enemies, for later reference
-	Entity enemy = create_enemy(renderer, { 680, 600 });
+	vec2 enemy_starting_point = uvec2(53, 54);
+	Entity enemy = create_enemy(renderer, enemy_starting_point);
 	registry.colors.insert(enemy, { 1, 1, 1 });
 }
 
@@ -379,16 +380,16 @@ void WorldSystem::move_player(Direction direction)
 
 // Fires arrow at a preset speed if it has not been fired already
 // TODO: Integrate into turn state to only enable if player's turn is on
-//void WorldSystem::on_mouse_click(int button, int action, int mods) {
-//	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-//		if (!player_arrow_fired) {
-//			player_arrow_fired = true;
-//			// Arrow becomes a projectile the moment it leaves the player, not while it's direction is being selected
-//			registry.active_projectiles.emplace(player_arrow);
-//			Motion& arrow_motion = registry.motions.get(player_arrow);
-//
-//			// TODO: Add better arrow physics potentially?
-//			arrow_motion.velocity = { sin(arrow_motion.angle) * projectile_speed, -cos(arrow_motion.angle) * projectile_speed };
-//		}
-//	}
-//}
+void WorldSystem::on_mouse_click(int button, int action, int mods) {
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+		if (!player_arrow_fired) {
+			player_arrow_fired = true;
+			// Arrow becomes a projectile the moment it leaves the player, not while it's direction is being selected
+			registry.active_projectiles.emplace(player_arrow);
+			Motion& arrow_motion = registry.motions.get(player_arrow);
+
+			// TODO: Add better arrow physics potentially?
+			arrow_motion.velocity = { sin(arrow_motion.angle) * projectile_speed, -cos(arrow_motion.angle) * projectile_speed };
+		}
+	}
+}
