@@ -40,10 +40,10 @@ Entity create_enemy(RenderSystem* renderer, uvec2 position)
 	auto& motion = registry.motions.emplace(entity);
 	motion.angle = 0.f;
 	motion.velocity = { 0.f, 0.f };
-	motion.position = position;
+	motion.position = actual_position;
 
 	// Setting initial values for enemy
-	motion.scale = mesh.original_size * 100.f;
+	motion.scale = vec2(tile_size, tile_size);
 
 	// Indicates enemy is hittable by objects
 	registry.hittables.emplace(entity);
@@ -68,7 +68,7 @@ Entity create_arrow(RenderSystem* renderer, vec2 position)
 	motion.position = position;
 	motion.angle = 0.f;
 	motion.velocity = { 0.f, 0.f };
-	motion.scale = mesh.original_size * 20.f;
+	motion.scale = vec2(tile_size, tile_size) * 0.5f;
 
 	// Create and (empty) player component to be able to refer to other enttities
 	registry.render_requests.insert(

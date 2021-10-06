@@ -376,8 +376,8 @@ void WorldSystem::on_mouse_click(int button, int action, int mods) {
 			Motion& arrow_motion = registry.motions.get(player_arrow);
 
 			// TODO: Add better arrow physics potentially?
-			arrow_motion.velocity = { sin(arrow_motion.angle) * projectile_speed * arrow_motion.scale.x,
-									  -cos(arrow_motion.angle) * projectile_speed * arrow_motion.scale.x };
+			arrow_motion.velocity = { sin(arrow_motion.angle) * projectile_speed,
+									  -cos(arrow_motion.angle) * projectile_speed};
 		}
 	}
 }
