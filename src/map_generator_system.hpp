@@ -28,5 +28,5 @@ public:
 
 	// Computes the shortest path from start to the first element of end that it encounters via BFS
 	// Returns the path, or an empty vector if no path was found
-	std::vector<uvec2> shortest_path(uvec2 start, std::vector<uvec2> end) const;
+	std::vector<uvec2> shortest_path(uvec2 start, uvec2 target) const;
 };

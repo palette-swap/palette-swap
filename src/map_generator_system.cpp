@@ -33,10 +33,8 @@ bool MapGeneratorSystem::walkable(uvec2 pos) const
 }
 
 // See https://en.wikipedia.org/wiki/Breadth-first_search for algorithm reference
-std::vector<uvec2> MapGeneratorSystem::shortest_path(uvec2 start_pos, std::vector<uvec2> valid_endpoints) const
+std::vector<uvec2> MapGeneratorSystem::shortest_path(uvec2 start_pos, uvec2 target) const
 {
-	assert(!valid_endpoints.empty());
-
 	std::queue<uvec2> frontier;
 	// Presence in parent will also be used to track visited
 	std::unordered_map<uvec2, uvec2> parent;
@@ -46,7 +44,7 @@ std::vector<uvec2> MapGeneratorSystem::shortest_path(uvec2 start_pos, std::vecto
 		uvec2 curr = frontier.front();
 
 		// Check if curr is an accepting state
-		if (std::find(valid_endpoints.begin(), valid_endpoints.end(), curr) != valid_endpoints.end()) { 
+		if (curr == target) { 
 			// Now generate the path to this node from the parent map
 			std::vector<uvec2> path;
 			while (curr != start_pos) {
