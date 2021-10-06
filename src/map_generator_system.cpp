@@ -19,7 +19,7 @@ const MapGeneratorSystem::Mapping& MapGeneratorSystem::current_map() const
 
 bool MapGeneratorSystem::is_on_map(uvec2 pos) const
 {
-	return pos.y < current_map().size() && pos.x < current_map().at(0).size();
+	return pos.y / room_size < current_map().size() && pos.x / room_size < current_map().at(0).size();
 }
 
 bool MapGeneratorSystem::walkable(uvec2 pos) const
@@ -27,8 +27,8 @@ bool MapGeneratorSystem::walkable(uvec2 pos) const
 	if (!is_on_map(pos)) {
 		return false;
 	}
-	uint8_t room_index = current_map().at(pos.y / 10).at(pos.x / 10);
-	uint8_t tile_index = room_layouts.at(room_index).at(pos.y % 10).at(pos.x % 10);
+	uint8_t room_index = current_map().at(pos.y / room_size).at(pos.x / room_size);
+	uint8_t tile_index = room_layouts.at(room_index).at(pos.y % room_size).at(pos.x % room_size);
 	return walkable_tiles.find(tile_index) != walkable_tiles.end();
 }
 
