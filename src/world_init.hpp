@@ -16,6 +16,5 @@ Entity create_enemy(RenderSystem* renderer, vec2 position);
 Entity create_arrow(RenderSystem* renderer, vec2 position);
 // a red line for debugging purposes
 Entity create_line(vec2 position, vec2 scale);
-
 // Creates a room on the current world map
 Entity create_room(RenderSystem* renderer, vec2 position, RoomType roomType);

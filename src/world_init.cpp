@@ -5,7 +5,6 @@ Entity create_player(RenderSystem* renderer, uvec2 pos)
 {
 	auto entity = Entity();
 
-	// Store a reference to the potentially re-used mesh object
 
 	// Create and (empty) player component to be able to refer to other enttities
 	registry.players.emplace(entity);
@@ -62,7 +61,7 @@ Entity create_arrow(RenderSystem* renderer, vec2 position)
 	motion.position = position;
 	motion.angle = 0.f;
 	motion.velocity = { 0.f, 0.f };
-	motion.scale = mesh.original_size * 50.f;
+	motion.scale = mesh.original_size * 20.f;
 
 	// Create and (empty) player component to be able to refer to other enttities
 	registry.render_requests.insert(
@@ -74,7 +73,7 @@ Entity create_arrow(RenderSystem* renderer, vec2 position)
 	return entity;
 }
 
-Entity createLine(vec2 position, vec2 scale)
+Entity create_line(vec2 position, vec2 scale)
 {
 	Entity entity = Entity();
 
