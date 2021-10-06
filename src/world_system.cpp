@@ -10,7 +10,7 @@
 
 // Game configuration
 bool player_arrow_fired = false;
-const size_t projectile_speed = 5;
+const size_t projectile_speed = 1;
 
 // Create the world
 WorldSystem::WorldSystem(Debug& debugging, std::shared_ptr<MapGeneratorSystem> map)
@@ -238,8 +238,7 @@ void WorldSystem::restart_game()
 	player_arrow = create_arrow(renderer, player_location);
 	// Creates a single enemy instance, (TODO: needs to be updated with position based on grid)
 	// Also requires naming scheme for randomly generated enemies, for later reference
-	vec2 enemy_starting_point = uvec2(53, 54);
-	Entity enemy = create_enemy(renderer, enemy_starting_point);
+	Entity enemy = create_enemy(renderer, { 680, 600 });
 	registry.colors.insert(enemy, { 1, 1, 1 });
 }
 
@@ -389,7 +388,8 @@ void WorldSystem::on_mouse_click(int button, int action, int mods) {
 			Motion& arrow_motion = registry.motions.get(player_arrow);
 
 			// TODO: Add better arrow physics potentially?
-			arrow_motion.velocity = { sin(arrow_motion.angle) * projectile_speed, -cos(arrow_motion.angle) * projectile_speed };
+			arrow_motion.velocity = { sin(arrow_motion.angle) * projectile_speed * arrow_motion.scale.x,
+									  -cos(arrow_motion.angle) * projectile_speed * arrow_motion.scale.x };
 		}
 	}
 }
