@@ -9,7 +9,7 @@ Entity create_player(RenderSystem* renderer, uvec2 pos)
 	registry.players.emplace(entity);
 	registry.map_positions.emplace(entity, pos, vec2(tile_size, tile_size));
 
-	vec2 actual_position = map_position_to_screen_position(position);
+	vec2 actual_position = map_position_to_screen_position(pos);
 	auto& motion = registry.motions.emplace(entity);
 	motion.angle = 0.f;
 	motion.velocity = { 0.f, 0.f };
