@@ -54,31 +54,38 @@ public:
 	// it also helps the room geometry hack to work...
 	template <class T> void bind_vbo_and_ibo(uint gid, std::vector<T> vertices, std::vector<uint16_t> indices);
 
-	void initializeGlTextures();
+	void initialize_gl_textures();
 
-	void initializeGlEffects();
+	void initialize_gl_effects();
 
-	void initializeGlMeshes();
-	Mesh& getMesh(GEOMETRY_BUFFER_ID id) { return meshes[(int)id]; };
+	void initialize_gl_meshes();
+	Mesh& get_mesh(GEOMETRY_BUFFER_ID id) { return meshes[(int)id]; };
 
-	void initializeGlGeometryBuffers();
+	void initialize_gl_geometry_buffers();
 	// Initialize the screen texture used as intermediate render target
 	// The draw loop first renders to this texture, then it is used for the water
 	// shader
-	bool initScreenTexture();
+	bool init_screen_texture();
 
 	// Destroy resources associated to one or all entities created by the system
 	~RenderSystem();
 
+	// rule of five
+	RenderSystem() = default;
+	RenderSystem(const RenderSystem&) = delete; // copy constructor
+	RenderSystem& operator=(const RenderSystem&) = delete; // copy assignment
+	RenderSystem(RenderSystem&&) = delete; // move constructor
+	RenderSystem& operator=(RenderSystem&&) = delete; // move assignment
+
 	// Draw all entities
 	void draw();
 
-	mat3 createProjectionMatrix();
+	mat3 create_projection_matrix();
 
 private:
 	// Internal drawing functions for each entity type
-	void drawTexturedMesh(Entity entity, const mat3& projection);
-	void drawToScreen();
+	void draw_textured_mesh(Entity entity, const mat3& projection);
+	void draw_to_screen();
 
 	// Window handle
 	GLFWwindow* window;
@@ -93,4 +100,4 @@ private:
 	Entity screen_state_entity;
 };
 
-bool loadEffectFromFile(const std::string& vs_path, const std::string& fs_path, GLuint& out_program);
+bool load_effect_from_file(const std::string& vs_path, const std::string& fs_path, GLuint& out_program);

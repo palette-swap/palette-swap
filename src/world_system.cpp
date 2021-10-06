@@ -19,7 +19,7 @@ WorldSystem::WorldSystem(Debug& debugging, std::shared_ptr<MapGeneratorSystem> m
 	rng = std::default_random_engine(std::random_device()());
 
 	// Instantiate MapGeneratorSystem class
-	mapGenerator = std::move(map);
+	map_generator = std::move(map);
 }
 
 WorldSystem::~WorldSystem()
@@ -135,8 +135,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	glfwSetWindowTitle(window, title_ss.str().c_str());
 
 	// Remove debug info from the last step
-	while (!registry.debugComponents.entities.empty()) {
-		registry.remove_all_components_of(registry.debugComponents.entities.back());
+	while (!registry.debug_components.entities.empty()) {
+		registry.remove_all_components_of(registry.debug_components.entities.back());
 	}
 
 	// Removing out of screen entities
@@ -153,13 +153,13 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	}
 
 	// Processing the player state
-	assert(registry.screenStates.components.size() <= 1);
-	ScreenState& screen = registry.screenStates.components[0];
+	assert(registry.screen_states.components.size() <= 1);
+	ScreenState& screen = registry.screen_states.components[0];
 
 	float min_counter_ms = 3000.f;
-	for (Entity entity : registry.deathTimers.entities) {
+	for (Entity entity : registry.death_timers.entities) {
 		// progress timer
-		DeathTimer& counter = registry.deathTimers.get(entity);
+		DeathTimer& counter = registry.death_timers.get(entity);
 		counter.counter_ms -= elapsed_ms_since_last_update;
 		if (counter.counter_ms < min_counter_ms) {
 			min_counter_ms = counter.counter_ms;
@@ -167,7 +167,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 
 		// restart the game once the death timer expired
 		if (counter.counter_ms < 0) {
-			registry.deathTimers.remove(entity);
+			registry.death_timers.remove(entity);
 			screen.darken_screen_factor = 0;
 			restart_game();
 			return true;
@@ -198,18 +198,18 @@ void WorldSystem::restart_game()
 	registry.list_all_components();
 
 	// Generate the levels
-	mapGenerator->generateLevels();
+	map_generator->generate_levels();
 
 	vec2 middle = { window_width_px / 2, window_height_px / 2 };
 
-	const MapGeneratorSystem::mapping& mapping = mapGenerator->currentMap();
-	vec2 top_left_corner = middle - vec2(TILE_SIZE * ROOM_SIZE * MAP_SIZE / 2, TILE_SIZE * ROOM_SIZE * MAP_SIZE / 2);
+	const MapGeneratorSystem::Mapping& mapping = map_generator->current_map();
+	vec2 top_left_corner = middle - vec2(tile_size * room_size * map_size / 2, tile_size * room_size * map_size / 2);
 	for (size_t row = 0; row < mapping.size(); row++) {
 		for (size_t col = 0; col < mapping[0].size(); col++) {
 			vec2 position = top_left_corner +
-				vec2(TILE_SIZE * ROOM_SIZE / 2, TILE_SIZE * ROOM_SIZE / 2) +
-				vec2(col * TILE_SIZE * ROOM_SIZE, row * TILE_SIZE * ROOM_SIZE);
-			createRoom(renderer, position, mapping.at(row).at(col));
+				vec2(tile_size * room_size / 2, tile_size * room_size / 2) +
+				vec2(col * tile_size * room_size, row * tile_size * room_size);
+			create_room(renderer, position, mapping.at(row).at(col));
 		}
 	}
 
@@ -243,11 +243,11 @@ void WorldSystem::handle_collisions()
 
 			// Example of how system currently handles collisions with a certain type of entity,
 			// will be replaced with other collisions types
-			if (registry.hardShells.has(entity_other)) {
+			if (registry.hard_shells.has(entity_other)) {
 				// initiate death unless already dying
-				if (!registry.deathTimers.has(entity)) {
+				if (!registry.death_timers.has(entity)) {
 					// Scream, reset timer, and make the salmon sink
-					registry.deathTimers.emplace(entity);
+					registry.death_timers.emplace(entity);
 					registry.motions.get(entity).velocity = { 0, 80 };
 				}
 			}
@@ -309,27 +309,27 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 
 void WorldSystem::move_player(Direction direction)
 {
-	MapPosition& map_pos = registry.mapPositions.get(player);
+	MapPosition& map_pos = registry.map_positions.get(player);
 	// TODO: this should be removed once we only use map_position
 
 	if (direction == Direction::Left && map_pos.position.x > 0) {
 		uvec2 new_pos = uvec2(map_pos.position.x - 1, map_pos.position.y);
-		if (mapGenerator->walkable(new_pos)) {
+		if (map_generator->walkable(new_pos)) {
 			map_pos.position = new_pos;
 		}
 	} else if (direction == Direction::Up && map_pos.position.y > 0) {
 		uvec2 new_pos = uvec2(map_pos.position.x, map_pos.position.y - 1);
-		if (mapGenerator->walkable(new_pos)) {
+		if (map_generator->walkable(new_pos)) {
 			map_pos.position = new_pos;
 		}
-	} else if (direction == Direction::Right && map_pos.position.x < ROOM_SIZE * TILE_SIZE - 1) {
+	} else if (direction == Direction::Right && map_pos.position.x < room_size * tile_size - 1) {
 		uvec2 new_pos = uvec2(map_pos.position.x + 1, map_pos.position.y);
-		if (mapGenerator->walkable(new_pos)) {
+		if (map_generator->walkable(new_pos)) {
 			map_pos.position = new_pos;
 		}
-	} else if (direction == Direction::Down && map_pos.position.y < ROOM_SIZE * TILE_SIZE - 1) {
+	} else if (direction == Direction::Down && map_pos.position.y < room_size * tile_size - 1) {
 		uvec2 new_pos = uvec2(map_pos.position.x, map_pos.position.y + 1);
-		if (mapGenerator->walkable(new_pos)) {
+		if (map_generator->walkable(new_pos)) {
 			map_pos.position = new_pos;
 		}
 	}
