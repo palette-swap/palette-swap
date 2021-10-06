@@ -10,7 +10,7 @@ class PhysicsSystem {
 public:
 	PhysicsSystem(const Debug& debugging);
 
-	void step(float elapsed_ms, float /*window_width_px*/, float /*window_height_px*/);
+	void step(float elapsed_ms, float window_width, float window_height);
 
 private:
 	const Debug& debugging;

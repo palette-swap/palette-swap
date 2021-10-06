@@ -49,7 +49,7 @@ Entity create_enemy(RenderSystem* renderer, vec2 position)
 	return entity;
 }
 
-Entity createArrow(RenderSystem* renderer, vec2 position)
+Entity create_arrow(RenderSystem* renderer, vec2 position)
 {
 	auto entity = Entity();
 
