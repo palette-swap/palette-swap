@@ -4,6 +4,8 @@
 #include <queue>
 #include <unordered_map>
 
+#include "glm/gtx/hash.hpp"
+
 // TODO: we want this eventually be procedural generated
 void MapGeneratorSystem::generate_levels()
 {
