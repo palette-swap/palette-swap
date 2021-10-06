@@ -19,7 +19,7 @@ Entity create_player(RenderSystem* renderer, uvec2 pos)
 
 // Repurposed into general create_enemy
 // TODO: add additional inputs to specify enemy type, current default is slug
-Entity create_enemy(RenderSystem* renderer, vec2 position)
+Entity create_enemy(RenderSystem* renderer, uvec2 position)
 {
 	auto entity = Entity();
 
@@ -27,6 +27,13 @@ Entity create_enemy(RenderSystem* renderer, vec2 position)
 
 	Mesh& mesh = renderer->get_mesh(GEOMETRY_BUFFER_ID::SPRITE);
 	registry.meshPtrs.emplace(entity, &mesh);
+
+
+	registry.map_positions.emplace(entity, position, vec2(tile_size, tile_size));
+
+
+	// Maps position of enemy to actual position (for reference)
+	vec2 actual_position = map_position_to_screen_position(position);
 
 	// TODO: Add additional components associated with enemy instance
 	// TODO: Change motion component based on grid system
