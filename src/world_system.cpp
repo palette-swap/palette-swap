@@ -13,16 +13,23 @@ bool player_arrow_fired = false;
 const size_t projectile_speed = 80;
 
 // Create the world
-WorldSystem::WorldSystem()
-	: points(0) {
+WorldSystem::WorldSystem(Debug& debugging, std::shared_ptr<MapGeneratorSystem> map)
+	: points(0)
+	, debugging(debugging)
+{
 	// Seeding rng with random device
 	rng = std::default_random_engine(std::random_device()());
+
+	// Instantiate MapGeneratorSystem class
+	mapGenerator = std::move(map);
 }
 
-WorldSystem::~WorldSystem() {
+WorldSystem::~WorldSystem()
+{
 	// Destroy music components
-	if (background_music != nullptr)
+	if (background_music != nullptr) {
 		Mix_FreeMusic(background_music);
+	}
 	Mix_CloseAudio();
 
 	// Destroy all created components
@@ -34,18 +41,17 @@ WorldSystem::~WorldSystem() {
 
 // Debugging
 namespace {
-	void glfw_err_cb(int error, const char *desc) {
-		fprintf(stderr, "%d: %s", error, desc);
-	}
-}
+void glfw_err_cb(int error, const char* desc) { fprintf(stderr, "%d: %s", error, desc); }
+} // namespace
 
 // World initialization
 // Note, this has a lot of OpenGL specific things, could be moved to the renderer
-GLFWwindow* WorldSystem::create_window(int width, int height) {
+GLFWwindow* WorldSystem::create_window(int width, int height)
+{
 	///////////////////////////////////////
 	// Initialize GLFW
 	glfwSetErrorCallback(glfw_err_cb);
-	if (!glfwInit()) {
+	if (glfwInit() == GLFW_FALSE) {
 		fprintf(stderr, "Failed to initialize GLFW");
 		return nullptr;
 	}
@@ -74,9 +80,15 @@ GLFWwindow* WorldSystem::create_window(int width, int height) {
 	// Input is handled using GLFW, for more info see
 	// http://www.glfw.org/docs/latest/input_guide.html
 	glfwSetWindowUserPointer(window, this);
-	auto key_redirect = [](GLFWwindow* wnd, int _0, int _1, int _2, int _3) { ((WorldSystem*)glfwGetWindowUserPointer(wnd))->on_key(_0, _1, _2, _3); };
-	auto cursor_pos_redirect = [](GLFWwindow* wnd, double _0, double _1) { ((WorldSystem*)glfwGetWindowUserPointer(wnd))->on_mouse_move({ _0, _1 }); };
-	auto mouse_click_redirect = [](GLFWwindow* wnd, int _0, int _1, int _2) { ((WorldSystem*)glfwGetWindowUserPointer(wnd))->on_mouse_click(_0, _1, _2 ); };
+	auto key_redirect = [](GLFWwindow* wnd, int _0, int _1, int _2, int _3) {
+		static_cast<WorldSystem*>(glfwGetWindowUserPointer(wnd))->on_key(_0, _1, _2, _3);
+	};
+	auto cursor_pos_redirect = [](GLFWwindow* wnd, double _0, double _1) {
+		static_cast<WorldSystem*>(glfwGetWindowUserPointer(wnd))->on_mouse_move({ _0, _1 });
+	};
+	auto mouse_click_redirect = [](GLFWwindow* wnd, int _0, int _1, int _2) { 
+		static_cast<WorldSystem*>(glfwGetWindowUserPointer(wnd))->on_mouse_click(_0, _1, _2 ); 
+
 	glfwSetKeyCallback(window, key_redirect);
 	glfwSetCursorPosCallback(window, cursor_pos_redirect);
 	glfwSetMouseButtonCallback(window, mouse_click_redirect);
@@ -98,29 +110,30 @@ GLFWwindow* WorldSystem::create_window(int width, int height) {
 	salmon_dead_sound = Mix_LoadWAV(audio_path("salmon_dead.wav").c_str());
 
 	if (background_music == nullptr) {
-		fprintf(stderr, "Failed to load sounds\n %s\n make sure the data directory is present",
-			audio_path("overworld.wav").c_str());
+		fprintf(stderr,
+				"Failed to load sounds\n %s\n make sure the data directory is present",
+				audio_path("overworld.wav").c_str());
 		return nullptr;
 	}
 
 	return window;
 }
 
-void WorldSystem::init(RenderSystem* renderer_arg) {
+void WorldSystem::init(RenderSystem* renderer_arg)
+{
 	this->renderer = renderer_arg;
 	// Playing background music indefinitely
 	Mix_PlayMusic(background_music, -1);
 	fprintf(stderr, "Loaded music\n");
 
 	// Set all states to default
-    restart_game();
+	restart_game();
 }
 
 // Update our game world
-bool WorldSystem::step(float elapsed_ms_since_last_update) {
+bool WorldSystem::step(float elapsed_ms_since_last_update)
+{
 	// Get the screen dimensions
-	int screen_width, screen_height;
-	glfwGetFramebufferSize(window, &screen_width, &screen_height);
 
 	// Updating window title with points
 	std::stringstream title_ss;
@@ -128,8 +141,9 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	glfwSetWindowTitle(window, title_ss.str().c_str());
 
 	// Remove debug info from the last step
-	while (registry.debugComponents.entities.size() > 0)
-	    registry.remove_all_components_of(registry.debugComponents.entities.back());
+	while (!registry.debugComponents.entities.empty()) {
+		registry.remove_all_components_of(registry.debugComponents.entities.back());
+	}
 
 	// Removing out of screen entities
 	auto& motions_registry = registry.motions;
@@ -137,16 +151,16 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	// Remove entities that leave the screen on the left side
 	// Iterate backwards to be able to remove without unterfering with the next object to visit
 	// (the containers exchange the last element with the current)
-	for (int i = (int)motions_registry.components.size()-1; i>=0; --i) {
-	    Motion& motion = motions_registry.components[i];
+	for (int i = (int)motions_registry.components.size() - 1; i >= 0; --i) {
+		Motion& motion = motions_registry.components[i];
 		if (motion.position.x + abs(motion.scale.x) < 0.f) {
-		    registry.remove_all_components_of(motions_registry.entities[i]);
+			registry.remove_all_components_of(motions_registry.entities[i]);
 		}
 	}
 
 	// Processing the player state
 	assert(registry.screenStates.components.size() <= 1);
-    ScreenState &screen = registry.screenStates.components[0];
+	ScreenState& screen = registry.screenStates.components[0];
 
 	// Resolves projectiles hitting objects, stops it for a period of time before returning it to the player
 	// Currently handles player arrow (as it is the only projectile that exists)
@@ -180,7 +194,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 }
 
 // Reset the world state to its initial state
-void WorldSystem::restart_game() {
+void WorldSystem::restart_game()
+{
 	// Debugging for memory/component leaks
 	registry.list_all_components();
 	printf("Restarting\n");
@@ -189,37 +204,54 @@ void WorldSystem::restart_game() {
 	current_speed = 1.f;
 
 	// Remove all entities that were created with a motion (TODO: Adjust once grid based components are introduced)
-	while (registry.motions.entities.size() > 0)
-	    registry.remove_all_components_of(registry.motions.entities.back());
+	while (!registry.motions.entities.empty()) {
+		registry.remove_all_components_of(registry.motions.entities.back());
+	}
 
 	// Debugging for memory/component leaks
 	registry.list_all_components();
 
+	// Generate the levels
+	mapGenerator->generateLevels();
+
+	vec2 middle = { window_width_px / 2, window_height_px / 2 };
+
+	const MapGeneratorSystem::mapping& mapping = mapGenerator->currentMap();
+	vec2 top_left_corner = middle - vec2(TILE_SIZE * ROOM_SIZE * MAP_SIZE / 2, TILE_SIZE * ROOM_SIZE * MAP_SIZE / 2);
+	for (size_t row = 0; row < mapping.size(); row++) {
+		for (size_t col = 0; col < mapping[0].size(); col++) {
+			vec2 position = top_left_corner +
+				vec2(TILE_SIZE * ROOM_SIZE / 2, TILE_SIZE * ROOM_SIZE / 2) +
+				vec2(col * TILE_SIZE * ROOM_SIZE, row * TILE_SIZE * ROOM_SIZE);
+			createRoom(renderer, position, mapping.at(row).at(col));
+		}
+	}
+
+	// a random starting position... probably need to update this
+	vec2 player_starting_point = uvec2(51, 51);
+	// Create a new Player instance and shift player onto a tile
+	player = create_player(renderer, player_starting_point);
+
+	registry.colors.insert(player, { 1, 0.8f, 0.8f });
+
+
 	// Creates a single enemy instance, (TODO: needs to be updated with position based on grid)
 	// Also requires naming scheme for randomly generated enemies, for later reference
-	Entity enemy = createEnemy(renderer, { 680,600 });
+	Entity enemy = create_enemy(renderer, { 680, 600 });
 	registry.colors.insert(enemy, { 1, 1, 1 });
-
-	// Create a new Player instance
-	player = createPlayer(renderer, { 640, 448 });
-	registry.colors.insert(player, { 1, 1, 1 });
-
-	// Create a new Player's Arrow instance 
-	player_arrow = createArrow(renderer, { 600, 600 });
-	registry.colors.insert(player_arrow, { 1, 1, 1 });
-	
 }
 
 
 
 // Compute collisions between entities
-void WorldSystem::handle_collisions() {
+void WorldSystem::handle_collisions()
+{
 	// Loop over all collisions detected by the physics system
-	auto& collisionsRegistry = registry.collisions; 
-	for (uint i = 0; i < collisionsRegistry.components.size(); i++) {
+	auto& collisions_registry = registry.collisions;
+	for (uint i = 0; i < collisions_registry.components.size(); i++) {
 		// The entity and its collider
-		Entity entity = collisionsRegistry.entities[i];
-		Entity entity_other = collisionsRegistry.components[i].other;
+		Entity entity = collisions_registry.entities[i];
+		Entity entity_other = collisions_registry.components[i].other;
 
 		// collisions involving projectiles
 		if (registry.active_projectiles.has(entity)) {
@@ -240,55 +272,48 @@ void WorldSystem::handle_collisions() {
 }
 
 // Should the game be over ?
-bool WorldSystem::is_over() const {
-	return bool(glfwWindowShouldClose(window));
-}
+bool WorldSystem::is_over() const { return bool(glfwWindowShouldClose(window)); }
 
 // On key callback
-void WorldSystem::on_key(int key, int, int action, int mod) {
-	int position_change = 64;
-	Motion& motion = registry.motions.get(player);
-
+void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
+{
 	if (action != GLFW_RELEASE) {
 		if (key == GLFW_KEY_RIGHT) {
-			motion.position += vec2(position_change, 0);
+			move_player(Direction::Right);
 		}
 
 		if (key == GLFW_KEY_LEFT) {
-			motion.position += vec2(-position_change, 0);
+			move_player(Direction::Left);
 		}
 
 		if (key == GLFW_KEY_UP) {
-			motion.position += vec2(0, -position_change);
+			move_player(Direction::Up);
 		}
 
 		if (key == GLFW_KEY_DOWN) {
-			motion.position += vec2(0, position_change);
+			move_player(Direction::Down);
 		}
 	}
 
 	// Resetting game
 	if (action == GLFW_RELEASE && key == GLFW_KEY_R) {
-		int w, h;
-		glfwGetWindowSize(window, &w, &h);
+		// int w, h;
+		// glfwGetWindowSize(window, &w, &h);
 
-        restart_game();
+		restart_game();
 	}
 
 	// Debugging
 	if (key == GLFW_KEY_D) {
-		if (action == GLFW_RELEASE)
-			debugging.in_debug_mode = false;
-		else
-			debugging.in_debug_mode = true;
+		debugging.in_debug_mode = action != GLFW_RELEASE;
 	}
 
 	// Control the current speed with `<` `>`
-	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_COMMA) {
+	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_COMMA) {
 		current_speed -= 0.1f;
 		printf("Current speed = %f\n", current_speed);
 	}
-	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_PERIOD) {
+	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_PERIOD) {
 		current_speed += 0.1f;
 		printf("Current speed = %f\n", current_speed);
 	}
@@ -317,6 +342,39 @@ void WorldSystem::on_mouse_move(vec2 mouse_position) {
 	}
 }
 
+
+
+void WorldSystem::move_player(Direction direction)
+{
+	MapPosition& map_pos = registry.mapPositions.get(player);
+	// TODO: this should be removed once we only use map_position
+
+	if (direction == Direction::Left && map_pos.position.x > 0) {
+		uvec2 new_pos = uvec2(map_pos.position.x - 1, map_pos.position.y);
+		if (mapGenerator->walkable(new_pos)) {
+			map_pos.position = new_pos;
+		}
+	}
+	else if (direction == Direction::Up && map_pos.position.y > 0) {
+		uvec2 new_pos = uvec2(map_pos.position.x, map_pos.position.y - 1);
+		if (mapGenerator->walkable(new_pos)) {
+			map_pos.position = new_pos;
+		}
+	}
+	else if (direction == Direction::Right && map_pos.position.x < ROOM_SIZE * TILE_SIZE - 1) {
+		uvec2 new_pos = uvec2(map_pos.position.x + 1, map_pos.position.y);
+		if (mapGenerator->walkable(new_pos)) {
+			map_pos.position = new_pos;
+		}
+	}
+	else if (direction == Direction::Down && map_pos.position.y < ROOM_SIZE * TILE_SIZE - 1) {
+		uvec2 new_pos = uvec2(map_pos.position.x, map_pos.position.y + 1);
+		if (mapGenerator->walkable(new_pos)) {
+			map_pos.position = new_pos;
+		}
+	}
+}
+
 // Fires arrow at a preset speed if it has not been fired already
 // TODO: Integrate into turn state to only enable if player's turn is on
 void WorldSystem::on_mouse_click(int button, int action, int mods) {
@@ -328,7 +386,7 @@ void WorldSystem::on_mouse_click(int button, int action, int mods) {
 			Motion& arrow_motion = registry.motions.get(player_arrow);
 
 			// TODO: Add better arrow physics potentially?
-			arrow_motion.velocity = {sin(arrow_motion.angle) * projectile_speed, -cos(arrow_motion.angle) * projectile_speed};
+			arrow_motion.velocity = { sin(arrow_motion.angle) * projectile_speed, -cos(arrow_motion.angle) * projectile_speed };
 		}
 	}
 }

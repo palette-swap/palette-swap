@@ -10,25 +10,26 @@
 #include "physics_system.hpp"
 #include "render_system.hpp"
 #include "world_system.hpp"
+#include "map_generator_system.hpp"
 
-using Clock = std::chrono::high_resolution_clock;
-
-// Currently configured to render a 10x10 tile grid of each tile 128 pixels
-const int window_width_px = 1280;
-const int window_height_px = 896;
+using Clock_t = std::chrono::high_resolution_clock;
 
 // Entry point
 int main()
 {
+	// Map system
+	std::shared_ptr<MapGeneratorSystem> map = std::make_shared<MapGeneratorSystem>();
+
 	// Global systems
-	WorldSystem world;
+	Debug debugging;
+	WorldSystem world(debugging, map);
 	RenderSystem renderer;
-	PhysicsSystem physics;
+	PhysicsSystem physics(debugging);
 	AISystem ai;
 
 	// Initializing window
 	GLFWwindow* window = world.create_window(window_width_px, window_height_px);
-	if (!window) {
+	if (window == nullptr) {
 		// Time to read the error message
 		printf("Press any key to exit");
 		getchar();
@@ -40,16 +41,15 @@ int main()
 	world.init(&renderer);
 
 	// variable timestep loop
-	auto t = Clock::now();
+	auto t = Clock_t::now();
 	while (!world.is_over()) {
 		// Processes system messages, if this wasn't present the window would become
 		// unresponsive
 		glfwPollEvents();
 
 		// Calculating elapsed times in milliseconds from the previous iteration
-		auto now = Clock::now();
-		float elapsed_ms =
-			(float)(std::chrono::duration_cast<std::chrono::microseconds>(now - t)).count() / 1000;
+		auto now = Clock_t::now();
+		float elapsed_ms = (float)(std::chrono::duration_cast<std::chrono::microseconds>(now - t)).count() / 1000;
 		t = now;
 
 		world.step(elapsed_ms);

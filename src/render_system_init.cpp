@@ -33,9 +33,7 @@ bool RenderSystem::init(int width, int height, GLFWwindow* window_arg)
 
 	// For some high DPI displays (ex. Retina Display on Macbooks)
 	// https://stackoverflow.com/questions/36672935/why-retina-screen-coordinate-value-is-twice-the-value-of-pixel-value
-	int fb_width, fb_height;
-	glfwGetFramebufferSize(window, &fb_width, &fb_height);
-	screen_scale = static_cast<float>(fb_width) / width;
+	screen_scale = static_cast<float>(window_width_px) / static_cast<float>(width);
 	(int)height; // dummy to avoid warning
 
 	// ASK(Camilo): Setup error callback. This can not be done in mac os, so do not enable
@@ -51,7 +49,7 @@ bool RenderSystem::init(int width, int height, GLFWwindow* window_arg)
 	gl_has_errors();
 
 	initScreenTexture();
-    initializeGlTextures();
+	initializeGlTextures();
 	initializeGlEffects();
 	initializeGlGeometryBuffers();
 
@@ -60,75 +58,131 @@ bool RenderSystem::init(int width, int height, GLFWwindow* window_arg)
 
 void RenderSystem::initializeGlTextures()
 {
-    glGenTextures((GLsizei)texture_gl_handles.size(), texture_gl_handles.data());
+	glGenTextures((GLsizei)texture_gl_handles.size(), texture_gl_handles.data());
 
-    for(uint i = 0; i < texture_paths.size(); i++)
-    {
-        const std::string& path = texture_paths[i];
-        ivec2& dimensions = texture_dimensions[i];
+	for (uint i = 0; i < texture_paths.size(); i++) {
+		const std::string& path = texture_paths.at(i);
+		ivec2& dimensions = texture_dimensions.at(i);
 
-        stbi_uc* data;
-        data  = stbi_load(path.c_str(), &dimensions.x, &dimensions.y, NULL, 4);
+		stbi_uc* data;
+		data = stbi_load(path.c_str(), &dimensions.x, &dimensions.y, nullptr, 4);
 
-        if (data == NULL)
-        {
+		if (data == nullptr) {
 			const std::string message = "Could not load the file " + path + ".";
-            fprintf(stderr, "%s", message.c_str());
-            assert(false);
-        }
-        glBindTexture(GL_TEXTURE_2D, texture_gl_handles[i]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, dimensions.x, dimensions.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			fprintf(stderr, "%s", message.c_str());
+			assert(false);
+		}
+		glBindTexture(GL_TEXTURE_2D, texture_gl_handles.at(i));
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, dimensions.x, dimensions.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		// This might be useful for some pictures, will leave it here for reference
+		// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		gl_has_errors();
-        stbi_image_free(data);
-    }
+		stbi_image_free(data);
+	}
 	gl_has_errors();
 }
 
 void RenderSystem::initializeGlEffects()
 {
-	for(uint i = 0; i < effect_paths.size(); i++)
-	{
-		const std::string vertex_shader_name = effect_paths[i] + ".vs.glsl";
-		const std::string fragment_shader_name = effect_paths[i] + ".fs.glsl";
+	for (uint i = 0; i < effect_paths.size(); i++) {
+		const std::string vertex_shader_name = effect_paths.at(i) + ".vs.glsl";
+		const std::string fragment_shader_name = effect_paths.at(i) + ".fs.glsl";
 
-		bool is_valid = loadEffectFromFile(vertex_shader_name, fragment_shader_name, effects[i]);
-		assert(is_valid && (GLuint)effects[i] != 0);
+		bool is_valid = loadEffectFromFile(vertex_shader_name, fragment_shader_name, effects.at(i));
+		assert(is_valid && (GLuint)effects.at(i) != 0);
 	}
 }
 
 // One could merge the following two functions as a template function...
-template <class T>
-void RenderSystem::bindVBOandIBO(GEOMETRY_BUFFER_ID gid, std::vector<T> vertices, std::vector<uint16_t> indices)
+template <class T> void RenderSystem::bind_vbo_and_ibo(uint gid, std::vector<T> vertices, std::vector<uint16_t> indices)
 {
-	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers[(uint)gid]);
-	glBufferData(GL_ARRAY_BUFFER,
-		sizeof(vertices[0]) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers.at((uint)gid));
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices[0]) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
 	gl_has_errors();
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffers[(uint)gid]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-		sizeof(indices[0]) * indices.size(), indices.data(), GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffers.at((uint)gid));
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices[0]) * indices.size(), indices.data(), GL_STATIC_DRAW);
 	gl_has_errors();
 }
 
 void RenderSystem::initializeGlMeshes()
 {
-	for (uint i = 0; i < mesh_paths.size(); i++)
-	{
+	for (const auto& path : mesh_paths) {
 		// Initialize meshes
-		GEOMETRY_BUFFER_ID geom_index = mesh_paths[i].first;
-		std::string name = mesh_paths[i].second;
-		Mesh::loadFromOBJFile(name, 
-			meshes[(int)geom_index].vertices,
-			meshes[(int)geom_index].vertex_indices,
-			meshes[(int)geom_index].original_size);
+		Mesh& mesh = meshes.at((int)path.first);
+		std::string name = path.second;
+		Mesh::loadFromOBJFile(name, mesh.vertices, mesh.vertex_indices, mesh.original_size);
 
-		bindVBOandIBO(geom_index,
-			meshes[(int)geom_index].vertices, 
-			meshes[(int)geom_index].vertex_indices);
+		bind_vbo_and_ibo((uint)path.first, mesh.vertices, mesh.vertex_indices);
 	}
+}
+
+void RenderSystem::initialize_room_vertices(uint8_t roomType)
+{
+	////////////////////////////
+	// Initialize TileMap
+	// Vertices of a 4*4 room is defined as follows, don't try to understand this, it's not efficient at all
+	/**
+		0           2 6         8
+			+----------------------
+			|       -/3|       -/ | 9
+			|    --/   |    --/   |
+			|  -/      |7 -/      |
+			|-/4      5|-/10      |11
+		  1 |--------14-----------|
+		  12|       --15 18    20-| 21
+			|   ---/   |     /--  |
+			|--/       |19/--     |
+		  13/---------------------+ 23
+			16        17   22
+	*/
+	// TODO: Optimize this, there's quite a bit duplicated vertices(a total of 600 vertices),
+	// eventually we want to reach 11*11 vertices.
+	const int total_vertices = ROOM_SIZE * ROOM_SIZE * 2 * 3;
+	float fraction = 1.f / ROOM_SIZE;
+	std::vector<TileMapVertex> tilemap_vertices(total_vertices);
+
+	for (int i = 0; i < total_vertices; i += 6) {
+		int row = i / (6 * ROOM_SIZE);
+		int col = (i % (6 * ROOM_SIZE)) / 6;
+
+		tilemap_vertices[i + 0].position = { fraction * (col - ROOM_SIZE / 2), fraction * (ROOM_SIZE / 2 - row), 0.f };
+		tilemap_vertices[i + 1].position
+			= { fraction * (col - ROOM_SIZE / 2), fraction * (ROOM_SIZE / 2 - row - 1), 0.f };
+		tilemap_vertices[i + 2].position
+			= { fraction * (col - ROOM_SIZE / 2 + 1), fraction * (ROOM_SIZE / 2 - row), 0.f };
+		tilemap_vertices[i + 3].position
+			= { fraction * (col - ROOM_SIZE / 2 + 1), fraction * (ROOM_SIZE / 2 - row), 0.f };
+		tilemap_vertices[i + 4].position
+			= { fraction * (col - ROOM_SIZE / 2), fraction * (ROOM_SIZE / 2 - row - 1), 0.f };
+		tilemap_vertices[i + 5].position
+			= { fraction * (col - ROOM_SIZE / 2 + 1), fraction * (ROOM_SIZE / 2 - row - 1), 0.f };
+
+		tilemap_vertices[i + 0].texcoord = { 0.f, 1.f };
+		tilemap_vertices[i + 1].texcoord = { 0.f, 0.f };
+		tilemap_vertices[i + 2].texcoord = { 1.f, 1.f };
+		tilemap_vertices[i + 3].texcoord = { 1.f, 1.f };
+		tilemap_vertices[i + 4].texcoord = { 0.f, 0.f };
+		tilemap_vertices[i + 5].texcoord = { 1.f, 0.f };
+
+		// The Room somehow was read upside down, so using ROOM_SIZE - row - 1 to reverse that, should
+		// investigate why later...
+		tilemap_vertices[i + 0].tile_texture = (float)(room_layouts.at(roomType).at(ROOM_SIZE - row - 1).at(col));
+		tilemap_vertices[i + 1].tile_texture = (float)(room_layouts.at(roomType).at(ROOM_SIZE - row - 1).at(col));
+		tilemap_vertices[i + 2].tile_texture = (float)(room_layouts.at(roomType).at(ROOM_SIZE - row - 1).at(col));
+		tilemap_vertices[i + 3].tile_texture = (float)(room_layouts.at(roomType).at(ROOM_SIZE - row - 1).at(col));
+		tilemap_vertices[i + 4].tile_texture = (float)(room_layouts.at(roomType).at(ROOM_SIZE - row - 1).at(col));
+		tilemap_vertices[i + 5].tile_texture = (float)(room_layouts.at(roomType).at(ROOM_SIZE - row - 1).at(col));
+	}
+
+	std::vector<uint16_t> tilemap_indices(total_vertices);
+	for (int i = 0; i < total_vertices; i++) {
+		tilemap_indices[i] = static_cast<uint16_t>(i);
+	}
+	bind_vbo_and_ibo(geometry_count - numRoom + roomType, tilemap_vertices, tilemap_indices);
 }
 
 void RenderSystem::initializeGlGeometryBuffers()
@@ -145,10 +199,10 @@ void RenderSystem::initializeGlGeometryBuffers()
 	// Initialize sprite
 	// The position corresponds to the center of the texture.
 	std::vector<TexturedVertex> textured_vertices(4);
-	textured_vertices[0].position = { -1.f/2, +1.f/2, 0.f };
-	textured_vertices[1].position = { +1.f/2, +1.f/2, 0.f };
-	textured_vertices[2].position = { +1.f/2, -1.f/2, 0.f };
-	textured_vertices[3].position = { -1.f/2, -1.f/2, 0.f };
+	textured_vertices[0].position = { -1.f / 2, +1.f / 2, 0.f };
+	textured_vertices[1].position = { +1.f / 2, +1.f / 2, 0.f };
+	textured_vertices[2].position = { +1.f / 2, -1.f / 2, 0.f };
+	textured_vertices[3].position = { -1.f / 2, -1.f / 2, 0.f };
 	textured_vertices[0].texcoord = { 0.f, 1.f };
 	textured_vertices[1].texcoord = { 1.f, 1.f };
 	textured_vertices[2].texcoord = { 1.f, 0.f };
@@ -156,17 +210,21 @@ void RenderSystem::initializeGlGeometryBuffers()
 
 	// Counterclockwise as it's the default opengl front winding direction.
 	const std::vector<uint16_t> textured_indices = { 0, 3, 1, 1, 3, 2 };
-	bindVBOandIBO(GEOMETRY_BUFFER_ID::SPRITE, textured_vertices, textured_indices);
+	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::SPRITE, textured_vertices, textured_indices);
+
+	for (uint8_t i = 0; i < numRoom; i++) {
+		initialize_room_vertices(i);
+	}
 
 	////////////////////////
 	// Initialize pebble
 	std::vector<ColoredVertex> pebble_vertices;
 	std::vector<uint16_t> pebble_indices;
 	constexpr float z = -0.1f;
-	constexpr int NUM_TRIANGLES = 62;
+	constexpr int num_triangles = 62;
 
-	for (int i = 0; i < NUM_TRIANGLES; i++) {
-		const float t = float(i) * M_PI * 2.f / float(NUM_TRIANGLES - 1);
+	for (int i = 0; i < num_triangles; i++) {
+		const float t = float(i) * M_PI * 2.f / float(num_triangles - 1);
 		pebble_vertices.push_back({});
 		pebble_vertices.back().position = { 0.5 * cos(t), 0.5 * sin(t), z };
 		pebble_vertices.back().color = { 0.8, 0.8, 0.8 };
@@ -174,15 +232,15 @@ void RenderSystem::initializeGlGeometryBuffers()
 	pebble_vertices.push_back({});
 	pebble_vertices.back().position = { 0, 0, 0 };
 	pebble_vertices.back().color = { 0.8, 0.8, 0.8 };
-	for (int i = 0; i < NUM_TRIANGLES; i++) {
+	for (int i = 0; i < num_triangles; i++) {
 		pebble_indices.push_back((uint16_t)i);
-		pebble_indices.push_back((uint16_t)((i + 1) % NUM_TRIANGLES));
-		pebble_indices.push_back((uint16_t)NUM_TRIANGLES);
+		pebble_indices.push_back((uint16_t)((i + 1) % num_triangles));
+		pebble_indices.push_back((uint16_t)num_triangles);
 	}
-	int geom_index = (int)GEOMETRY_BUFFER_ID::LINE;
-	meshes[geom_index].vertices = pebble_vertices;
-	meshes[geom_index].vertex_indices = pebble_indices;
-	bindVBOandIBO(GEOMETRY_BUFFER_ID::LINE, meshes[geom_index].vertices, meshes[geom_index].vertex_indices);
+	Mesh& line = meshes.at((int)GEOMETRY_BUFFER_ID::LINE);
+	line.vertices = pebble_vertices;
+	line.vertex_indices = pebble_indices;
+	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::DEBUG_LINE, pebble_vertices, pebble_indices);
 
 	//////////////////////////////////
 	// Initialize debug line
@@ -190,23 +248,23 @@ void RenderSystem::initializeGlGeometryBuffers()
 	std::vector<uint16_t> line_indices;
 
 	constexpr float depth = 0.5f;
-	constexpr vec3 red = { 0.8,0.1,0.1 };
+	constexpr vec3 red = { 0.8, 0.1, 0.1 };
 
 	// Corner points
 	line_vertices = {
-		{{-0.5,-0.5, depth}, red},
-		{{-0.5, 0.5, depth}, red},
-		{{ 0.5, 0.5, depth}, red},
-		{{ 0.5,-0.5, depth}, red},
+		{ { -0.5, -0.5, depth }, red },
+		{ { -0.5, 0.5, depth }, red },
+		{ { 0.5, 0.5, depth }, red },
+		{ { 0.5, -0.5, depth }, red },
 	};
 
 	// Two triangles
-	line_indices = {0, 1, 3, 1, 2, 3};
-	
-	geom_index = (int)GEOMETRY_BUFFER_ID::DEBUG_LINE;
-	meshes[geom_index].vertices = line_vertices;
-	meshes[geom_index].vertex_indices = line_indices;
-	bindVBOandIBO(GEOMETRY_BUFFER_ID::DEBUG_LINE, line_vertices, line_indices);
+	line_indices = { 0, 1, 3, 1, 2, 3 };
+
+	Mesh& debug_line = meshes.at((int)GEOMETRY_BUFFER_ID::DEBUG_LINE);
+	debug_line.vertices = line_vertices;
+	debug_line.vertex_indices = line_indices;
+	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::DEBUG_LINE, line_vertices, line_indices);
 
 	///////////////////////////////////////////////////////
 	// Initialize screen triangle (yes, triangle, not quad; its more efficient).
@@ -217,7 +275,7 @@ void RenderSystem::initializeGlGeometryBuffers()
 
 	// Counterclockwise as it's the default opengl front winding direction.
 	const std::vector<uint16_t> screen_indices = { 0, 1, 2 };
-	bindVBOandIBO(GEOMETRY_BUFFER_ID::SCREEN_TRIANGLE, screen_vertices, screen_indices);
+	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::SCREEN_TRIANGLE, screen_vertices, screen_indices);
 }
 
 RenderSystem::~RenderSystem()
@@ -231,16 +289,17 @@ RenderSystem::~RenderSystem()
 	glDeleteRenderbuffers(1, &off_screen_render_buffer_depth);
 	gl_has_errors();
 
-	for(uint i = 0; i < effect_count; i++) {
-		glDeleteProgram(effects[i]);
+	for (const auto effect : effects) {
+		glDeleteProgram(effect);
 	}
 	// delete allocated resources
 	glDeleteFramebuffers(1, &frame_buffer);
 	gl_has_errors();
 
 	// remove all entities created by the render system
-	while (registry.renderRequests.entities.size() > 0)
-	    registry.remove_all_components_of(registry.renderRequests.entities.back());
+	while (!registry.renderRequests.entities.empty()) {
+		registry.remove_all_components_of(registry.renderRequests.entities.back());
+	}
 }
 
 // Initialize the screen texture from a standard sprite
@@ -248,12 +307,9 @@ bool RenderSystem::initScreenTexture()
 {
 	registry.screenStates.emplace(screen_state_entity);
 
-	int width, height;
-	glfwGetFramebufferSize(const_cast<GLFWwindow*>(window), &width, &height);
-
 	glGenTextures(1, &off_screen_render_buffer_color);
 	glBindTexture(GL_TEXTURE_2D, off_screen_render_buffer_color);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, window_width_px, window_height_px, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	gl_has_errors();
@@ -261,7 +317,7 @@ bool RenderSystem::initScreenTexture()
 	glGenRenderbuffers(1, &off_screen_render_buffer_depth);
 	glBindRenderbuffer(GL_RENDERBUFFER, off_screen_render_buffer_depth);
 	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, off_screen_render_buffer_color, 0);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, window_width_px, window_height_px);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, off_screen_render_buffer_depth);
 	gl_has_errors();
 
@@ -276,8 +332,7 @@ bool gl_compile_shader(GLuint shader)
 	gl_has_errors();
 	GLint success = 0;
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-	if (success == GL_FALSE)
-	{
+	if (success == GL_FALSE) {
 		GLint log_len;
 		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &log_len);
 		std::vector<char> log(log_len);
@@ -293,14 +348,12 @@ bool gl_compile_shader(GLuint shader)
 	return true;
 }
 
-bool loadEffectFromFile(
-	const std::string& vs_path, const std::string& fs_path, GLuint& out_program)
+bool loadEffectFromFile(const std::string& vs_path, const std::string& fs_path, GLuint& out_program)
 {
 	// Opening files
 	std::ifstream vs_is(vs_path);
 	std::ifstream fs_is(fs_path);
-	if (!vs_is.good() || !fs_is.good())
-	{
+	if (!vs_is.good() || !fs_is.good()) {
 		fprintf(stderr, "Failed to load shader files %s, %s", vs_path.c_str(), fs_path.c_str());
 		assert(false);
 		return false;
@@ -314,8 +367,8 @@ bool loadEffectFromFile(
 	std::string fs_str = fs_ss.str();
 	const char* vs_src = vs_str.c_str();
 	const char* fs_src = fs_str.c_str();
-	GLsizei vs_len = (GLsizei)vs_str.size();
-	GLsizei fs_len = (GLsizei)fs_str.size();
+	auto vs_len = (GLsizei)vs_str.size();
+	auto fs_len = (GLsizei)fs_str.size();
 
 	GLuint vertex = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vertex, 1, &vs_src, &vs_len);
@@ -324,14 +377,12 @@ bool loadEffectFromFile(
 	gl_has_errors();
 
 	// Compiling
-	if (!gl_compile_shader(vertex))
-	{
+	if (!gl_compile_shader(vertex)) {
 		fprintf(stderr, "Vertex compilation failed");
 		assert(false);
 		return false;
 	}
-	if (!gl_compile_shader(fragment))
-	{
+	if (!gl_compile_shader(fragment)) {
 		fprintf(stderr, "Vertex compilation failed");
 		assert(false);
 		return false;
@@ -344,12 +395,10 @@ bool loadEffectFromFile(
 	glLinkProgram(out_program);
 	gl_has_errors();
 
-
 	{
 		GLint is_linked = GL_FALSE;
 		glGetProgramiv(out_program, GL_LINK_STATUS, &is_linked);
-		if (is_linked == GL_FALSE)
-		{
+		if (is_linked == GL_FALSE) {
 			GLint log_len;
 			glGetProgramiv(out_program, GL_INFO_LOG_LENGTH, &log_len);
 			std::vector<char> log(log_len);
@@ -372,4 +421,3 @@ bool loadEffectFromFile(
 
 	return true;
 }
-

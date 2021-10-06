@@ -29,4 +29,5 @@
 
 !ext/
 !template/ext/
+!CMakeSettings.json
 ext/project_path.hpp

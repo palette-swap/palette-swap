@@ -2,128 +2,112 @@
 #include "ai_system.hpp"
 #include "components.hpp"
 
-
-
 // Depends on Turn System from Nathan.
 
-bool isPlayerTurn() {
+bool AISystem::is_player_turn()
+{
 	// TODO
 	return true;
 }
 
-void switchToPlayerTurn() {
+void AISystem::switch_to_player_turn()
+{
 	// TODO
 }
-
-
 
 // Depends on Map System from Yan.
 
-bool isPlayerSpotted(uint radius)
+bool AISystem::is_player_spotted(uint /*radius*/)
 {
 	// TODO
 	return true;
 }
 
-bool isPlayerReachable()
+bool AISystem::is_player_reachable()
 {
 	// TODO
 	return true;
 }
 
-bool isAfraid()
+bool AISystem::is_afraid()
 {
 	// TODO
 	return true;
 }
 
-void animateAlert()
+void AISystem::animate_alert()
 {
 	// TODO
 }
 
-void approachPlayer()
+void AISystem::approach_player()
 {
 	// TODO
 }
 
-void attackPlayer()
+void AISystem::attack_player()
 {
 	// TODO
 }
 
-void fleePlayer()
+void AISystem::flee_player()
 {
 	// TODO
 }
-
-
 
 // AI logic
 
-void AISystem::step(float elapsed_ms)
+void AISystem::step(float /*elapsed_ms*/)
 {
-	if (isPlayerTurn())
-	{
+	if (is_player_turn()) {
 		return;
 	}
 
-	for (EnemyState& enemyState : registry.enemyStates.components) {
+	for (EnemyState& enemy_state : registry.enemyStates.components) {
 
-		switch (enemyState.current_state)
-		{
+		switch (enemy_state.current_state) {
 		case ENEMY_STATE_ID::IDLE:
 
-			if (isPlayerSpotted(5))
-			{
-				animateAlert();
-				enemyState.current_state = ENEMY_STATE_ID::ACTIVE;
+			if (is_player_spotted(5)) {
+				animate_alert();
+				enemy_state.current_state = ENEMY_STATE_ID::ACTIVE;
 			}
 
 			break;
 
 		case ENEMY_STATE_ID::ACTIVE:
 
-			if (isPlayerSpotted(7))
-			{
-				if (isPlayerReachable())
-				{
-					attackPlayer();
-				}
-				else
-				{
-					approachPlayer();
+			if (is_player_spotted(7)) {
+				if (is_player_reachable()) {
+					attack_player();
+				} else {
+					approach_player();
 				}
 
-				if (isAfraid())
-				{
-					enemyState.current_state = ENEMY_STATE_ID::FLINCHED;
+				if (is_afraid()) {
+					enemy_state.current_state = ENEMY_STATE_ID::FLINCHED;
 				}
-			}
-			else
-			{
-				enemyState.current_state = ENEMY_STATE_ID::IDLE;
+			} else {
+				enemy_state.current_state = ENEMY_STATE_ID::IDLE;
 			}
 
 			break;
 
 		case ENEMY_STATE_ID::FLINCHED:
 
-			if (isPlayerSpotted(9))
-			{
-				fleePlayer();
-			}
-			else
-			{
-				enemyState.current_state = ENEMY_STATE_ID::IDLE;
+			if (is_player_spotted(9)) {
+				flee_player();
+			} else {
+				enemy_state.current_state = ENEMY_STATE_ID::IDLE;
 			}
 
 			break;
 
 		default:
-			printf("Should never happen.\n"); exit(1);
+			printf("Should never happen.\n");
+			throw std::runtime_error("Invalid Enemy State");
 		}
 	}
 
-	switchToPlayerTurn();
+	switch_to_player_turn();
 }
