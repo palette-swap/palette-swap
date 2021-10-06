@@ -271,15 +271,10 @@ mat3 RenderSystem::create_projection_matrix()
 	glfwGetFramebufferSize(window, &w, &h);
 	gl_has_errors();
 
-	// set up 4 sides of window
-	/*float left = 0.f;
-	float top = 0.f;
-	float right = (float)window_width_px / screen_scale;
-	float bottom = (float)window_height_px / screen_scale;*/
+	// set up 4 sides of window based on player
 	Entity player = registry.players.entities[0];
-	// vec2 position = registry.motions.get(player).position;
-	vec2 position = map_position_to_screen_position(registry.mapPositions.get(player).position);
-	//printf("player position: (%f, %f)\n", position.x, position.y);
+	vec2 position = map_position_to_screen_position(registry.map_positions.get(player).position);
+
 	float right = position.x + w / 2.f;
 	float left = position.x - w / 2.f;
 	float top = position.y - h / 2.f;
