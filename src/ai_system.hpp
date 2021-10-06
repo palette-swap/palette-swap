@@ -1,5 +1,6 @@
 #pragma once
 
+#include <random>
 #include <vector>
 
 #include "common.hpp"
@@ -10,33 +11,39 @@
 class AISystem {
 public:
 
-	AISystem(std::shared_ptr<MapGeneratorSystem> map_generator);
+	explicit AISystem(std::shared_ptr<MapGeneratorSystem> map_generator);
 
 	void step(float /*elapsed_ms*/, bool& isPlayerTurn);
 
-	// Depends on Turn System from Nathan.
+private:
+
+	void switch_to_idle(const Entity& enemy_entity);
+
+	void switch_to_active(const Entity& enemy_entity);
+
+	void switch_to_flinched(const Entity& enemy_entity);
 
 	bool is_player_turn();
 
 	void switch_to_player_turn();
 
-	// Depends on Map System from Yan.
+	bool is_player_spotted(const Entity& entity, const uint radius);
 
-	bool is_player_spotted(uint radius);
-
-	bool is_player_reachable();
+	bool is_player_reachable(const Entity& entity, const uint attack_range);
 
 	bool is_afraid();
 
-	void animate_alert();
-
-	void approach_player();
+	void become_alert(const Entity& entity);
 
 	void attack_player();
 
+	void approach_player();
+
 	void flee_player();
 
-private:
-
 	std::shared_ptr<MapGeneratorSystem> map_generator;
+
+	// C++ random number generator
+	std::default_random_engine rng;
+	std::uniform_real_distribution<float> uniform_dist; // number between 0..1
 };

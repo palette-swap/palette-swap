@@ -39,6 +39,8 @@ struct Hittable {
 
 // Stucture to store collision information
 struct Collision {
+	// TODO: Need avoid this entity initialization. Otherwise, id_count quickly runs out (overflow).
+
 	// Note, the first object is stored in the ECS container.entities
 	Entity other; // the second object involved in the collision
 	Collision(Entity& other) { this->other = other; };
@@ -121,7 +123,8 @@ struct ResolvedProjectile
 enum class TEXTURE_ASSET_ID : uint8_t {
 	PALADIN = 0,
 	SLUG = PALADIN + 1,
-	ARROW = SLUG + 1,
+	SLUG_ALERT = SLUG + 1,
+	ARROW = SLUG_ALERT + 1,
 	WALKABLE_1 = ARROW + 1,
 	WALL_1 = WALKABLE_1 + 1,
 	WINDOW_1 = WALL_1 + 1,

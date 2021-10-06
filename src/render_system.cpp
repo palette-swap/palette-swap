@@ -262,7 +262,7 @@ mat3 RenderSystem::create_projection_matrix()
 	MapPosition& map_position = registry.map_positions.get(registry.players.entities[0]);
 	vec2 screen_position = map_position_to_screen_position(map_position.position);
 
-	float zoom = 1.f;
+	float zoom = 0.5f;
 
 	float left = (screen_position.x - window_width_px * zoom / 2);
 	float right = (screen_position.x + window_width_px * zoom / 2);

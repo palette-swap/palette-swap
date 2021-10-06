@@ -283,8 +283,6 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		if (key == GLFW_KEY_DOWN) {
 			move_player(Direction::Down);
 		}
-
-		isPlayerTurn = !isPlayerTurn;
 	}
 
 	// Resetting game
@@ -347,23 +345,27 @@ void WorldSystem::move_player(Direction direction)
 		uvec2 new_pos = uvec2(map_pos.position.x - 1, map_pos.position.y);
 		if (map_generator->walkable(new_pos)) {
 			map_pos.position = new_pos;
+			isPlayerTurn = false;
 		}
 	}
 	else if (direction == Direction::Up && map_pos.position.y > 0) {
 		uvec2 new_pos = uvec2(map_pos.position.x, map_pos.position.y - 1);
 		if (map_generator->walkable(new_pos)) {
 			map_pos.position = new_pos;
+			isPlayerTurn = false;
 		}
 	}
 	else if (direction == Direction::Right && map_pos.position.x < room_size * tile_size - 1) {
 		uvec2 new_pos = uvec2(map_pos.position.x + 1, map_pos.position.y);
 		if (map_generator->walkable(new_pos)) {
 			map_pos.position = new_pos;
+			isPlayerTurn = false;
 		}
 	} else if (direction == Direction::Down && map_pos.position.y < room_size * tile_size - 1) {
 		uvec2 new_pos = uvec2(map_pos.position.x, map_pos.position.y + 1);
 		if (map_generator->walkable(new_pos)) {
 			map_pos.position = new_pos;
+			isPlayerTurn = false;
 		}
 	}
 }
