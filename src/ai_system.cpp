@@ -57,6 +57,11 @@ void AISystem::flee_player()
 
 // AI logic
 
+AISystem::AISystem(std::shared_ptr<MapGeneratorSystem> map_generator)
+	: map_generator(std::move(map_generator))
+{
+}
+
 void AISystem::step(float /*elapsed_ms*/)
 {
 	if (is_player_turn()) {
