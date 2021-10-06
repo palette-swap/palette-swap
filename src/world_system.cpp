@@ -144,31 +144,37 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		}
 	}
 
-
-
 	// Processing the player state
 	assert(registry.screenStates.components.size() <= 1);
     ScreenState &screen = registry.screenStates.components[0];
 
-    float min_counter_ms = 3000.f;
-	for (Entity entity : registry.deathTimers.entities) {
-		// progress timer
-		DeathTimer& counter = registry.deathTimers.get(entity);
-		counter.counter_ms -= elapsed_ms_since_last_update;
-		if(counter.counter_ms < min_counter_ms){
-		    min_counter_ms = counter.counter_ms;
+	// Resolves projectiles hitting objects, stops it for a period of time before returning it to the player
+	// Currently handles player arrow (as it is the only projectile that exists)
+    float projectile_max_counter = 2000.f;
+	for (Entity entity : registry.resolved_projectiles.entities) {
+		// Gets desired projectile
+		ResolvedProjectile& projectile = registry.resolved_projectiles.get(entity);
+		projectile.counter -= elapsed_ms_since_last_update;
+		if(projectile.counter < projectile_max_counter){
+		    projectile_max_counter = projectile.counter;
 		}
 
-		// restart the game once the death timer expired
-		if (counter.counter_ms < 0) {
-			registry.deathTimers.remove(entity);
-			screen.darken_screen_factor = 0;
-            restart_game();
-			return true;
+		// Removes the projectile from the list of projectiles that are still waiting
+		// If it is the player arrow, returns the arrow to the player's control
+		// If other projectile, removes all components of it
+		if (projectile.counter < 0) {
+			if (entity == player_arrow) {
+				player_arrow_fired = false;
+				registry.resolved_projectiles.remove(entity);
+			}
+			else {
+				registry.remove_all_components_of(entity);
+			}
+			
 		}
+		projectile_max_counter = 2000;
+
 	}
-	// reduce window brightness if any of the present salmons is dying
-	screen.darken_screen_factor = 1 - min_counter_ms / 3000;
 
 	return true;
 }
@@ -198,11 +204,12 @@ void WorldSystem::restart_game() {
 	player = createPlayer(renderer, { 640, 448 });
 	registry.colors.insert(player, { 1, 1, 1 });
 
-	// Create a new Player's Arrow instance (does not initially render)
+	// Create a new Player's Arrow instance 
 	player_arrow = createArrow(renderer, { 600, 600 });
 	registry.colors.insert(player_arrow, { 1, 1, 1 });
 	
 }
+
 
 
 // Compute collisions between entities
@@ -215,14 +222,15 @@ void WorldSystem::handle_collisions() {
 		Entity entity_other = collisionsRegistry.components[i].other;
 
 		// collisions involving projectiles
-		if (registry.projectiles.has(entity)) {
-
-			//Example of how system currently handles collisions with a certain type of entity, 
-			//Currently, arrows can hit anything with a hittable component 
+		if (registry.active_projectiles.has(entity)) {
+			//Currently, arrows can hit anything with a hittable component, which will include walls and enemies
 			//TODO: rename hittable container type 
 			//TODO: resolve with arrow 
 			if (registry.hittables.has(entity_other)) {
 				registry.motions.get(entity).velocity = { 0, 0 };
+				registry.active_projectiles.remove(entity);		
+				// Stops projectile motion, adds projectile to list of resolved projectiles
+				registry.resolved_projectiles.emplace(entity);
 			}
 		}
 	}
@@ -315,6 +323,8 @@ void WorldSystem::on_mouse_click(int button, int action, int mods) {
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
 		if (!player_arrow_fired) {
 			player_arrow_fired = true;
+			// Arrow becomes a projectile the moment it leaves the player, not while it's direction is being selected
+			registry.active_projectiles.emplace(player_arrow);
 			Motion& arrow_motion = registry.motions.get(player_arrow);
 
 			// TODO: Add better arrow physics potentially?

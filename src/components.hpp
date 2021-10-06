@@ -16,8 +16,8 @@ struct GridPosition
 };
 
 
-// 
-struct Projectile {
+// struct denoting a currently active projectile
+struct ActiveProjectile {
 
 };
 
@@ -88,6 +88,12 @@ struct Mesh
 	vec2 original_size = {1,1};
 	std::vector<ColoredVertex> vertices;
 	std::vector<uint16_t> vertex_indices;
+};
+
+// Struct for resolving projectiles, including the arrow fired by the player
+struct ResolvedProjectile
+{
+	float counter = 2000;
 };
 
 /**

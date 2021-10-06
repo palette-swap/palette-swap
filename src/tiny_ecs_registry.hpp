@@ -22,8 +22,9 @@ public:
 	ComponentContainer<DebugComponent> debugComponents;
 	ComponentContainer<vec3> colors;
 	ComponentContainer<EnemyState> enemyStates;
-	ComponentContainer<Projectile> projectiles;
 	ComponentContainer<Hittable> hittables;
+	ComponentContainer<ActiveProjectile> active_projectiles;
+	ComponentContainer<ResolvedProjectile> resolved_projectiles;
 
 	// constructor that adds all containers for looping over them
 	// IMPORTANT: Don't forget to add any newly added containers!
@@ -41,6 +42,8 @@ public:
 		registry_list.push_back(&colors);
 		registry_list.push_back(&enemyStates);
 		registry_list.push_back(&hittables);
+		registry_list.push_back(&active_projectiles);
+		registry_list.push_back(&resolved_projectiles);
 	}
 
 	void clear_all_components() {

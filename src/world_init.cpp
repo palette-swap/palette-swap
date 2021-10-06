@@ -75,7 +75,6 @@ Entity createArrow(RenderSystem* renderer, vec2 position)
 	motion.scale = mesh.original_size * 50.f;
 
 	// Create and (empty) player component to be able to refer to other enttities
-	registry.projectiles.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{ TEXTURE_ASSET_ID::ARROW, 
