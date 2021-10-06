@@ -99,7 +99,7 @@ GLFWwindow* WorldSystem::create_window(int width, int height)
 		return nullptr;
 	}
 
-	background_music = Mix_LoadMUS(audio_path("overworld.wav").c_str());
+	background_music = Mix_LoadMUS(audio_path("henry_martin.wav").c_str());
 	// Example left to demonstrate loading of WAV instead of MUS, need to check difference
 	salmon_dead_sound = Mix_LoadWAV(audio_path("salmon_dead.wav").c_str());
 
