@@ -3,49 +3,58 @@
 
 Entity TurnSystem::getActiveUnit()
 {
-	return unitQueue.front();
+	return teamQueue.front();
 }
 
-std::deque<Entity> TurnSystem::getUnitPositionInQueue(Entity unit)
+std::deque<Entity> TurnSystem::getTeamPositionInQueue(Entity unit)
 {
-	return std::find(unitQueue.begin(), unitQueue.end(), unit);
+	return std::find(teamQueue.begin(), teamQueue.end(), unit);
 }
 
-bool TurnSystem::addUnitToQueue(Entity unit)
+bool TurnSystem::teamInQueue(Entity team) 
 {
-	if (getUnitPositionInQueue(unit) == unitQueue.end()) {
-		unitQueue.push_back(unit);
+	return getTeamPositionInQueue(team) == teamQueue.end();
+}
+
+bool TurnSystem::addTeamToQueue(Entity team)
+{
+	if (teamInQueue(team)) {
+		teamQueue.push_back(team);
 		return true;
 	}
 	else return false;
 }
 
-bool TurnSystem::removeUnitFromQueue(Entity unit)
+bool TurnSystem::removeTeamFromQueue(Entity team)
 {
-	unitQueue.erase(getUnitPositionInQueue(unit));
+	teamQueue.erase(getTeamPositionInQueue(team));
 	return true;
 }
 
-bool TurnSystem::executeUnitAction(Entity unit)
+std::unique_ptr<turn_flag> TurnSystem::executeTeamAction(Entity team)
 {
-	if (getActiveUnit() == unit && queueState == QUEUE_STATE::IDLE) {
-		queueState = QUEUE_STATE::EXECUTING;
-		return true;
-	}
-	return false;
 	
+	if (getActiveUnit() == team && queueState == QUEUE_STATE::IDLE) {
+		queueState = QUEUE_STATE::EXECUTING;
+		return std::make_unique<turn_flag>(team);
+	}
+	return NULL;
 }
 
-bool TurnSystem::completeUnitAction(Entity unit)
+bool TurnSystem::completeTeamAction(Entity team)
 {
 	if ((queueState == QUEUE_STATE::EXECUTING || queueState == QUEUE_STATE::IDLE)
-				&& getActiveUnit() == unit) {
+				&& getActiveUnit() == team) {
 		queueState == QUEUE_STATE::FINISHED;
 		// Perform post-execution actions
-		unitQueue.push_back(unitQueue.front());
-		unitQueue.pop_front();
-		queueState == QUEUE_STATE::IDLE;
+		cycleQueue();
 		return true;
 	}
 	return false;
+}
+
+bool cycleQueue() {
+	teamQueue.push_back(teamQueue.front());
+	teamQueue.pop_front();
+	queueState == QUEUE_STATE::IDLE;
 }

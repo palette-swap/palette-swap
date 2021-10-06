@@ -1,5 +1,6 @@
 #pragma once
 #include <deque>
+#include <utility>
 
 #include "tiny_ecs_registry.hpp"
 #include "common.hpp"
@@ -9,11 +10,12 @@ class TurnSystem
 public:
 
 	Entity getActiveUnit();
-	std::deque<Entity> getUnitPositionInQueue(Entity unit);
-	bool executeUnitAction(Entity unit);
-	bool completeUnitAction(Entity unit);
-	bool addUnitToQueue(Entity unit);
-	bool removeUnitFromQueue(Entity unit);
+	std::deque<Entity> getTeamPositionInQueue(Entity team);
+	bool teamInQueue(Entity team);
+	std::unique_ptr<turn_flag> executeTeamAction(Entity team);
+	bool completeTeamAction(Entity team);
+	bool addTeamToQueue(Entity team);
+	bool removeTeamFromQueue(Entity team);
 	
 
 	enum class QUEUE_STATE
@@ -31,6 +33,14 @@ public:
 
 private:
 	
-	std::deque<Entity> unitQueue;
+	std::deque<Entity> teamQueue;
 
+};
+
+struct turn_flag {
+	Entity team;
+	turn_flag(Entity team) { this.team = team; }
+	~turn_flag() {
+		TurnSystem::completeTeamAction(team);
+	}
 };
