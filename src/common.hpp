@@ -4,7 +4,6 @@
 #include <fstream> // stdout, stderr..
 #include <string>
 #include <tuple>
-#include <unordered_set>
 #include <vector>
 
 // glfw (OpenGL)
@@ -71,7 +70,7 @@ static constexpr uint8_t num_room = 3;
 // TODO: This will probably overflow the supported number of textures at some point, replace this once we support
 // texture atlas
 static constexpr uint8_t num_tile_textures = 3;
-static const std::unordered_set<uint8_t> walkable_tiles = { 0 };
+static const std::set<uint8_t> walkable_tiles = { 0 };
 
 // Some ASCII art to explain... It's basically coordinate system conversion
 // TODO: This might need to be in the camera system after it's added
