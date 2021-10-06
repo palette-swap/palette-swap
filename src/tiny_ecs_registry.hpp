@@ -14,15 +14,19 @@ public:
 	ComponentContainer<Mesh*> meshPtrs;
 	ComponentContainer<RenderRequest> render_requests;
 	ComponentContainer<ScreenState> screen_states;
-	ComponentContainer<HardShell> hard_shells;
 	ComponentContainer<DebugComponent> debug_components;
 	ComponentContainer<vec3> colors;
 	ComponentContainer<Room> rooms;
 	ComponentContainer<MapPosition> map_positions;
 	ComponentContainer<EnemyState> enemy_states;
+	ComponentContainer<Hittable> hittables;
+	ComponentContainer<ActiveProjectile> active_projectiles;
+	ComponentContainer<ResolvedProjectile> resolved_projectiles;
+
 
 private:
 	// IMPORTANT: Don't forget to add any newly added containers!
+
 	std::vector<ContainerInterface*> registry_list = {
 		&death_timers,
 		&motions,
@@ -31,13 +35,16 @@ private:
 		&meshPtrs,
 		&render_requests,
 		&screen_states,
-		&hard_shells,
 		&debug_components,
 		&colors,
 		&rooms,
 		&map_positions,
-		&enemy_states
+		&enemy_states,
+    &hittables,
+    &active_projectiles,
+    &resolved_projectiles
 	};
+
 
 public:
 

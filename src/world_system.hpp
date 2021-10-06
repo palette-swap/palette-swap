@@ -42,7 +42,8 @@ public:
 private:
 	// Input callback functions
 	void on_key(int key, int /*scancode*/, int action, int mod);
-	void on_mouse_move(vec2 /*mouse_position*/);
+	void on_mouse_move(vec2 pos);
+	void on_mouse_click(int button, int action, int mods);
 
 	// restart level
 	void restart_game();
@@ -61,6 +62,7 @@ private:
 	RenderSystem* renderer = nullptr;
 	float current_speed = 0;
 	Entity player;
+	Entity player_arrow;
 	Debug& debugging;
 
 	// music references

@@ -12,6 +12,8 @@ vec2 get_bounding_box(const Motion& motion)
 // This is a SUPER APPROXIMATE check that puts a circle around the bounding boxes and sees
 // if the center point of either object is inside the other's bounding-box-circle. You can
 // surely implement a more accurate detection
+// TODO: Add exact bounding box struct for each enemy
+// And check if custom bounding boxes 
 bool collides(const Motion& motion1, const Motion& motion2)
 {
 	vec2 dp = motion1.position - motion2.position;
@@ -29,13 +31,21 @@ PhysicsSystem::PhysicsSystem(const Debug& debugging)
 {
 }
 
-void PhysicsSystem::step(float elapsed_ms, float /*window_width_px*/, float /*window_height_px*/)
+void PhysicsSystem::step(float elapsed_ms, float window_width, float window_height)
 {
-
+	// Currently still using motion component to udpate projectile position based on velocity
+	// TODO: Change check for motions into check for projectiles, update based on projectile component
 	auto& motion_registry = registry.motions;
-	for (uint i = 0; i < motion_registry.size(); i++) {
+	for(uint i = 0; i< motion_registry.size(); i++)
+	{
 
-		(void)elapsed_ms; // placeholder to silence unused warning until implemented
+		auto& motion_registry = registry.motions;
+		for (uint i = 0; i < motion_registry.size(); i++)
+		{
+			Motion& motion = motion_registry.components[i];
+			float step_seconds = 1.0f * (elapsed_ms / 1000.f);
+			motion.position += motion.velocity * step_seconds;
+		}
 	}
 
 	// Check for collisions between all moving entities
@@ -75,9 +85,25 @@ void PhysicsSystem::step(float elapsed_ms, float /*window_width_px*/, float /*wi
 			const vec2 bonding_box = get_bounding_box(motion_i);
 			float radius = sqrt(dot(bonding_box / 2.f, bonding_box / 2.f));
 			vec2 line_scale1 = { motion_i.scale.x / 10, 2 * radius };
-			/*Entity line1 = */ create_line(motion_i.position, line_scale1);
+			/*Entity line1 =*/  create_line(motion_i.position, line_scale1);
 			vec2 line_scale2 = { 2 * radius, motion_i.scale.x / 10 };
-			/*Entity line2 = */ create_line(motion_i.position, line_scale2);
+			/*Entity line2 =*/  create_line(motion_i.position, line_scale2);
 		}
 	}
 }
+
+
+// TODO: Check for collisisons between projectiles and hittables
+//void PhysicsSystem::checkProjectileCollisions() {
+//	// Check for collisions between all moving entities
+//	ComponentContainer<Motion>& motion_container = registry.motions;
+//	for (uint i = 0; i < motion_container.components.size(); i++)
+//	{
+//		Motion& motion_i = motion_container.components[i];
+//		Entity entity_i = motion_container.entities[i];
+//		for (uint j = 0; j < motion_container.components.size(); j++) // i+1
+//		{
+//			}
+//		}
+//	}
+//}

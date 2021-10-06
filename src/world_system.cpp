@@ -9,6 +9,8 @@
 #include "physics_system.hpp"
 
 // Game configuration
+bool player_arrow_fired = false;
+const size_t projectile_speed = 1;
 
 // Create the world
 WorldSystem::WorldSystem(Debug& debugging, std::shared_ptr<MapGeneratorSystem> map)
@@ -84,8 +86,12 @@ GLFWwindow* WorldSystem::create_window(int width, int height)
 	auto cursor_pos_redirect = [](GLFWwindow* wnd, double _0, double _1) {
 		static_cast<WorldSystem*>(glfwGetWindowUserPointer(wnd))->on_mouse_move({ _0, _1 });
 	};
+	auto mouse_click_redirect = [](GLFWwindow* wnd, int _0, int _1, int _2) {
+		static_cast<WorldSystem*>(glfwGetWindowUserPointer(wnd))->on_mouse_click(_0, _1, _2);
+	};
 	glfwSetKeyCallback(window, key_redirect);
 	glfwSetCursorPosCallback(window, cursor_pos_redirect);
+	glfwSetMouseButtonCallback(window, mouse_click_redirect);
 
 	//////////////////////////////////////
 	// Loading music and sounds with SDL
@@ -139,42 +145,36 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		registry.remove_all_components_of(registry.debug_components.entities.back());
 	}
 
-	// Removing out of screen entities
-	auto& motions_registry = registry.motions;
-
-	// Remove entities that leave the screen on the left side
-	// Iterate backwards to be able to remove without unterfering with the next object to visit
-	// (the containers exchange the last element with the current)
-	for (int i = (int)motions_registry.components.size() - 1; i >= 0; --i) {
-		Motion& motion = motions_registry.components[i];
-		if (motion.position.x + abs(motion.scale.x) < 0.f) {
-			registry.remove_all_components_of(motions_registry.entities[i]);
-		}
-	}
-
 	// Processing the player state
 	assert(registry.screen_states.components.size() <= 1);
 	ScreenState& screen = registry.screen_states.components[0];
 
-	float min_counter_ms = 3000.f;
-	for (Entity entity : registry.death_timers.entities) {
-		// progress timer
-		DeathTimer& counter = registry.death_timers.get(entity);
-		counter.counter_ms -= elapsed_ms_since_last_update;
-		if (counter.counter_ms < min_counter_ms) {
-			min_counter_ms = counter.counter_ms;
+	// Resolves projectiles hitting objects, stops it for a period of time before returning it to the player
+	// Currently handles player arrow (as it is the only projectile that exists)
+    float projectile_max_counter = 2000.f;
+	for (Entity entity : registry.resolved_projectiles.entities) {
+		// Gets desired projectile
+		ResolvedProjectile& projectile = registry.resolved_projectiles.get(entity);
+		projectile.counter -= elapsed_ms_since_last_update;
+		if(projectile.counter < projectile_max_counter){
+		    projectile_max_counter = projectile.counter;
 		}
 
-		// restart the game once the death timer expired
-		if (counter.counter_ms < 0) {
-			registry.death_timers.remove(entity);
-			screen.darken_screen_factor = 0;
-			restart_game();
-			return true;
+		// Removes the projectile from the list of projectiles that are still waiting
+		// If it is the player arrow, returns the arrow to the player's control
+		// If other projectile, removes all components of it
+		if (projectile.counter < 0) {
+			if (entity == player_arrow) {
+				player_arrow_fired = false;
+				registry.resolved_projectiles.remove(entity);
+			}
+			else {
+				registry.remove_all_components_of(entity);
+			}
+			
 		}
+		projectile_max_counter = 2000;
 	}
-	// reduce window brightness if any of the present salmons is dying
-	screen.darken_screen_factor = 1 - min_counter_ms / 3000;
 
 	return true;
 }
@@ -214,18 +214,23 @@ void WorldSystem::restart_game()
 	}
 
 	// a random starting position... probably need to update this
-	vec2 player_starting_point = uvec2(51, 51);
+	uvec2 player_starting_point = uvec2(51, 51);
 	// Create a new Player instance and shift player onto a tile
 	player = create_player(renderer, player_starting_point);
 
-	registry.colors.insert(player, { 1, 0.8f, 0.8f });
+	registry.colors.insert(player, { 1, 1, 1 });
 
-
+	// Create a new player arrow instance
+	vec2 player_location = map_position_to_screen_position(player_starting_point);
+	player_arrow = create_arrow(renderer, player_location);
 	// Creates a single enemy instance, (TODO: needs to be updated with position based on grid)
 	// Also requires naming scheme for randomly generated enemies, for later reference
-	Entity enemy = create_enemy(renderer, { 680, 600 });
+	uvec2 enemy_starting_point = uvec2(53, 54);
+	Entity enemy = create_enemy(renderer, enemy_starting_point);
 	registry.colors.insert(enemy, { 1, 1, 1 });
 }
+
+
 
 // Compute collisions between entities
 void WorldSystem::handle_collisions()
@@ -237,19 +242,16 @@ void WorldSystem::handle_collisions()
 		Entity entity = collisions_registry.entities[i];
 		Entity entity_other = collisions_registry.components[i].other;
 
-		// For now, we are only interested in collisions that involve the salmon
-		if (registry.players.has(entity)) {
-			// Player& player = registry.players.get(entity);
-
-			// Example of how system currently handles collisions with a certain type of entity,
-			// will be replaced with other collisions types
-			if (registry.hard_shells.has(entity_other)) {
-				// initiate death unless already dying
-				if (!registry.death_timers.has(entity)) {
-					// Scream, reset timer, and make the salmon sink
-					registry.death_timers.emplace(entity);
-					registry.motions.get(entity).velocity = { 0, 80 };
-				}
+		// collisions involving projectiles
+		if (registry.active_projectiles.has(entity)) {
+			//Currently, arrows can hit anything with a hittable component, which will include walls and enemies
+			//TODO: rename hittable container type 
+			//TODO: resolve with arrow 
+			if (registry.hittables.has(entity_other)) {
+				registry.motions.get(entity).velocity = { 0, 0 };
+				registry.active_projectiles.remove(entity);		
+				// Stops projectile motion, adds projectile to list of resolved projectiles
+				registry.resolved_projectiles.emplace(entity);
 			}
 		}
 	}
@@ -307,6 +309,32 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 	current_speed = fmax(0.f, current_speed);
 }
 
+ //Tracks position of cursor, points arrow at potential fire location
+ //Only enables if an arrow has not already been fired
+ //TODO: Integrate into turn state to only enable if player's turn is on
+void WorldSystem::on_mouse_move(vec2 mouse_position) {
+
+	if (!player_arrow_fired) {
+		Motion& arrow_motion = registry.motions.get(player_arrow);
+		MapPosition& player_map_position= registry.map_positions.get(player);
+
+		vec2 player_screen_position = map_position_to_screen_position(player_map_position.position);
+
+		//Calculated Euclidean difference between player and arrow
+		vec2 eucl_diff = mouse_position - player_screen_position;
+
+		// Calculates arrow position based on position of mouse relative to player
+		vec2 new_arrow_position = normalize(eucl_diff) * 20.f + player_screen_position;
+		arrow_motion.position = new_arrow_position;
+
+
+		// Calculates arrow angle based on position of mouse
+		arrow_motion.angle = atan2(eucl_diff.x, -eucl_diff.y);
+	}
+}
+
+
+
 void WorldSystem::move_player(Direction direction)
 {
 	MapPosition& map_pos = registry.map_positions.get(player);
@@ -317,12 +345,14 @@ void WorldSystem::move_player(Direction direction)
 		if (map_generator->walkable(new_pos)) {
 			map_pos.position = new_pos;
 		}
-	} else if (direction == Direction::Up && map_pos.position.y > 0) {
+	}
+	else if (direction == Direction::Up && map_pos.position.y > 0) {
 		uvec2 new_pos = uvec2(map_pos.position.x, map_pos.position.y - 1);
 		if (map_generator->walkable(new_pos)) {
 			map_pos.position = new_pos;
 		}
-	} else if (direction == Direction::Right && map_pos.position.x < room_size * tile_size - 1) {
+	}
+	else if (direction == Direction::Right && map_pos.position.x < room_size * tile_size - 1) {
 		uvec2 new_pos = uvec2(map_pos.position.x + 1, map_pos.position.y);
 		if (map_generator->walkable(new_pos)) {
 			map_pos.position = new_pos;
@@ -335,4 +365,19 @@ void WorldSystem::move_player(Direction direction)
 	}
 }
 
-void WorldSystem::on_mouse_move(vec2 /*mouse_position*/) { }
+// Fires arrow at a preset speed if it has not been fired already
+// TODO: Integrate into turn state to only enable if player's turn is on
+void WorldSystem::on_mouse_click(int button, int action, int mods) {
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+		if (!player_arrow_fired) {
+			player_arrow_fired = true;
+			// Arrow becomes a projectile the moment it leaves the player, not while it's direction is being selected
+			registry.active_projectiles.emplace(player_arrow);
+			Motion& arrow_motion = registry.motions.get(player_arrow);
+
+			// TODO: Add better arrow physics potentially?
+			arrow_motion.velocity = { sin(arrow_motion.angle) * projectile_speed,
+									  -cos(arrow_motion.angle) * projectile_speed};
+		}
+	}
+}
