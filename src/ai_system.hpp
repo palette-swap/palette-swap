@@ -13,33 +13,51 @@ public:
 
 	explicit AISystem(std::shared_ptr<MapGeneratorSystem> map_generator);
 
-	void step(float /*elapsed_ms*/, bool& isPlayerTurn);
+	void step(float elapsed_ms, bool& isPlayerTurn);
 
 private:
 
+	// Switch enemy state to IDLE.
 	void switch_to_idle(const Entity& enemy_entity);
 
+	// Switch enemy state to ACTIVE.
 	void switch_to_active(const Entity& enemy_entity);
 
+	// Switch enemy state to FLINCHED.
 	void switch_to_flinched(const Entity& enemy_entity);
 
+	// Check if it is player's turn.
 	bool is_player_turn();
 
+	// Switch to player's turn.
 	void switch_to_player_turn();
 
-	bool is_player_spotted(const Entity& entity, const uint radius);
+	// Check if the player is spotted by an entity within its radius.
+	bool is_player_spotted(const Entity& entity, uint radius);
 
-	bool is_player_reachable(const Entity& entity, const uint attack_range);
+	// Check if the player is reachable by an entity within its attack range.
+	bool is_player_reachable(const Entity& entity, uint attack_range);
 
-	bool is_afraid();
+	// Check if an entity is afraid.
+	bool is_afraid(const Entity& entity);
 
+	// Check if an entity is at its nest.
+	bool is_at_nest(const Entity& entity);
+
+	// An entity becomes alert.
 	void become_alert(const Entity& entity);
 
-	void attack_player();
+	// An entity attackes the player.
+	void attack_player(const Entity& entity);
 
-	void approach_player();
+	// An entity approaches the player.
+	bool approach_player(const Entity& entity);
 
-	void flee_player();
+	// An entity approaches its nest.
+	bool approach_nest(const Entity& entity);
+
+	// An entity moves to a targeted map position.
+	bool move(const Entity& entity, const uvec2& map_pos);
 
 	std::shared_ptr<MapGeneratorSystem> map_generator;
 

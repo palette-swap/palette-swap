@@ -60,6 +60,7 @@ Entity create_enemy(RenderSystem* renderer, uvec2 position)
 								   { TEXTURE_ASSET_ID::SLUG, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE });
 
 	registry.enemy_states.emplace(entity);
+	registry.enemy_nest_positions.emplace(entity, position);
 
 	return entity;
 }

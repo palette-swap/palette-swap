@@ -19,6 +19,7 @@ public:
 	ComponentContainer<Room> rooms;
 	ComponentContainer<MapPosition> map_positions;
 	ComponentContainer<EnemyState> enemy_states;
+	ComponentContainer<EnemyNestPosition> enemy_nest_positions;
 	ComponentContainer<Hittable> hittables;
 	ComponentContainer<ActiveProjectile> active_projectiles;
 	ComponentContainer<ResolvedProjectile> resolved_projectiles;
@@ -40,6 +41,7 @@ private:
 		&rooms,
 		&map_positions,
 		&enemy_states,
+		&enemy_nest_positions,
     &hittables,
     &active_projectiles,
     &resolved_projectiles

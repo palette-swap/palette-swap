@@ -225,9 +225,9 @@ void WorldSystem::restart_game()
 	player_arrow = create_arrow(renderer, player_location);
 	// Creates a single enemy instance, (TODO: needs to be updated with position based on grid)
 	// Also requires naming scheme for randomly generated enemies, for later reference
-	uvec2 enemy_starting_point = uvec2(53, 54);
+	uvec2 enemy_starting_point = uvec2(55, 56);
 	Entity enemy = create_enemy(renderer, enemy_starting_point);
-	registry.colors.insert(enemy, { 1, 1, 1 });
+	registry.colors.insert(enemy, { 1, 4, 1 });
 }
 
 

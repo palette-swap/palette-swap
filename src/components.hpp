@@ -39,11 +39,15 @@ struct Hittable {
 
 // Stucture to store collision information
 struct Collision {
-	// TODO: Need avoid this entity initialization. Otherwise, id_count quickly runs out (overflow).
+	// Maintenance Note: make sure initializer list is applied here.
+	// Otherwise, id_count in Entity quickly runs out (overflow) during collision checks.
 
 	// Note, the first object is stored in the ECS container.entities
 	Entity other; // the second object involved in the collision
-	Collision(Entity& other) { this->other = other; };
+	Collision(const Entity& other)
+		: other(other) {
+		this->other = other;
+	};
 };
 
 // Data structure for toggling debug mode
@@ -218,4 +222,13 @@ enum class ENEMY_STATE_ID { IDLE = 0, ACTIVE = IDLE + 1, FLINCHED = ACTIVE + 1 }
 // Structure to store enemy state.
 struct EnemyState {
 	ENEMY_STATE_ID current_state = ENEMY_STATE_ID::IDLE;
+};
+
+// Structure to store enemy nest position.
+struct EnemyNestPosition {
+	uvec2 position;
+	EnemyNestPosition(const uvec2& position)
+		: position(position) {
+		assert(position.x < map_size * room_size && position.y < map_size * room_size);
+	};
 };
