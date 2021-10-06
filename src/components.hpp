@@ -13,11 +13,6 @@
 struct Player {
 };
 
-struct GridPosition 
-{
-	ivec2 position;
-};
-
 
 // struct denoting a currently active projectile
 struct ActiveProjectile {
@@ -126,7 +121,6 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 	WALL_1 = WALKABLE_1 + 1,
 	WINDOW_1 = WALL_1 + 1,
 	TEXTURE_COUNT = WINDOW_1 + 1
-
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 
