@@ -37,13 +37,13 @@ private:
 	std::unordered_map<unsigned int, unsigned int> map_entity_component_id; // the entity is cast to uint to be hashable.
 	bool registered = false;
 
+public:
+
 	// Container of all components of type 'Component'
 	std::vector<Component> components;
 
 	// The corresponding entities
 	std::vector<Entity> entities;
-
-public:
 
 	// Constructor that registers the type
 	ComponentContainer() { }

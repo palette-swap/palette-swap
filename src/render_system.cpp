@@ -124,7 +124,7 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 		}
     
 		auto textures_loc = glGetUniformLocation(program, "tile_textures");
-		glUniform1iv(textures_loc, num_tile_textures, samplers.data());
+		glUniform1iv(textures_loc, num_tile_textures, samplers);
 	} else {
 		assert(false && "Type of render request not supported");
 	}
