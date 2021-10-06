@@ -6,7 +6,6 @@
 vec2 get_bounding_box(const Motion& motion)
 {
 	// abs is to avoid negative scale due to the facing direction.
-	
 	return { abs(motion.scale.x), abs(motion.scale.y) };
 }
 
@@ -20,7 +19,7 @@ bool collides(const Motion& motion1, const Motion& motion2)
 	vec2 dp = motion1.position - motion2.position;
 	float dist_squared = dot(dp, dp);
 	const vec2 other_bonding_box = get_bounding_box(motion1) / 2.f;
-	const float other_r_squared =  dot(other_bonding_box, other_bonding_box);
+	const float other_r_squared = dot(other_bonding_box, other_bonding_box);
 	const vec2 my_bonding_box = get_bounding_box(motion2) / 2.f;
 	const float my_r_squared = dot(my_bonding_box, my_bonding_box);
 	const float r_squared = max(other_r_squared, my_r_squared);
@@ -32,7 +31,7 @@ PhysicsSystem::PhysicsSystem(const Debug& debugging)
 {
 }
 
-void PhysicsSystem:: step(float elapsed_ms, float window_width, float window_height)
+void PhysicsSystem::step(float elapsed_ms, float window_width, float window_height)
 {
 	// Currently still using motion component to udpate projectile position based on velocity
 	// TODO: Change check for motions into check for projectiles, update based on projectile component
@@ -86,9 +85,9 @@ void PhysicsSystem:: step(float elapsed_ms, float window_width, float window_hei
 			const vec2 bonding_box = get_bounding_box(motion_i);
 			float radius = sqrt(dot(bonding_box / 2.f, bonding_box / 2.f));
 			vec2 line_scale1 = { motion_i.scale.x / 10, 2 * radius };
-			Entity line1 =  create_line(motion_i.position, line_scale1);
+			/*Entity line1 =*/  create_line(motion_i.position, line_scale1);
 			vec2 line_scale2 = { 2 * radius, motion_i.scale.x / 10 };
-			Entity line2 =  create_line(motion_i.position, line_scale2);
+			/*Entity line2 =*/  create_line(motion_i.position, line_scale2);
 		}
 	}
 }
