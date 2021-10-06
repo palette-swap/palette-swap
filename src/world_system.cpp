@@ -145,19 +145,6 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		registry.remove_all_components_of(registry.debug_components.entities.back());
 	}
 
-	// Removing out of screen entities
-	auto& motions_registry = registry.motions;
-
-	// Remove entities that leave the screen on the left side
-	// Iterate backwards to be able to remove without unterfering with the next object to visit
-	// (the containers exchange the last element with the current)
-	for (int i = (int)motions_registry.components.size() - 1; i >= 0; --i) {
-		Motion& motion = motions_registry.components[i];
-		if (motion.position.x + abs(motion.scale.x) < 0.f) {
-			registry.remove_all_components_of(motions_registry.entities[i]);
-		}
-	}
-
 	// Processing the player state
 	assert(registry.screen_states.components.size() <= 1);
 	ScreenState& screen = registry.screen_states.components[0];
@@ -227,7 +214,7 @@ void WorldSystem::restart_game()
 	}
 
 	// a random starting position... probably need to update this
-	vec2 player_starting_point = uvec2(51, 51);
+	uvec2 player_starting_point = uvec2(51, 51);
 	// Create a new Player instance and shift player onto a tile
 	player = create_player(renderer, player_starting_point);
 
@@ -238,7 +225,8 @@ void WorldSystem::restart_game()
 	player_arrow = create_arrow(renderer, player_location);
 	// Creates a single enemy instance, (TODO: needs to be updated with position based on grid)
 	// Also requires naming scheme for randomly generated enemies, for later reference
-	Entity enemy = create_enemy(renderer, { 680, 600 });
+	uvec2 enemy_starting_point = uvec2(53, 54);
+	Entity enemy = create_enemy(renderer, enemy_starting_point);
 	registry.colors.insert(enemy, { 1, 1, 1 });
 }
 
