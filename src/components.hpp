@@ -46,8 +46,8 @@ struct Collision {
 
 // Data structure for toggling debug mode
 struct Debug {
-	bool in_debug_mode = 0;
-	bool in_freeze_mode = 0;
+	bool in_debug_mode = false;
+	bool in_freeze_mode = false;
 };
 
 // Sets the brightness of the screen
@@ -79,7 +79,7 @@ struct TexturedVertex {
 
 // Mesh datastructure for storing vertex and index buffers
 struct Mesh {
-	static bool loadFromOBJFile(const std::string& obj_path,
+	static bool load_from_obj_file(const std::string& obj_path,
 								std::vector<ColoredVertex>& out_vertices,
 								std::vector<uint16_t>& out_vertex_indices,
 								vec2& out_size);
@@ -148,14 +148,14 @@ enum class GEOMETRY_BUFFER_ID : uint8_t {
 
 	// Note: Keep ROOM at the bottom because of hacky implementation,
 	// this is somewhat hacky, this is actually a single geometry related to a room, but
-	// we don't want to update the Enum every time we add a new room. It's numRoom - 1
+	// we don't want to update the Enum every time we add a new room. It's num_room - 1
 	// because we want to bind vertex buffer for each room but not for the ROOM enum, it's
 	// just a placeholder to tell us it's a room geometry, which geometry will be defined
 	// by the room struct
 	ROOM = SCREEN_TRIANGLE + 1,
 	GEOMETRY_COUNT = ROOM + 1
 };
-const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT + numRoom - 1;
+const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT + num_room - 1;
 
 struct RenderRequest {
 	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
@@ -179,11 +179,11 @@ struct MapPosition {
 	uvec2 position;
 	// represent if the object needs to be scale
 	vec2 scale;
-	MapPosition(uvec2 pos, vec2 scaling)
+	MapPosition(uvec2 position, vec2 scale)
+		: position(position)
+		, scale(scale)
 	{
-		assert(pos.x < 99 && pos.y < 99);
-		position = pos;
-		scale = scaling;
+		assert(position.x < 99 && position.y < 99);
 	};
 };
 
@@ -196,8 +196,8 @@ struct Room {
 // For TileMap vertex buffers, we need a separate tile_texture float because we want
 // to be able to specify different textures for a room
 struct TileMapVertex {
-	vec3 position;
-	vec2 texcoord;
+	vec3 position = vec3(0);
+	vec2 texcoord = vec3(0);
 
 	// each tile texture corresponds to a 32*32 png
 	// TODO: modify this once we support texture atlas

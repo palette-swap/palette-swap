@@ -21,7 +21,7 @@ WorldSystem::WorldSystem(Debug& debugging, std::shared_ptr<MapGeneratorSystem> m
 	rng = std::default_random_engine(std::random_device()());
 
 	// Instantiate MapGeneratorSystem class
-	mapGenerator = std::move(map);
+	map_generator = std::move(map);
 }
 
 WorldSystem::~WorldSystem()
@@ -141,8 +141,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	glfwSetWindowTitle(window, title_ss.str().c_str());
 
 	// Remove debug info from the last step
-	while (!registry.debugComponents.entities.empty()) {
-		registry.remove_all_components_of(registry.debugComponents.entities.back());
+	while (!registry.debug_components.entities.empty()) {
+		registry.remove_all_components_of(registry.debug_components.entities.back());
 	}
 
 	// Removing out of screen entities
@@ -159,8 +159,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	}
 
 	// Processing the player state
-	assert(registry.screenStates.components.size() <= 1);
-	ScreenState& screen = registry.screenStates.components[0];
+	assert(registry.screen_states.components.size() <= 1);
+	ScreenState& screen = registry.screen_states.components[0];
 
 	// Resolves projectiles hitting objects, stops it for a period of time before returning it to the player
 	// Currently handles player arrow (as it is the only projectile that exists)
@@ -187,7 +187,6 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 			
 		}
 		projectile_max_counter = 2000;
-
 	}
 
 	return true;
@@ -212,18 +211,18 @@ void WorldSystem::restart_game()
 	registry.list_all_components();
 
 	// Generate the levels
-	mapGenerator->generateLevels();
+	map_generator->generate_levels();
 
 	vec2 middle = { window_width_px / 2, window_height_px / 2 };
 
-	const MapGeneratorSystem::mapping& mapping = mapGenerator->currentMap();
-	vec2 top_left_corner = middle - vec2(TILE_SIZE * ROOM_SIZE * MAP_SIZE / 2, TILE_SIZE * ROOM_SIZE * MAP_SIZE / 2);
+	const MapGeneratorSystem::Mapping& mapping = map_generator->current_map();
+	vec2 top_left_corner = middle - vec2(tile_size * room_size * map_size / 2, tile_size * room_size * map_size / 2);
 	for (size_t row = 0; row < mapping.size(); row++) {
 		for (size_t col = 0; col < mapping[0].size(); col++) {
 			vec2 position = top_left_corner +
-				vec2(TILE_SIZE * ROOM_SIZE / 2, TILE_SIZE * ROOM_SIZE / 2) +
-				vec2(col * TILE_SIZE * ROOM_SIZE, row * TILE_SIZE * ROOM_SIZE);
-			createRoom(renderer, position, mapping.at(row).at(col));
+				vec2(tile_size * room_size / 2, tile_size * room_size / 2) +
+				vec2(col * tile_size * room_size, row * tile_size * room_size);
+			create_room(renderer, position, mapping.at(row).at(col));
 		}
 	}
 

@@ -57,15 +57,15 @@ static constexpr int window_height_px = 1080;
 
 // Map constants
 // Each tile is 32x32 pixels
-static constexpr float TILE_SIZE = 32.f;
+static constexpr float tile_size = 32.f;
 // Each room is 10x10 tiles
-static constexpr int ROOM_SIZE = 10;
+static constexpr int room_size = 10;
 // Each map is 10x10 rooms
-static constexpr int MAP_SIZE = 10;
+static constexpr int map_size = 10;
 // RoomType is just a uint8_t
 using RoomType = uint8_t;
 
-static constexpr uint8_t numRoom = 3;
+static constexpr uint8_t num_room = 3;
 
 // TODO: This will probably overflow the supported number of textures at some point, replace this once we support
 // texture atlas
@@ -105,6 +105,5 @@ inline vec2 map_position_to_screen_position(uvec2 pos)
 {
 	vec2 top_left_corner
 		= vec2((window_width_px - TILE_SIZE * ROOM_SIZE * MAP_SIZE) / 2, (window_height_px - TILE_SIZE * ROOM_SIZE * MAP_SIZE) / 2);
-	vec2 ret = vec2(pos.x * 32 + top_left_corner.x, pos.y * 32 + top_left_corner.y);
 	return vec2(pos.x * 32 + top_left_corner.x, pos.y * 32 + top_left_corner.y) + vec2(TILE_SIZE / 2, TILE_SIZE / 2);
 }

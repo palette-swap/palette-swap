@@ -8,11 +8,11 @@
 
 #include "tiny_ecs_registry.hpp"
 
-void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
+void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 {
 	Transform transform;
-	if (registry.mapPositions.has(entity)) {
-		MapPosition& map_position = registry.mapPositions.get(entity);
+	if (registry.map_positions.has(entity)) {
+		MapPosition& map_position = registry.map_positions.get(entity);
 		transform.translate(map_position_to_screen_position(map_position.position));
 		transform.scale(map_position.scale);
 	} else {
@@ -25,8 +25,8 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 		transform.scale(motion.scale);
 	}
 
-	assert(registry.renderRequests.has(entity));
-	const RenderRequest& render_request = registry.renderRequests.get(entity);
+	assert(registry.render_requests.has(entity));
+	const RenderRequest& render_request = registry.render_requests.get(entity);
 
 	const auto used_effect_enum = (GLuint)render_request.used_effect;
 	assert(used_effect_enum != (GLuint)EFFECT_ASSET_ID::EFFECT_COUNT);
@@ -68,8 +68,8 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 		glActiveTexture(GL_TEXTURE0);
 		gl_has_errors();
 
-		assert(registry.renderRequests.has(entity));
-		GLuint texture_id = texture_gl_handles.at((GLuint)registry.renderRequests.get(entity).used_texture);
+		assert(registry.render_requests.has(entity));
+		GLuint texture_id = texture_gl_handles.at((GLuint)registry.render_requests.get(entity).used_texture);
 
 		glBindTexture(GL_TEXTURE_2D, texture_id);
 		gl_has_errors();
@@ -113,22 +113,30 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 		// 2. (Preferred) Use a sprite sheet(tilemap atlas), access multiple tiles for
 		// a single load
 		int samplers[num_tile_textures];
-		for (int i = 0; i < num_tile_textures; i++) {
-			glBindTextureUnit(i, texture_gl_handles[(GLuint)tile_textures[i]]);
+		for (int i = 0; i < num_tile_textures; i++)
+		{
+			// Maintenance Note:
+			// To support OpenGL 3.3, glBindTextureUnit (OpenGL 4.5 feature) is replaced by glActiveTexture + glBindTexture.
+			glActiveTexture(GL_TEXTURE0 + i);
+			glBindTexture(GL_TEXTURE_2D, texture_gl_handles[(GLuint)tile_textures[i]]);
+      
 			samplers[i] = i;
 		}
-
+    
 		auto textures_loc = glGetUniformLocation(program, "tile_textures");
-		glUniform1iv(textures_loc, num_tile_textures, samplers);
+		glUniform1iv(textures_loc, num_tile_textures, samplers.data());
 	} else {
 		assert(false && "Type of render request not supported");
 	}
 
 	// Getting uniform locations for glUniform* calls
-	GLint color_uloc = glGetUniformLocation(program, "fcolor");
-	const vec3 color = registry.colors.has(entity) ? registry.colors.get(entity) : vec3(1);
-	glUniform3fv(color_uloc, 1, glm::value_ptr(color));
-	gl_has_errors();
+	if (registry.colors.has(entity))
+	{
+		GLint color_uloc = glGetUniformLocation(program, "fcolor");
+		const vec3 color = registry.colors.get(entity);
+		glUniform3fv(color_uloc, 1, glm::value_ptr(color));
+		gl_has_errors();
+	}
 
 	// Get number of indices from index buffer, which has elements uint16_t
 	GLint size = 0;
@@ -153,7 +161,7 @@ void RenderSystem::drawTexturedMesh(Entity entity, const mat3& projection)
 
 // draw the intermediate texture to the screen, with some distortion to simulate
 // water
-void RenderSystem::drawToScreen()
+void RenderSystem::draw_to_screen()
 {
 	// Setting shaders
 	// get the water texture, sprite mesh, and program
@@ -184,7 +192,7 @@ void RenderSystem::drawToScreen()
 	GLint time_uloc = glGetUniformLocation(water_program, "time");
 	GLint dead_timer_uloc = glGetUniformLocation(water_program, "darken_screen_factor");
 	glUniform1f(time_uloc, (float)(glfwGetTime() * 10.0f));
-	ScreenState& screen = registry.screenStates.get(screen_state_entity);
+	ScreenState& screen = registry.screen_states.get(screen_state_entity);
 	glUniform1f(dead_timer_uloc, screen.darken_screen_factor);
 	gl_has_errors();
 	// Set the vertex position and vertex texture coordinates (both stored in the
@@ -225,26 +233,26 @@ void RenderSystem::draw()
 							  // and alpha blending, one would have to sort
 							  // sprites back to front
 	gl_has_errors();
-	mat3 projection_2d = createProjectionMatrix();
+	mat3 projection_2d = create_projection_matrix();
 	// Draw all textured meshes that have a position and size component
-	for (Entity entity : registry.renderRequests.entities) {
-		if (!registry.motions.has(entity) && !registry.mapPositions.has(entity)) {
+	for (Entity entity : registry.render_requests.entities) {
+		if (!registry.motions.has(entity) && !registry.map_positions.has(entity)) {
 			continue;
 		}
 		// Note, its not very efficient to access elements indirectly via the entity
 		// albeit iterating through all Sprites in sequence. A good point to optimize
-		drawTexturedMesh(entity, projection_2d);
+		draw_textured_mesh(entity, projection_2d);
 	}
 
 	// Truely render to the screen
-	drawToScreen();
+	draw_to_screen();
 
 	// flicker-free display with a double buffer
 	glfwSwapBuffers(window);
 	gl_has_errors();
 }
 
-mat3 RenderSystem::createProjectionMatrix()
+mat3 RenderSystem::create_projection_matrix()
 {
 	// Fake projection matrix, scales with respect to window coordinates
 	float left = 0.f;

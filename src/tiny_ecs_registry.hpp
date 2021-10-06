@@ -5,74 +5,84 @@
 #include "tiny_ecs.hpp"
 
 class ECSRegistry {
-	// Callbacks to remove a particular or all entities in the system
-	std::vector<ContainerInterface*> registry_list;
-
 public:
 	// Manually created list of all components this game has
-	ComponentContainer<DeathTimer> deathTimers;
+	ComponentContainer<DeathTimer> death_timers;
 	ComponentContainer<Motion> motions;
 	ComponentContainer<Collision> collisions;
 	ComponentContainer<Player> players;
 	ComponentContainer<Mesh*> meshPtrs;
-	ComponentContainer<RenderRequest> renderRequests;
-	ComponentContainer<ScreenState> screenStates;
-	ComponentContainer<DebugComponent> debugComponents;
+	ComponentContainer<RenderRequest> render_requests;
+	ComponentContainer<ScreenState> screen_states;
+	ComponentContainer<HardShell> hard_shells;
+	ComponentContainer<DebugComponent> debug_components;
 	ComponentContainer<vec3> colors;
 	ComponentContainer<Room> rooms;
-	ComponentContainer<MapPosition> mapPositions;
-	ComponentContainer<EnemyState> enemyStates;
-	ComponentContainer<Hittable> hittables;
+	ComponentContainer<MapPosition> map_positions;
+	ComponentContainer<EnemyState> enemy_states;
+  ComponentContainer<Hittable> hittables;
 	ComponentContainer<ActiveProjectile> active_projectiles;
 	ComponentContainer<ResolvedProjectile> resolved_projectiles;
 
-	// constructor that adds all containers for looping over them
-	// IMPORTANT: Don't forget to add any newly added containers!
-	ECSRegistry() noexcept
-	{
-		registry_list.push_back(&deathTimers);
-		registry_list.push_back(&motions);
-		registry_list.push_back(&collisions);
-		registry_list.push_back(&players);
-		registry_list.push_back(&meshPtrs);
-		registry_list.push_back(&renderRequests);
-		registry_list.push_back(&screenStates);
-		registry_list.push_back(&debugComponents);
-		registry_list.push_back(&colors);
-		registry_list.push_back(&rooms);
-		registry_list.push_back(&mapPositions);
-		registry_list.push_back(&enemyStates);
-		registry_list.push_back(&hittables);
-		registry_list.push_back(&active_projectiles);
-		registry_list.push_back(&resolved_projectiles);
-	}
 
+private:
+	// IMPORTANT: Don't forget to add any newly added containers!
+
+	std::vector<ContainerInterface*> registry_list = {
+		&death_timers,
+		&motions,
+		&collisions,
+		&players,
+		&meshPtrs,
+		&render_requests,
+		&screen_states,
+		&hard_shells,
+		&debug_components,
+		&colors,
+		&rooms,
+		&map_positions,
+		&enemy_states,
+    &hittables,
+    &active_projectiles,
+    &resolved_projectiles
+	};
+
+
+public:
+
+	// Callbacks to remove a particular or all entities in the system
 	void clear_all_components()
 	{
-		for (ContainerInterface* reg : registry_list)
+		for (ContainerInterface* reg : registry_list) {
 			reg->clear();
+		}
 	}
 
 	void list_all_components()
 	{
 		printf("Debug info on all registry entries:\n");
-		for (ContainerInterface* reg : registry_list)
-			if (reg->size() > 0)
+		for (ContainerInterface* reg : registry_list) {
+			if (reg->size() > 0) {
 				printf("%4d components of type %s\n", (int)reg->size(), typeid(*reg).name());
+			}
+		}
 	}
 
 	void list_all_components_of(Entity e)
 	{
 		printf("Debug info on components of entity %u:\n", (unsigned int)e);
-		for (ContainerInterface* reg : registry_list)
-			if (reg->has(e))
+		for (ContainerInterface* reg : registry_list) {
+			if (reg->has(e)) {
 				printf("type %s\n", typeid(*reg).name());
+			}
+		}
 	}
 
 	void remove_all_components_of(Entity e)
 	{
-		for (ContainerInterface* reg : registry_list)
+		for (ContainerInterface* reg : registry_list) {
 			reg->remove(e);
+		}
 	}
 };
 
