@@ -14,7 +14,6 @@ public:
 	ComponentContainer<Mesh*> meshPtrs;
 	ComponentContainer<RenderRequest> render_requests;
 	ComponentContainer<ScreenState> screen_states;
-	ComponentContainer<HardShell> hard_shells;
 	ComponentContainer<DebugComponent> debug_components;
 	ComponentContainer<vec3> colors;
 	ComponentContainer<Room> rooms;
@@ -36,7 +35,6 @@ private:
 		&meshPtrs,
 		&render_requests,
 		&screen_states,
-		&hard_shells,
 		&debug_components,
 		&colors,
 		&rooms,

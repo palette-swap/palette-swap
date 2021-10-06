@@ -345,30 +345,29 @@ void WorldSystem::on_mouse_move(vec2 mouse_position) {
 
 void WorldSystem::move_player(Direction direction)
 {
-	MapPosition& map_pos = registry.mapPositions.get(player);
+	MapPosition& map_pos = registry.map_positions.get(player);
 	// TODO: this should be removed once we only use map_position
 
 	if (direction == Direction::Left && map_pos.position.x > 0) {
 		uvec2 new_pos = uvec2(map_pos.position.x - 1, map_pos.position.y);
-		if (mapGenerator->walkable(new_pos)) {
+		if (map_generator->walkable(new_pos)) {
 			map_pos.position = new_pos;
 		}
 	}
 	else if (direction == Direction::Up && map_pos.position.y > 0) {
 		uvec2 new_pos = uvec2(map_pos.position.x, map_pos.position.y - 1);
-		if (mapGenerator->walkable(new_pos)) {
+		if (map_generator->walkable(new_pos)) {
 			map_pos.position = new_pos;
 		}
 	}
-	else if (direction == Direction::Right && map_pos.position.x < ROOM_SIZE * TILE_SIZE - 1) {
+	else if (direction == Direction::Right && map_pos.position.x < room_size * tile_size - 1) {
 		uvec2 new_pos = uvec2(map_pos.position.x + 1, map_pos.position.y);
-		if (mapGenerator->walkable(new_pos)) {
+		if (map_generator->walkable(new_pos)) {
 			map_pos.position = new_pos;
 		}
-	}
-	else if (direction == Direction::Down && map_pos.position.y < ROOM_SIZE * TILE_SIZE - 1) {
+	} else if (direction == Direction::Down && map_pos.position.y < room_size * tile_size - 1) {
 		uvec2 new_pos = uvec2(map_pos.position.x, map_pos.position.y + 1);
-		if (mapGenerator->walkable(new_pos)) {
+		if (map_generator->walkable(new_pos)) {
 			map_pos.position = new_pos;
 		}
 	}

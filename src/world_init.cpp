@@ -9,8 +9,8 @@ Entity create_player(RenderSystem* renderer, uvec2 pos)
 
 	// Create and (empty) player component to be able to refer to other enttities
 	registry.players.emplace(entity);
-	registry.mapPositions.emplace(entity, pos, vec2(TILE_SIZE, TILE_SIZE));
-	registry.renderRequests.insert(entity,
+	registry.map_positions.emplace(entity, pos, vec2(tile_size, tile_size));
+	registry.render_requests.insert(entity,
 								   { TEXTURE_ASSET_ID::PALADIN, 
 									 EFFECT_ASSET_ID::TEXTURED,
 									 GEOMETRY_BUFFER_ID::SPRITE });
@@ -55,7 +55,7 @@ Entity create_arrow(RenderSystem* renderer, vec2 position)
 	auto entity = Entity();
 
 	// Store a reference to the potentially re-used mesh object
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	Mesh& mesh = renderer->get_mesh(GEOMETRY_BUFFER_ID::SPRITE);
 
 	// Setting initial motion values
 	Motion& motion = registry.motions.emplace(entity);
@@ -65,7 +65,7 @@ Entity create_arrow(RenderSystem* renderer, vec2 position)
 	motion.scale = mesh.original_size * 50.f;
 
 	// Create and (empty) player component to be able to refer to other enttities
-	registry.renderRequests.insert(
+	registry.render_requests.insert(
 		entity,
 		{ TEXTURE_ASSET_ID::ARROW, 
 			EFFECT_ASSET_ID::TEXTURED,
