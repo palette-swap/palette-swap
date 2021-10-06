@@ -8,6 +8,14 @@ Entity create_player(RenderSystem* renderer, uvec2 pos)
 	// Create and (empty) player component to be able to refer to other enttities
 	registry.players.emplace(entity);
 	registry.map_positions.emplace(entity, pos, vec2(tile_size, tile_size));
+
+	vec2 actual_position = map_position_to_screen_position(position);
+	auto& motion = registry.motions.emplace(entity);
+	motion.angle = 0.f;
+	motion.velocity = { 0.f, 0.f };
+	motion.position = actual_position;
+	motion.scale = vec2(tile_size, tile_size);
+
 	registry.render_requests.insert(entity,
 								   { TEXTURE_ASSET_ID::PALADIN, 
 									 EFFECT_ASSET_ID::TEXTURED,
