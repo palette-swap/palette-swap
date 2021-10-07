@@ -275,10 +275,12 @@ mat3 RenderSystem::create_projection_matrix()
 	Entity player = registry.players.entities[0];
 	vec2 position = map_position_to_screen_position(registry.map_positions.get(player).position);
 
-	float right = position.x + w / 2.f;
-	float left = position.x - w / 2.f;
-	float top = position.y - h / 2.f;
-	float bottom = position.y + h / 2.f;
+	float zoom = 0.25;// zoom in 4 times
+
+	float right = position.x + w * zoom / 2.f;
+	float left = position.x - w * zoom / 2.f;
+	float top = position.y - h * zoom / 2.f;
+	float bottom = position.y + h * zoom / 2.f;
 
 	float sx = 2.f / (right - left);
 	float sy = 2.f / (top - bottom);
