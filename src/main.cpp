@@ -53,7 +53,7 @@ int main()
 		t = now;
 
 		world.step(elapsed_ms);
-		ai.step(elapsed_ms);
+		ai.step(elapsed_ms, world.isPlayerTurn);
 		physics.step(elapsed_ms, window_width_px, window_height_px);
 		world.handle_collisions();
 

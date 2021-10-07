@@ -81,6 +81,13 @@ public:
 	// Check if entity has a component of type 'Component'
 	bool has(Entity entity) override { return map_entity_component_id.count(entity) > 0; }
 
+	// Get the top entity.
+	Entity& top_entity()
+	{
+		assert(!entities.empty() && "The component container is empty.");
+		return entities[0];
+	}
+
 	// Remove an component and pack the container to re-use the empty space
 	void remove(Entity e) override
 	{

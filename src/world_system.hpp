@@ -39,6 +39,10 @@ public:
 	// Should the game be over ?
 	bool is_over() const;
 
+	// Temporary simulation of turn sytem to test AI System.
+	// Will be removed after integrating real Turn System.
+	bool isPlayerTurn = true;
+
 private:
 	// Input callback functions
 	void on_key(int key, int /*scancode*/, int action, int mod);
