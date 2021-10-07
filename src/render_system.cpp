@@ -275,7 +275,7 @@ mat3 RenderSystem::create_projection_matrix()
 	gl_has_errors();
 
 	// set up 4 sides of window based on player
-	Entity player = registry.players.entities[0];
+	Entity player = registry.players.top_entity();
 	vec2 position = map_position_to_screen_position(registry.map_positions.get(player).position);
 
 	float zoom = 0.25;// zoom in 4 times

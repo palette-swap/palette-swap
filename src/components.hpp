@@ -16,7 +16,8 @@ struct Player {
 // Camera component
 struct Camera 
 {
-	uvec2 size, central;
+	uvec2 size;
+	uvec2 central;
 };
 
 // Turtles and pebbles have a hard shell
