@@ -19,7 +19,7 @@ void AISystem::step(float /*elapsed_ms*/, bool& isPlayerTurn) {
 		case ENEMY_STATE_ID::IDLE:
 			if (is_player_spotted(enemy_entity, 3)) {
 				become_alert(enemy_entity);
-				switch_to_active(enemy_entity);
+				switch_enemry_state(enemy_entity, ENEMY_STATE_ID::ACTIVE);
 			}
 			break;
 
@@ -32,16 +32,16 @@ void AISystem::step(float /*elapsed_ms*/, bool& isPlayerTurn) {
 				}
 
 				if (is_afraid(enemy_entity)) {
-					switch_to_flinched(enemy_entity);
+					switch_enemry_state(enemy_entity, ENEMY_STATE_ID::FLINCHED);
 				}
 			} else {
-				switch_to_idle(enemy_entity);
+				switch_enemry_state(enemy_entity, ENEMY_STATE_ID::IDLE);
 			}
 			break;
 
 		case ENEMY_STATE_ID::FLINCHED:
 			if (is_at_nest(enemy_entity)) {
-				switch_to_idle(enemy_entity);
+				switch_enemry_state(enemy_entity, ENEMY_STATE_ID::IDLE);
 			} else {
 				approach_nest(enemy_entity);
 			}
@@ -55,22 +55,34 @@ void AISystem::step(float /*elapsed_ms*/, bool& isPlayerTurn) {
 	isPlayerTurn = true;
 }
 
-void AISystem::switch_to_idle(const Entity& enemy_entity) {
-	registry.enemy_states.get(enemy_entity).current_state = ENEMY_STATE_ID::IDLE;
-	registry.render_requests.get(enemy_entity).used_texture = TEXTURE_ASSET_ID::SLUG;
-	registry.colors.get(enemy_entity) = { 1, 4, 1 };
-}
+void AISystem::switch_enemry_state(const Entity& enemy_entity, ENEMY_STATE_ID enemy_state) {
+	ENEMY_STATE_ID& enemy_current_state = registry.enemy_states.get(enemy_entity).current_state;
+	TEXTURE_ASSET_ID& enemy_current_textrue = registry.render_requests.get(enemy_entity).used_texture;
+	vec3& enemy_current_color = registry.colors.get(enemy_entity);
 
-void AISystem::switch_to_active(const Entity& enemy_entity) {
-	registry.enemy_states.get(enemy_entity).current_state = ENEMY_STATE_ID::ACTIVE;
-	registry.render_requests.get(enemy_entity).used_texture = TEXTURE_ASSET_ID::SLUG_ALERT;
-	registry.colors.get(enemy_entity) = { 1, 1, 1 };
-}
+	switch (enemy_state) {
 
-void AISystem::switch_to_flinched(const Entity& enemy_entity) {
-	registry.enemy_states.get(enemy_entity).current_state = ENEMY_STATE_ID::FLINCHED;
-	registry.render_requests.get(enemy_entity).used_texture = TEXTURE_ASSET_ID::SLUG;
-	registry.colors.get(enemy_entity) = { 0, 1, 8 };
+	case ENEMY_STATE_ID::IDLE:
+		enemy_current_state = ENEMY_STATE_ID::IDLE;
+		enemy_current_textrue = TEXTURE_ASSET_ID::SLUG;
+		enemy_current_color = { 1, 4, 1 };
+		break;
+
+	case ENEMY_STATE_ID::ACTIVE:
+		enemy_current_state = ENEMY_STATE_ID::ACTIVE;
+		enemy_current_textrue = TEXTURE_ASSET_ID::SLUG_ALERT;
+		enemy_current_color = { 1, 1, 1 };
+		break;
+
+	case ENEMY_STATE_ID::FLINCHED:
+		enemy_current_state = ENEMY_STATE_ID::FLINCHED;
+		enemy_current_textrue = TEXTURE_ASSET_ID::SLUG;
+		enemy_current_color = { 0, 1, 8 };
+		break;
+
+	default:
+		throw std::runtime_error("Invalid Enemy State");
+	}
 }
 
 // Depends on Turn System from Nathan.
@@ -85,8 +97,7 @@ void AISystem::switch_to_player_turn() {
 }
 
 bool AISystem::is_player_spotted(const Entity& entity, const uint radius) {
-	assert(registry.players.entities.size() == 1);
-	uvec2 player_map_pos = registry.map_positions.get(registry.players.entities[0]).position;
+	uvec2 player_map_pos = registry.map_positions.get(registry.players.top_entity()).position;
 	uvec2 entity_map_pos = registry.map_positions.get(entity).position;
 
 	ivec2 distance = entity_map_pos - player_map_pos;
@@ -127,8 +138,7 @@ void AISystem::attack_player(const Entity& /*entity*/) {
 }
 
 bool AISystem::approach_player(const Entity& entity) {
-	assert(registry.players.entities.size() == 1);
-	uvec2 player_map_pos = registry.map_positions.get(registry.players.entities[0]).position;
+	uvec2 player_map_pos = registry.map_positions.get(registry.players.top_entity()).position;
 	uvec2 entity_map_pos = registry.map_positions.get(entity).position;
 
 	std::vector<uvec2> shortest_path = map_generator->shortest_path(entity_map_pos, player_map_pos);
