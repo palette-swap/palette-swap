@@ -225,9 +225,9 @@ void WorldSystem::restart_game()
 	player_arrow = create_arrow(renderer, player_location);
 	// Creates a single enemy instance, (TODO: needs to be updated with position based on grid)
 	// Also requires naming scheme for randomly generated enemies, for later reference
-	uvec2 enemy_starting_point = uvec2(53, 54);
+	uvec2 enemy_starting_point = uvec2(55, 56);
 	Entity enemy = create_enemy(renderer, enemy_starting_point);
-	registry.colors.insert(enemy, { 1, 1, 1 });
+	registry.colors.insert(enemy, { 1, 4, 1 });
 }
 
 
@@ -266,7 +266,8 @@ bool WorldSystem::is_over() const { return bool(glfwWindowShouldClose(window)); 
 // On key callback
 void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 {
-	if (action != GLFW_RELEASE) {
+	if (isPlayerTurn && action != GLFW_RELEASE) {
+
 		if (key == GLFW_KEY_RIGHT) {
 			move_player(Direction::Right);
 		}
@@ -344,23 +345,27 @@ void WorldSystem::move_player(Direction direction)
 		uvec2 new_pos = uvec2(map_pos.position.x - 1, map_pos.position.y);
 		if (map_generator->walkable(new_pos)) {
 			map_pos.position = new_pos;
+			isPlayerTurn = false;
 		}
 	}
 	else if (direction == Direction::Up && map_pos.position.y > 0) {
 		uvec2 new_pos = uvec2(map_pos.position.x, map_pos.position.y - 1);
 		if (map_generator->walkable(new_pos)) {
 			map_pos.position = new_pos;
+			isPlayerTurn = false;
 		}
 	}
 	else if (direction == Direction::Right && map_pos.position.x < room_size * tile_size - 1) {
 		uvec2 new_pos = uvec2(map_pos.position.x + 1, map_pos.position.y);
 		if (map_generator->walkable(new_pos)) {
 			map_pos.position = new_pos;
+			isPlayerTurn = false;
 		}
 	} else if (direction == Direction::Down && map_pos.position.y < room_size * tile_size - 1) {
 		uvec2 new_pos = uvec2(map_pos.position.x, map_pos.position.y + 1);
 		if (map_generator->walkable(new_pos)) {
 			map_pos.position = new_pos;
+			isPlayerTurn = false;
 		}
 	}
 }
