@@ -5,8 +5,13 @@
 #include "common.hpp"
 #include "tiny_ecs_registry.hpp"
 
+#include "map_generator_system.hpp"
+
 class AISystem {
 public:
+
+	AISystem(std::shared_ptr<MapGeneratorSystem> map_generator);
+
 	void step(float /*elapsed_ms*/);
 
 	// Depends on Turn System from Nathan.
@@ -29,4 +34,8 @@ public:
 	void attack_player();
 
 	void flee_player();
+
+private:
+
+	std::shared_ptr<MapGeneratorSystem> map_generator;
 };

@@ -21,6 +21,10 @@ struct Camera
 
 // Turtles and pebbles have a hard shell
 struct HardShell {
+
+// struct denoting a currently active projectile
+struct ActiveProjectile {
+
 };
 
 // All data relevant to the shape and motion of entities
@@ -29,6 +33,11 @@ struct Motion {
 	float angle = 0;
 	vec2 velocity = { 0, 0 };
 	vec2 scale = { 10, 10 };
+};
+
+// Struct indicating an object is hittable (Currently limited to projectiles
+struct Hittable {
+
 };
 
 // Stucture to store collision information
@@ -82,6 +91,12 @@ struct Mesh {
 	std::vector<uint16_t> vertex_indices;
 };
 
+// Struct for resolving projectiles, including the arrow fired by the player
+struct ResolvedProjectile
+{
+	float counter = 2000;
+};
+
 /**
  * The following enumerators represent global identifiers refering to graphic
  * assets. For example TEXTURE_ASSET_ID are the identifiers of each texture
@@ -109,7 +124,8 @@ struct Mesh {
 enum class TEXTURE_ASSET_ID : uint8_t {
 	PALADIN = 0,
 	SLUG = PALADIN + 1,
-	WALKABLE_1 = SLUG + 1,
+	ARROW = SLUG + 1,
+	WALKABLE_1 = ARROW + 1,
 	WALL_1 = WALKABLE_1 + 1,
 	WINDOW_1 = WALL_1 + 1,
 	TEXTURE_COUNT = WINDOW_1 + 1

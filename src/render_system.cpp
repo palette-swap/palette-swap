@@ -15,7 +15,10 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 		MapPosition& map_position = registry.map_positions.get(entity);
 		transform.translate(map_position_to_screen_position(map_position.position));
 		transform.scale(map_position.scale);
-	} else {
+	}
+	// Change this, needed to change it since room was rendering based on motion, but so is arrow
+	/*if (registry.active_projectiles.has(entity) */
+	else {
 		Motion& motion = registry.motions.get(entity);
 		// Transformation code, see Rendering and Transformation in the template
 		// specification for more info Incrementally updates transformation matrix,

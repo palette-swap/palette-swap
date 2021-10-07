@@ -25,7 +25,7 @@ int main()
 	WorldSystem world(debugging, map);
 	RenderSystem renderer;
 	PhysicsSystem physics(debugging);
-	AISystem ai;
+	AISystem ai(map);
 
 	// Initializing window
 	GLFWwindow* window = world.create_window(window_width_px, window_height_px);
