@@ -13,10 +13,9 @@
 struct Player {
 };
 
-
 // struct denoting a currently active projectile
 struct ActiveProjectile {
-
+	vec2 head_offset = { 0, 0 };
 };
 
 // All data relevant to the shape and motion of entities

@@ -10,7 +10,7 @@
 
 // Game configuration
 bool player_arrow_fired = false;
-const size_t projectile_speed = 1;
+const size_t projectile_speed = 5;
 
 // Create the world
 WorldSystem::WorldSystem(Debug& debugging, std::shared_ptr<MapGeneratorSystem> map)
@@ -244,15 +244,28 @@ void WorldSystem::handle_collisions()
 
 		// collisions involving projectiles
 		if (registry.active_projectiles.has(entity)) {
+			ActiveProjectile& projectile = registry.active_projectiles.get(entity);
+			// TODO: rename hittable container type
+			// TODO: Convert all checks to if tile is walkable, currently has issue that enemies can overlay player
 			//Currently, arrows can hit anything with a hittable component, which will include walls and enemies
-			//TODO: rename hittable container type 
-			//TODO: resolve with arrow 
 			if (registry.hittables.has(entity_other)) {
 				registry.motions.get(entity).velocity = { 0, 0 };
 				registry.active_projectiles.remove(entity);		
 				// Stops projectile motion, adds projectile to list of resolved projectiles
 				registry.resolved_projectiles.emplace(entity);
+			} else {
+				// Checks if projectile's head has hit a wall
+				uvec2 projectile_location = (screen_position_to_map_position(registry.motions.get(entity).position + projectile.head_offset));
+
+				// Hacky way, using the same check for the player's "walkable"
+				if (!map_generator->walkable(projectile_location)) {
+					registry.motions.get(entity).velocity = { 0, 0 };
+					registry.active_projectiles.remove(entity);
+					// Stops projectile motion, adds projectile to list of resolved projectiles
+					registry.resolved_projectiles.emplace(entity);
+				}
 			}
+			
 		}
 	}
 
@@ -328,7 +341,6 @@ void WorldSystem::on_mouse_move(vec2 mouse_position) {
 		vec2 new_arrow_position = normalize(eucl_diff) * 20.f + player_screen_position;
 		arrow_motion.position = new_arrow_position;
 
-
 		// Calculates arrow angle based on position of mouse
 		arrow_motion.angle = atan2(eucl_diff.x, -eucl_diff.y);
 	}
@@ -377,8 +389,11 @@ void WorldSystem::on_mouse_click(int button, int action, int mods) {
 		if (!player_arrow_fired) {
 			player_arrow_fired = true;
 			// Arrow becomes a projectile the moment it leaves the player, not while it's direction is being selected
-			registry.active_projectiles.emplace(player_arrow);
+			ActiveProjectile& arrow_projectile = registry.active_projectiles.emplace(player_arrow);
 			Motion& arrow_motion = registry.motions.get(player_arrow);
+
+			// Denotes arrowhead location the player's arrow, based on firing angle and current scaling
+			arrow_projectile.head_offset = { sin(arrow_motion.angle) * arrow_motion.scale.y/2, -cos(arrow_motion.angle) * arrow_motion.scale.x/2};
 
 			// TODO: Add better arrow physics potentially?
 			arrow_motion.velocity = { sin(arrow_motion.angle) * projectile_speed,
