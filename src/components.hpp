@@ -13,6 +13,15 @@
 struct Player {
 };
 
+// Camera component
+struct Camera 
+{
+	uvec2 size;
+	uvec2 central;
+};
+
+// Turtles and pebbles have a hard shell
+struct HardShell {
 
 // struct denoting a currently active projectile
 struct ActiveProjectile {

@@ -65,7 +65,11 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 		gl_has_errors();
 
 		glEnableVertexAttribArray(in_texcoord_loc);
-		glVertexAttribPointer(in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex),
+		glVertexAttribPointer(in_texcoord_loc,
+							  2,
+							  GL_FLOAT,
+							  GL_FALSE,
+							  sizeof(TexturedVertex),
 							  (void*)sizeof(vec3)); // note the stride to skip the preceeding vertex position
 		// Enabling and binding texture to slot 0
 		glActiveTexture(GL_TEXTURE0);
@@ -102,13 +106,17 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 		gl_has_errors();
 
 		glEnableVertexAttribArray(in_texcoord_loc);
-		glVertexAttribPointer(in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TileMapVertex),
+		glVertexAttribPointer(in_texcoord_loc,
+							  2,
+							  GL_FLOAT,
+							  GL_FALSE,
+							  sizeof(TileMapVertex),
 							  (void*)sizeof(vec3)); // note the stride to skip the preceeding vertex position
 
 		// Pass in the tile indexes
 		glEnableVertexAttribArray(tile_index_loc);
-		glVertexAttribPointer(tile_index_loc, 1, GL_FLOAT, GL_FALSE, sizeof(TileMapVertex),
-							  (void*)(sizeof(vec3) + sizeof(vec2)));
+		glVertexAttribPointer(
+			tile_index_loc, 1, GL_FLOAT, GL_FALSE, sizeof(TileMapVertex), (void*)(sizeof(vec3) + sizeof(vec2)));
 
 		// Currently we pass in all tiles included, this can be inefficient and can
 		// overflow the texture limit, some ways to optimize
@@ -211,7 +219,9 @@ void RenderSystem::draw_to_screen()
 	glBindTexture(GL_TEXTURE_2D, off_screen_render_buffer_color);
 	gl_has_errors();
 	// Draw
-	glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_SHORT,
+	glDrawElements(GL_TRIANGLES,
+				   3,
+				   GL_UNSIGNED_SHORT,
 				   nullptr); // one triangle = 3 vertices; nullptr indicates that there is
 							 // no offset from the bound index buffer
 	gl_has_errors();
@@ -255,15 +265,25 @@ void RenderSystem::draw()
 	gl_has_errors();
 }
 
+// TODO: Update projection matrix to be based on camera
+// currently it's based on player
 mat3 RenderSystem::create_projection_matrix()
 {
 	// Fake projection matrix, scales with respect to window coordinates
-	float left = 0.f;
-	float top = 0.f;
-
+	int w, h;
+	glfwGetFramebufferSize(window, &w, &h);
 	gl_has_errors();
-	float right = (float)window_width_px / screen_scale;
-	float bottom = (float)window_height_px / screen_scale;
+
+	// set up 4 sides of window based on player
+	Entity player = registry.players.top_entity();
+	vec2 position = map_position_to_screen_position(registry.map_positions.get(player).position);
+
+	float zoom = 0.25;// zoom in 4 times
+
+	float right = position.x + w * zoom / 2.f;
+	float left = position.x - w * zoom / 2.f;
+	float top = position.y - h * zoom / 2.f;
+	float bottom = position.y + h * zoom / 2.f;
 
 	float sx = 2.f / (right - left);
 	float sy = 2.f / (top - bottom);

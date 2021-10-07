@@ -11,6 +11,7 @@ public:
 	ComponentContainer<Motion> motions;
 	ComponentContainer<Collision> collisions;
 	ComponentContainer<Player> players;
+	ComponentContainer<Camera> cameras;
 	ComponentContainer<Mesh*> meshPtrs;
 	ComponentContainer<RenderRequest> render_requests;
 	ComponentContainer<ScreenState> screen_states;
