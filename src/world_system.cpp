@@ -351,12 +351,17 @@ void WorldSystem::on_mouse_move(vec2 mouse_position) {
 void WorldSystem::move_player(Direction direction)
 {
 	MapPosition& map_pos = registry.map_positions.get(player);
+	Motion& arrow_motion = registry.motions.get(player_arrow);
 	// TODO: this should be removed once we only use map_position
 
 	if (direction == Direction::Left && map_pos.position.x > 0) {
 		uvec2 new_pos = uvec2(map_pos.position.x - 1, map_pos.position.y);
 		if (map_generator->walkable(new_pos)) {
 			map_pos.position = new_pos;
+			// Temp update for arrow position
+			// TODO: Dynamically track arrow to player after spawning
+			
+			arrow_motion.position = { arrow_motion.position.x - tile_size, arrow_motion.position.y };
 			isPlayerTurn = false;
 		}
 	}
@@ -364,6 +369,8 @@ void WorldSystem::move_player(Direction direction)
 		uvec2 new_pos = uvec2(map_pos.position.x, map_pos.position.y - 1);
 		if (map_generator->walkable(new_pos)) {
 			map_pos.position = new_pos;
+			// Temp update for arrow position
+			arrow_motion.position = { arrow_motion.position.x, arrow_motion.position.y - tile_size };
 			isPlayerTurn = false;
 		}
 	}
@@ -371,12 +378,16 @@ void WorldSystem::move_player(Direction direction)
 		uvec2 new_pos = uvec2(map_pos.position.x + 1, map_pos.position.y);
 		if (map_generator->walkable(new_pos)) {
 			map_pos.position = new_pos;
+			// Temp update for arrow position
+			arrow_motion.position = { arrow_motion.position.x + tile_size, arrow_motion.position.y };
 			isPlayerTurn = false;
 		}
 	} else if (direction == Direction::Down && map_pos.position.y < room_size * tile_size - 1) {
 		uvec2 new_pos = uvec2(map_pos.position.x, map_pos.position.y + 1);
 		if (map_generator->walkable(new_pos)) {
 			map_pos.position = new_pos;
+			// Temp update for arrow position
+			arrow_motion.position = { arrow_motion.position.x, arrow_motion.position.y + tile_size };
 			isPlayerTurn = false;
 		}
 	}

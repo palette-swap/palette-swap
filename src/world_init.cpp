@@ -57,7 +57,7 @@ Entity create_enemy(RenderSystem* renderer, uvec2 position)
 
 	// TODO: Switch out basic enemy type based on input (Currently Defaulted to Slug)
 	registry.render_requests.insert(entity,
-								   { TEXTURE_ASSET_ID::SLUG, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE });
+								   { TEXTURE_ASSET_ID::SLIME, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE });
 
 	registry.enemy_states.emplace(entity);
 	registry.enemy_nest_positions.emplace(entity, position);
