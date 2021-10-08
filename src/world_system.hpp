@@ -20,7 +20,7 @@
 // deferred to the relative update() methods
 class WorldSystem {
 public:
-	WorldSystem(Debug& debugging, std::shared_ptr<MapGeneratorSystem> map);
+	WorldSystem(Debug& debugging, std::shared_ptr<MapGeneratorSystem> map, std::shared_ptr<TurnSystem> turns);
 
 	// Creates a window
 	GLFWwindow* create_window(int width, int height);
@@ -39,10 +39,6 @@ public:
 
 	// Should the game be over ?
 	bool is_over() const;
-
-	// Temporary simulation of turn sytem to test AI System.
-	// Will be removed after integrating real Turn System.
-	bool isPlayerTurn = true;
 
 private:
 	// Input callback functions
@@ -71,8 +67,6 @@ private:
 	Entity camera;
 	Entity player_arrow;
 	Debug& debugging;
-	Entity player_team;
-	Entity enemy_team;
 
 	// music references
 	Mix_Music* background_music = nullptr;
@@ -83,4 +77,5 @@ private:
 	std::uniform_real_distribution<float> uniform_dist; // number between 0..1
 
 	std::shared_ptr<MapGeneratorSystem> map_generator;
+	std::shared_ptr<TurnSystem> turns;
 };

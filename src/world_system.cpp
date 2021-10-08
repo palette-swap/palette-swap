@@ -13,15 +13,14 @@ bool player_arrow_fired = false;
 const size_t projectile_speed = 1;
 
 // Create the world
-WorldSystem::WorldSystem(Debug& debugging, std::shared_ptr<MapGeneratorSystem> map)
+WorldSystem::WorldSystem(Debug& debugging, std::shared_ptr<MapGeneratorSystem> map, std::shared_ptr<TurnSystem> turns)
 	: points(0)
 	, debugging(debugging)
+	, map_generator(std::move(map))
+	, turns(std::move(turns))
 {
 	// Seeding rng with random device
 	rng = std::default_random_engine(std::random_device()());
-
-	// Instantiate MapGeneratorSystem class
-	map_generator = std::move(map);
 }
 
 WorldSystem::~WorldSystem()
@@ -155,13 +154,13 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 
 	// Resolves projectiles hitting objects, stops it for a period of time before returning it to the player
 	// Currently handles player arrow (as it is the only projectile that exists)
-    float projectile_max_counter = 2000.f;
+	float projectile_max_counter = 2000.f;
 	for (Entity entity : registry.resolved_projectiles.entities) {
 		// Gets desired projectile
 		ResolvedProjectile& projectile = registry.resolved_projectiles.get(entity);
 		projectile.counter -= elapsed_ms_since_last_update;
-		if(projectile.counter < projectile_max_counter){
-		    projectile_max_counter = projectile.counter;
+		if (projectile.counter < projectile_max_counter) {
+			projectile_max_counter = projectile.counter;
 		}
 
 		// Removes the projectile from the list of projectiles that are still waiting
@@ -171,18 +170,11 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 			if (entity == player_arrow) {
 				player_arrow_fired = false;
 				registry.resolved_projectiles.remove(entity);
-			}
-			else {
+			} else {
 				registry.remove_all_components_of(entity);
 			}
-			
 		}
 		projectile_max_counter = 2000;
-	}
-
-	if (TurnSystem::getInstance()->getActiveUnit() == enemy_team) {
-		TurnSystem::getInstance()->executeTeamAction(enemy_team);
-		TurnSystem::getInstance()->completeTeamAction(enemy_team);
 	}
 
 	return true;
@@ -215,9 +207,8 @@ void WorldSystem::restart_game()
 	vec2 top_left_corner = middle - vec2(tile_size * room_size * map_size / 2, tile_size * room_size * map_size / 2);
 	for (size_t row = 0; row < mapping.size(); row++) {
 		for (size_t col = 0; col < mapping[0].size(); col++) {
-			vec2 position = top_left_corner +
-				vec2(tile_size * room_size / 2, tile_size * room_size / 2) +
-				vec2(col * tile_size * room_size, row * tile_size * room_size);
+			vec2 position = top_left_corner + vec2(tile_size * room_size / 2, tile_size * room_size / 2)
+				+ vec2(col * tile_size * room_size, row * tile_size * room_size);
 			create_room(renderer, position, mapping.at(row).at(col));
 		}
 	}
@@ -227,6 +218,7 @@ void WorldSystem::restart_game()
 	// Create a new Player instance and shift player onto a tile
 	player = create_player(renderer, player_starting_point);
 	registry.colors.insert(player, { 1, 1, 1 });
+	turns->addTeamToQueue(player);
 
 	// create camera instance
 	camera = create_camera(
@@ -243,14 +235,7 @@ void WorldSystem::restart_game()
 	uvec2 enemy_starting_point = uvec2(55, 56);
 	Entity enemy = create_enemy(renderer, enemy_starting_point);
 	registry.colors.insert(enemy, { 1, 4, 1 });
-
-	player_team = create_team();
-	TurnSystem::getInstance()->addTeamToQueue(player_team);
-	enemy_team = create_team();
-	TurnSystem::getInstance()->addTeamToQueue(enemy_team);
 }
-
-
 
 // Compute collisions between entities
 void WorldSystem::handle_collisions()
@@ -264,12 +249,12 @@ void WorldSystem::handle_collisions()
 
 		// collisions involving projectiles
 		if (registry.active_projectiles.has(entity)) {
-			//Currently, arrows can hit anything with a hittable component, which will include walls and enemies
-			//TODO: rename hittable container type 
-			//TODO: resolve with arrow 
+			// Currently, arrows can hit anything with a hittable component, which will include walls and enemies
+			// TODO: rename hittable container type
+			// TODO: resolve with arrow
 			if (registry.hittables.has(entity_other)) {
 				registry.motions.get(entity).velocity = { 0, 0 };
-				registry.active_projectiles.remove(entity);		
+				registry.active_projectiles.remove(entity);
 				// Stops projectile motion, adds projectile to list of resolved projectiles
 				registry.resolved_projectiles.emplace(entity);
 			}
@@ -286,7 +271,7 @@ bool WorldSystem::is_over() const { return bool(glfwWindowShouldClose(window)); 
 // On key callback
 void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 {
-	if (isPlayerTurn && action != GLFW_RELEASE) {
+	if (turns && action != GLFW_RELEASE) {
 
 		if (key == GLFW_KEY_RIGHT) {
 			move_player(Direction::Right);
@@ -330,74 +315,60 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 	current_speed = fmax(0.f, current_speed);
 }
 
- //Tracks position of cursor, points arrow at potential fire location
- //Only enables if an arrow has not already been fired
- //TODO: Integrate into turn state to only enable if player's turn is on
-void WorldSystem::on_mouse_move(vec2 mouse_position) {
+// Tracks position of cursor, points arrow at potential fire location
+// Only enables if an arrow has not already been fired
+// TODO: Integrate into turn state to only enable if player's turn is on
+void WorldSystem::on_mouse_move(vec2 mouse_position)
+{
 
 	if (!player_arrow_fired) {
 		Motion& arrow_motion = registry.motions.get(player_arrow);
-		MapPosition& player_map_position= registry.map_positions.get(player);
+		MapPosition& player_map_position = registry.map_positions.get(player);
 
 		vec2 player_screen_position = map_position_to_screen_position(player_map_position.position);
 
-		//Calculated Euclidean difference between player and arrow
+		// Calculated Euclidean difference between player and arrow
 		vec2 eucl_diff = mouse_position - player_screen_position;
 
 		// Calculates arrow position based on position of mouse relative to player
 		vec2 new_arrow_position = normalize(eucl_diff) * 20.f + player_screen_position;
 		arrow_motion.position = new_arrow_position;
 
-
 		// Calculates arrow angle based on position of mouse
 		arrow_motion.angle = atan2(eucl_diff.x, -eucl_diff.y);
 	}
 }
 
-
-
 void WorldSystem::move_player(Direction direction)
 {
-	TurnSystem::getInstance()->executeTeamAction(player_team);
+	if (turns->getActiveUnit() != player) {
+		return;
+	}
 
 	MapPosition& map_pos = registry.map_positions.get(player);
-	// TODO: this should be removed once we only use map_position
+	uvec2 new_pos = map_pos.position;
 
 	if (direction == Direction::Left && map_pos.position.x > 0) {
-		uvec2 new_pos = uvec2(map_pos.position.x - 1, map_pos.position.y);
-		if (map_generator->walkable(new_pos)) {
-			map_pos.position = new_pos;
-			isPlayerTurn = false;
-		}
-	}
-	else if (direction == Direction::Up && map_pos.position.y > 0) {
-		uvec2 new_pos = uvec2(map_pos.position.x, map_pos.position.y - 1);
-		if (map_generator->walkable(new_pos)) {
-			map_pos.position = new_pos;
-			isPlayerTurn = false;
-		}
-	}
-	else if (direction == Direction::Right && map_pos.position.x < room_size * tile_size - 1) {
-		uvec2 new_pos = uvec2(map_pos.position.x + 1, map_pos.position.y);
-		if (map_generator->walkable(new_pos)) {
-			map_pos.position = new_pos;
-			isPlayerTurn = false;
-		}
+		new_pos = uvec2(map_pos.position.x - 1, map_pos.position.y);
+	} else if (direction == Direction::Up && map_pos.position.y > 0) {
+		new_pos = uvec2(map_pos.position.x, map_pos.position.y - 1);
+	} else if (direction == Direction::Right && map_pos.position.x < room_size * tile_size - 1) {
+		new_pos = uvec2(map_pos.position.x + 1, map_pos.position.y);
 	} else if (direction == Direction::Down && map_pos.position.y < room_size * tile_size - 1) {
-		uvec2 new_pos = uvec2(map_pos.position.x, map_pos.position.y + 1);
-		if (map_generator->walkable(new_pos)) {
-			map_pos.position = new_pos;
-			isPlayerTurn = false;
-		}
+		new_pos = uvec2(map_pos.position.x, map_pos.position.y + 1);
 	}
 
-	TurnSystem::getInstance()->completeTeamAction(player_team);
-
+	if (map_pos.position == new_pos || !map_generator->walkable(new_pos) || !turns->executeTeamAction(player)) {
+		return;
+	}
+	map_pos.position = new_pos;
+	turns->completeTeamAction(player);
 }
 
 // Fires arrow at a preset speed if it has not been fired already
 // TODO: Integrate into turn state to only enable if player's turn is on
-void WorldSystem::on_mouse_click(int button, int action, int mods) {
+void WorldSystem::on_mouse_click(int button, int action, int mods)
+{
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
 		if (!player_arrow_fired) {
 			player_arrow_fired = true;
@@ -406,8 +377,8 @@ void WorldSystem::on_mouse_click(int button, int action, int mods) {
 			Motion& arrow_motion = registry.motions.get(player_arrow);
 
 			// TODO: Add better arrow physics potentially?
-			arrow_motion.velocity = { sin(arrow_motion.angle) * projectile_speed,
-									  -cos(arrow_motion.angle) * projectile_speed};
+			arrow_motion.velocity
+				= { sin(arrow_motion.angle) * projectile_speed, -cos(arrow_motion.angle) * projectile_speed };
 		}
 	}
 }

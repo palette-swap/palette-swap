@@ -3,12 +3,17 @@
 #include "components.hpp"
 
 // AI logic
-AISystem::AISystem(std::shared_ptr<MapGeneratorSystem> map_generator):
-	map_generator(std::move(map_generator)) {
+AISystem::AISystem(std::shared_ptr<MapGeneratorSystem> map_generator, std::shared_ptr<TurnSystem> turns)
+	:
+	map_generator(std::move(map_generator)), turns(std::move(turns)) {
+
+	registry.debug_components.emplace(enemy_team);
+	
+	this->turns->addTeamToQueue(enemy_team);
 }
 
-void AISystem::step(float /*elapsed_ms*/, bool& isPlayerTurn) {
-	if (isPlayerTurn) {
+void AISystem::step(float /*elapsed_ms*/) {
+	if (!turns->executeTeamAction(enemy_team)) {
 		return;
 	}
 
@@ -52,7 +57,7 @@ void AISystem::step(float /*elapsed_ms*/, bool& isPlayerTurn) {
 		}
 	}
 
-	isPlayerTurn = true;
+	turns->completeTeamAction(enemy_team);
 }
 
 void AISystem::switch_enemry_state(const Entity& enemy_entity, ENEMY_STATE_ID enemy_state) {
