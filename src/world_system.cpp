@@ -222,14 +222,10 @@ void WorldSystem::restart_game()
 	uvec2 player_starting_point = uvec2(51, 51);
 	// Create a new Player instance and shift player onto a tile
 	player = create_player(renderer, player_starting_point);
-	registry.colors.insert(player, { 1, 1, 1 });
 
 	// create camera instance
 	camera = create_camera(
 		{ (player_starting_point.x - 20), (player_starting_point.y - 20)}, { 23, 23 }, player_starting_point);
-
-
-	
 
 	// Create a new player arrow instance
 	vec2 player_location = map_position_to_screen_position(player_starting_point);
