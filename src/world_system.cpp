@@ -219,16 +219,15 @@ void WorldSystem::restart_game()
 	// Create a new Player instance and shift player onto a tile
 	player = create_player(renderer, player_starting_point);
 
-	registry.colors.insert(player, { 1, 1, 1 });
+	
 
 	// Create a new player arrow instance
 	vec2 player_location = map_position_to_screen_position(player_starting_point);
 	player_arrow = create_arrow(renderer, player_location);
 	// Creates a single enemy instance, (TODO: needs to be updated with position based on grid)
 	// Also requires naming scheme for randomly generated enemies, for later reference
-	uvec2 enemy_starting_point = uvec2(55, 56);
-	Entity enemy = create_enemy(renderer, enemy_starting_point);
-	registry.colors.insert(enemy, { 1, 4, 1 });
+	create_enemy(renderer, uvec2(55, 56));
+	create_enemy(renderer, uvec2(58, 51));
 }
 
 
