@@ -43,9 +43,9 @@ private:
 		&map_positions,
 		&enemy_states,
 		&enemy_nest_positions,
-    &hittables,
-    &active_projectiles,
-    &resolved_projectiles
+		&hittables,
+		&active_projectiles,
+		&resolved_projectiles
 	};
 
 
