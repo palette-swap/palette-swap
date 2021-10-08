@@ -31,21 +31,15 @@ PhysicsSystem::PhysicsSystem(const Debug& debugging)
 {
 }
 
-void PhysicsSystem::step(float elapsed_ms, float window_width, float window_height)
+void PhysicsSystem::step(float elapsed_ms, float /*window_width*/, float /*window_height*/)
 {
 	// Currently still using motion component to udpate projectile position based on velocity
 	// TODO: Change check for motions into check for projectiles, update based on projectile component
 	auto& motion_registry = registry.motions;
-	for(uint i = 0; i< motion_registry.size(); i++)
-	{
-
-		auto& motion_registry = registry.motions;
-		for (uint i = 0; i < motion_registry.size(); i++)
-		{
-			Motion& motion = motion_registry.components[i];
-			float step_seconds = 1.0f * (elapsed_ms / 1000.f);
-			motion.position += motion.velocity * step_seconds;
-		}
+	for (uint i = 0; i < motion_registry.size(); i++) {
+		Motion& motion = motion_registry.components[i];
+		float step_seconds = 1.0f * (elapsed_ms / 1000.f);
+		motion.position += motion.velocity * step_seconds;
 	}
 
 	// Check for collisions between all moving entities

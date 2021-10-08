@@ -7,29 +7,29 @@
 
 class TurnSystem {
 public:
-	Entity getActiveUnit();
+	Entity get_active_unit();
 	// std::deque<Entity>::iterator getTeamPositionInQueue(Entity team);
-	bool teamInQueue(Entity team);
-	bool executeTeamAction(Entity team);
-	bool completeTeamAction(Entity team);
-	bool addTeamToQueue(Entity team);
-	bool removeTeamFromQueue(Entity team);
+	bool team_in_queue(Entity team);
+	bool execute_team_action(Entity team);
+	bool complete_team_action(Entity team);
+	bool add_team_to_queue(Entity team);
+	bool remove_team_from_queue(Entity team);
 
-	bool skipTeamAction(Entity team);
+	bool skip_team_action(Entity team);
 
-	enum class QUEUE_STATE { IDLE, EXECUTING, FINISHED };
-
-	QUEUE_STATE queueState = QUEUE_STATE::IDLE;
+	enum class QueueState { Idle, Executing, Finished };
 
 private:
-	std::deque<Entity> teamQueue;
-	bool cycleQueue();
+	QueueState queue_state = QueueState::Idle;
+
+	std::deque<Entity> team_queue;
+	bool cycle_queue();
 };
 /*
 struct turn_flag {
 	Entity team;
 	turn_flag(Entity team) { this.team = team; }
 	~turn_flag() {
-		TurnSystem::completeTeamAction(team);
+		TurnSystem::complete_team_action(team);
 	}
 };*/

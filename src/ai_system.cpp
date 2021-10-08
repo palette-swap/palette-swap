@@ -9,11 +9,11 @@ AISystem::AISystem(std::shared_ptr<MapGeneratorSystem> map_generator, std::share
 
 	registry.debug_components.emplace(enemy_team);
 	
-	this->turns->addTeamToQueue(enemy_team);
+	this->turns->add_team_to_queue(enemy_team);
 }
 
 void AISystem::step(float /*elapsed_ms*/) {
-	if (!turns->executeTeamAction(enemy_team)) {
+	if (!turns->execute_team_action(enemy_team)) {
 		return;
 	}
 
@@ -21,7 +21,7 @@ void AISystem::step(float /*elapsed_ms*/) {
 
 		switch (registry.enemy_states.get(enemy_entity).current_state) {
 
-		case ENEMY_STATE_ID::IDLE:
+		case ENEMY_STATE_ID::Idle:
 			if (is_player_spotted(enemy_entity, 3)) {
 				become_alert(enemy_entity);
 				switch_enemry_state(enemy_entity, ENEMY_STATE_ID::ACTIVE);
@@ -40,13 +40,13 @@ void AISystem::step(float /*elapsed_ms*/) {
 					switch_enemry_state(enemy_entity, ENEMY_STATE_ID::FLINCHED);
 				}
 			} else {
-				switch_enemry_state(enemy_entity, ENEMY_STATE_ID::IDLE);
+				switch_enemry_state(enemy_entity, ENEMY_STATE_ID::Idle);
 			}
 			break;
 
 		case ENEMY_STATE_ID::FLINCHED:
 			if (is_at_nest(enemy_entity)) {
-				switch_enemry_state(enemy_entity, ENEMY_STATE_ID::IDLE);
+				switch_enemry_state(enemy_entity, ENEMY_STATE_ID::Idle);
 			} else {
 				approach_nest(enemy_entity);
 			}
@@ -57,7 +57,7 @@ void AISystem::step(float /*elapsed_ms*/) {
 		}
 	}
 
-	turns->completeTeamAction(enemy_team);
+	turns->complete_team_action(enemy_team);
 }
 
 void AISystem::switch_enemry_state(const Entity& enemy_entity, ENEMY_STATE_ID enemy_state) {
@@ -67,8 +67,8 @@ void AISystem::switch_enemry_state(const Entity& enemy_entity, ENEMY_STATE_ID en
 
 	switch (enemy_state) {
 
-	case ENEMY_STATE_ID::IDLE:
-		enemy_current_state = ENEMY_STATE_ID::IDLE;
+	case ENEMY_STATE_ID::Idle:
+		enemy_current_state = ENEMY_STATE_ID::Idle;
 		enemy_current_textrue = TEXTURE_ASSET_ID::SLUG;
 		enemy_current_color = { 1, 4, 1 };
 		break;

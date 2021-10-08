@@ -18,7 +18,7 @@ public:
 		id = id_count++;
 		// Note, indices of already deleted entities arent re-used in this simple implementation.
 	}
-	operator unsigned int() { return id; } // this enables automatic casting to int
+	operator unsigned int() const { return id; } // this enables automatic casting to int
 };
 
 // Common interface to refer to all containers in the ECS registry

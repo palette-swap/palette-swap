@@ -88,7 +88,7 @@ GLFWwindow* WorldSystem::create_window(int width, int height)
 	auto mouse_click_redirect = [](GLFWwindow* wnd, int _0, int _1, int _2) {
 		static_cast<WorldSystem*>(glfwGetWindowUserPointer(wnd))->on_mouse_click(_0, _1, _2);
 	};
-	auto scroll_redirect = [](GLFWwindow* wnd, double _0, double _1) {
+	auto scroll_redirect = [](GLFWwindow* wnd, double /*_0*/, double _1) {
 		static_cast<WorldSystem*>(glfwGetWindowUserPointer(wnd))->on_mouse_scroll(_1);
 	};
 	glfwSetKeyCallback(window, key_redirect);
@@ -218,7 +218,7 @@ void WorldSystem::restart_game()
 	// Create a new Player instance and shift player onto a tile
 	player = create_player(renderer, player_starting_point);
 	registry.colors.insert(player, { 1, 1, 1 });
-	turns->addTeamToQueue(player);
+	turns->add_team_to_queue(player);
 
 	// create camera instance
 	camera = create_camera(
@@ -341,7 +341,7 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 
 void WorldSystem::move_player(Direction direction)
 {
-	if (turns->getActiveUnit() != player) {
+	if (turns->get_active_unit() != player) {
 		return;
 	}
 
@@ -358,16 +358,16 @@ void WorldSystem::move_player(Direction direction)
 		new_pos = uvec2(map_pos.position.x, map_pos.position.y + 1);
 	}
 
-	if (map_pos.position == new_pos || !map_generator->walkable(new_pos) || !turns->executeTeamAction(player)) {
+	if (map_pos.position == new_pos || !map_generator->walkable(new_pos) || !turns->execute_team_action(player)) {
 		return;
 	}
 	map_pos.position = new_pos;
-	turns->completeTeamAction(player);
+	turns->complete_team_action(player);
 }
 
 // Fires arrow at a preset speed if it has not been fired already
 // TODO: Integrate into turn state to only enable if player's turn is on
-void WorldSystem::on_mouse_click(int button, int action, int mods)
+void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 {
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
 		if (!player_arrow_fired) {

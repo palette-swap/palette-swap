@@ -1,17 +1,17 @@
 // internal
 #include "turn_system.hpp"
 
-Entity TurnSystem::getActiveUnit()
+Entity TurnSystem::get_active_unit()
 {
-	if (!teamQueue.empty()) {
-		return teamQueue.front();
+	if (!team_queue.empty()) {
+		return team_queue.front();
 	}
 	return {};
 }
 
-bool TurnSystem::teamInQueue(Entity team)
+bool TurnSystem::team_in_queue(Entity team)
 {
-	for (Entity e : teamQueue) {
+	for (Entity e : team_queue) {
 		if (e == team) {
 			return true;
 		}
@@ -19,38 +19,38 @@ bool TurnSystem::teamInQueue(Entity team)
 	return false;
 }
 
-bool TurnSystem::addTeamToQueue(Entity team)
+bool TurnSystem::add_team_to_queue(Entity team)
 {
-	if (!teamInQueue(team)) {
-		teamQueue.push_back(team);
+	if (!team_in_queue(team)) {
+		team_queue.push_back(team);
 		return true;
 	}
 	return false;
 }
 
-bool TurnSystem::removeTeamFromQueue(Entity team)
+bool TurnSystem::remove_team_from_queue(Entity team)
 {
-	for (Entity e : teamQueue) {
+	for (Entity e : team_queue) {
 		if (e == team) {
-			teamQueue.pop_front();
+			team_queue.pop_front();
 		} else {
-			teamQueue.push_back(teamQueue.front());
-			teamQueue.pop_front();
+			team_queue.push_back(team_queue.front());
+			team_queue.pop_front();
 		}
 	}
 	return true;
 }
 
-bool TurnSystem::skipTeamAction(Entity team)
+bool TurnSystem::skip_team_action(Entity team)
 {
-	executeTeamAction(team);
-	return completeTeamAction(team);
+	execute_team_action(team);
+	return complete_team_action(team);
 }
 
-bool TurnSystem::executeTeamAction(Entity team)
+bool TurnSystem::execute_team_action(Entity team)
 {
-	if (getActiveUnit() == team && queueState == QUEUE_STATE::IDLE) {
-		queueState = QUEUE_STATE::EXECUTING;
+	if (get_active_unit() == team && queue_state == QueueState::Idle) {
+		queue_state = QueueState::Executing;
 		printf("Executing turn: Team %d\n", (int)team);
 
 		return true;
@@ -58,24 +58,24 @@ bool TurnSystem::executeTeamAction(Entity team)
 	return false;
 }
 
-bool TurnSystem::completeTeamAction(Entity team)
+bool TurnSystem::complete_team_action(Entity team)
 {
-	assert(getActiveUnit() == team);
-	if ((queueState == QUEUE_STATE::EXECUTING || queueState == QUEUE_STATE::IDLE) && getActiveUnit() == team) {
+	assert(get_active_unit() == team);
+	if ((queue_state == QueueState::Executing || queue_state == QueueState::Idle) && get_active_unit() == team) {
 		printf("Completing turn of: Team %d\n", (int)team);
-		queueState = QUEUE_STATE::FINISHED;
+		queue_state = QueueState::Finished;
 		// Perform post-execution actions
-		cycleQueue();
-		printf("Current turn: Team %d\n", getActiveUnit());
+		cycle_queue();
+		printf("Current turn: Team %d\n", get_active_unit());
 		return true;
 	}
 	return false;
 }
 
-bool TurnSystem::cycleQueue()
+bool TurnSystem::cycle_queue()
 {
-	teamQueue.push_back(teamQueue.front());
-	teamQueue.pop_front();
-	queueState = QUEUE_STATE::IDLE;
+	team_queue.push_back(team_queue.front());
+	team_queue.pop_front();
+	queue_state = QueueState::Idle;
 	return true;
 }
