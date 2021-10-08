@@ -10,7 +10,7 @@ public:
 	Entity getActiveUnit();
 	// std::deque<Entity>::iterator getTeamPositionInQueue(Entity team);
 	bool teamInQueue(Entity team);
-	int executeTeamAction(Entity team);
+	bool executeTeamAction(Entity team);
 	bool completeTeamAction(Entity team);
 	bool addTeamToQueue(Entity team);
 	bool removeTeamFromQueue(Entity team);

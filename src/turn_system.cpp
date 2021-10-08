@@ -47,22 +47,22 @@ bool TurnSystem::skipTeamAction(Entity team)
 	return completeTeamAction(team);
 }
 
-int TurnSystem::executeTeamAction(Entity team)
+bool TurnSystem::executeTeamAction(Entity team)
 {
-	printf("Exectuing turn: Team %d\n", (int)team);
 	if (getActiveUnit() == team && queueState == QUEUE_STATE::IDLE) {
 		queueState = QUEUE_STATE::EXECUTING;
+		printf("Executing turn: Team %d\n", (int)team);
 
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
 
 bool TurnSystem::completeTeamAction(Entity team)
 {
-	printf("Completing turn of: Team %d", (int)team);
 	assert(getActiveUnit() == team);
 	if ((queueState == QUEUE_STATE::EXECUTING || queueState == QUEUE_STATE::IDLE) && getActiveUnit() == team) {
+		printf("Completing turn of: Team %d\n", (int)team);
 		queueState = QUEUE_STATE::FINISHED;
 		// Perform post-execution actions
 		cycleQueue();
