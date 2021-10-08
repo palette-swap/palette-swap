@@ -87,6 +87,9 @@ public:
 	mat3 create_projection_matrix();
 	void scale_on_scroll(float scale);
 
+	float screen_scale; // Screen to pixel coordinates scale factor (for apple
+					// retina display?)
+
 private:
 	// Internal drawing functions for each entity type
 	void draw_textured_mesh(Entity entity, const mat3& projection);
@@ -94,8 +97,6 @@ private:
 
 	// Window handle
 	GLFWwindow* window;
-	float screen_scale; // Screen to pixel coordinates scale factor (for apple
-						// retina display?)
 
 	// Screen texture handles
 	GLuint frame_buffer;

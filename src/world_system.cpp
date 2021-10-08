@@ -341,15 +341,33 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
  //Tracks position of cursor, points arrow at potential fire location
  //Only enables if an arrow has not already been fired
  //TODO: Integrate into turn state to only enable if player's turn is on
-void WorldSystem::on_mouse_move(vec2 mouse_position) {
+void WorldSystem::on_mouse_move(vec2 mouse_position)
+{
 	if (!player_arrow_fired) {
+
+		int w, h;
+		glfwGetFramebufferSize(window, &w, &h);
+
+		Entity player = registry.players.top_entity();
+		vec2 position = map_position_to_screen_position(registry.map_positions.get(player).position);
+
+		float left = position.x - w * 0.5 / 2.f;
+		float top = position.y - h * 0.5 / 2.f;
+
+		float screen_scale = 0.5f;
+
+		vec2 mouse_screen_position = mouse_position * renderer->screen_scale + vec2(left, top);
+
+		// The mouse_position has to be adjusted to screen position (screen position might be a bad naming since it's actually world position).
+		// The above code I borrowed from RenderSystem::create_projection_matrix(). In the future, we can wrap left/top/right/bottom/screen_scale into camera component, so you can easily access them.
+
 		Motion& arrow_motion = registry.motions.get(player_arrow);
 		MapPosition& player_map_position = registry.map_positions.get(player);
 
 		vec2 player_screen_position = map_position_to_screen_position(player_map_position.position);
 
 		// Calculated Euclidean difference between player and arrow
-		vec2 eucl_diff = mouse_position - player_screen_position;
+		vec2 eucl_diff = mouse_screen_position - player_screen_position;
 
 		// Calculates arrow position based on position of mouse relative to player
 		vec2 new_arrow_position = normalize(eucl_diff) * 20.f + player_screen_position;
@@ -359,8 +377,6 @@ void WorldSystem::on_mouse_move(vec2 mouse_position) {
 		arrow_motion.angle = atan2(eucl_diff.x, -eucl_diff.y);
 	}
 }
-
-
 
 void WorldSystem::move_player(Direction direction)
 {
