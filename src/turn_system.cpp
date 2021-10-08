@@ -1,4 +1,4 @@
-//internal
+// internal
 #include "turn_system.hpp"
 
 Entity TurnSystem::getActiveUnit()
@@ -6,10 +6,10 @@ Entity TurnSystem::getActiveUnit()
 	if (!teamQueue.empty()) {
 		return teamQueue.front();
 	}
-	return Entity();
+	return {};
 }
 
-bool TurnSystem::teamInQueue(Entity team) 
+bool TurnSystem::teamInQueue(Entity team)
 {
 	for (Entity e : teamQueue) {
 		if (e == team) {
@@ -41,9 +41,10 @@ bool TurnSystem::removeTeamFromQueue(Entity team)
 	return true;
 }
 
-bool TurnSystem::skipTeamAction(Entity team) { 
+bool TurnSystem::skipTeamAction(Entity team)
+{
 	executeTeamAction(team);
-	return completeTeamAction(team); 
+	return completeTeamAction(team);
 }
 
 int TurnSystem::executeTeamAction(Entity team)
@@ -61,8 +62,7 @@ bool TurnSystem::completeTeamAction(Entity team)
 {
 	printf("Completing turn of: Team %d", (int)team);
 	assert(getActiveUnit() == team);
-	if ((queueState == QUEUE_STATE::EXECUTING || queueState == QUEUE_STATE::IDLE)
-				&& getActiveUnit() == team) {
+	if ((queueState == QUEUE_STATE::EXECUTING || queueState == QUEUE_STATE::IDLE) && getActiveUnit() == team) {
 		queueState = QUEUE_STATE::FINISHED;
 		// Perform post-execution actions
 		cycleQueue();
@@ -72,22 +72,10 @@ bool TurnSystem::completeTeamAction(Entity team)
 	return false;
 }
 
-TurnSystem* TurnSystem::instance = nullptr;
-
-TurnSystem* TurnSystem::getInstance() { 
-	if (instance == nullptr) {
-		instance = new TurnSystem();
-	}
-	return instance; 
-}
-
 bool TurnSystem::cycleQueue()
 {
 	teamQueue.push_back(teamQueue.front());
 	teamQueue.pop_front();
 	queueState = QUEUE_STATE::IDLE;
 	return true;
-}
-
-TurnSystem::TurnSystem() {
 }
