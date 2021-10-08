@@ -7,14 +7,26 @@
 
 class TurnSystem {
 public:
-	Entity get_active_unit();
+	// Returns the entity who can start their turn / is in their turn
+	Entity get_active_team();
 	// std::deque<Entity>::iterator getTeamPositionInQueue(Entity team);
+	
+	// Returns true if the entity team has a turn
 	bool team_in_queue(Entity team);
+
+	// Begins the turn of the given entity if they are the active team and we're currently idle
 	bool execute_team_action(Entity team);
+
+	// Ends the turn of the given entity, makes the next team in the queue active
 	bool complete_team_action(Entity team);
+	
+	// Adds a turn associated with the provided entity
 	bool add_team_to_queue(Entity team);
+
+	// Removes the turn associated with the provided entity
 	bool remove_team_from_queue(Entity team);
 
+	// Instantly start and end the turn of the given team if it's active
 	bool skip_team_action(Entity team);
 
 	enum class QueueState { Idle, Executing, Finished };

@@ -341,7 +341,7 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 
 void WorldSystem::move_player(Direction direction)
 {
-	if (turns->get_active_unit() != player) {
+	if (turns->get_active_team() != player) {
 		return;
 	}
 
