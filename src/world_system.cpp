@@ -351,10 +351,8 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 		Entity player = registry.players.top_entity();
 		vec2 position = map_position_to_screen_position(registry.map_positions.get(player).position);
 
-		float left = position.x - w * 0.5 / 2.f;
-		float top = position.y - h * 0.5 / 2.f;
-
-		float screen_scale = 0.5f;
+		float left = position.x - w * renderer->screen_scale / 2.f;
+		float top = position.y - h * renderer->screen_scale / 2.f;
 
 		vec2 mouse_screen_position = mouse_position * renderer->screen_scale + vec2(left, top);
 
