@@ -54,6 +54,7 @@ bool gl_has_errors();
 // Window sizes
 static constexpr int window_width_px = 1920;
 static constexpr int window_height_px = 1080;
+static constexpr float window_default_scale = 0.5;
 
 // Map constants
 // Each tile is 32x32 pixels
