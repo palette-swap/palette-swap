@@ -74,8 +74,8 @@ static constexpr uint8_t num_tile_textures = 3;
 static const std::set<uint8_t> walkable_tiles = { 0 };
 
 // Calculates virtual position of top left corner of map given screen and mapsystem constants
-// Currently used for map_position to/from actual position conversions
-static constexpr ivec2 top_left_corner = vec2((window_width_px - tile_size * room_size * map_size) / 2,
+// Currently used for actual_position to render_position convertion
+static constexpr vec2 top_left_corner = vec2((window_width_px - tile_size * room_size * map_size) / 2,
 								  (window_height_px - tile_size * room_size * map_size) / 2);
 
 // Some ASCII art to explain... It's basically coordinate system conversion
