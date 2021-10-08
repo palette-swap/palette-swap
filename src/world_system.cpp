@@ -176,6 +176,11 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		projectile_max_counter = 2000;
 	}
 
+	if (TurnSystem::getInstance()->getActiveUnit() == enemy_team) {
+		TurnSystem::getInstance()->executeTeamAction(enemy_team);
+		TurnSystem::getInstance()->completeTeamAction(enemy_team);
+	}
+
 	return true;
 }
 
@@ -228,6 +233,11 @@ void WorldSystem::restart_game()
 	uvec2 enemy_starting_point = uvec2(55, 56);
 	Entity enemy = create_enemy(renderer, enemy_starting_point);
 	registry.colors.insert(enemy, { 1, 4, 1 });
+
+	player_team = create_team();
+	TurnSystem::getInstance()->addTeamToQueue(player_team);
+	enemy_team = create_team();
+	TurnSystem::getInstance()->addTeamToQueue(enemy_team);
 }
 
 
@@ -338,6 +348,8 @@ void WorldSystem::on_mouse_move(vec2 mouse_position) {
 
 void WorldSystem::move_player(Direction direction)
 {
+	TurnSystem::getInstance()->executeTeamAction(player_team);
+
 	MapPosition& map_pos = registry.map_positions.get(player);
 	// TODO: this should be removed once we only use map_position
 
@@ -368,6 +380,9 @@ void WorldSystem::move_player(Direction direction)
 			isPlayerTurn = false;
 		}
 	}
+
+	TurnSystem::getInstance()->completeTeamAction(player_team);
+
 }
 
 // Fires arrow at a preset speed if it has not been fired already

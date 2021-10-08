@@ -127,3 +127,10 @@ Entity create_room(RenderSystem* renderer, vec2 position, RoomType roomType)
 
 	return entity;
 }
+
+Entity create_team()
+{
+	Entity entity = Entity();
+	registry.debug_components.emplace(entity);
+	return entity;
+}

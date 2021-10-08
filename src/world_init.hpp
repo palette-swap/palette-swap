@@ -18,3 +18,5 @@ Entity create_arrow(RenderSystem* renderer, vec2 position);
 Entity create_line(vec2 position, vec2 scale);
 // Creates a room on the current world map
 Entity create_room(RenderSystem* renderer, vec2 position, RoomType roomType);
+// Creates a team that encompasses a group of units
+Entity create_team();

@@ -10,6 +10,7 @@
 #include "map_generator_system.hpp"
 #include "physics_system.hpp"
 #include "render_system.hpp"
+#include "turn_system.hpp"
 #include "world_system.hpp"
 
 using Clock = std::chrono::high_resolution_clock;
@@ -56,7 +57,6 @@ int main()
 		ai.step(elapsed_ms, world.isPlayerTurn);
 		physics.step(elapsed_ms, window_width_px, window_height_px);
 		world.handle_collisions();
-
 		renderer.draw();
 	}
 

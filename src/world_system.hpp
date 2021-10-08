@@ -14,6 +14,7 @@
 
 #include "map_generator_system.hpp"
 #include "render_system.hpp"
+#include "turn_system.hpp"
 
 // Container for all our entities and game logic. Individual rendering / update is
 // deferred to the relative update() methods
@@ -68,6 +69,8 @@ private:
 	Entity player;
 	Entity player_arrow;
 	Debug& debugging;
+	Entity player_team;
+	Entity enemy_team;
 
 	// music references
 	Mix_Music* background_music = nullptr;
