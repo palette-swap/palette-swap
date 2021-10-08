@@ -151,7 +151,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 
 	// Resolves projectiles hitting objects, stops it for a period of time before returning it to the player
 	// Currently handles player arrow (as it is the only projectile that exists)
-    float projectile_max_counter = 2000.f;
+    float projectile_max_counter = 1000.f;
 	for (Entity entity : registry.resolved_projectiles.entities) {
 		// Gets desired projectile
 		ResolvedProjectile& projectile = registry.resolved_projectiles.get(entity);
@@ -164,9 +164,10 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		// If it is the player arrow, returns the arrow to the player's control
 		// If other projectile, removes all components of it
 		if (projectile.counter < 0) {
-			if (entity == player_arrow) {
-				player_arrow_fired = false;
+			if (entity == player_arrow) {			
 				registry.resolved_projectiles.remove(entity);
+				return_arrow_to_player();
+				player_arrow_fired = false;
 			}
 			else {
 				registry.remove_all_components_of(entity);
@@ -273,10 +274,19 @@ void WorldSystem::handle_collisions()
 	registry.collisions.clear();
 }
 
-// Should the game be over ?
+// Should the game be over?
 bool WorldSystem::is_over() const { return bool(glfwWindowShouldClose(window)); }
 
-// On key callback
+// Returns arrow to player after firing
+void WorldSystem::return_arrow_to_player() 
+{ 
+	Motion& arrow_motion = registry.motions.get(player_arrow);
+	MapPosition& player_map_position = registry.map_positions.get(player);
+	vec2 player_screen_position = map_position_to_screen_position(player_map_position.position);
+	arrow_motion.position = player_screen_position;
+}
+
+	// On key callback
 void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 {
 	if (isPlayerTurn && action != GLFW_RELEASE) {
@@ -327,14 +337,13 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
  //Only enables if an arrow has not already been fired
  //TODO: Integrate into turn state to only enable if player's turn is on
 void WorldSystem::on_mouse_move(vec2 mouse_position) {
-
 	if (!player_arrow_fired) {
 		Motion& arrow_motion = registry.motions.get(player_arrow);
-		MapPosition& player_map_position= registry.map_positions.get(player);
+		MapPosition& player_map_position = registry.map_positions.get(player);
 
 		vec2 player_screen_position = map_position_to_screen_position(player_map_position.position);
 
-		//Calculated Euclidean difference between player and arrow
+		// Calculated Euclidean difference between player and arrow
 		vec2 eucl_diff = mouse_position - player_screen_position;
 
 		// Calculates arrow position based on position of mouse relative to player
@@ -360,8 +369,9 @@ void WorldSystem::move_player(Direction direction)
 			map_pos.position = new_pos;
 			// Temp update for arrow position
 			// TODO: Dynamically track arrow to player after spawning
-			
-			arrow_motion.position = { arrow_motion.position.x - tile_size, arrow_motion.position.y };
+			if (!player_arrow_fired) {
+				arrow_motion.position = { arrow_motion.position.x - tile_size, arrow_motion.position.y };
+			}	
 			isPlayerTurn = false;
 		}
 	}
@@ -370,7 +380,9 @@ void WorldSystem::move_player(Direction direction)
 		if (map_generator->walkable(new_pos)) {
 			map_pos.position = new_pos;
 			// Temp update for arrow position
-			arrow_motion.position = { arrow_motion.position.x, arrow_motion.position.y - tile_size };
+			if (!player_arrow_fired) {
+				arrow_motion.position = { arrow_motion.position.x, arrow_motion.position.y - tile_size };
+			}
 			isPlayerTurn = false;
 		}
 	}
@@ -379,7 +391,9 @@ void WorldSystem::move_player(Direction direction)
 		if (map_generator->walkable(new_pos)) {
 			map_pos.position = new_pos;
 			// Temp update for arrow position
-			arrow_motion.position = { arrow_motion.position.x + tile_size, arrow_motion.position.y };
+			if (!player_arrow_fired) {
+				arrow_motion.position = { arrow_motion.position.x + tile_size, arrow_motion.position.y };
+			}	
 			isPlayerTurn = false;
 		}
 	} else if (direction == Direction::Down && map_pos.position.y < room_size * tile_size - 1) {
@@ -387,7 +401,9 @@ void WorldSystem::move_player(Direction direction)
 		if (map_generator->walkable(new_pos)) {
 			map_pos.position = new_pos;
 			// Temp update for arrow position
-			arrow_motion.position = { arrow_motion.position.x, arrow_motion.position.y + tile_size };
+			if (!player_arrow_fired) {
+				arrow_motion.position = { arrow_motion.position.x, arrow_motion.position.y + tile_size };
+			}
 			isPlayerTurn = false;
 		}
 	}
