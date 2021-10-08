@@ -84,7 +84,6 @@ public:
 	void draw();
 
 	mat3 create_projection_matrix();
-	void scale_on_scroll(float scale);
 
 private:
 	// Internal drawing functions for each entity type
