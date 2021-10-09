@@ -10,7 +10,8 @@
 
 // Game configuration
 bool player_arrow_fired = false;
-const size_t projectile_speed = 6;
+// TODO Track why my projectile speed had slowed throughout
+const size_t projectile_speed = 500;
 
 // Create the world
 WorldSystem::WorldSystem(Debug& debugging, std::shared_ptr<MapGeneratorSystem> map, std::shared_ptr<TurnSystem> turns)
