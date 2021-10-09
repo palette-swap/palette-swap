@@ -11,21 +11,13 @@
 
 class AISystem {
 public:
-
 	AISystem(std::shared_ptr<MapGeneratorSystem> map_generator, std::shared_ptr<TurnSystem> turns);
 
 	void step(float elapsed_ms);
 
 private:
-
 	// Switch enemy state.
 	void switch_enemy_state(const Entity& enemy_entity, ENEMY_STATE_ID enemy_state);
-
-	// Check if it is player's turn.
-	bool is_player_turn();
-
-	// Switch to player's turn.
-	void switch_to_player_turn();
 
 	// Check if the player is spotted by an entity within its radius.
 	bool is_player_spotted(const Entity& entity, uint radius);
@@ -54,13 +46,16 @@ private:
 	// An entity moves to a targeted map position.
 	bool move(const Entity& entity, const uvec2& map_pos);
 
+	// Shared resource: Map system.
 	std::shared_ptr<MapGeneratorSystem> map_generator;
+
+	// Shared resource: Turn system.
 	std::shared_ptr<TurnSystem> turns;
+
+	// Entity representing the enemy team's turn.
+	Entity enemy_team;
 
 	// C++ random number generator
 	std::default_random_engine rng;
 	std::uniform_real_distribution<float> uniform_dist; // number between 0..1
-
-	// Entity representing the enemy team's turn
-	Entity enemy_team;
 };

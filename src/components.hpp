@@ -14,11 +14,9 @@ struct Player {
 };
 
 // Camera component
-struct Camera 
-{
+struct Camera {
 	uvec2 size, central;
 };
-
 
 // struct denoting a currently active projectile
 struct ActiveProjectile {
@@ -35,7 +33,6 @@ struct Motion {
 
 // Struct indicating an object is hittable (Currently limited to projectiles
 struct Hittable {
-
 };
 
 // Stucture to store collision information
@@ -46,7 +43,8 @@ struct Collision {
 	// Note, the first object is stored in the ECS container.entities
 	Entity other; // the second object involved in the collision
 	Collision(const Entity& other)
-		: other(other) {
+		: other(other)
+	{
 		this->other = other;
 	};
 };
@@ -87,17 +85,16 @@ struct TexturedVertex {
 // Mesh datastructure for storing vertex and index buffers
 struct Mesh {
 	static bool load_from_obj_file(const std::string& obj_path,
-								std::vector<ColoredVertex>& out_vertices,
-								std::vector<uint16_t>& out_vertex_indices,
-								vec2& out_size);
+								   std::vector<ColoredVertex>& out_vertices,
+								   std::vector<uint16_t>& out_vertex_indices,
+								   vec2& out_size);
 	vec2 original_size = { 1, 1 };
 	std::vector<ColoredVertex> vertices;
 	std::vector<uint16_t> vertex_indices;
 };
 
 // Struct for resolving projectiles, including the arrow fired by the player
-struct ResolvedProjectile
-{
+struct ResolvedProjectile {
 	float counter = 2000;
 };
 
@@ -215,7 +212,8 @@ struct TileMapVertex {
 static constexpr TEXTURE_ASSET_ID tile_textures[num_tile_textures] = {
 	TEXTURE_ASSET_ID::WALKABLE_1,
 	TEXTURE_ASSET_ID::WALL_1,
-	TEXTURE_ASSET_ID::WINDOW_1, };
+	TEXTURE_ASSET_ID::WINDOW_1,
+};
 
 // Simple 3-state state machine for enemy AI: IDEL, ACTIVE, FLINCHED.
 enum class ENEMY_STATE_ID { Idle = 0, ACTIVE = Idle + 1, FLINCHED = ACTIVE + 1 };
@@ -229,7 +227,8 @@ struct EnemyState {
 struct EnemyNestPosition {
 	uvec2 position;
 	EnemyNestPosition(const uvec2& position)
-		: position(position) {
+		: position(position)
+	{
 		assert(position.x < map_size * room_size && position.y < map_size * room_size);
 	};
 };
