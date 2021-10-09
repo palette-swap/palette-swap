@@ -141,3 +141,9 @@ Entity create_camera(vec2 pos, vec2 size, ivec2 central)
 	camera.central = central;
 	return entity;
 }
+
+Entity create_team()
+{
+	Entity entity = Entity();
+	return entity;
+}
