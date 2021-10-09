@@ -396,11 +396,11 @@ void WorldSystem::move_player(Direction direction)
 	if (map_pos.position == new_pos || !map_generator->walkable(new_pos) || !turns->execute_team_action(player)) {
 		return;
 	}
-	map_pos.position = new_pos;
 	// Temp update for arrow position
 	if (!player_arrow_fired) {
-		arrow_motion.position = { arrow_motion.position.x, arrow_motion.position.y - tile_size };
+		arrow_motion.position += (vec2(new_pos) - vec2(map_pos.position)) * tile_size;
 	}
+	map_pos.position = new_pos;
 	turns->complete_team_action(player);
 }
 
