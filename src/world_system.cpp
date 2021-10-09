@@ -89,7 +89,7 @@ GLFWwindow* WorldSystem::create_window(int width, int height)
 	auto mouse_click_redirect = [](GLFWwindow* wnd, int _0, int _1, int _2) {
 		static_cast<WorldSystem*>(glfwGetWindowUserPointer(wnd))->on_mouse_click(_0, _1, _2);
 	};
-	auto scroll_redirect = [](GLFWwindow* wnd, double _0, double _1) {
+	auto scroll_redirect = [](GLFWwindow* wnd, double /*_0*/, double _1) {
 		static_cast<WorldSystem*>(glfwGetWindowUserPointer(wnd))->on_mouse_scroll(_1);
 	};
 	glfwSetKeyCallback(window, key_redirect);
