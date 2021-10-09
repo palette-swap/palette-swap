@@ -10,7 +10,7 @@
 
 // Game configuration
 bool player_arrow_fired = false;
-const size_t projectile_speed = 3;
+const size_t projectile_speed = 6;
 
 // Create the world
 WorldSystem::WorldSystem(Debug& debugging, std::shared_ptr<MapGeneratorSystem> map, std::shared_ptr<TurnSystem> turns)
@@ -94,7 +94,6 @@ GLFWwindow* WorldSystem::create_window(int width, int height)
 	glfwSetKeyCallback(window, key_redirect);
 	glfwSetCursorPosCallback(window, cursor_pos_redirect);
 	glfwSetMouseButtonCallback(window, mouse_click_redirect);
-	glfwSetScrollCallback(window, scroll_redirect);
 
 	//////////////////////////////////////
 	// Loading music and sounds with SDL
@@ -423,8 +422,4 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 				= { sin(arrow_motion.angle) * projectile_speed, -cos(arrow_motion.angle) * projectile_speed };
 		}
 	}
-}
-
-void WorldSystem::on_mouse_scroll(float offset) {
-	this->renderer->scale_on_scroll(offset);
 }

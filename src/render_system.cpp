@@ -278,27 +278,16 @@ mat3 RenderSystem::create_projection_matrix()
 	Entity player = registry.players.top_entity();
 	vec2 position = map_position_to_screen_position(registry.map_positions.get(player).position);
 
-	
-	float right = position.x + w * screen_scale / 2.f;
-	float left = position.x - w * screen_scale / 2.f;
-	float top = position.y - h * screen_scale / 2.f;
-	float bottom = position.y + h * screen_scale / 2.f;
+	float zoom = 0.25;// zoom in 4 times
+
+	float right = position.x + w * zoom / 2.f;
+	float left = position.x - w * zoom / 2.f;
+	float top = position.y - h * zoom / 2.f;
+	float bottom = position.y + h * zoom / 2.f;
 
 	float sx = 2.f / (right - left);
 	float sy = 2.f / (top - bottom);
 	float tx = -(right + left) / (right - left);
 	float ty = -(top + bottom) / (top - bottom);
 	return { { sx, 0.f, 0.f }, { 0.f, sy, 0.f }, { tx, ty, 1.f } };
-}
-
- void RenderSystem::scale_on_scroll(float offset)
-{
-	 // scale the camera based on scrolling offset
-	 // scrolling forward -> zoom in
-	 // scrolling backward -> zoom out
-	 // max: 1.0, min: 0.2
-	float zoom = offset / 10;
-	if (this->screen_scale - zoom > 0.1 && this->screen_scale - zoom <= 1.0) {
-		this->screen_scale -= zoom;
-	}
 }
