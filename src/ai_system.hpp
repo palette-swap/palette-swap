@@ -7,18 +7,19 @@
 #include "tiny_ecs_registry.hpp"
 
 #include "map_generator_system.hpp"
+#include "turn_system.hpp"
 
 class AISystem {
 public:
 
-	explicit AISystem(std::shared_ptr<MapGeneratorSystem> map_generator);
+	AISystem(std::shared_ptr<MapGeneratorSystem> map_generator, std::shared_ptr<TurnSystem> turns);
 
-	void step(float elapsed_ms, bool& isPlayerTurn);
+	void step(float elapsed_ms);
 
 private:
 
 	// Switch enemy state.
-	void switch_enemry_state(const Entity& enemy_entity, ENEMY_STATE_ID enemy_state);
+	void switch_enemy_state(const Entity& enemy_entity, ENEMY_STATE_ID enemy_state);
 
 	// Check if it is player's turn.
 	bool is_player_turn();
@@ -54,8 +55,12 @@ private:
 	bool move(const Entity& entity, const uvec2& map_pos);
 
 	std::shared_ptr<MapGeneratorSystem> map_generator;
+	std::shared_ptr<TurnSystem> turns;
 
 	// C++ random number generator
 	std::default_random_engine rng;
 	std::uniform_real_distribution<float> uniform_dist; // number between 0..1
+
+	// Entity representing the enemy team's turn
+	Entity enemy_team;
 };

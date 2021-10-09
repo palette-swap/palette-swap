@@ -14,12 +14,13 @@
 
 #include "map_generator_system.hpp"
 #include "render_system.hpp"
+#include "turn_system.hpp"
 
 // Container for all our entities and game logic. Individual rendering / update is
 // deferred to the relative update() methods
 class WorldSystem {
 public:
-	WorldSystem(Debug& debugging, std::shared_ptr<MapGeneratorSystem> map);
+	WorldSystem(Debug& debugging, std::shared_ptr<MapGeneratorSystem> map, std::shared_ptr<TurnSystem> turns);
 
 	// Creates a window
 	GLFWwindow* create_window(int width, int height);
@@ -39,15 +40,12 @@ public:
 	// Should the game be over ?
 	bool is_over() const;
 
-	// Temporary simulation of turn sytem to test AI System.
-	// Will be removed after integrating real Turn System.
-	bool isPlayerTurn = true;
-
 private:
 	// Input callback functions
 	void on_key(int key, int /*scancode*/, int action, int mod);
 	void on_mouse_move(vec2 pos);
-	void on_mouse_click(int button, int action, int mods);
+	void on_mouse_click(int button, int action, int /*mods*/);
+	void on_mouse_scroll(float offset);
 
 	// restart level
 	void restart_game();
@@ -82,4 +80,5 @@ private:
 	std::uniform_real_distribution<float> uniform_dist; // number between 0..1
 
 	std::shared_ptr<MapGeneratorSystem> map_generator;
+	std::shared_ptr<TurnSystem> turns;
 };

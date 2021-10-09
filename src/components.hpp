@@ -218,11 +218,11 @@ static constexpr TEXTURE_ASSET_ID tile_textures[num_tile_textures] = {
 	TEXTURE_ASSET_ID::WINDOW_1, };
 
 // Simple 3-state state machine for enemy AI: IDEL, ACTIVE, FLINCHED.
-enum class ENEMY_STATE_ID { IDLE = 0, ACTIVE = IDLE + 1, FLINCHED = ACTIVE + 1 };
+enum class ENEMY_STATE_ID { Idle = 0, ACTIVE = Idle + 1, FLINCHED = ACTIVE + 1 };
 
 // Structure to store enemy state.
 struct EnemyState {
-	ENEMY_STATE_ID current_state = ENEMY_STATE_ID::IDLE;
+	ENEMY_STATE_ID current_state = ENEMY_STATE_ID::Idle;
 };
 
 // Structure to store enemy nest position.

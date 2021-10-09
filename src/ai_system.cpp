@@ -3,12 +3,17 @@
 #include "components.hpp"
 
 // AI logic
-AISystem::AISystem(std::shared_ptr<MapGeneratorSystem> map_generator):
-	map_generator(std::move(map_generator)) {
+AISystem::AISystem(std::shared_ptr<MapGeneratorSystem> map_generator, std::shared_ptr<TurnSystem> turns)
+	:
+	map_generator(std::move(map_generator)), turns(std::move(turns)) {
+
+	registry.debug_components.emplace(enemy_team);
+	
+	this->turns->add_team_to_queue(enemy_team);
 }
 
-void AISystem::step(float /*elapsed_ms*/, bool& isPlayerTurn) {
-	if (isPlayerTurn) {
+void AISystem::step(float /*elapsed_ms*/) {
+	if (!turns->execute_team_action(enemy_team)) {
 		return;
 	}
 
@@ -16,10 +21,10 @@ void AISystem::step(float /*elapsed_ms*/, bool& isPlayerTurn) {
 
 		switch (registry.enemy_states.get(enemy_entity).current_state) {
 
-		case ENEMY_STATE_ID::IDLE:
+		case ENEMY_STATE_ID::Idle:
 			if (is_player_spotted(enemy_entity, 3)) {
 				become_alert(enemy_entity);
-				switch_enemry_state(enemy_entity, ENEMY_STATE_ID::ACTIVE);
+				switch_enemy_state(enemy_entity, ENEMY_STATE_ID::ACTIVE);
 			}
 			break;
 
@@ -32,16 +37,16 @@ void AISystem::step(float /*elapsed_ms*/, bool& isPlayerTurn) {
 				}
 
 				if (is_afraid(enemy_entity)) {
-					switch_enemry_state(enemy_entity, ENEMY_STATE_ID::FLINCHED);
+					switch_enemy_state(enemy_entity, ENEMY_STATE_ID::FLINCHED);
 				}
 			} else {
-				switch_enemry_state(enemy_entity, ENEMY_STATE_ID::IDLE);
+				switch_enemy_state(enemy_entity, ENEMY_STATE_ID::Idle);
 			}
 			break;
 
 		case ENEMY_STATE_ID::FLINCHED:
 			if (is_at_nest(enemy_entity)) {
-				switch_enemry_state(enemy_entity, ENEMY_STATE_ID::IDLE);
+				switch_enemy_state(enemy_entity, ENEMY_STATE_ID::Idle);
 			} else {
 				approach_nest(enemy_entity);
 			}
@@ -52,20 +57,20 @@ void AISystem::step(float /*elapsed_ms*/, bool& isPlayerTurn) {
 		}
 	}
 
-	isPlayerTurn = true;
+	turns->complete_team_action(enemy_team);
 }
 
-void AISystem::switch_enemry_state(const Entity& enemy_entity, ENEMY_STATE_ID enemy_state) {
+void AISystem::switch_enemy_state(const Entity& enemy_entity, ENEMY_STATE_ID enemy_state) {
 	ENEMY_STATE_ID& enemy_current_state = registry.enemy_states.get(enemy_entity).current_state;
 	TEXTURE_ASSET_ID& enemy_current_textrue = registry.render_requests.get(enemy_entity).used_texture;
 	vec3& enemy_current_color = registry.colors.get(enemy_entity);
 
 	switch (enemy_state) {
 
-	case ENEMY_STATE_ID::IDLE:
-		enemy_current_state = ENEMY_STATE_ID::IDLE;
+	case ENEMY_STATE_ID::Idle:
+		enemy_current_state = ENEMY_STATE_ID::Idle;
 		enemy_current_textrue = TEXTURE_ASSET_ID::SLIME;
-		enemy_current_color = { 1, 1, 1 };
+		enemy_current_color = { 1, 4, 1 };
 		break;
 
 	case ENEMY_STATE_ID::ACTIVE:

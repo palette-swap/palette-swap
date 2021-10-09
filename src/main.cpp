@@ -10,6 +10,7 @@
 #include "map_generator_system.hpp"
 #include "physics_system.hpp"
 #include "render_system.hpp"
+#include "turn_system.hpp"
 #include "world_system.hpp"
 
 using Clock = std::chrono::high_resolution_clock;
@@ -20,12 +21,15 @@ int main()
 	// Map system
 	std::shared_ptr<MapGeneratorSystem> map = std::make_shared<MapGeneratorSystem>();
 
+	// Turn System
+	std::shared_ptr<TurnSystem> turns = std::make_shared<TurnSystem>();
+
 	// Global systems
 	Debug debugging;
-	WorldSystem world(debugging, map);
+	WorldSystem world(debugging, map, turns);
 	RenderSystem renderer;
 	PhysicsSystem physics(debugging);
-	AISystem ai(map);
+	AISystem ai(map, turns);
 
 	// Initializing window
 	GLFWwindow* window = world.create_window(window_width_px, window_height_px);
@@ -53,10 +57,9 @@ int main()
 		t = now;
 
 		world.step(elapsed_ms);
-		ai.step(elapsed_ms, world.isPlayerTurn);
+		ai.step(elapsed_ms);
 		physics.step(elapsed_ms, window_width_px, window_height_px);
 		world.handle_collisions();
-
 		renderer.draw();
 	}
 

@@ -135,9 +135,15 @@ Entity create_camera(vec2 pos, vec2 size, ivec2 central)
 	auto entity = Entity();
 
 	// Setting initial position for camera
-	MapPosition& mapPosition = registry.map_positions.emplace(entity, pos, vec2(tile_size, tile_size));
+	MapPosition& map_position = registry.map_positions.emplace(entity, pos, vec2(tile_size, tile_size));
 	Camera& camera = registry.cameras.emplace(entity);
 	camera.size = size;
 	camera.central = central;
+	return entity;
+}
+
+Entity create_team()
+{
+	Entity entity = Entity();
 	return entity;
 }
