@@ -33,7 +33,7 @@ bool RenderSystem::init(int width, int height, GLFWwindow* window_arg)
 
 	// For some high DPI displays (ex. Retina Display on Macbooks)
 	// https://stackoverflow.com/questions/36672935/why-retina-screen-coordinate-value-is-twice-the-value-of-pixel-value
-	screen_scale = static_cast<float>(window_width_px) / static_cast<float>(width);
+	screen_scale = static_cast<float>(window_width_px) / static_cast<float>(width) * window_default_scale;
 	(int)height; // dummy to avoid warning
 
 	// ASK(Camilo): Setup error callback. This can not be done in mac os, so do not enable
