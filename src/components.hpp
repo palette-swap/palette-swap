@@ -131,10 +131,8 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 	SLIME_ALERT = SLIME + 1,
 	SLIME_FLINCHED = SLIME_ALERT + 1,
 	ARROW = SLIME_FLINCHED + 1,
-	WALKABLE_1 = ARROW + 1,
-	WALL_1 = WALKABLE_1 + 1,
-	WINDOW_1 = WALL_1 + 1,
-	TEXTURE_COUNT = WINDOW_1 + 1
+	TILE_SET = ARROW + 1,
+	TEXTURE_COUNT = TILE_SET + 1
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 
@@ -206,16 +204,7 @@ struct Room {
 struct TileMapVertex {
 	vec3 position = vec3(0);
 	vec2 texcoord = vec3(0);
-
-	// each tile texture corresponds to a 32*32 png
-	// TODO: modify this once we support texture atlas
-	float tile_texture = 0;
 };
-
-static constexpr TEXTURE_ASSET_ID tile_textures[num_tile_textures] = {
-	TEXTURE_ASSET_ID::WALKABLE_1,
-	TEXTURE_ASSET_ID::WALL_1,
-	TEXTURE_ASSET_ID::WINDOW_1, };
 
 // Simple 3-state state machine for enemy AI: IDEL, ACTIVE, FLINCHED.
 enum class ENEMY_STATE_ID { Idle = 0, ACTIVE = Idle + 1, FLINCHED = ACTIVE + 1 };

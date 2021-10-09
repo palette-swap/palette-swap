@@ -96,7 +96,6 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 	} else if (render_request.used_effect == EFFECT_ASSET_ID::TILE_MAP) {
 		GLint in_position_loc = glGetAttribLocation(program, "in_position");
 		GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
-		GLint tile_index_loc = glGetAttribLocation(program, "tile_index");
 
 		gl_has_errors();
 		assert(in_texcoord_loc >= 0);
@@ -112,30 +111,15 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 							  GL_FALSE,
 							  sizeof(TileMapVertex),
 							  (void*)sizeof(vec3)); // note the stride to skip the preceeding vertex position
+		// Enabling and binding texture to slot 0
+		glActiveTexture(GL_TEXTURE0);
+		gl_has_errors();
 
-		// Pass in the tile indexes
-		glEnableVertexAttribArray(tile_index_loc);
-		glVertexAttribPointer(
-			tile_index_loc, 1, GL_FLOAT, GL_FALSE, sizeof(TileMapVertex), (void*)(sizeof(vec3) + sizeof(vec2)));
+		assert(registry.render_requests.has(entity));
+		GLuint texture_id = texture_gl_handles.at((GLuint)registry.render_requests.get(entity).used_texture);
 
-		// Currently we pass in all tiles included, this can be inefficient and can
-		// overflow the texture limit, some ways to optimize
-		// 1. Pass in certian tiles based on camera position
-		// 2. (Preferred) Use a sprite sheet(tilemap atlas), access multiple tiles for
-		// a single load
-		int samplers[num_tile_textures];
-		for (int i = 0; i < num_tile_textures; i++)
-		{
-			// Maintenance Note:
-			// To support OpenGL 3.3, glBindTextureUnit (OpenGL 4.5 feature) is replaced by glActiveTexture + glBindTexture.
-			glActiveTexture(GL_TEXTURE0 + i);
-			glBindTexture(GL_TEXTURE_2D, texture_gl_handles[(GLuint)tile_textures[i]]);
-      
-			samplers[i] = i;
-		}
-    
-		auto textures_loc = glGetUniformLocation(program, "tile_textures");
-		glUniform1iv(textures_loc, num_tile_textures, samplers);
+		glBindTexture(GL_TEXTURE_2D, texture_id);
+		gl_has_errors();
 	} else {
 		assert(false && "Type of render request not supported");
 	}

@@ -125,7 +125,7 @@ Entity create_room(RenderSystem* renderer, vec2 position, RoomType roomType)
 	room.type = roomType;
 
 	registry.render_requests.insert(
-		entity, { TEXTURE_ASSET_ID::TEXTURE_COUNT, EFFECT_ASSET_ID::TILE_MAP, GEOMETRY_BUFFER_ID::ROOM });
+		entity, { TEXTURE_ASSET_ID::TILE_SET, EFFECT_ASSET_ID::TILE_MAP, GEOMETRY_BUFFER_ID::ROOM });
 
 	return entity;
 }
