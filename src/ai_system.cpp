@@ -69,20 +69,20 @@ void AISystem::switch_enemry_state(const Entity& enemy_entity, ENEMY_STATE_ID en
 
 	case ENEMY_STATE_ID::Idle:
 		enemy_current_state = ENEMY_STATE_ID::Idle;
-		enemy_current_textrue = TEXTURE_ASSET_ID::SLUG;
+		enemy_current_textrue = TEXTURE_ASSET_ID::SLIME;
 		enemy_current_color = { 1, 4, 1 };
 		break;
 
 	case ENEMY_STATE_ID::ACTIVE:
 		enemy_current_state = ENEMY_STATE_ID::ACTIVE;
-		enemy_current_textrue = TEXTURE_ASSET_ID::SLUG_ALERT;
-		enemy_current_color = { 1, 1, 1 };
+		enemy_current_textrue = TEXTURE_ASSET_ID::SLIME_ALERT;
+		enemy_current_color = { 3, 1, 1 };
 		break;
 
 	case ENEMY_STATE_ID::FLINCHED:
 		enemy_current_state = ENEMY_STATE_ID::FLINCHED;
-		enemy_current_textrue = TEXTURE_ASSET_ID::SLUG;
-		enemy_current_color = { 0, 1, 8 };
+		enemy_current_textrue = TEXTURE_ASSET_ID::SLIME_FLINCHED;
+		enemy_current_color = { 1, 1, 1 };
 		break;
 
 	default:

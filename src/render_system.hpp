@@ -30,8 +30,9 @@ class RenderSystem {
 	// Make sure these paths remain in sync with the associated enumerators.
 	const std::array<std::string, texture_count> texture_paths = {
 			textures_path("Paladin_A01.png"),
-			textures_path("Slug.png"),
-			textures_path("Slug Alert.png"),
+			textures_path("Slime.png"),
+			textures_path("Slime alert.png"),
+			textures_path("Slime flinched.png"),
 			textures_path("Arrow.png"),
 			textures_path("walkable_1.png"),
 			textures_path("wall_1.png"),
@@ -86,6 +87,9 @@ public:
 	mat3 create_projection_matrix();
 	void scale_on_scroll(float scale);
 
+	float screen_scale; // Screen to pixel coordinates scale factor (for apple
+					// retina display?)
+
 private:
 	// Internal drawing functions for each entity type
 	void draw_textured_mesh(Entity entity, const mat3& projection);
@@ -93,8 +97,6 @@ private:
 
 	// Window handle
 	GLFWwindow* window;
-	float screen_scale; // Screen to pixel coordinates scale factor (for apple
-						// retina display?)
 
 	// Screen texture handles
 	GLuint frame_buffer;

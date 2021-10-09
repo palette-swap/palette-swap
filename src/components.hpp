@@ -22,7 +22,7 @@ struct Camera
 
 // struct denoting a currently active projectile
 struct ActiveProjectile {
-
+	vec2 head_offset = { 0, 0 };
 };
 
 // All data relevant to the shape and motion of entities
@@ -127,9 +127,10 @@ struct ResolvedProjectile
 
 enum class TEXTURE_ASSET_ID : uint8_t {
 	PALADIN = 0,
-	SLUG = PALADIN + 1,
-	SLUG_ALERT = SLUG + 1,
-	ARROW = SLUG_ALERT + 1,
+	SLIME = PALADIN + 1,
+	SLIME_ALERT = SLIME + 1,
+	SLIME_FLINCHED = SLIME_ALERT + 1,
+	ARROW = SLIME_FLINCHED + 1,
 	WALKABLE_1 = ARROW + 1,
 	WALL_1 = WALKABLE_1 + 1,
 	WINDOW_1 = WALL_1 + 1,
