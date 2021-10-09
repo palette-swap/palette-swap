@@ -24,7 +24,7 @@ void AISystem::step(float /*elapsed_ms*/) {
 		case ENEMY_STATE_ID::Idle:
 			if (is_player_spotted(enemy_entity, 3)) {
 				become_alert(enemy_entity);
-				switch_enemry_state(enemy_entity, ENEMY_STATE_ID::ACTIVE);
+				switch_enemy_state(enemy_entity, ENEMY_STATE_ID::ACTIVE);
 			}
 			break;
 
@@ -37,16 +37,16 @@ void AISystem::step(float /*elapsed_ms*/) {
 				}
 
 				if (is_afraid(enemy_entity)) {
-					switch_enemry_state(enemy_entity, ENEMY_STATE_ID::FLINCHED);
+					switch_enemy_state(enemy_entity, ENEMY_STATE_ID::FLINCHED);
 				}
 			} else {
-				switch_enemry_state(enemy_entity, ENEMY_STATE_ID::Idle);
+				switch_enemy_state(enemy_entity, ENEMY_STATE_ID::Idle);
 			}
 			break;
 
 		case ENEMY_STATE_ID::FLINCHED:
 			if (is_at_nest(enemy_entity)) {
-				switch_enemry_state(enemy_entity, ENEMY_STATE_ID::Idle);
+				switch_enemy_state(enemy_entity, ENEMY_STATE_ID::Idle);
 			} else {
 				approach_nest(enemy_entity);
 			}
@@ -60,7 +60,7 @@ void AISystem::step(float /*elapsed_ms*/) {
 	turns->complete_team_action(enemy_team);
 }
 
-void AISystem::switch_enemry_state(const Entity& enemy_entity, ENEMY_STATE_ID enemy_state) {
+void AISystem::switch_enemy_state(const Entity& enemy_entity, ENEMY_STATE_ID enemy_state) {
 	ENEMY_STATE_ID& enemy_current_state = registry.enemy_states.get(enemy_entity).current_state;
 	TEXTURE_ASSET_ID& enemy_current_textrue = registry.render_requests.get(enemy_entity).used_texture;
 	vec3& enemy_current_color = registry.colors.get(enemy_entity);

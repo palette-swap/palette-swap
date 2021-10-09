@@ -19,7 +19,7 @@ public:
 private:
 
 	// Switch enemy state.
-	void switch_enemry_state(const Entity& enemy_entity, ENEMY_STATE_ID enemy_state);
+	void switch_enemy_state(const Entity& enemy_entity, ENEMY_STATE_ID enemy_state);
 
 	// Check if it is player's turn.
 	bool is_player_turn();
