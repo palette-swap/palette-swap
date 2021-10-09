@@ -4,7 +4,6 @@
 
 #include "common.hpp"
 #include "tiny_ecs_registry.hpp"
-#include "ai_system.hpp"
 
 class TurnSystem {
 public:
