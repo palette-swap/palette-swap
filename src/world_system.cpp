@@ -10,7 +10,7 @@
 
 // Game configuration
 bool player_arrow_fired = false;
-const size_t projectile_speed = 3;
+const size_t projectile_speed = 6;
 
 // Create the world
 WorldSystem::WorldSystem(Debug& debugging, std::shared_ptr<MapGeneratorSystem> map)
