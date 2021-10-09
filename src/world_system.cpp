@@ -165,8 +165,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		if (projectile.counter < 0) {
 			if (entity == player_arrow) {			
 				registry.resolved_projectiles.remove(entity);
-				return_arrow_to_player();
 				player_arrow_fired = false;
+				return_arrow_to_player();
 			}
 			else {
 				registry.remove_all_components_of(entity);
@@ -277,10 +277,9 @@ bool WorldSystem::is_over() const { return bool(glfwWindowShouldClose(window)); 
 // Returns arrow to player after firing
 void WorldSystem::return_arrow_to_player() 
 { 
-	Motion& arrow_motion = registry.motions.get(player_arrow);
-	MapPosition& player_map_position = registry.map_positions.get(player);
-	vec2 player_screen_position = map_position_to_screen_position(player_map_position.position);
-	arrow_motion.position = player_screen_position;
+	dvec2 mouse_pos;
+	glfwGetCursorPos(window, &mouse_pos.x, &mouse_pos.y);
+	on_mouse_move(vec2(mouse_pos));
 }
 
 	// On key callback
