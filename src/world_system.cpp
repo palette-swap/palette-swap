@@ -10,7 +10,7 @@
 
 // Game configuration
 bool player_arrow_fired = false;
-const size_t projectile_speed = 1;
+const size_t projectile_speed = 3;
 
 // Create the world
 WorldSystem::WorldSystem(Debug& debugging, std::shared_ptr<MapGeneratorSystem> map)
@@ -155,7 +155,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 
 	// Resolves projectiles hitting objects, stops it for a period of time before returning it to the player
 	// Currently handles player arrow (as it is the only projectile that exists)
-    float projectile_max_counter = 2000.f;
+    float projectile_max_counter = 1000.f;
 	for (Entity entity : registry.resolved_projectiles.entities) {
 		// Gets desired projectile
 		ResolvedProjectile& projectile = registry.resolved_projectiles.get(entity);
@@ -168,9 +168,10 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		// If it is the player arrow, returns the arrow to the player's control
 		// If other projectile, removes all components of it
 		if (projectile.counter < 0) {
-			if (entity == player_arrow) {
-				player_arrow_fired = false;
+			if (entity == player_arrow) {			
 				registry.resolved_projectiles.remove(entity);
+				return_arrow_to_player();
+				player_arrow_fired = false;
 			}
 			else {
 				registry.remove_all_components_of(entity);
@@ -221,23 +222,18 @@ void WorldSystem::restart_game()
 	uvec2 player_starting_point = uvec2(51, 51);
 	// Create a new Player instance and shift player onto a tile
 	player = create_player(renderer, player_starting_point);
-	registry.colors.insert(player, { 1, 1, 1 });
 
 	// create camera instance
 	camera = create_camera(
 		{ (player_starting_point.x - 20), (player_starting_point.y - 20)}, { 23, 23 }, player_starting_point);
-
-
-
 
 	// Create a new player arrow instance
 	vec2 player_location = map_position_to_screen_position(player_starting_point);
 	player_arrow = create_arrow(renderer, player_location);
 	// Creates a single enemy instance, (TODO: needs to be updated with position based on grid)
 	// Also requires naming scheme for randomly generated enemies, for later reference
-	uvec2 enemy_starting_point = uvec2(55, 56);
-	Entity enemy = create_enemy(renderer, enemy_starting_point);
-	registry.colors.insert(enemy, { 1, 4, 1 });
+	create_enemy(renderer, uvec2(55, 56));
+	create_enemy(renderer, uvec2(58, 51));
 }
 
 
@@ -254,15 +250,28 @@ void WorldSystem::handle_collisions()
 
 		// collisions involving projectiles
 		if (registry.active_projectiles.has(entity)) {
+			ActiveProjectile& projectile = registry.active_projectiles.get(entity);
+			// TODO: rename hittable container type
+			// TODO: Convert all checks to if tile is walkable, currently has issue that enemies can overlay player
 			//Currently, arrows can hit anything with a hittable component, which will include walls and enemies
-			//TODO: rename hittable container type 
-			//TODO: resolve with arrow 
 			if (registry.hittables.has(entity_other)) {
 				registry.motions.get(entity).velocity = { 0, 0 };
 				registry.active_projectiles.remove(entity);		
 				// Stops projectile motion, adds projectile to list of resolved projectiles
 				registry.resolved_projectiles.emplace(entity);
+			} else {
+				// Checks if projectile's head has hit a wall
+				uvec2 projectile_location = (screen_position_to_map_position(registry.motions.get(entity).position + projectile.head_offset));
+
+				// Hacky way, using the same check for the player's "walkable"
+				if (!map_generator->walkable(projectile_location)) {
+					registry.motions.get(entity).velocity = { 0, 0 };
+					registry.active_projectiles.remove(entity);
+					// Stops projectile motion, adds projectile to list of resolved projectiles
+					registry.resolved_projectiles.emplace(entity);
+				}
 			}
+			
 		}
 	}
 
@@ -270,10 +279,19 @@ void WorldSystem::handle_collisions()
 	registry.collisions.clear();
 }
 
-// Should the game be over ?
+// Should the game be over?
 bool WorldSystem::is_over() const { return bool(glfwWindowShouldClose(window)); }
 
-// On key callback
+// Returns arrow to player after firing
+void WorldSystem::return_arrow_to_player() 
+{ 
+	Motion& arrow_motion = registry.motions.get(player_arrow);
+	MapPosition& player_map_position = registry.map_positions.get(player);
+	vec2 player_screen_position = map_position_to_screen_position(player_map_position.position);
+	arrow_motion.position = player_screen_position;
+}
+
+	// On key callback
 void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 {
 	if (isPlayerTurn && action != GLFW_RELEASE) {
@@ -323,38 +341,56 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
  //Tracks position of cursor, points arrow at potential fire location
  //Only enables if an arrow has not already been fired
  //TODO: Integrate into turn state to only enable if player's turn is on
-void WorldSystem::on_mouse_move(vec2 mouse_position) {
-
+void WorldSystem::on_mouse_move(vec2 mouse_position)
+{
 	if (!player_arrow_fired) {
+
+		int w, h;
+		glfwGetFramebufferSize(window, &w, &h);
+
+		Entity player = registry.players.top_entity();
+		vec2 position = map_position_to_screen_position(registry.map_positions.get(player).position);
+
+		float left = position.x - w * renderer->screen_scale / 2.f;
+		float top = position.y - h * renderer->screen_scale / 2.f;
+
+		vec2 mouse_screen_position = mouse_position * renderer->screen_scale + vec2(left, top);
+
+		// The mouse_position has to be adjusted to screen position (screen position might be a bad naming since it's actually world position).
+		// The above code I borrowed from RenderSystem::create_projection_matrix(). In the future, we can wrap left/top/right/bottom/screen_scale into camera component, so you can easily access them.
+
 		Motion& arrow_motion = registry.motions.get(player_arrow);
-		MapPosition& player_map_position= registry.map_positions.get(player);
+		MapPosition& player_map_position = registry.map_positions.get(player);
 
 		vec2 player_screen_position = map_position_to_screen_position(player_map_position.position);
 
-		//Calculated Euclidean difference between player and arrow
-		vec2 eucl_diff = mouse_position - player_screen_position;
+		// Calculated Euclidean difference between player and arrow
+		vec2 eucl_diff = mouse_screen_position - player_screen_position;
 
 		// Calculates arrow position based on position of mouse relative to player
 		vec2 new_arrow_position = normalize(eucl_diff) * 20.f + player_screen_position;
 		arrow_motion.position = new_arrow_position;
-
 
 		// Calculates arrow angle based on position of mouse
 		arrow_motion.angle = atan2(eucl_diff.x, -eucl_diff.y);
 	}
 }
 
-
-
 void WorldSystem::move_player(Direction direction)
 {
 	MapPosition& map_pos = registry.map_positions.get(player);
+	Motion& arrow_motion = registry.motions.get(player_arrow);
 	// TODO: this should be removed once we only use map_position
 
 	if (direction == Direction::Left && map_pos.position.x > 0) {
 		uvec2 new_pos = uvec2(map_pos.position.x - 1, map_pos.position.y);
 		if (map_generator->walkable(new_pos)) {
 			map_pos.position = new_pos;
+			// Temp update for arrow position
+			// TODO: Dynamically track arrow to player after spawning
+			if (!player_arrow_fired) {
+				arrow_motion.position = { arrow_motion.position.x - tile_size, arrow_motion.position.y };
+			}	
 			isPlayerTurn = false;
 		}
 	}
@@ -362,6 +398,10 @@ void WorldSystem::move_player(Direction direction)
 		uvec2 new_pos = uvec2(map_pos.position.x, map_pos.position.y - 1);
 		if (map_generator->walkable(new_pos)) {
 			map_pos.position = new_pos;
+			// Temp update for arrow position
+			if (!player_arrow_fired) {
+				arrow_motion.position = { arrow_motion.position.x, arrow_motion.position.y - tile_size };
+			}
 			isPlayerTurn = false;
 		}
 	}
@@ -369,12 +409,20 @@ void WorldSystem::move_player(Direction direction)
 		uvec2 new_pos = uvec2(map_pos.position.x + 1, map_pos.position.y);
 		if (map_generator->walkable(new_pos)) {
 			map_pos.position = new_pos;
+			// Temp update for arrow position
+			if (!player_arrow_fired) {
+				arrow_motion.position = { arrow_motion.position.x + tile_size, arrow_motion.position.y };
+			}	
 			isPlayerTurn = false;
 		}
 	} else if (direction == Direction::Down && map_pos.position.y < room_size * tile_size - 1) {
 		uvec2 new_pos = uvec2(map_pos.position.x, map_pos.position.y + 1);
 		if (map_generator->walkable(new_pos)) {
 			map_pos.position = new_pos;
+			// Temp update for arrow position
+			if (!player_arrow_fired) {
+				arrow_motion.position = { arrow_motion.position.x, arrow_motion.position.y + tile_size };
+			}
 			isPlayerTurn = false;
 		}
 	}
@@ -387,8 +435,11 @@ void WorldSystem::on_mouse_click(int button, int action, int mods) {
 		if (!player_arrow_fired) {
 			player_arrow_fired = true;
 			// Arrow becomes a projectile the moment it leaves the player, not while it's direction is being selected
-			registry.active_projectiles.emplace(player_arrow);
+			ActiveProjectile& arrow_projectile = registry.active_projectiles.emplace(player_arrow);
 			Motion& arrow_motion = registry.motions.get(player_arrow);
+
+			// Denotes arrowhead location the player's arrow, based on firing angle and current scaling
+			arrow_projectile.head_offset = { sin(arrow_motion.angle) * arrow_motion.scale.y/2, -cos(arrow_motion.angle) * arrow_motion.scale.x/2};
 
 			// TODO: Add better arrow physics potentially?
 			arrow_motion.velocity = { sin(arrow_motion.angle) * projectile_speed,

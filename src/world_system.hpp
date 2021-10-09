@@ -53,6 +53,9 @@ private:
 	// restart level
 	void restart_game();
 
+	// returns arrow asset to player
+	void return_arrow_to_player();
+
 	// move the player one unit in the given direction,
 	// if the tile is blocked by a wall, player won't move
 	void move_player(Direction direction);
