@@ -14,22 +14,21 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 	if (registry.map_positions.has(entity)) {
 		MapPosition& map_position = registry.map_positions.get(entity);
 		transform.translate(map_position_to_screen_position(map_position.position));
-		transform.scale(map_position.scale);
 	}
-	// Change this, needed to change it since room was rendering based on motion, but so is arrow
-	/*if (registry.active_projectiles.has(entity) */
 	else {
-		Motion& motion = registry.motions.get(entity);
-		// Transformation code, see Rendering and Transformation in the template
-		// specification for more info Incrementally updates transformation matrix,
-		// thus ORDER IS IMPORTANT
-		transform.translate(motion.position);
-		transform.rotate(motion.angle);
-		transform.scale(motion.scale);
+		// Most objects in the game are expected to use MapPosition, exceptions are:
+		// Arrow, Room.
+		transform.translate(registry.world_positions.get(entity).position);
+		if (registry.velocities.has(entity)) {
+			// Probably can provide a get if exist function here to boost performance
+			transform.rotate(registry.velocities.get(entity).angle);
+		}
 	}
 
 	assert(registry.render_requests.has(entity));
 	const RenderRequest& render_request = registry.render_requests.get(entity);
+
+	transform.scale(scaling_factors.at(static_cast<int>(render_request.used_texture)));
 
 	const auto used_effect_enum = (GLuint)render_request.used_effect;
 	assert(used_effect_enum != (GLuint)EFFECT_ASSET_ID::EFFECT_COUNT);
@@ -249,9 +248,6 @@ void RenderSystem::draw()
 	mat3 projection_2d = create_projection_matrix();
 	// Draw all textured meshes that have a position and size component
 	for (Entity entity : registry.render_requests.entities) {
-		if (!registry.motions.has(entity) && !registry.map_positions.has(entity)) {
-			continue;
-		}
 		// Note, its not very efficient to access elements indirectly via the entity
 		// albeit iterating through all Sprites in sequence. A good point to optimize
 		draw_textured_mesh(entity, projection_2d);

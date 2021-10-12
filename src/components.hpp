@@ -23,14 +23,6 @@ struct ActiveProjectile {
 	vec2 head_offset = { 0, 0 };
 };
 
-// All data relevant to the shape and motion of entities
-struct Motion {
-	vec2 position = { 0, 0 };
-	float angle = 0;
-	vec2 velocity = { 0, 0 };
-	vec2 scale = { 10, 10 };
-};
-
 // Struct indicating an object is hittable (Currently limited to projectiles
 struct Hittable {
 };
@@ -135,6 +127,20 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 
+// Define the scaling factors needed for each textures
+// Note: This needs to stay the same order as TEXTURE_ASSET_ID and texture_paths
+static constexpr std::array<vec2, texture_count> scaling_factors = {
+	vec2(tile_size, tile_size),
+	vec2(tile_size, tile_size),
+	vec2(tile_size, tile_size),
+	vec2(tile_size, tile_size),
+	vec2(tile_size * 0.5, tile_size * 0.5),
+	// TODO: Remove redundant lines once #36 is resolved.
+	vec2(tile_size* room_size, tile_size* room_size),
+	vec2(tile_size* room_size, tile_size* room_size),
+	vec2(tile_size* room_size, tile_size* room_size),
+};
+
 enum class EFFECT_ASSET_ID {
 	LINE = 0,
 	TEXTURED = LINE + 1,
@@ -176,20 +182,33 @@ enum class Direction : uint8_t {
 	Down,
 };
 
-// Represents the position on the world map,
+// Represents the position on the map,
 // top left is (0,0) bottom right is (99,99)
-// TODO: with this, we probably won't need position from
-// Motion, the rendered postion can be calculate from MapPosition
 struct MapPosition {
 	uvec2 position;
-	// represent if the object needs to be scale
-	vec2 scale;
-	MapPosition(uvec2 position, vec2 scale)
+	MapPosition(uvec2 position)
 		: position(position)
-		, scale(scale)
 	{
 		assert(position.x < 99 && position.y < 99);
 	};
+};
+
+// Represents the world position,
+// top left is (0,0), bottom right is (window_width_px, window_height_px)
+struct WorldPosition {
+	vec2 position;
+	WorldPosition(vec2 position)
+		: position(position)
+	{ };
+};
+
+struct Velocity {
+	float speed;
+	float angle;
+	Velocity(float speed, float angle)
+		: speed(speed), angle(angle) { }
+	vec2 get_velocity() { return { sin(angle) * speed, -cos(angle) * speed };
+	}
 };
 
 struct Room {

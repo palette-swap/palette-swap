@@ -12,6 +12,8 @@ private:
 	// the (procedural) generated levels, each level contains a full map(max 10*10 rooms)
 	std::vector<Mapping> levels;
 
+	TileId get_tile_id(uvec2 pos) const;
+
 public:
 
 	// Generates the levels, should be called at the beginning of the game,
@@ -26,6 +28,9 @@ public:
 
 	// Check if a position on the map is walkable for the player
 	bool walkable(uvec2 pos) const;
+
+	// Check if a position on the map is a wall
+	bool is_wall(uvec2 pos) const;
 
 	// Computes the shortest path from start to the first element of end that it encounters via BFS
 	// Returns the path, or an empty vector if no path was found

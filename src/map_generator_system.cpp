@@ -29,9 +29,17 @@ bool MapGeneratorSystem::walkable(uvec2 pos) const
 	if (!is_on_map(pos)) {
 		return false;
 	}
-	uint8_t room_index = current_map().at(pos.y / room_size).at(pos.x / room_size);
-	uint8_t tile_index = room_layouts.at(room_index).at(pos.y % room_size).at(pos.x % room_size);
-	return walkable_tiles.find(tile_index) != walkable_tiles.end();
+
+	return walkable_tiles.find(get_tile_id(pos)) != walkable_tiles.end();
+}
+
+bool MapGeneratorSystem::is_wall(uvec2 pos) const
+{
+	if (!is_on_map(pos)) {
+		return false;
+	}
+
+	return wall_tiles.find(get_tile_id(pos)) != wall_tiles.end();
 }
 
 // See https://en.wikipedia.org/wiki/Breadth-first_search for algorithm reference
@@ -76,4 +84,11 @@ std::vector<uvec2> MapGeneratorSystem::shortest_path(uvec2 start_pos, uvec2 targ
 
 	// Return empty path if no path exists
 	return std::vector<uvec2>();
+}
+
+TileId MapGeneratorSystem::get_tile_id(uvec2 pos) const
+{
+	RoomType room_index = current_map().at(pos.y / room_size).at(pos.x / room_size);
+	TileId tile_index = room_layouts.at(room_index).at(pos.y % room_size).at(pos.x % room_size);
+	return tile_index;
 }

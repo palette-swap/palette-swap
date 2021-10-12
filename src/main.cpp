@@ -28,7 +28,7 @@ int main()
 	Debug debugging;
 	WorldSystem world(debugging, map, turns);
 	RenderSystem renderer;
-	PhysicsSystem physics(debugging);
+	PhysicsSystem physics(debugging, map);
 	AISystem ai(map, turns);
 
 	// Initializing window

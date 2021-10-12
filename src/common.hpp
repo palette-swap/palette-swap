@@ -65,6 +65,7 @@ static constexpr int room_size = 10;
 static constexpr int map_size = 10;
 // RoomType is just a uint8_t
 using RoomType = uint8_t;
+using TileId = uint8_t;
 
 static constexpr uint8_t num_room = 3;
 
@@ -72,6 +73,7 @@ static constexpr uint8_t num_room = 3;
 // texture atlas
 static constexpr uint8_t num_tile_textures = 3;
 static const std::set<uint8_t> walkable_tiles = { 0 };
+static const std::set<uint8_t> wall_tiles = { 1 };
 
 // Calculates virtual position of top left corner of map given screen and mapsystem constants
 // Currently used for actual_position to render_position convertion

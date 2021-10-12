@@ -12,6 +12,8 @@
 class Entity {
 	unsigned int id;
 	static unsigned int id_count; // starts from 1, entit 0 is the default initialization
+	Entity(unsigned int id) : id(id) {};
+
 public:
 	Entity()
 	{
@@ -19,6 +21,9 @@ public:
 		// Note, indices of already deleted entities arent re-used in this simple implementation.
 	}
 	operator unsigned int() const { return id; } // this enables automatic casting to int
+
+	static Entity undefined() { return Entity(0); }
+	bool is_undefined() { return id == 0; }
 };
 
 // Common interface to refer to all containers in the ECS registry
