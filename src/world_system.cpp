@@ -205,11 +205,11 @@ void WorldSystem::restart_game()
 	vec2 middle = { window_width_px / 2, window_height_px / 2 };
 
 	const MapGeneratorSystem::Mapping& mapping = map_generator->current_map();
-	vec2 top_left_corner_pos = middle - vec2(tile_size * room_size * map_size / 2, tile_size * room_size * map_size / 2);
+	vec2 top_left_corner_pos = middle - vec2(MapUtility::tile_size * MapUtility::room_size * MapUtility::map_size / 2, MapUtility::tile_size * MapUtility::room_size * MapUtility::map_size / 2);
 	for (size_t row = 0; row < mapping.size(); row++) {
 		for (size_t col = 0; col < mapping[0].size(); col++) {
-			vec2 position = top_left_corner_pos + vec2(tile_size * room_size / 2, tile_size * room_size / 2)
-				+ vec2(col * tile_size * room_size, row * tile_size * room_size);
+			vec2 position = top_left_corner_pos + vec2(MapUtility::tile_size * MapUtility::room_size / 2, MapUtility::tile_size * MapUtility::room_size / 2)
+				+ vec2(col * MapUtility::tile_size * MapUtility::room_size, row * MapUtility::tile_size * MapUtility::room_size);
 			create_room(position, mapping.at(row).at(col));
 		}
 	}
@@ -225,7 +225,7 @@ void WorldSystem::restart_game()
 		{ (player_starting_point.x - 20), (player_starting_point.y - 20)}, { 23, 23 }, player_starting_point);
 
 	// Create a new player arrow instance
-	vec2 player_location = map_position_to_screen_position(player_starting_point);
+	vec2 player_location = MapUtility::map_position_to_screen_position(player_starting_point);
 	player_arrow = create_arrow(player_location);
 	// Creates a single enemy instance, (TODO: needs to be updated with position based on grid)
 	// Also requires naming scheme for randomly generated enemies, for later reference
@@ -332,7 +332,7 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 
 		int w, h;
 		glfwGetFramebufferSize(window, &w, &h);
-		vec2 position = map_position_to_screen_position(registry.map_positions.get(player).position);
+		vec2 position = MapUtility::map_position_to_screen_position(registry.map_positions.get(player).position);
 
 		float left = position.x - w * renderer->screen_scale / 2.f;
 		float top = position.y - h * renderer->screen_scale / 2.f;
@@ -346,7 +346,7 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 		WorldPosition& arrow_position = registry.world_positions.get(player_arrow);
 		MapPosition& player_map_position = registry.map_positions.get(player);
 
-		vec2 player_screen_position = map_position_to_screen_position(player_map_position.position);
+		vec2 player_screen_position = MapUtility::map_position_to_screen_position(player_map_position.position);
 
 		// Calculated Euclidean difference between player and arrow
 		vec2 eucl_diff = mouse_screen_position - player_screen_position;
@@ -375,9 +375,9 @@ void WorldSystem::move_player(Direction direction)
 		new_pos = uvec2(map_pos.position.x - 1, map_pos.position.y);
 	} else if (direction == Direction::Up && map_pos.position.y > 0) {
 		new_pos = uvec2(map_pos.position.x, map_pos.position.y - 1);
-	} else if (direction == Direction::Right && map_pos.position.x < room_size * tile_size - 1) {
+	} else if (direction == Direction::Right && map_pos.position.x < MapUtility::room_size * MapUtility::tile_size - 1) {
 		new_pos = uvec2(map_pos.position.x + 1, map_pos.position.y);
-	} else if (direction == Direction::Down && map_pos.position.y < room_size * tile_size - 1) {
+	} else if (direction == Direction::Down && map_pos.position.y < MapUtility::room_size * MapUtility::tile_size - 1) {
 		new_pos = uvec2(map_pos.position.x, map_pos.position.y + 1);
 	}
 
@@ -386,7 +386,7 @@ void WorldSystem::move_player(Direction direction)
 	}
 	// Temp update for arrow position
 	if (!player_arrow_fired) {
-		arrow_position.position += (vec2(new_pos) - vec2(map_pos.position)) * tile_size;
+		arrow_position.position += (vec2(new_pos) - vec2(map_pos.position)) * MapUtility::tile_size;
 	}
 	map_pos.position = new_pos;
 	turns->complete_team_action(player);

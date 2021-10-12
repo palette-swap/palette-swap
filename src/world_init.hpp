@@ -15,6 +15,6 @@ Entity create_arrow(vec2 position);
 // a red line for debugging purposes
 Entity create_line(vec2 position);
 // Creates a room on the current world map
-Entity create_room(vec2 position, RoomType roomType);
+Entity create_room(vec2 position, MapUtility::RoomType roomType);
 // Creates a team that encompasses a group of units
 Entity create_team();

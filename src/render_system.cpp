@@ -13,7 +13,7 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 	Transform transform;
 	if (registry.map_positions.has(entity)) {
 		MapPosition& map_position = registry.map_positions.get(entity);
-		transform.translate(map_position_to_screen_position(map_position.position));
+		transform.translate(MapUtility::map_position_to_screen_position(map_position.position));
 	}
 	else {
 		// Most objects in the game are expected to use MapPosition, exceptions are:
@@ -122,8 +122,8 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 		// 1. Pass in certian tiles based on camera position
 		// 2. (Preferred) Use a sprite sheet(tilemap atlas), access multiple tiles for
 		// a single load
-		int samplers[num_tile_textures];
-		for (int i = 0; i < num_tile_textures; i++)
+		int samplers[MapUtility::num_tile_textures];
+		for (int i = 0; i < MapUtility::num_tile_textures; i++)
 		{
 			// Maintenance Note:
 			// To support OpenGL 3.3, glBindTextureUnit (OpenGL 4.5 feature) is replaced by glActiveTexture + glBindTexture.
@@ -134,7 +134,7 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 		}
     
 		auto textures_loc = glGetUniformLocation(program, "tile_textures");
-		glUniform1iv(textures_loc, num_tile_textures, samplers);
+		glUniform1iv(textures_loc, MapUtility::num_tile_textures, samplers);
 	} else {
 		assert(false && "Type of render request not supported");
 	}
@@ -272,7 +272,7 @@ mat3 RenderSystem::create_projection_matrix()
 
 	// set up 4 sides of window based on player
 	Entity player = registry.players.top_entity();
-	vec2 position = map_position_to_screen_position(registry.map_positions.get(player).position);
+	vec2 position = MapUtility::map_position_to_screen_position(registry.map_positions.get(player).position);
 
 	
 	float right = position.x + w * screen_scale / 2.f;

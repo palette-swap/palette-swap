@@ -9,7 +9,7 @@ vec2 get_bounding_box()
 	// TODO: This needs to be reworked, as we move scale to be statically defined
 	// array, this method can potentially take in a TEXTURE_ASSET_ID, depending on
 	// how exactly we want to do collision
-	return { abs(tile_size), abs(tile_size) };
+	return { abs(MapUtility::tile_size), abs(MapUtility::tile_size) };
 }
 
 // This is a SUPER APPROXIMATE check that puts a circle around the bounding boxes and sees
@@ -59,7 +59,7 @@ void PhysicsSystem::step(float elapsed_ms, float /*window_width*/, float /*windo
 			continue;
 		}
 		WorldPosition& position_i = world_positions.components[i];
-		uvec2 map_position_i = screen_position_to_map_position(position_i.position);
+		uvec2 map_position_i = MapUtility::screen_position_to_map_position(position_i.position);
 
 		// Check if the map position is occupy
 		for (uint j = 0; j < map_positions.components.size(); j++) {

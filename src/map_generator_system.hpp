@@ -5,14 +5,14 @@
 // Manages and store the generated maps
 class MapGeneratorSystem {
 public:
-	using Mapping = std::array<std::array<RoomType, room_size>, room_size>;
+	using Mapping = std::array<std::array<MapUtility::RoomType, MapUtility::room_size>, MapUtility::room_size>;
 private:
 	int current_level = -1;
 
 	// the (procedural) generated levels, each level contains a full map(max 10*10 rooms)
 	std::vector<Mapping> levels;
 
-	TileId get_tile_id(uvec2 pos) const;
+	MapUtility::TileId get_tile_id(uvec2 pos) const;
 
 public:
 

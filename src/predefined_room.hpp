@@ -16,7 +16,7 @@
 * 1. add to TEXTURE_ASSET_ID in components.hpp
 * 2. add to texture_paths in render_system.hpp
 * 3. add to tile_textures in components.hpp
-* 4. Update num_tile_textures in common.hpp and add to tile_textures[] array in components.hpp.
+* 4. Update MapUtility::num_tile_textures in common.hpp and add to tile_textures[] array in components.hpp.
 *    This is for assigning an unique id for each texture starting from 0
 * 5. Update size of tile_textures in shaders\tilemap.fs.glsl
 * Then the tile can be referenced with id in the predefined room arrays.

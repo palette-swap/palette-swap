@@ -130,15 +130,15 @@ const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 // Define the scaling factors needed for each textures
 // Note: This needs to stay the same order as TEXTURE_ASSET_ID and texture_paths
 static constexpr std::array<vec2, texture_count> scaling_factors = {
-	vec2(tile_size, tile_size),
-	vec2(tile_size, tile_size),
-	vec2(tile_size, tile_size),
-	vec2(tile_size, tile_size),
-	vec2(tile_size * 0.5, tile_size * 0.5),
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size * 0.5, MapUtility::tile_size * 0.5),
 	// TODO: Remove redundant lines once #36 is resolved.
-	vec2(tile_size* room_size, tile_size* room_size),
-	vec2(tile_size* room_size, tile_size* room_size),
-	vec2(tile_size* room_size, tile_size* room_size),
+	vec2(MapUtility::tile_size* MapUtility::room_size, MapUtility::tile_size* MapUtility::room_size),
+	vec2(MapUtility::tile_size* MapUtility::room_size, MapUtility::tile_size* MapUtility::room_size),
+	vec2(MapUtility::tile_size* MapUtility::room_size, MapUtility::tile_size* MapUtility::room_size),
 };
 
 enum class EFFECT_ASSET_ID {
@@ -159,14 +159,14 @@ enum class GEOMETRY_BUFFER_ID : uint8_t {
 
 	// Note: Keep ROOM at the bottom because of hacky implementation,
 	// this is somewhat hacky, this is actually a single geometry related to a room, but
-	// we don't want to update the Enum every time we add a new room. It's num_room - 1
+	// we don't want to update the Enum every time we add a new room. It's MapUtility::num_room - 1
 	// because we want to bind vertex buffer for each room but not for the ROOM enum, it's
 	// just a placeholder to tell us it's a room geometry, which geometry will be defined
 	// by the room struct
 	ROOM = SCREEN_TRIANGLE + 1,
 	GEOMETRY_COUNT = ROOM + 1
 };
-const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT + num_room - 1;
+const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT + MapUtility::num_room - 1;
 
 struct RenderRequest {
 	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
@@ -214,7 +214,7 @@ struct Velocity {
 struct Room {
 	// use 0xff to indicate uninitialized value
 	// this can have potential bug if we have up to 255 rooms, but we probably won't...
-	RoomType type = 0xff;
+	MapUtility::RoomType type = 0xff;
 };
 
 // For TileMap vertex buffers, we need a separate tile_texture float because we want
@@ -228,7 +228,7 @@ struct TileMapVertex {
 	float tile_texture = 0;
 };
 
-static constexpr TEXTURE_ASSET_ID tile_textures[num_tile_textures] = {
+static constexpr TEXTURE_ASSET_ID tile_textures[MapUtility::num_tile_textures] = {
 	TEXTURE_ASSET_ID::WALKABLE_1,
 	TEXTURE_ASSET_ID::WALL_1,
 	TEXTURE_ASSET_ID::WINDOW_1,
@@ -248,6 +248,6 @@ struct EnemyNestPosition {
 	EnemyNestPosition(const uvec2& position)
 		: position(position)
 	{
-		assert(position.x < map_size * room_size && position.y < map_size * room_size);
+		assert(position.x < MapUtility::map_size * MapUtility::room_size && position.y < MapUtility::map_size * MapUtility::room_size);
 	};
 };

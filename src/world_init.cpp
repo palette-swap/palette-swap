@@ -27,7 +27,7 @@ Entity create_enemy(uvec2 position)
 	registry.map_positions.emplace(entity, position);
 
 	// Maps position of enemy to actual position (for reference)
-	vec2 actual_position = map_position_to_screen_position(position);
+	vec2 actual_position = MapUtility::map_position_to_screen_position(position);
 
 	// Indicates enemy is hittable by objects
 	registry.hittables.emplace(entity);
@@ -75,7 +75,7 @@ Entity create_line(vec2 position)
 }
 
 // Creates a room entity, with room type referencing to the predefined room
-Entity create_room(vec2 position, RoomType roomType)
+Entity create_room(vec2 position, MapUtility::RoomType roomType)
 {
 	auto entity = Entity();
 

@@ -48,7 +48,7 @@ class RenderSystem {
 	std::array<Mesh, geometry_count> meshes;
 
 	// initialize all predefined rooms, based on roomtype
-	void initialize_room_vertices(RoomType roomType);
+	void initialize_room_vertices(MapUtility::RoomType roomType);
 
 public:
 	// Initialize the window
