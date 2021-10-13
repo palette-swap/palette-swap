@@ -16,6 +16,10 @@ bool CombatSystem::do_attack(Stats& attacker, Attack& attack, Stats& target)
 		std::uniform_int_distribution<int> damage_roller(attack.damage_min, attack.damage_max);
 		target.health -= damage_roller(*rng) + attacker.damage_bonus
 			+ target.damage_modifiers[static_cast<int>(attack.damage_type)];
+		printf("Hit! Target's new HP is %i\n", target.health);
+	} else {
+		printf("Miss!\n");
 	}
+
 	return success;
 }

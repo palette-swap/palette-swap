@@ -143,10 +143,7 @@ void AISystem::attack_player(const Entity& entity) {
 	printf("Enemy attacks player!\n");
 	Stats& stats = registry.stats.get(entity);
 	Stats& player_stats = registry.stats.get(registry.players.top_entity());
-	bool hit = combat->do_attack(stats, stats.base_attack, player_stats);
-	if (hit) {
-		printf("Enemy hits player!\n");
-	}
+	combat->do_attack(stats, stats.base_attack, player_stats);
 }
 
 bool AISystem::approach_player(const Entity& entity) {
