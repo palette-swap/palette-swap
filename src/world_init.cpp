@@ -8,6 +8,7 @@ Entity create_player(RenderSystem* renderer, uvec2 pos)
 	// Create and (empty) player component to be able to refer to other enttities
 	registry.players.emplace(entity);
 	registry.map_positions.emplace(entity, pos, vec2(tile_size, tile_size));
+	registry.stats.emplace(entity);
 
 	vec2 actual_position = map_position_to_screen_position(pos);
 	auto& motion = registry.motions.emplace(entity);
@@ -38,6 +39,16 @@ Entity create_enemy(RenderSystem* renderer, uvec2 position)
 
 
 	registry.map_positions.emplace(entity, position, vec2(tile_size, tile_size));
+
+	// Set up enemy stats to be weaker than the player
+	// TODO: Replace with load from file or auto-generate
+	Stats& stats = registry.stats.emplace(entity);
+	stats.health = 50;
+	stats.health_max = 50;
+	stats.to_hit_bonus = 6;
+	stats.defence = 12;
+	stats.base_attack.damage_min = 5;
+	stats.base_attack.damage_max = 15;
 
 
 	// Maps position of enemy to actual position (for reference)

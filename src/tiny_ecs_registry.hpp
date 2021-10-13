@@ -17,13 +17,22 @@ public:
 	ComponentContainer<ScreenState> screen_states;
 	ComponentContainer<DebugComponent> debug_components;
 	ComponentContainer<vec3> colors;
+
+	// Map Generator
 	ComponentContainer<Room> rooms;
 	ComponentContainer<MapPosition> map_positions;
+
+	// AI
 	ComponentContainer<EnemyState> enemy_states;
 	ComponentContainer<EnemyNestPosition> enemy_nest_positions;
+
+	// Physics
 	ComponentContainer<Hittable> hittables;
 	ComponentContainer<ActiveProjectile> active_projectiles;
 	ComponentContainer<ResolvedProjectile> resolved_projectiles;
+
+	// Combat
+	ComponentContainer<Stats> stats;
 
 
 private:
