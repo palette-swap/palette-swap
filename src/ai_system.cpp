@@ -116,11 +116,9 @@ bool AISystem::is_player_reachable(const Entity& entity, const uint attack_range
 	return is_player_spotted(entity, attack_range);
 }
 
-bool AISystem::is_afraid(const Entity& /*entity*/) {
-	// TODO: M2 whether enemies is afraid depends on their real HP.
-	uint hp = uint(uniform_dist(rng) * 100.f);
-	printf("Enemy HP: %d\n", hp);
-	if (hp < 5) {
+bool AISystem::is_afraid(const Entity& entity) {
+	// TODO: Replace magic number 12 with variable amount
+	if (registry.stats.get(entity).health < 12) {
 		printf("Enemy is afraid...\n");
 		return true;
 	}
@@ -140,9 +138,15 @@ void AISystem::become_alert(const Entity& /*entity*/) {
 	printf("Enemy becomes alert!\n");
 }
 
-void AISystem::attack_player(const Entity& /*entity*/) {
+void AISystem::attack_player(const Entity& entity) {
 	// TODO: M2 add animation/sound and injure player.
 	printf("Enemy attacks player!\n");
+	Stats& stats = registry.stats.get(entity);
+	Stats& player_stats = registry.stats.get(registry.players.top_entity());
+	bool hit = combat->do_attack(stats, stats.base_attack, player_stats);
+	if (hit) {
+		printf("Enemy hits player!\n");
+	}
 }
 
 bool AISystem::approach_player(const Entity& entity) {
