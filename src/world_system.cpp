@@ -14,9 +14,13 @@ bool player_arrow_fired = false;
 const size_t projectile_speed = 500;
 
 // Create the world
-WorldSystem::WorldSystem(Debug& debugging, std::shared_ptr<MapGeneratorSystem> map, std::shared_ptr<TurnSystem> turns)
+WorldSystem::WorldSystem(Debug& debugging,
+						 std::shared_ptr<CombatSystem> combat,
+						 std::shared_ptr<MapGeneratorSystem> map,
+						 std::shared_ptr<TurnSystem> turns)
 	: points(0)
 	, debugging(debugging)
+	, combat(std::move(combat))
 	, map_generator(std::move(map))
 	, turns(std::move(turns))
 {

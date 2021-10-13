@@ -12,6 +12,7 @@
 #include <SDL.h>
 #include <SDL_mixer.h>
 
+#include "combat_system.hpp"
 #include "map_generator_system.hpp"
 #include "render_system.hpp"
 #include "turn_system.hpp"
@@ -20,7 +21,10 @@
 // deferred to the relative update() methods
 class WorldSystem {
 public:
-	WorldSystem(Debug& debugging, std::shared_ptr<MapGeneratorSystem> map, std::shared_ptr<TurnSystem> turns);
+	WorldSystem(Debug& debugging,
+				std::shared_ptr<CombatSystem> combat,
+				std::shared_ptr<MapGeneratorSystem> map,
+				std::shared_ptr<TurnSystem> turns);
 
 	// Creates a window
 	GLFWwindow* create_window(int width, int height);
@@ -79,6 +83,7 @@ private:
 	std::default_random_engine rng;
 	std::uniform_real_distribution<float> uniform_dist; // number between 0..1
 
+	std::shared_ptr<CombatSystem> combat;
 	std::shared_ptr<MapGeneratorSystem> map_generator;
 	std::shared_ptr<TurnSystem> turns;
 };

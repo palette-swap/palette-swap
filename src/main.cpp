@@ -7,6 +7,7 @@
 
 // internal
 #include "ai_system.hpp"
+#include "combat_system.hpp"
 #include "map_generator_system.hpp"
 #include "physics_system.hpp"
 #include "render_system.hpp"
@@ -18,6 +19,9 @@ using Clock = std::chrono::high_resolution_clock;
 // Entry point
 int main()
 {
+	// Combat System
+	std::shared_ptr<CombatSystem> combat = std::make_shared<CombatSystem>();
+
 	// Map system
 	std::shared_ptr<MapGeneratorSystem> map = std::make_shared<MapGeneratorSystem>();
 
@@ -26,10 +30,10 @@ int main()
 
 	// Global systems
 	Debug debugging;
-	WorldSystem world(debugging, map, turns);
+	WorldSystem world(debugging, combat, map, turns);
 	RenderSystem renderer;
 	PhysicsSystem physics(debugging);
-	AISystem ai(map, turns);
+	AISystem ai(combat, map, turns);
 
 	// Initializing window
 	GLFWwindow* window = world.create_window(window_width_px, window_height_px);

@@ -3,10 +3,13 @@
 #include "components.hpp"
 
 // AI logic
-AISystem::AISystem(std::shared_ptr<MapGeneratorSystem> map_generator, std::shared_ptr<TurnSystem> turns)
-	:
-	map_generator(std::move(map_generator)), turns(std::move(turns)) {
-
+AISystem::AISystem(std::shared_ptr<CombatSystem> combat,
+				   std::shared_ptr<MapGeneratorSystem> map_generator,
+				   std::shared_ptr<TurnSystem> turns)
+	: combat(std::move(combat)
+	, map_generator(std::move(map_generator))
+	, turns(std::move(turns))
+{
 	registry.debug_components.emplace(enemy_team);
 	
 	this->turns->add_team_to_queue(enemy_team);
