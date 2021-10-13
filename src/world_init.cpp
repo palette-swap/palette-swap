@@ -34,7 +34,7 @@ Entity create_enemy(RenderSystem* renderer, uvec2 position)
 	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
 
 	Mesh& mesh = renderer->get_mesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
+	registry.mesh_ptrs.emplace(entity, &mesh);
 
 
 	registry.map_positions.emplace(entity, position, vec2(tile_size, tile_size));
@@ -114,7 +114,7 @@ Entity create_room(RenderSystem* renderer, vec2 position, RoomType roomType)
 
 	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
 	Mesh& mesh = renderer->get_mesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
+	registry.mesh_ptrs.emplace(entity, &mesh);
 
 	Motion& pos = registry.motions.emplace(entity);
 	pos.position = position;

@@ -12,7 +12,7 @@ public:
 	ComponentContainer<Collision> collisions;
 	ComponentContainer<Player> players;
 	ComponentContainer<Camera> cameras;
-	ComponentContainer<Mesh*> meshPtrs;
+	ComponentContainer<Mesh*> mesh_ptrs;
 	ComponentContainer<RenderRequest> render_requests;
 	ComponentContainer<ScreenState> screen_states;
 	ComponentContainer<DebugComponent> debug_components;
@@ -34,7 +34,7 @@ private:
 		&motions,
 		&collisions,
 		&players,
-		&meshPtrs,
+		&mesh_ptrs,
 		&render_requests,
 		&screen_states,
 		&debug_components,

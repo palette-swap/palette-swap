@@ -43,7 +43,7 @@ public:
 private:
 	// Input callback functions
 	void on_key(int key, int /*scancode*/, int action, int mod);
-	void on_mouse_move(vec2 pos);
+	void on_mouse_move(vec2 mouse_position);
 	void on_mouse_click(int button, int action, int /*mods*/);
 	void on_mouse_scroll(float offset);
 
@@ -62,6 +62,11 @@ private:
 
 	// Number of fish eaten by the salmon, displayed in the window title
 	unsigned int points;
+
+	// Game configuration
+	bool player_arrow_fired = false;
+	// TODO Track why my projectile speed had slowed throughout
+	const size_t projectile_speed = 500;
 
 	// Game state
 	RenderSystem* renderer = nullptr;
