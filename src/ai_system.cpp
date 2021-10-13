@@ -182,7 +182,6 @@ bool AISystem::move(const Entity& entity, const uvec2& map_pos)
 	MapPosition& entity_map_pos = registry.map_positions.get(entity);
 	if (entity_map_pos.position != map_pos && map_generator->walkable(map_pos)) {
 		entity_map_pos.position = map_pos;
-		registry.motions.get(entity).position = map_position_to_screen_position(map_pos);
 		return true;
 	}
 	return false;

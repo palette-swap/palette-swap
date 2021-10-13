@@ -8,7 +8,6 @@ class ECSRegistry {
 public:
 	// Manually created list of all components this game has
 	ComponentContainer<DeathTimer> death_timers;
-	ComponentContainer<Motion> motions;
 	ComponentContainer<Collision> collisions;
 	ComponentContainer<Player> players;
 	ComponentContainer<Camera> cameras;
@@ -21,6 +20,8 @@ public:
 	// Map Generator
 	ComponentContainer<Room> rooms;
 	ComponentContainer<MapPosition> map_positions;
+	ComponentContainer<WorldPosition> world_positions;
+	ComponentContainer<Velocity> velocities;
 
 	// AI
 	ComponentContainer<EnemyState> enemy_states;
@@ -40,7 +41,6 @@ private:
 
 	std::vector<ContainerInterface*> registry_list = {
 		&death_timers,
-		&motions,
 		&collisions,
 		&players,
 		&mesh_ptrs,
@@ -54,7 +54,9 @@ private:
 		&enemy_nest_positions,
 		&hittables,
 		&active_projectiles,
-		&resolved_projectiles
+		&resolved_projectiles,
+		&world_positions,
+		&velocities,
 	};
 
 

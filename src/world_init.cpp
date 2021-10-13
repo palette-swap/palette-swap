@@ -1,21 +1,14 @@
 #include "world_init.hpp"
 #include "tiny_ecs_registry.hpp"
 
-Entity create_player(RenderSystem* renderer, uvec2 pos)
+Entity create_player(uvec2 pos)
 {
 	auto entity = Entity();
 
 	// Create and (empty) player component to be able to refer to other enttities
 	registry.players.emplace(entity);
-	registry.map_positions.emplace(entity, pos, vec2(tile_size, tile_size));
+	registry.map_positions.emplace(entity, pos);
 	registry.stats.emplace(entity);
-
-	vec2 actual_position = map_position_to_screen_position(pos);
-	auto& motion = registry.motions.emplace(entity);
-	motion.angle = 0.f;
-	motion.velocity = { 0.f, 0.f };
-	motion.position = actual_position;
-	motion.scale = vec2(tile_size, tile_size);
 
 	registry.render_requests.insert(entity,
 								   { TEXTURE_ASSET_ID::PALADIN, 
@@ -28,17 +21,11 @@ Entity create_player(RenderSystem* renderer, uvec2 pos)
 
 // Repurposed into general create_enemy
 // TODO: add additional inputs to specify enemy type, current default is slug
-Entity create_enemy(RenderSystem* renderer, uvec2 position)
+Entity create_enemy(uvec2 position)
 {
 	auto entity = Entity();
 
-	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
-
-	Mesh& mesh = renderer->get_mesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.mesh_ptrs.emplace(entity, &mesh);
-
-
-	registry.map_positions.emplace(entity, position, vec2(tile_size, tile_size));
+	registry.map_positions.emplace(entity, position);
 
 	// Set up enemy stats to be weaker than the player
 	// TODO: Replace with load from file or auto-generate
@@ -50,19 +37,8 @@ Entity create_enemy(RenderSystem* renderer, uvec2 position)
 	stats.base_attack.damage_min = 5;
 	stats.base_attack.damage_max = 15;
 
-
 	// Maps position of enemy to actual position (for reference)
-	vec2 actual_position = map_position_to_screen_position(position);
-
-	// TODO: Add additional components associated with enemy instance
-	// TODO: Change motion component based on grid system
-	auto& motion = registry.motions.emplace(entity);
-	motion.angle = 0.f;
-	motion.velocity = { 0.f, 0.f };
-	motion.position = actual_position;
-
-	// Setting initial values for enemy
-	motion.scale = vec2(tile_size, tile_size);
+	vec2 actual_position = MapUtility::map_position_to_screen_position(position);
 
 	// Indicates enemy is hittable by objects
 	registry.hittables.emplace(entity);
@@ -78,16 +54,12 @@ Entity create_enemy(RenderSystem* renderer, uvec2 position)
 	return entity;
 }
 
-Entity create_arrow(RenderSystem* renderer, vec2 position)
+Entity create_arrow(vec2 position)
 {
 	auto entity = Entity();
 
-	// Setting initial motion values
-	Motion& motion = registry.motions.emplace(entity);
-	motion.position = position;
-	motion.angle = 0.f;
-	motion.velocity = { 0.f, 0.f };
-	motion.scale = vec2(tile_size, tile_size) * 0.5f;
+	registry.world_positions.emplace(entity, position);
+	registry.velocities.emplace(entity, 0.f, 0.f);
 
 	// Create and (empty) player component to be able to refer to other enttities
 	registry.render_requests.insert(
@@ -99,7 +71,7 @@ Entity create_arrow(RenderSystem* renderer, vec2 position)
 	return entity;
 }
 
-Entity create_line(vec2 position, vec2 scale)
+Entity create_line(vec2 position)
 {
 	Entity entity = Entity();
 
@@ -107,46 +79,35 @@ Entity create_line(vec2 position, vec2 scale)
 	registry.render_requests.insert(
 		entity, { TEXTURE_ASSET_ID::TEXTURE_COUNT, EFFECT_ASSET_ID::LINE, GEOMETRY_BUFFER_ID::DEBUG_LINE });
 
-	// Create motion
-	Motion& motion = registry.motions.emplace(entity);
-	motion.angle = 0.f;
-	motion.velocity = { 0, 0 };
-	motion.position = position;
-	motion.scale = scale;
+	registry.world_positions.emplace(entity, position);
 
 	registry.debug_components.emplace(entity);
 	return entity;
 }
 
 // Creates a room entity, with room type referencing to the predefined room
-Entity create_room(RenderSystem* renderer, vec2 position, RoomType roomType)
+Entity create_room(vec2 position, MapUtility::RoomType roomType)
 {
 	auto entity = Entity();
 
-	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
-	Mesh& mesh = renderer->get_mesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.mesh_ptrs.emplace(entity, &mesh);
-
-	Motion& pos = registry.motions.emplace(entity);
-	pos.position = position;
-	pos.angle = 0.f;
-	pos.scale = { tile_size * room_size, tile_size * room_size };
+	registry.world_positions.emplace(entity, position);
 
 	Room& room = registry.rooms.emplace(entity);
 	room.type = roomType;
 
+	// TODO: Remove temporary workaround once #36 is resolved.
 	registry.render_requests.insert(
-		entity, { TEXTURE_ASSET_ID::TEXTURE_COUNT, EFFECT_ASSET_ID::TILE_MAP, GEOMETRY_BUFFER_ID::ROOM });
+		entity, { TEXTURE_ASSET_ID::TILE_SET, EFFECT_ASSET_ID::TILE_MAP, GEOMETRY_BUFFER_ID::ROOM });
 
 	return entity;
 }
 
-Entity create_camera(vec2 pos, vec2 size, ivec2 central)
+Entity create_camera(vec2 /*pos*/, vec2 size, ivec2 central)
 {
 	auto entity = Entity();
 
 	// Setting initial position for camera
-	MapPosition& map_position = registry.map_positions.emplace(entity, pos, vec2(tile_size, tile_size));
+	// MapPosition& map_position = registry.map_positions.emplace(entity, pos);
 	Camera& camera = registry.cameras.emplace(entity);
 	camera.size = size;
 	camera.central = central;
