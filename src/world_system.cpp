@@ -258,6 +258,14 @@ void WorldSystem::handle_collisions()
 			if (registry.hittables.has(entity_other)) {
 				registry.motions.get(entity).velocity = { 0, 0 };
 				registry.active_projectiles.remove(entity);
+
+				// Attack the other entity if it can be attacked
+				if (registry.stats.has(entity_other)) {
+					Stats& player_stats = registry.stats.get(player);
+					Stats& enemy_stats = registry.stats.get(entity_other);
+					combat->do_attack(player_stats, player_stats.base_attack, enemy_stats);
+				}
+
 				// Stops projectile motion, adds projectile to list of resolved projectiles
 				registry.resolved_projectiles.emplace(entity);
 			} else {
