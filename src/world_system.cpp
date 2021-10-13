@@ -20,12 +20,12 @@ WorldSystem::WorldSystem(Debug& debugging,
 						 std::shared_ptr<TurnSystem> turns)
 	: points(0)
 	, debugging(debugging)
+	, rng(std::make_shared<std::default_random_engine>(std::default_random_engine(std::random_device()())))
 	, combat(std::move(combat))
 	, map_generator(std::move(map))
 	, turns(std::move(turns))
 {
-	// Seeding rng with random device
-	rng = std::default_random_engine(std::random_device()());
+	this->combat->init(rng);
 }
 
 WorldSystem::~WorldSystem()

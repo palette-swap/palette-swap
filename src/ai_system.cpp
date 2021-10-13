@@ -6,7 +6,7 @@
 AISystem::AISystem(std::shared_ptr<CombatSystem> combat,
 				   std::shared_ptr<MapGeneratorSystem> map_generator,
 				   std::shared_ptr<TurnSystem> turns)
-	: combat(std::move(combat)
+	: combat(std::move(combat))
 	, map_generator(std::move(map_generator))
 	, turns(std::move(turns))
 {

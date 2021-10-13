@@ -215,7 +215,12 @@ struct TileMapVertex {
 static constexpr TEXTURE_ASSET_ID tile_textures[num_tile_textures] = {
 	TEXTURE_ASSET_ID::WALKABLE_1,
 	TEXTURE_ASSET_ID::WALL_1,
-	TEXTURE_ASSET_ID::WINDOW_1, };
+	TEXTURE_ASSET_ID::WINDOW_1,
+};
+
+//---------------------------------------------------------------------------
+//-------------------------           AI            -------------------------
+//---------------------------------------------------------------------------
 
 // Simple 3-state state machine for enemy AI: IDEL, ACTIVE, FLINCHED.
 enum class ENEMY_STATE_ID { Idle = 0, ACTIVE = Idle + 1, FLINCHED = ACTIVE + 1 };
@@ -232,4 +237,36 @@ struct EnemyNestPosition {
 		: position(position) {
 		assert(position.x < map_size * room_size && position.y < map_size * room_size);
 	};
+};
+
+//---------------------------------------------------------------------------
+//-------------------------         COMBAT          -------------------------
+//---------------------------------------------------------------------------
+
+enum class DamageType {
+	Physical = 0,
+	Magical = Physical + 1,
+	Count = Magical + 1,
+};
+
+template <typename T> using DamageTypeList = std::array<T, static_cast<size_t>(DamageType::Count)>;
+
+struct Attack {
+	int to_hit_min = 1;
+	int to_hit_max = 20;
+	int damage_min = 10;
+	int damage_max = 25;
+	DamageType damage_type = DamageType::Physical;
+};
+
+struct Stats {
+	int health = 100;
+	int health_max = 100;
+	int mana = 100;
+	int mana_max = 100;
+	int to_hit_bonus = 10;
+	int damage_bonus = 5;
+	int defence = 15;
+	Attack base_attack;
+	DamageTypeList<int> damage_modifiers = { 0 };
 };
