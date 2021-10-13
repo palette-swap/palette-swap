@@ -21,7 +21,14 @@ void AISystem::step(float /*elapsed_ms*/)
 		return;
 	}
 
-	for (const Entity& enemy_entity : registry.enemy_states.entities) {
+	for (long long i = registry.enemy_states.entities.size() - 1; i >= 0; i--) {
+		const Entity& enemy_entity = registry.enemy_states.entities[i];
+
+		// TODO: Animate death instead of just removing
+		if (registry.stats.has(enemy_entity) && registry.stats.get(enemy_entity).health <= 0) {
+			registry.remove_all_components_of(enemy_entity);
+			continue;
+		}
 
 		switch (registry.enemy_states.get(enemy_entity).current_state) {
 

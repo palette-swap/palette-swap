@@ -151,6 +151,10 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	// Processing the player state
 	assert(registry.screen_states.components.size() <= 1);
 	// ScreenState& screen = registry.screen_states.components[0];
+	if (registry.stats.get(player).health <= 0 && turns->get_active_team() == player) { 
+		restart_game();
+		return true;
+	}
 
 	// Resolves projectiles hitting objects, stops it for a period of time before returning it to the player
 	// Currently handles player arrow (as it is the only projectile that exists)
