@@ -149,33 +149,43 @@ void RenderSystem::initialize_room_vertices(RoomType roomType)
 		int row = i / (6 * room_size);
 		int col = (i % (6 * room_size)) / 6;
 
-		tilemap_vertices[i + 0].position = { fraction * (col - room_size / 2), fraction * (room_size / 2 - row), 0.f };
-		tilemap_vertices[i + 1].position
-			= { fraction * (col - room_size / 2), fraction * (room_size / 2 - row - 1), 0.f };
-		tilemap_vertices[i + 2].position
-			= { fraction * (col - room_size / 2 + 1), fraction * (room_size / 2 - row), 0.f };
-		tilemap_vertices[i + 3].position
-			= { fraction * (col - room_size / 2 + 1), fraction * (room_size / 2 - row), 0.f };
-		tilemap_vertices[i + 4].position
-			= { fraction * (col - room_size / 2), fraction * (room_size / 2 - row - 1), 0.f };
-		tilemap_vertices[i + 5].position
-			= { fraction * (col - room_size / 2 + 1), fraction * (room_size / 2 - row - 1), 0.f };
+		tilemap_vertices[i + 0].position = { fraction * (col - static_cast<float>(room_size) / 2),
+											 fraction * (static_cast<float>(room_size) / 2 - row),
+											 0.f };
+		tilemap_vertices[i + 1].position = { fraction * (col - static_cast<float>(room_size) / 2),
+											 fraction * (static_cast<float>(room_size) / 2 - row - 1),
+											 0.f };
+		tilemap_vertices[i + 2].position = { fraction * (col - static_cast<float>(room_size) / 2 + 1),
+											 fraction * (static_cast<float>(room_size) / 2 - row),
+											 0.f };
+		tilemap_vertices[i + 3].position = { fraction * (col - static_cast<float>(room_size) / 2 + 1),
+											 fraction * (static_cast<float> (room_size) / 2 - row),
+											 0.f };
+		tilemap_vertices[i + 4].position = { fraction * (col - static_cast<float>(room_size) / 2),
+											 fraction * (static_cast<float>(room_size) / 2 - row - 1),
+											 0.f };
+		tilemap_vertices[i + 5].position = { fraction * (col - static_cast<float>(room_size) / 2 + 1),
+											 fraction * (static_cast<float>(room_size) / 2 - row - 1),
+											 0.f };
 
-		tilemap_vertices[i + 0].texcoord = { 0.f, 1.f };
-		tilemap_vertices[i + 1].texcoord = { 0.f, 0.f };
-		tilemap_vertices[i + 2].texcoord = { 1.f, 1.f };
-		tilemap_vertices[i + 3].texcoord = { 1.f, 1.f };
-		tilemap_vertices[i + 4].texcoord = { 0.f, 0.f };
-		tilemap_vertices[i + 5].texcoord = { 1.f, 0.f };
-
-		// The Room somehow was read upside down, so using room_size - row - 1 to reverse that, should
-		// investigate why later...
-		tilemap_vertices[i + 0].tile_texture = (float)(room_layouts.at(roomType).at(room_size - row - 1).at(col));
-		tilemap_vertices[i + 1].tile_texture = (float)(room_layouts.at(roomType).at(room_size - row - 1).at(col));
-		tilemap_vertices[i + 2].tile_texture = (float)(room_layouts.at(roomType).at(room_size - row - 1).at(col));
-		tilemap_vertices[i + 3].tile_texture = (float)(room_layouts.at(roomType).at(room_size - row - 1).at(col));
-		tilemap_vertices[i + 4].tile_texture = (float)(room_layouts.at(roomType).at(room_size - row - 1).at(col));
-		tilemap_vertices[i + 5].tile_texture = (float)(room_layouts.at(roomType).at(room_size - row - 1).at(col));
+		// We have a total of 8*8 tile texture, for a single texture,
+		// top left is 0,0 and bottom right is 1,1
+		float fraction = 32.f / 256.f;
+		uint8_t tile_texture = (room_layouts.at(roomType).at(room_size - row - 1).at(col));
+		vec2 tile_bottom_left_corner
+			= { static_cast<float>(tile_texture % 8) * fraction, static_cast<float>(tile_texture / 8) * fraction };
+		tilemap_vertices[i + 0].texcoord
+			= { tile_bottom_left_corner.x, tile_bottom_left_corner.y + fraction - 1.f / 256.f};
+		tilemap_vertices[i + 1].texcoord
+			= { tile_bottom_left_corner.x, tile_bottom_left_corner.y };
+		tilemap_vertices[i + 2].texcoord
+			= { tile_bottom_left_corner.x + fraction - 1.f / 256.f, tile_bottom_left_corner.y + fraction - 1.f / 256.f };
+		tilemap_vertices[i + 3].texcoord
+			= { tile_bottom_left_corner.x + fraction - 1.f / 256.f, tile_bottom_left_corner.y + fraction - 1.f / 256.f };
+		tilemap_vertices[i + 4].texcoord
+			= { tile_bottom_left_corner.x, tile_bottom_left_corner.y };
+		tilemap_vertices[i + 5].texcoord
+			= { tile_bottom_left_corner.x + fraction - 1.f / 256.f, tile_bottom_left_corner.y };
 	}
 
 	std::vector<uint16_t> tilemap_indices(total_vertices);
