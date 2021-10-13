@@ -120,7 +120,7 @@ void RenderSystem::initialize_gl_meshes()
 	}
 }
 
-void RenderSystem::initialize_room_vertices(RoomType roomType)
+void RenderSystem::initialize_room_vertices(MapUtility::RoomType roomType)
 {
 	////////////////////////////
 	// Initialize TileMap
@@ -141,37 +141,37 @@ void RenderSystem::initialize_room_vertices(RoomType roomType)
 	*/
 	// TODO: Optimize this, there's quite a bit duplicated vertices(a total of 600 vertices),
 	// eventually we want to reach 11*11 vertices.
-	const int total_vertices = room_size * room_size * 2 * 3;
-	float fraction = 1.f / room_size;
+	const int total_vertices = MapUtility::room_size * MapUtility::room_size * 2 * 3;
+	float fraction = 1.f / MapUtility::room_size;
 	std::vector<TileMapVertex> tilemap_vertices(total_vertices);
 
 	for (int i = 0; i < total_vertices; i += 6) {
-		int row = i / (6 * room_size);
-		int col = (i % (6 * room_size)) / 6;
+		int row = i / (6 * MapUtility::room_size);
+		int col = (i % (6 * MapUtility::room_size)) / 6;
 
-		tilemap_vertices[i + 0].position = { fraction * (col - static_cast<float>(room_size) / 2),
-											 fraction * (static_cast<float>(room_size) / 2 - row),
+		tilemap_vertices[i + 0].position = { fraction * (col - static_cast<float>(MapUtility::room_size) / 2),
+											 fraction * (static_cast<float>(MapUtility::room_size) / 2 - row),
 											 0.f };
-		tilemap_vertices[i + 1].position = { fraction * (col - static_cast<float>(room_size) / 2),
-											 fraction * (static_cast<float>(room_size) / 2 - row - 1),
+		tilemap_vertices[i + 1].position = { fraction * (col - static_cast<float>(MapUtility::room_size) / 2),
+											 fraction * (static_cast<float>(MapUtility::room_size) / 2 - row - 1),
 											 0.f };
-		tilemap_vertices[i + 2].position = { fraction * (col - static_cast<float>(room_size) / 2 + 1),
-											 fraction * (static_cast<float>(room_size) / 2 - row),
+		tilemap_vertices[i + 2].position = { fraction * (col - static_cast<float>(MapUtility::room_size) / 2 + 1),
+											 fraction * (static_cast<float>(MapUtility::room_size) / 2 - row),
 											 0.f };
-		tilemap_vertices[i + 3].position = { fraction * (col - static_cast<float>(room_size) / 2 + 1),
-											 fraction * (static_cast<float> (room_size) / 2 - row),
+		tilemap_vertices[i + 3].position = { fraction * (col - static_cast<float>(MapUtility::room_size) / 2 + 1),
+											 fraction * (static_cast<float> (MapUtility::room_size) / 2 - row),
 											 0.f };
-		tilemap_vertices[i + 4].position = { fraction * (col - static_cast<float>(room_size) / 2),
-											 fraction * (static_cast<float>(room_size) / 2 - row - 1),
+		tilemap_vertices[i + 4].position = { fraction * (col - static_cast<float>(MapUtility::room_size) / 2),
+											 fraction * (static_cast<float>(MapUtility::room_size) / 2 - row - 1),
 											 0.f };
-		tilemap_vertices[i + 5].position = { fraction * (col - static_cast<float>(room_size) / 2 + 1),
-											 fraction * (static_cast<float>(room_size) / 2 - row - 1),
+		tilemap_vertices[i + 5].position = { fraction * (col - static_cast<float>(MapUtility::room_size) / 2 + 1),
+											 fraction * (static_cast<float>(MapUtility::room_size) / 2 - row - 1),
 											 0.f };
 
 		// We have a total of 8*8 tile texture, for a single texture,
 		// top left is 0,0 and bottom right is 1,1
 		float fraction = 32.f / 256.f;
-		uint8_t tile_texture = (room_layouts.at(roomType).at(room_size - row - 1).at(col));
+		uint8_t tile_texture = (room_layouts.at(roomType).at(MapUtility::room_size - row - 1).at(col));
 		vec2 tile_bottom_left_corner
 			= { static_cast<float>(tile_texture % 8) * fraction, static_cast<float>(tile_texture / 8) * fraction };
 		tilemap_vertices[i + 0].texcoord
@@ -192,7 +192,7 @@ void RenderSystem::initialize_room_vertices(RoomType roomType)
 	for (int i = 0; i < total_vertices; i++) {
 		tilemap_indices[i] = static_cast<uint16_t>(i);
 	}
-	bind_vbo_and_ibo(geometry_count - num_room + roomType, tilemap_vertices, tilemap_indices);
+	bind_vbo_and_ibo(geometry_count - MapUtility::num_room + roomType, tilemap_vertices, tilemap_indices);
 }
 
 void RenderSystem::initialize_gl_geometry_buffers()
@@ -222,7 +222,7 @@ void RenderSystem::initialize_gl_geometry_buffers()
 	const std::vector<uint16_t> textured_indices = { 0, 3, 1, 1, 3, 2 };
 	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::SPRITE, textured_vertices, textured_indices);
 
-	for (uint8_t i = 0; i < num_room; i++) {
+	for (uint8_t i = 0; i < MapUtility::num_room; i++) {
 		initialize_room_vertices(i);
 	}
 
