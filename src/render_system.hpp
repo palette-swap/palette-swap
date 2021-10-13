@@ -85,7 +85,7 @@ public:
 	void draw();
 
 	mat3 create_projection_matrix();
-	void scale_on_scroll(float scale);
+	void scale_on_scroll(float offset);
 
 	float screen_scale; // Screen to pixel coordinates scale factor (for apple
 					// retina display?)

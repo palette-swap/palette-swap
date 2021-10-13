@@ -11,16 +11,17 @@ AISystem::AISystem(std::shared_ptr<CombatSystem> combat,
 	, turns(std::move(turns))
 {
 	registry.debug_components.emplace(enemy_team);
-	
+
 	this->turns->add_team_to_queue(enemy_team);
 }
 
-void AISystem::step(float /*elapsed_ms*/) {
+void AISystem::step(float /*elapsed_ms*/)
+{
 	if (!turns->execute_team_action(enemy_team)) {
 		return;
 	}
 
-	for (const Entity& enemy_entity: registry.enemy_states.entities) {
+	for (const Entity& enemy_entity : registry.enemy_states.entities) {
 
 		switch (registry.enemy_states.get(enemy_entity).current_state) {
 
@@ -63,7 +64,8 @@ void AISystem::step(float /*elapsed_ms*/) {
 	turns->complete_team_action(enemy_team);
 }
 
-void AISystem::switch_enemy_state(const Entity& enemy_entity, ENEMY_STATE_ID enemy_state) {
+void AISystem::switch_enemy_state(const Entity& enemy_entity, ENEMY_STATE_ID enemy_state)
+{
 	ENEMY_STATE_ID& enemy_current_state = registry.enemy_states.get(enemy_entity).current_state;
 	TEXTURE_ASSET_ID& enemy_current_textrue = registry.render_requests.get(enemy_entity).used_texture;
 	vec3& enemy_current_color = registry.colors.get(enemy_entity);
@@ -73,7 +75,7 @@ void AISystem::switch_enemy_state(const Entity& enemy_entity, ENEMY_STATE_ID ene
 	case ENEMY_STATE_ID::Idle:
 		enemy_current_state = ENEMY_STATE_ID::Idle;
 		enemy_current_textrue = TEXTURE_ASSET_ID::SLIME;
-		enemy_current_color = { 1, 4, 1 };
+		enemy_current_color = { 1, 1, 1 };
 		break;
 
 	case ENEMY_STATE_ID::ACTIVE:
@@ -93,18 +95,8 @@ void AISystem::switch_enemy_state(const Entity& enemy_entity, ENEMY_STATE_ID ene
 	}
 }
 
-// Depends on Turn System from Nathan.
-
-bool AISystem::is_player_turn() {
-	// TODO
-	return true;
-}
-
-void AISystem::switch_to_player_turn() {
-	// TODO
-}
-
-bool AISystem::is_player_spotted(const Entity& entity, const uint radius) {
+bool AISystem::is_player_spotted(const Entity& entity, const uint radius)
+{
 	uvec2 player_map_pos = registry.map_positions.get(registry.players.top_entity()).position;
 	uvec2 entity_map_pos = registry.map_positions.get(entity).position;
 
@@ -112,11 +104,13 @@ bool AISystem::is_player_spotted(const Entity& entity, const uint radius) {
 	return uint(abs(distance.x)) <= radius && uint(abs(distance.y)) <= radius;
 }
 
-bool AISystem::is_player_reachable(const Entity& entity, const uint attack_range) {
+bool AISystem::is_player_reachable(const Entity& entity, const uint attack_range)
+{
 	return is_player_spotted(entity, attack_range);
 }
 
-bool AISystem::is_afraid(const Entity& entity) {
+bool AISystem::is_afraid(const Entity& entity)
+{
 	// TODO: Replace magic number 12 with variable amount
 	if (registry.stats.get(entity).health < 12) {
 		printf("Enemy is afraid...\n");
@@ -125,7 +119,8 @@ bool AISystem::is_afraid(const Entity& entity) {
 	return false;
 }
 
-bool AISystem::is_at_nest(const Entity& entity) {
+bool AISystem::is_at_nest(const Entity& entity)
+{
 	assert(registry.enemy_nest_positions.has(entity));
 	uvec2 nest_map_pos = registry.enemy_nest_positions.get(entity).position;
 	uvec2 entity_map_pos = registry.map_positions.get(entity).position;
@@ -133,12 +128,14 @@ bool AISystem::is_at_nest(const Entity& entity) {
 	return nest_map_pos == entity_map_pos;
 }
 
-void AISystem::become_alert(const Entity& /*entity*/) {
+void AISystem::become_alert(const Entity& /*entity*/)
+{
 	// TODO: M2 add animation/sound.
 	printf("Enemy becomes alert!\n");
 }
 
-void AISystem::attack_player(const Entity& entity) {
+void AISystem::attack_player(const Entity& entity)
+{
 	// TODO: M2 add animation/sound and injure player.
 	printf("Enemy attacks player!\n");
 	Stats& stats = registry.stats.get(entity);
@@ -146,7 +143,8 @@ void AISystem::attack_player(const Entity& entity) {
 	combat->do_attack(stats, stats.base_attack, player_stats);
 }
 
-bool AISystem::approach_player(const Entity& entity) {
+bool AISystem::approach_player(const Entity& entity)
+{
 	uvec2 player_map_pos = registry.map_positions.get(registry.players.top_entity()).position;
 	uvec2 entity_map_pos = registry.map_positions.get(entity).position;
 
@@ -158,7 +156,8 @@ bool AISystem::approach_player(const Entity& entity) {
 	return false;
 }
 
-bool AISystem::approach_nest(const Entity& entity) {
+bool AISystem::approach_nest(const Entity& entity)
+{
 	assert(registry.enemy_nest_positions.has(entity));
 	uvec2 nest_map_pos = registry.enemy_nest_positions.get(entity).position;
 	uvec2 entity_map_pos = registry.map_positions.get(entity).position;
@@ -171,7 +170,8 @@ bool AISystem::approach_nest(const Entity& entity) {
 	return false;
 }
 
-bool AISystem::move(const Entity& entity, const uvec2& map_pos) {
+bool AISystem::move(const Entity& entity, const uvec2& map_pos)
+{
 	MapPosition& entity_map_pos = registry.map_positions.get(entity);
 	if (entity_map_pos.position != map_pos && map_generator->walkable(map_pos)) {
 		entity_map_pos.position = map_pos;

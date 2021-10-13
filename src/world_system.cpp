@@ -8,11 +8,6 @@
 
 #include "physics_system.hpp"
 
-// Game configuration
-bool player_arrow_fired = false;
-// TODO Track why my projectile speed had slowed throughout
-const size_t projectile_speed = 500;
-
 // Create the world
 WorldSystem::WorldSystem(Debug& debugging,
 						 std::shared_ptr<CombatSystem> combat,
@@ -94,7 +89,7 @@ GLFWwindow* WorldSystem::create_window(int width, int height)
 		static_cast<WorldSystem*>(glfwGetWindowUserPointer(wnd))->on_mouse_click(_0, _1, _2);
 	};
 	auto scroll_redirect = [](GLFWwindow* wnd, double /*_0*/, double _1) {
-		static_cast<WorldSystem*>(glfwGetWindowUserPointer(wnd))->on_mouse_scroll(_1);
+		static_cast<WorldSystem*>(glfwGetWindowUserPointer(wnd))->on_mouse_scroll(static_cast<float>(_1));
 	};
 	glfwSetKeyCallback(window, key_redirect);
 	glfwSetCursorPosCallback(window, cursor_pos_redirect);
@@ -155,7 +150,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 
 	// Processing the player state
 	assert(registry.screen_states.components.size() <= 1);
-	ScreenState& screen = registry.screen_states.components[0];
+	// ScreenState& screen = registry.screen_states.components[0];
 
 	// Resolves projectiles hitting objects, stops it for a period of time before returning it to the player
 	// Currently handles player arrow (as it is the only projectile that exists)
@@ -174,8 +169,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		if (projectile.counter < 0) {
 			if (entity == player_arrow) {			
 				registry.resolved_projectiles.remove(entity);
-				return_arrow_to_player();
 				player_arrow_fired = false;
+				return_arrow_to_player();
 			}
 			else {
 				registry.remove_all_components_of(entity);
@@ -211,10 +206,10 @@ void WorldSystem::restart_game()
 	vec2 middle = { window_width_px / 2, window_height_px / 2 };
 
 	const MapGeneratorSystem::Mapping& mapping = map_generator->current_map();
-	vec2 top_left_corner = middle - vec2(tile_size * room_size * map_size / 2, tile_size * room_size * map_size / 2);
+	vec2 top_left_corner_pos = middle - vec2(tile_size * room_size * map_size / 2, tile_size * room_size * map_size / 2);
 	for (size_t row = 0; row < mapping.size(); row++) {
 		for (size_t col = 0; col < mapping[0].size(); col++) {
-			vec2 position = top_left_corner + vec2(tile_size * room_size / 2, tile_size * room_size / 2)
+			vec2 position = top_left_corner_pos + vec2(tile_size * room_size / 2, tile_size * room_size / 2)
 				+ vec2(col * tile_size * room_size, row * tile_size * room_size);
 			create_room(renderer, position, mapping.at(row).at(col));
 		}
@@ -294,10 +289,9 @@ bool WorldSystem::is_over() const { return bool(glfwWindowShouldClose(window)); 
 // Returns arrow to player after firing
 void WorldSystem::return_arrow_to_player() 
 { 
-	Motion& arrow_motion = registry.motions.get(player_arrow);
-	MapPosition& player_map_position = registry.map_positions.get(player);
-	vec2 player_screen_position = map_position_to_screen_position(player_map_position.position);
-	arrow_motion.position = player_screen_position;
+	dvec2 mouse_pos;
+	glfwGetCursorPos(window, &mouse_pos.x, &mouse_pos.y);
+	on_mouse_move(vec2(mouse_pos));
 }
 
 	// On key callback
@@ -356,8 +350,6 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 
 		int w, h;
 		glfwGetFramebufferSize(window, &w, &h);
-
-		Entity player = registry.players.top_entity();
 		vec2 position = map_position_to_screen_position(registry.map_positions.get(player).position);
 
 		float left = position.x - w * renderer->screen_scale / 2.f;
