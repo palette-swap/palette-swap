@@ -86,7 +86,7 @@ Entity create_room(vec2 position, MapUtility::RoomType roomType)
 
 	// TODO: Remove temporary workaround once #36 is resolved.
 	registry.render_requests.insert(
-		entity, { TEXTURE_ASSET_ID::WINDOW_1, EFFECT_ASSET_ID::TILE_MAP, GEOMETRY_BUFFER_ID::ROOM });
+		entity, { TEXTURE_ASSET_ID::TILE_SET, EFFECT_ASSET_ID::TILE_MAP, GEOMETRY_BUFFER_ID::ROOM });
 
 	return entity;
 }

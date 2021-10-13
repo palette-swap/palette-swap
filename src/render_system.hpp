@@ -34,9 +34,7 @@ class RenderSystem {
 			textures_path("Slime alert.png"),
 			textures_path("Slime flinched.png"),
 			textures_path("Arrow.png"),
-			textures_path("walkable_1.png"),
-			textures_path("wall_1.png"),
-			textures_path("window_1.png") };
+			textures_path("tile_set.png"), };
 
 	std::array<GLuint, effect_count> effects;
 	// Make sure these paths remain in sync with the associated enumerators.

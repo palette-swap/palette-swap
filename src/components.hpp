@@ -120,10 +120,8 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 	SLIME_ALERT = SLIME + 1,
 	SLIME_FLINCHED = SLIME_ALERT + 1,
 	ARROW = SLIME_FLINCHED + 1,
-	WALKABLE_1 = ARROW + 1,
-	WALL_1 = WALKABLE_1 + 1,
-	WINDOW_1 = WALL_1 + 1,
-	TEXTURE_COUNT = WINDOW_1 + 1
+	TILE_SET = ARROW + 1,
+	TEXTURE_COUNT = TILE_SET + 1
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 
@@ -135,9 +133,6 @@ static constexpr std::array<vec2, texture_count> scaling_factors = {
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size * 0.5, MapUtility::tile_size * 0.5),
-	// TODO: Remove redundant lines once #36 is resolved.
-	vec2(MapUtility::tile_size* MapUtility::room_size, MapUtility::tile_size* MapUtility::room_size),
-	vec2(MapUtility::tile_size* MapUtility::room_size, MapUtility::tile_size* MapUtility::room_size),
 	vec2(MapUtility::tile_size* MapUtility::room_size, MapUtility::tile_size* MapUtility::room_size),
 };
 
@@ -222,16 +217,6 @@ struct Room {
 struct TileMapVertex {
 	vec3 position = vec3(0);
 	vec2 texcoord = vec3(0);
-
-	// each tile texture corresponds to a 32*32 png
-	// TODO: modify this once we support texture atlas
-	float tile_texture = 0;
-};
-
-static constexpr TEXTURE_ASSET_ID tile_textures[MapUtility::num_tile_textures] = {
-	TEXTURE_ASSET_ID::WALKABLE_1,
-	TEXTURE_ASSET_ID::WALL_1,
-	TEXTURE_ASSET_ID::WINDOW_1,
 };
 
 // Simple 3-state state machine for enemy AI: IDEL, ACTIVE, FLINCHED.
