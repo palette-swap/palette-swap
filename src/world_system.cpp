@@ -174,6 +174,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 			if (entity == player_arrow) {			
 				registry.resolved_projectiles.remove(entity);
 				player_arrow_fired = false;
+				turns->complete_team_action(player);
 				return_arrow_to_player();
 			}
 			else {
@@ -418,7 +419,7 @@ void WorldSystem::move_player(Direction direction)
 void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 {
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-		if (!player_arrow_fired) {
+		if (!player_arrow_fired && turns->execute_team_action(player)) {
 			player_arrow_fired = true;
 			// Arrow becomes a projectile the moment it leaves the player, not while it's direction is being selected
 			ActiveProjectile& arrow_projectile = registry.active_projectiles.emplace(player_arrow);
