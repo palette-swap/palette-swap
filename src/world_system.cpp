@@ -196,6 +196,9 @@ void WorldSystem::restart_game()
 	// Reset the game speed
 	current_speed = 1.f;
 
+	// Remove the old player team
+	turns->remove_team_from_queue(player);
+
 	while (!registry.map_positions.entities.empty()) {
 		registry.remove_all_components_of(registry.map_positions.entities.back());
 	}
