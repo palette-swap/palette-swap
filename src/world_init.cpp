@@ -20,7 +20,7 @@ Entity create_player(uvec2 pos)
 
 // Repurposed into general create_enemy
 // TODO: add additional inputs to specify enemy type, current default is slug
-Entity create_enemy(uvec2 position)
+Entity create_enemy(uvec2 position, bool team_red, bool team_blue)
 {
 	auto entity = Entity();
 
@@ -37,7 +37,9 @@ Entity create_enemy(uvec2 position)
 								   { TEXTURE_ASSET_ID::SLIME, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE });
 	registry.colors.insert(entity, { 1, 1, 1 });
 
-	registry.enemy_states.emplace(entity);
+	assert(team_red || team_blue);
+	uint8_t team = team_red + team_blue * 2;
+	registry.enemy_states.emplace(entity, team);
 	registry.enemy_nest_positions.emplace(entity, position);
 
 	return entity;

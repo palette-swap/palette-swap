@@ -57,6 +57,9 @@ private:
 	// if the tile is blocked by a wall, player won't move
 	void move_player(Direction direction);
 
+	// Flips color state.
+	void change_color();
+
 	// OpenGL window handle
 	GLFWwindow* window = nullptr;
 

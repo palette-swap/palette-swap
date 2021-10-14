@@ -231,6 +231,7 @@ void WorldSystem::restart_game()
 	// Also requires naming scheme for randomly generated enemies, for later reference
 	create_enemy(uvec2(55, 56));
 	create_enemy(uvec2(58, 51));
+	create_enemy(uvec2(58, 52), false, true);
 }
 
 // Compute collisions between entities
@@ -284,17 +285,18 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		if (key == GLFW_KEY_RIGHT) {
 			move_player(Direction::Right);
 		}
-
 		if (key == GLFW_KEY_LEFT) {
 			move_player(Direction::Left);
 		}
-
 		if (key == GLFW_KEY_UP) {
 			move_player(Direction::Up);
 		}
-
 		if (key == GLFW_KEY_DOWN) {
 			move_player(Direction::Down);
+		}
+		
+		if (key == GLFW_KEY_EQUAL) {
+			change_color();
 		}
 	}
 
@@ -390,6 +392,21 @@ void WorldSystem::move_player(Direction direction)
 	}
 	map_pos.position = new_pos;
 	turns->complete_team_action(player);
+}
+
+void WorldSystem::change_color() 
+{ 
+	switch (turns->get_active_color()) {
+	case TurnSystem::ColorState::Red:
+		turns->set_active_color(TurnSystem::ColorState::Blue);
+		break;
+	case TurnSystem::ColorState::Blue:
+		turns->set_active_color(TurnSystem::ColorState::Red);
+		break;
+	default:
+		turns->set_active_color(TurnSystem::ColorState::Red);
+		break;
+	}
 }
 
 // Fires arrow at a preset speed if it has not been fired already
