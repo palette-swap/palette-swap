@@ -14,8 +14,8 @@ bool CombatSystem::do_attack(Stats& attacker, Attack& attack, Stats& target)
 		// Roll a random damage between min and max (inclusive), then
 		// add attacker's damage_bonus and the target's damage_modifiers
 		std::uniform_int_distribution<int> damage_roller(attack.damage_min, attack.damage_max);
-		target.health -= damage_roller(*rng) + attacker.damage_bonus
-			+ target.damage_modifiers[static_cast<int>(attack.damage_type)];
+		target.health -= max(damage_roller(*rng) + attacker.damage_bonus
+			+ target.damage_modifiers[static_cast<int>(attack.damage_type)], 0);
 		printf("Hit! Target's new HP is %i\n", target.health);
 	} else {
 		printf("Miss!\n");
