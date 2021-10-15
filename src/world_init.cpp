@@ -8,6 +8,7 @@ Entity create_player(uvec2 pos)
 	// Create and (empty) player component to be able to refer to other enttities
 	registry.players.emplace(entity);
 	registry.map_positions.emplace(entity, pos);
+	registry.stats.emplace(entity);
 
 	registry.render_requests.insert(entity,
 								   { TEXTURE_ASSET_ID::PALADIN, 
@@ -25,6 +26,16 @@ Entity create_enemy(uvec2 position)
 	auto entity = Entity();
 
 	registry.map_positions.emplace(entity, position);
+
+	// Set up enemy stats to be weaker than the player
+	// TODO: Replace with load from file or auto-generate
+	Stats& stats = registry.stats.emplace(entity);
+	stats.health = 50;
+	stats.health_max = 50;
+	stats.to_hit_bonus = 6;
+	stats.evasion = 12;
+	stats.base_attack.damage_min = 5;
+	stats.base_attack.damage_max = 15;
 
 	// Maps position of enemy to actual position (for reference)
 	vec2 actual_position = MapUtility::map_position_to_screen_position(position);
