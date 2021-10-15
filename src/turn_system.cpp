@@ -59,7 +59,6 @@ bool TurnSystem::execute_team_action(Entity team)
 {
 	if (get_active_team() == team && queue_state == QueueState::Idle) {
 		queue_state = QueueState::Executing;
-		printf("Executing turn: Team %d\n", (int)team);
 
 		return true;
 	}
@@ -70,11 +69,9 @@ bool TurnSystem::complete_team_action(Entity team)
 {
 	assert(get_active_team() == team);
 	if ((queue_state == QueueState::Executing || queue_state == QueueState::Idle) && get_active_team() == team) {
-		printf("Completing turn of: Team %d\n", (int)team);
 		queue_state = QueueState::Finished;
 		// Perform post-execution actions
 		cycle_queue();
-		printf("Current turn: Team %d\n", (int)get_active_team());
 		return true;
 	}
 	return false;

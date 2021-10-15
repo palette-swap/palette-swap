@@ -407,6 +407,16 @@ void WorldSystem::change_color()
 		turns->set_active_color(TurnSystem::ColorState::Red);
 		break;
 	}
+
+	uint8_t active_color = (uint8_t)turns->get_active_color();
+	for (long long i = registry.enemy_states.entities.size() - 1; i >= 0; i--) { 
+		const Entity& enemy_entity = registry.enemy_states.entities[i];
+		if ((registry.enemy_states.get(enemy_entity).team & active_color) == 0) {
+			registry.render_requests.get(enemy_entity).visible = false;
+		} else {
+			registry.render_requests.get(enemy_entity).visible = true;
+		}
+	}
 }
 
 // Fires arrow at a preset speed if it has not been fired already
