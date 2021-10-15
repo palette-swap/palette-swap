@@ -285,8 +285,8 @@ struct Stats {
 	int damage_bonus = 5;
 
 	// This number is compared to an attack total to see if it hits.
-	// It hits if attack_total >= defence
-	int defence = 15;
+	// It hits if attack_total >= evasion
+	int evasion = 15;
 
 	// The default attack associated with this entity
 	// TODO: Consider removing when multiple attacks are more readily supported

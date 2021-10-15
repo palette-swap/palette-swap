@@ -33,7 +33,7 @@ Entity create_enemy(uvec2 position)
 	stats.health = 50;
 	stats.health_max = 50;
 	stats.to_hit_bonus = 6;
-	stats.defence = 12;
+	stats.evasion = 12;
 	stats.base_attack.damage_min = 5;
 	stats.base_attack.damage_max = 15;
 
