@@ -23,14 +23,6 @@ struct ActiveProjectile {
 	vec2 head_offset = { 0, 0 };
 };
 
-// All data relevant to the shape and motion of entities
-struct Motion {
-	vec2 position = { 0, 0 };
-	float angle = 0;
-	vec2 velocity = { 0, 0 };
-	vec2 scale = { 10, 10 };
-};
-
 // Struct indicating an object is hittable (Currently limited to projectiles
 struct Hittable {
 };
@@ -128,12 +120,21 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 	SLIME_ALERT = SLIME + 1,
 	SLIME_FLINCHED = SLIME_ALERT + 1,
 	ARROW = SLIME_FLINCHED + 1,
-	WALKABLE_1 = ARROW + 1,
-	WALL_1 = WALKABLE_1 + 1,
-	WINDOW_1 = WALL_1 + 1,
-	TEXTURE_COUNT = WINDOW_1 + 1
+	TILE_SET = ARROW + 1,
+	TEXTURE_COUNT = TILE_SET + 1
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
+
+// Define the scaling factors needed for each textures
+// Note: This needs to stay the same order as TEXTURE_ASSET_ID and texture_paths
+static constexpr std::array<vec2, texture_count> scaling_factors = {
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size * 0.5, MapUtility::tile_size * 0.5),
+	vec2(MapUtility::tile_size* MapUtility::room_size, MapUtility::tile_size* MapUtility::room_size),
+};
 
 enum class EFFECT_ASSET_ID {
 	LINE = 0,
@@ -153,14 +154,14 @@ enum class GEOMETRY_BUFFER_ID : uint8_t {
 
 	// Note: Keep ROOM at the bottom because of hacky implementation,
 	// this is somewhat hacky, this is actually a single geometry related to a room, but
-	// we don't want to update the Enum every time we add a new room. It's num_room - 1
+	// we don't want to update the Enum every time we add a new room. It's MapUtility::num_room - 1
 	// because we want to bind vertex buffer for each room but not for the ROOM enum, it's
 	// just a placeholder to tell us it's a room geometry, which geometry will be defined
 	// by the room struct
 	ROOM = SCREEN_TRIANGLE + 1,
 	GEOMETRY_COUNT = ROOM + 1
 };
-const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT + num_room - 1;
+const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT + MapUtility::num_room - 1;
 
 struct RenderRequest {
 	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
@@ -176,26 +177,39 @@ enum class Direction : uint8_t {
 	Down,
 };
 
-// Represents the position on the world map,
+// Represents the position on the map,
 // top left is (0,0) bottom right is (99,99)
-// TODO: with this, we probably won't need position from
-// Motion, the rendered postion can be calculate from MapPosition
 struct MapPosition {
 	uvec2 position;
-	// represent if the object needs to be scale
-	vec2 scale;
-	MapPosition(uvec2 position, vec2 scale)
+	MapPosition(uvec2 position)
 		: position(position)
-		, scale(scale)
 	{
 		assert(position.x < 99 && position.y < 99);
 	};
 };
 
+// Represents the world position,
+// top left is (0,0), bottom right is (window_width_px, window_height_px)
+struct WorldPosition {
+	vec2 position;
+	WorldPosition(vec2 position)
+		: position(position)
+	{ };
+};
+
+struct Velocity {
+	float speed;
+	float angle;
+	Velocity(float speed, float angle)
+		: speed(speed), angle(angle) { }
+	vec2 get_velocity() { return { sin(angle) * speed, -cos(angle) * speed };
+	}
+};
+
 struct Room {
 	// use 0xff to indicate uninitialized value
 	// this can have potential bug if we have up to 255 rooms, but we probably won't...
-	RoomType type = 0xff;
+	MapUtility::RoomType type = 0xff;
 };
 
 // For TileMap vertex buffers, we need a separate tile_texture float because we want
@@ -203,17 +217,11 @@ struct Room {
 struct TileMapVertex {
 	vec3 position = vec3(0);
 	vec2 texcoord = vec3(0);
-
-	// each tile texture corresponds to a 32*32 png
-	// TODO: modify this once we support texture atlas
-	float tile_texture = 0;
 };
 
-static constexpr TEXTURE_ASSET_ID tile_textures[num_tile_textures] = {
-	TEXTURE_ASSET_ID::WALKABLE_1,
-	TEXTURE_ASSET_ID::WALL_1,
-	TEXTURE_ASSET_ID::WINDOW_1,
-};
+//---------------------------------------------------------------------------
+//-------------------------           AI            -------------------------
+//---------------------------------------------------------------------------
 
 // Simple 3-state state machine for enemy AI: IDEL, ACTIVE, FLINCHED.
 enum class ENEMY_STATE_ID { Idle = 0, ACTIVE = Idle + 1, FLINCHED = ACTIVE + 1 };
@@ -229,6 +237,63 @@ struct EnemyNestPosition {
 	EnemyNestPosition(const uvec2& position)
 		: position(position)
 	{
-		assert(position.x < map_size * room_size && position.y < map_size * room_size);
+		assert(position.x < MapUtility::map_size * MapUtility::room_size && position.y < MapUtility::map_size * MapUtility::room_size);
 	};
+};
+
+//---------------------------------------------------------------------------
+//-------------------------         COMBAT          -------------------------
+//---------------------------------------------------------------------------
+
+enum class DamageType {
+	Physical = 0,
+	Magical = Physical + 1,
+	Count = Magical + 1,
+};
+
+template <typename T> using DamageTypeList = std::array<T, static_cast<size_t>(DamageType::Count)>;
+
+struct Attack {
+	// Each time an attack is made, a random number is chosen uniformly from [to_hit_min, to_hit_max]
+	// This is added to the attack total
+	int to_hit_min = 1;
+	int to_hit_max = 20;
+
+	// Each time damage is calculated, a random number is chosen uniformly from [damage_min, damage_max]
+	// This is added to the damage total
+	int damage_min = 10;
+	int damage_max = 25;
+
+	// This is used when calculating damage to work out if any of the target's damage_modifiers should apply
+	DamageType damage_type = DamageType::Physical;
+};
+
+struct Stats {
+
+	// Health and its max
+	int health = 100;
+	int health_max = 100;
+
+	// Mana and its max
+	int mana = 100;
+	int mana_max = 100;
+
+	// Each time an attack is made, this flat amount is added to the attack total
+	int to_hit_bonus = 10;
+
+	// Each time damage is calculated, this flat amount is added to the damage total
+	int damage_bonus = 5;
+
+	// This number is compared to an attack total to see if it hits.
+	// It hits if attack_total >= evasion
+	int evasion = 15;
+
+	// The default attack associated with this entity
+	// TODO: Consider removing when multiple attacks are more readily supported
+	Attack base_attack;
+
+	// Each time damage is calculated, the modifier of the relevant type is added
+	// A positive modifier is a weakness, like a straw golem being weak to fire
+	// A negative modifeir is a resistance, like an iron golem being resistant to sword cuts
+	DamageTypeList<int> damage_modifiers = { 0 };
 };

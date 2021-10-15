@@ -3,8 +3,11 @@
 #include "components.hpp"
 
 // AI logic
-AISystem::AISystem(std::shared_ptr<MapGeneratorSystem> map_generator, std::shared_ptr<TurnSystem> turns)
-	: map_generator(std::move(map_generator))
+AISystem::AISystem(std::shared_ptr<CombatSystem> combat,
+				   std::shared_ptr<MapGeneratorSystem> map_generator,
+				   std::shared_ptr<TurnSystem> turns)
+	: combat(std::move(combat))
+	, map_generator(std::move(map_generator))
 	, turns(std::move(turns))
 {
 	registry.debug_components.emplace(enemy_team);
@@ -18,7 +21,14 @@ void AISystem::step(float /*elapsed_ms*/)
 		return;
 	}
 
-	for (const Entity& enemy_entity : registry.enemy_states.entities) {
+	for (long long i = registry.enemy_states.entities.size() - 1; i >= 0; i--) {
+		const Entity& enemy_entity = registry.enemy_states.entities[i];
+
+		// TODO: Animate death instead of just removing
+		if (registry.stats.has(enemy_entity) && registry.stats.get(enemy_entity).health <= 0) {
+			registry.remove_all_components_of(enemy_entity);
+			continue;
+		}
 
 		switch (registry.enemy_states.get(enemy_entity).current_state) {
 
@@ -106,12 +116,10 @@ bool AISystem::is_player_reachable(const Entity& entity, const uint attack_range
 	return is_player_spotted(entity, attack_range);
 }
 
-bool AISystem::is_afraid(const Entity& /*entity*/)
+bool AISystem::is_afraid(const Entity& entity)
 {
-	// TODO: M2 whether enemies is afraid depends on their real HP.
-	uint hp = uint(uniform_dist(rng) * 100.f);
-	printf("Enemy HP: %d\n", hp);
-	if (hp < 5) {
+	// TODO: Replace magic number 12 with variable amount
+	if (registry.stats.get(entity).health < 12) {
 		printf("Enemy is afraid...\n");
 		return true;
 	}
@@ -133,10 +141,13 @@ void AISystem::become_alert(const Entity& /*entity*/)
 	printf("Enemy becomes alert!\n");
 }
 
-void AISystem::attack_player(const Entity& /*entity*/)
+void AISystem::attack_player(const Entity& entity)
 {
 	// TODO: M2 add animation/sound and injure player.
 	printf("Enemy attacks player!\n");
+	Stats& stats = registry.stats.get(entity);
+	Stats& player_stats = registry.stats.get(registry.players.top_entity());
+	combat->do_attack(stats, stats.base_attack, player_stats);
 }
 
 bool AISystem::approach_player(const Entity& entity)
@@ -171,7 +182,6 @@ bool AISystem::move(const Entity& entity, const uvec2& map_pos)
 	MapPosition& entity_map_pos = registry.map_positions.get(entity);
 	if (entity_map_pos.position != map_pos && map_generator->walkable(map_pos)) {
 		entity_map_pos.position = map_pos;
-		registry.motions.get(entity).position = map_position_to_screen_position(map_pos);
 		return true;
 	}
 	return false;

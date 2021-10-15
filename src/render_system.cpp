@@ -13,23 +13,22 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 	Transform transform;
 	if (registry.map_positions.has(entity)) {
 		MapPosition& map_position = registry.map_positions.get(entity);
-		transform.translate(map_position_to_screen_position(map_position.position));
-		transform.scale(map_position.scale);
+		transform.translate(MapUtility::map_position_to_screen_position(map_position.position));
 	}
-	// Change this, needed to change it since room was rendering based on motion, but so is arrow
-	/*if (registry.active_projectiles.has(entity) */
 	else {
-		Motion& motion = registry.motions.get(entity);
-		// Transformation code, see Rendering and Transformation in the template
-		// specification for more info Incrementally updates transformation matrix,
-		// thus ORDER IS IMPORTANT
-		transform.translate(motion.position);
-		transform.rotate(motion.angle);
-		transform.scale(motion.scale);
+		// Most objects in the game are expected to use MapPosition, exceptions are:
+		// Arrow, Room.
+		transform.translate(registry.world_positions.get(entity).position);
+		if (registry.velocities.has(entity)) {
+			// Probably can provide a get if exist function here to boost performance
+			transform.rotate(registry.velocities.get(entity).angle);
+		}
 	}
 
 	assert(registry.render_requests.has(entity));
 	const RenderRequest& render_request = registry.render_requests.get(entity);
+
+	transform.scale(scaling_factors.at(static_cast<int>(render_request.used_texture)));
 
 	const auto used_effect_enum = (GLuint)render_request.used_effect;
 	assert(used_effect_enum != (GLuint)EFFECT_ASSET_ID::EFFECT_COUNT);
@@ -96,7 +95,6 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 	} else if (render_request.used_effect == EFFECT_ASSET_ID::TILE_MAP) {
 		GLint in_position_loc = glGetAttribLocation(program, "in_position");
 		GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
-		GLint tile_index_loc = glGetAttribLocation(program, "tile_index");
 
 		gl_has_errors();
 		assert(in_texcoord_loc >= 0);
@@ -112,30 +110,15 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 							  GL_FALSE,
 							  sizeof(TileMapVertex),
 							  (void*)sizeof(vec3)); // note the stride to skip the preceeding vertex position
+		// Enabling and binding texture to slot 0
+		glActiveTexture(GL_TEXTURE0);
+		gl_has_errors();
 
-		// Pass in the tile indexes
-		glEnableVertexAttribArray(tile_index_loc);
-		glVertexAttribPointer(
-			tile_index_loc, 1, GL_FLOAT, GL_FALSE, sizeof(TileMapVertex), (void*)(sizeof(vec3) + sizeof(vec2)));
+		assert(registry.render_requests.has(entity));
+		GLuint texture_id = texture_gl_handles.at((GLuint)registry.render_requests.get(entity).used_texture);
 
-		// Currently we pass in all tiles included, this can be inefficient and can
-		// overflow the texture limit, some ways to optimize
-		// 1. Pass in certian tiles based on camera position
-		// 2. (Preferred) Use a sprite sheet(tilemap atlas), access multiple tiles for
-		// a single load
-		int samplers[num_tile_textures];
-		for (int i = 0; i < num_tile_textures; i++)
-		{
-			// Maintenance Note:
-			// To support OpenGL 3.3, glBindTextureUnit (OpenGL 4.5 feature) is replaced by glActiveTexture + glBindTexture.
-			glActiveTexture(GL_TEXTURE0 + i);
-			glBindTexture(GL_TEXTURE_2D, texture_gl_handles[(GLuint)tile_textures[i]]);
-      
-			samplers[i] = i;
-		}
-    
-		auto textures_loc = glGetUniformLocation(program, "tile_textures");
-		glUniform1iv(textures_loc, num_tile_textures, samplers);
+		glBindTexture(GL_TEXTURE_2D, texture_id);
+		gl_has_errors();
 	} else {
 		assert(false && "Type of render request not supported");
 	}
@@ -249,9 +232,6 @@ void RenderSystem::draw()
 	mat3 projection_2d = create_projection_matrix();
 	// Draw all textured meshes that have a position and size component
 	for (Entity entity : registry.render_requests.entities) {
-		if (!registry.motions.has(entity) && !registry.map_positions.has(entity)) {
-			continue;
-		}
 		// Note, its not very efficient to access elements indirectly via the entity
 		// albeit iterating through all Sprites in sequence. A good point to optimize
 		draw_textured_mesh(entity, projection_2d);
@@ -276,7 +256,7 @@ mat3 RenderSystem::create_projection_matrix()
 
 	// set up 4 sides of window based on player
 	Entity player = registry.players.top_entity();
-	vec2 position = map_position_to_screen_position(registry.map_positions.get(player).position);
+	vec2 position = MapUtility::map_position_to_screen_position(registry.map_positions.get(player).position);
 
 	
 	float right = position.x + w * screen_scale / 2.f;
