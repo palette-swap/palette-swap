@@ -8,6 +8,7 @@
 #include "../ext/stb_image/stb_image.h"
 
 #include <predefined_room.hpp>
+#include "map_generator_system.hpp"
 
 // Player component
 struct Player {

@@ -48,9 +48,10 @@ class RenderSystem {
 	// initialize all predefined rooms, based on roomtype
 	void initialize_room_vertices(MapUtility::RoomType roomType);
 
+	std::shared_ptr<MapGeneratorSystem> map_generator;
 public:
 	// Initialize the window
-	bool init(int width, int height, GLFWwindow* window);
+	bool init(int width, int height, GLFWwindow* window, std::shared_ptr<MapGeneratorSystem> map);
 
 	// Modified first argument to gid, which doesn't change behavior and is reasonable,
 	// it also helps the room geometry hack to work...

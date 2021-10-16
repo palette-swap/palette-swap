@@ -231,7 +231,7 @@ void WorldSystem::restart_game()
 	}
 
 	// a random starting position... probably need to update this
-	uvec2 player_starting_point = uvec2(51, 51);
+	uvec2 player_starting_point = uvec2(1, 1);
 	// Create a new Player instance and shift player onto a tile
 	player = create_player(player_starting_point);
 	turns->add_team_to_queue(player);
@@ -245,8 +245,8 @@ void WorldSystem::restart_game()
 	player_arrow = create_arrow(player_location);
 	// Creates a single enemy instance, (TODO: needs to be updated with position based on grid)
 	// Also requires naming scheme for randomly generated enemies, for later reference
-	create_enemy(uvec2(55, 56));
-	create_enemy(uvec2(58, 51));
+	create_enemy(uvec2(12, 3));
+	create_enemy(uvec2(15, 3));
 }
 
 // Compute collisions between entities
