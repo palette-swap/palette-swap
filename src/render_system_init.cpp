@@ -231,9 +231,9 @@ void RenderSystem::initialize_gl_geometry_buffers()
 	enemy_vertices[1].position = { +1.f / 2, +1.f / 2, 0.f };
 	enemy_vertices[2].position = { +1.f / 2, -1.f / 2, 0.f };
 	enemy_vertices[3].position = { -1.f / 2, -1.f / 2, 0.f };
-	enemy_vertices[0].texcoord = { 0, 0.33 };
-	enemy_vertices[1].texcoord = { 0.25, 0.33 };
-	enemy_vertices[2].texcoord = { 0.25, 0 };
+	enemy_vertices[0].texcoord = { 0, sprite_size/spritesheet_height};
+	enemy_vertices[1].texcoord = { sprite_size / spritesheet_width, sprite_size / spritesheet_height };
+	enemy_vertices[2].texcoord = { sprite_size / spritesheet_width, 0 };
 	enemy_vertices[3].texcoord = { 0, 0 };
 
 	// Counterclockwise as it's the default opengl front winding direction.

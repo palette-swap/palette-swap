@@ -46,6 +46,15 @@ class RenderSystem {
 																 shader_path("water"),
 																 shader_path("tilemap") };
 
+	// TODO: move these constants into animation system most likely, need to finalize
+	// hierachy between animation and render system
+	// Filler for experimental spritesheet dimensions (3 rows and 4 columns)
+	// Will likely update to a standard square (regardless of rows or columns of actual sprites used)
+	static constexpr float spritesheet_width = 128.f;
+	static constexpr float spritesheet_height = 96.f;
+	// Should be kept in tune with tile size, but this remains to be seen
+	static constexpr float sprite_size = 32.f;
+
 	std::array<GLuint, geometry_count> vertex_buffers;
 	std::array<GLuint, geometry_count> index_buffers;
 	std::array<Mesh, geometry_count> meshes;

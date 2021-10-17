@@ -16,7 +16,7 @@ public:
 	ComponentContainer<DebugComponent> debug_components;
 
 	// Rendering
-	ComponentContainer<AnimationFrame> animation_frame;
+	ComponentContainer<Animation> animation_frame;
 	ComponentContainer<RenderRequest> render_requests;
 	ComponentContainer<vec3> colors;
 

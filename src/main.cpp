@@ -7,12 +7,14 @@
 
 // internal
 #include "ai_system.hpp"
+#include "animation_system.hpp"
 #include "combat_system.hpp"
 #include "map_generator_system.hpp"
 #include "physics_system.hpp"
 #include "render_system.hpp"
 #include "turn_system.hpp"
 #include "world_system.hpp"
+
 
 using Clock = std::chrono::high_resolution_clock;
 
@@ -34,6 +36,7 @@ int main()
 	RenderSystem renderer;
 	PhysicsSystem physics(debugging, map);
 	AISystem ai(combat, map, turns);
+	AnimationSystem animation;
 
 	// Initializing window
 	GLFWwindow* window = world.create_window(window_width_px, window_height_px);
@@ -47,6 +50,7 @@ int main()
 	// initialize the main systems
 	renderer.init(window_width_px, window_height_px, window);
 	world.init(&renderer);
+	animation.init();
 
 	// variable timestep loop
 	auto t = Clock::now();
@@ -64,6 +68,7 @@ int main()
 		ai.step(elapsed_ms);
 		physics.step(elapsed_ms, window_width_px, window_height_px);
 		world.handle_collisions();
+		/*animation.update_animations(elapsed_ms);*/
 		renderer.draw();
 	}
 

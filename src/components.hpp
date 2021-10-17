@@ -93,9 +93,9 @@ struct ResolvedProjectile {
 
 // Struct for denoting the frame that the rendering system should be rendering 
 // to the screen for a spritesheet
-struct AnimationFrame {
+struct Animation {
 	uint8_t frame = 0;
-	uint8_t total_frames = 4;
+	uint8_t state = 0;
 };
 
 // Test Texture Buffer element for enemies

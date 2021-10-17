@@ -11,10 +11,14 @@ out vec2 texcoord;
 uniform mat3 transform;
 uniform mat3 projection;
 
+// Value used for sprite size, used for calculating spritesheet offset
+uniform float sprite_size = 32;
+uniform int frame;
+uniform int state;
+
 void main()
 {
 	texcoord = in_texcoord;
-	texcoord.x += 32;
 	vec3 pos = projection * transform * vec3(in_position.xy, 1.0);
 	gl_Position = vec4(pos.xy, in_position.z, 1.0);
 }
