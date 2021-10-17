@@ -43,6 +43,10 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 	if (render_request.used_geometry == GEOMETRY_BUFFER_ID::ROOM) {
 		vbo_ibo_offset = registry.rooms.get(entity).type;
 	}
+	// Test for rendering slime offset
+	if (render_request.used_texture == TEXTURE_ASSET_ID::SLIME) {
+		vbo_ibo_offset = 0.8;
+	}
 
 	const GLuint vbo = vertex_buffers.at((int)render_request.used_geometry + vbo_ibo_offset);
 	const GLuint ibo = index_buffers.at((int)render_request.used_geometry + vbo_ibo_offset);
@@ -69,6 +73,32 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 							  GL_FLOAT,
 							  GL_FALSE,
 							  sizeof(TexturedVertex),
+							  (void*)sizeof(vec3)); // note the stride to skip the preceeding vertex position
+		// Enabling and binding texture to slot 0
+		glActiveTexture(GL_TEXTURE0);
+		gl_has_errors();
+
+		assert(registry.render_requests.has(entity));
+		GLuint texture_id = texture_gl_handles.at((GLuint)registry.render_requests.get(entity).used_texture);
+
+		glBindTexture(GL_TEXTURE_2D, texture_id);
+		gl_has_errors();
+	} else if (render_request.used_effect == EFFECT_ASSET_ID::ENEMY) {
+		GLint in_position_loc = glGetAttribLocation(program, "in_position");
+		GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
+		gl_has_errors();
+		assert(in_texcoord_loc >= 0);
+
+		glEnableVertexAttribArray(in_position_loc);
+		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(EnemyVertex), nullptr);
+		gl_has_errors();
+
+		glEnableVertexAttribArray(in_texcoord_loc);
+		glVertexAttribPointer(in_texcoord_loc,
+							  2,
+							  GL_FLOAT,
+							  GL_FALSE,
+							  sizeof(EnemyVertex),
 							  (void*)sizeof(vec3)); // note the stride to skip the preceeding vertex position
 		// Enabling and binding texture to slot 0
 		glActiveTexture(GL_TEXTURE0);

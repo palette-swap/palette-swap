@@ -26,11 +26,13 @@ class RenderSystem {
 		{ GEOMETRY_BUFFER_ID::SALMON, mesh_path("salmon.obj") }
 		// specify meshes of other assets here
 	};
-
+	
+	// TODO: change all asset paths to reference corresponding folder instead
+	// 	   For each corresponding enemy/player type
 	// Make sure these paths remain in sync with the associated enumerators.
 	const std::array<std::string, texture_count> texture_paths = {
 			textures_path("Paladin_A01.png"),
-			textures_path("Slime.png"),
+			textures_path("./Slime/Slime Spritesheet.png"),
 			textures_path("Slime alert.png"),
 			textures_path("Slime flinched.png"),
 			textures_path("Arrow.png"),
@@ -38,8 +40,11 @@ class RenderSystem {
 
 	std::array<GLuint, effect_count> effects;
 	// Make sure these paths remain in sync with the associated enumerators.
-	const std::array<std::string, effect_count> effect_paths
-		= { shader_path("line"), shader_path("textured"), shader_path("water"), shader_path("tilemap") };
+	const std::array<std::string, effect_count> effect_paths = { shader_path("line"),
+																 shader_path("enemy"),
+																 shader_path("textured"),
+																 shader_path("water"),
+																 shader_path("tilemap") };
 
 	std::array<GLuint, geometry_count> vertex_buffers;
 	std::array<GLuint, geometry_count> index_buffers;

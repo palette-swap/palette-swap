@@ -18,11 +18,6 @@ struct Camera {
 	uvec2 size, central;
 };
 
-// struct denoting a currently active projectile
-struct ActiveProjectile {
-	vec2 head_offset = { 0, 0 };
-};
-
 // Struct indicating an object is hittable (Currently limited to projectiles
 struct Hittable {
 };
@@ -85,9 +80,28 @@ struct Mesh {
 	std::vector<uint16_t> vertex_indices;
 };
 
+
+// struct denoting a currently active projectile
+struct ActiveProjectile {
+	vec2 head_offset = { 0, 0 };
+};
+
 // Struct for resolving projectiles, including the arrow fired by the player
 struct ResolvedProjectile {
 	float counter = 2000;
+};
+
+// Struct for denoting the frame that the rendering system should be rendering 
+// to the screen for a spritesheet
+struct AnimationFrame {
+	uint8_t frame = 0;
+	uint8_t total_frames = 4;
+};
+
+// Test Texture Buffer element for enemies
+struct EnemyVertex {
+	vec3 position;
+	vec2 texcoord;
 };
 
 /**
@@ -138,7 +152,8 @@ static constexpr std::array<vec2, texture_count> scaling_factors = {
 
 enum class EFFECT_ASSET_ID {
 	LINE = 0,
-	TEXTURED = LINE + 1,
+	ENEMY = LINE + 1,
+	TEXTURED = ENEMY + 1,
 	WATER = TEXTURED + 1,
 	TILE_MAP = WATER + 1,
 	EFFECT_COUNT = TILE_MAP + 1
@@ -146,9 +161,10 @@ enum class EFFECT_ASSET_ID {
 constexpr int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 
 enum class GEOMETRY_BUFFER_ID : uint8_t {
-	SALMON = 0,
-	SPRITE = SALMON + 1,
-	LINE = SPRITE + 1,
+	SALMON = 0, 
+	SPRITE = SALMON + 1, 
+	ENEMY = SPRITE + 1,
+	LINE = ENEMY + 1,
 	DEBUG_LINE = LINE + 1,
 	SCREEN_TRIANGLE = DEBUG_LINE + 1,
 

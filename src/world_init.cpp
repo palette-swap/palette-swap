@@ -43,9 +43,9 @@ Entity create_enemy(uvec2 position)
 	// Indicates enemy is hittable by objects
 	registry.hittables.emplace(entity);
 
-	// TODO: Switch out basic enemy type based on input (Currently Defaulted to Slug)
+	// TODO: Switch out basic enemy type based on input (Currently Defaulted to Slime)
 	registry.render_requests.insert(entity,
-								   { TEXTURE_ASSET_ID::SLIME, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE });
+								   { TEXTURE_ASSET_ID::SLIME, EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY });
 	registry.colors.insert(entity, { 1, 1, 1 });
 
 	registry.enemy_states.emplace(entity);

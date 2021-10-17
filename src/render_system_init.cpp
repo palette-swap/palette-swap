@@ -222,6 +222,26 @@ void RenderSystem::initialize_gl_geometry_buffers()
 	const std::vector<uint16_t> textured_indices = { 0, 3, 1, 1, 3, 2 };
 	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::SPRITE, textured_vertices, textured_indices);
 
+	//////////////////////////
+	// TODO: Consolidate all 
+	// Initialize ENEMY sprites
+	// The position corresponds to the center of the texture.
+	std::vector<EnemyVertex> enemy_vertices(4);
+	enemy_vertices[0].position = { -1.f / 2, +1.f / 2, 0.f };
+	enemy_vertices[1].position = { +1.f / 2, +1.f / 2, 0.f };
+	enemy_vertices[2].position = { +1.f / 2, -1.f / 2, 0.f };
+	enemy_vertices[3].position = { -1.f / 2, -1.f / 2, 0.f };
+	enemy_vertices[0].texcoord = { 0, 0.33 };
+	enemy_vertices[1].texcoord = { 0.25, 0.33 };
+	enemy_vertices[2].texcoord = { 0.25, 0 };
+	enemy_vertices[3].texcoord = { 0, 0 };
+
+	// Counterclockwise as it's the default opengl front winding direction.
+	const std::vector<uint16_t> enemy_indices = { 0, 3, 1, 1, 3, 2 };
+	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::ENEMY, enemy_vertices, enemy_indices);
+
+
+
 	for (uint8_t i = 0; i < MapUtility::num_room; i++) {
 		initialize_room_vertices(i);
 	}

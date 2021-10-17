@@ -12,9 +12,12 @@ public:
 	ComponentContainer<Player> players;
 	ComponentContainer<Camera> cameras;
 	ComponentContainer<Mesh*> mesh_ptrs;
-	ComponentContainer<RenderRequest> render_requests;
 	ComponentContainer<ScreenState> screen_states;
 	ComponentContainer<DebugComponent> debug_components;
+
+	// Rendering
+	ComponentContainer<AnimationFrame> animation_frame;
+	ComponentContainer<RenderRequest> render_requests;
 	ComponentContainer<vec3> colors;
 
 	// Map Generator
@@ -44,10 +47,11 @@ private:
 		&collisions,
 		&players,
 		&mesh_ptrs,
-		&render_requests,
 		&screen_states,
 		&debug_components,
+		&render_requests,
 		&colors,
+		&animation_frame,
 		&rooms,
 		&map_positions,
 		&enemy_states,
