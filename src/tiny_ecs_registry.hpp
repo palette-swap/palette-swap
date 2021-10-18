@@ -35,6 +35,11 @@ public:
 	// Combat
 	ComponentContainer<Stats> stats;
 
+	// Items
+	ComponentContainer<Item> items;
+	ComponentContainer<Weapon> weapons;
+	ComponentContainer<Inventory> inventories;
+
 
 private:
 	// IMPORTANT: Don't forget to add any newly added containers!
@@ -48,15 +53,29 @@ private:
 		&screen_states,
 		&debug_components,
 		&colors,
+
+		// Map Generator
 		&rooms,
 		&map_positions,
+		&world_positions,
+		&velocities,
+
+		// AI
 		&enemy_states,
 		&enemy_nest_positions,
+
+		// Physics
 		&hittables,
 		&active_projectiles,
 		&resolved_projectiles,
-		&world_positions,
-		&velocities,
+
+		// Combat
+		&stats,
+
+		// Items
+		&items,
+		&weapons,
+		&inventories,
 	};
 
 

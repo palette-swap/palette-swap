@@ -297,3 +297,31 @@ struct Stats {
 	// A negative modifeir is a resistance, like an iron golem being resistant to sword cuts
 	DamageTypeList<int> damage_modifiers = { 0 };
 };
+
+enum class Slot {
+	PrimaryHand,
+	Body,
+	Head,
+	Neck,
+	Hands,
+	Feet,
+	Count,
+};
+
+template <typename T> using SlotList = std::array<T, static_cast<size_t>(Slot::Count)>;
+
+struct Inventory {
+	std::vector<Entity> inventory;
+	SlotList<Entity> equipped = { Entity::undefined() };
+};
+
+struct Item {
+	float weight = 0.f;
+	int value = 0;
+	SlotList<bool> allowed_slots = { false };
+};
+
+struct Weapon {
+	// TODO: Potentially replace with intelligent direct/indirect container
+	std::vector<Attack> given_attacks;
+};

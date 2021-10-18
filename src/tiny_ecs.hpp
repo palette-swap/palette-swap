@@ -8,7 +8,7 @@
 #include <unordered_map>
 #include <vector>
 
-// Unique identifyer for all entities
+// Unique identifier for all entities
 class Entity {
 	unsigned int id;
 	static unsigned int id_count; // starts from 1, entit 0 is the default initialization
