@@ -100,17 +100,20 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 		glActiveTexture(GL_TEXTURE0);
 		gl_has_errors();
 
-		assert(registry.render_requests.has(entity));
-		GLuint texture_id = texture_gl_handles.at((GLuint)registry.render_requests.get(entity).used_texture);
-
 		// Updates frame for entity
-		GLint in_frame_loc = glGetAttribLocation(program, "frame");
+		GLint in_frame_loc = glGetUniformLocation(program, "frame");
 		assert(registry.animations.has(entity));
 		Animation& animation = registry.animations.get(entity);
 		glUniform1i(in_frame_loc, animation.frame);
+		gl_has_errors();
+
+		assert(registry.render_requests.has(entity));
+		GLuint texture_id = texture_gl_handles.at((GLuint)registry.render_requests.get(entity).used_texture);
 
 		glBindTexture(GL_TEXTURE_2D, texture_id);
 		gl_has_errors();
+
+
 	} else if (render_request.used_effect == EFFECT_ASSET_ID::LINE) {
 		GLint in_position_loc = glGetAttribLocation(program, "in_position");
 		GLint in_color_loc = glGetAttribLocation(program, "in_color");

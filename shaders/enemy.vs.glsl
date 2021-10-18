@@ -13,6 +13,10 @@ uniform mat3 projection;
 
 // Value used for sprite size, used for calculating spritesheet offset
 uniform float sprite_size = 32;
+// Value used for representing number of frames:
+uniform float num_frames = 4;
+// Value denoting total number of states for an enemy:
+uniform float num_states = 3;
 // Denotes current frame_state (frame rendered in animation as well as entity state)
 uniform int frame;
 uniform int state;
@@ -20,7 +24,8 @@ uniform int state;
 void main()
 {
 	texcoord = in_texcoord;
-	texcoord.x += 0.25 * frame;
+	texcoord.x += (1/num_frames * frame);
+	texcoord.y += (1/num_states);
 	vec3 pos = projection * transform * vec3(in_position.xy, 1.0);
 	gl_Position = vec4(pos.xy, in_position.z, 1.0);
 }

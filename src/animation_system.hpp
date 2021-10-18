@@ -11,7 +11,7 @@
 // TODO: change number of frames for an animation to vary based on the asset
 
 static constexpr int num_frames = 4;
-static constexpr int base_animation_speed = 300;
+static constexpr int base_animation_speed = 150;
 
 class AnimationSystem {
 
