@@ -68,7 +68,7 @@ int main()
 		ai.step(elapsed_ms);
 		physics.step(elapsed_ms, window_width_px, window_height_px);
 		world.handle_collisions();
-		/*animation.update_animations(elapsed_ms);*/
+		animation.update_animations(elapsed_ms);
 		renderer.draw();
 	}
 

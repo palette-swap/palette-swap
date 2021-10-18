@@ -8,8 +8,10 @@
 
 // Total number of frames in a spritesheet. Currently used for some test spritesheets.
 // Number of actual frames can be adapted to vary from asset to asset
+// TODO: change number of frames for an animation to vary based on the asset
+
 static constexpr int num_frames = 4;
-static constexpr float animation_time = 300;
+static constexpr int base_animation_speed = 300;
 
 class AnimationSystem {
 

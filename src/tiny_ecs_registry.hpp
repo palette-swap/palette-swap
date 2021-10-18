@@ -16,7 +16,7 @@ public:
 	ComponentContainer<DebugComponent> debug_components;
 
 	// Rendering
-	ComponentContainer<Animation> animation_frame;
+	ComponentContainer<Animation> animations;
 	ComponentContainer<RenderRequest> render_requests;
 	ComponentContainer<vec3> colors;
 
@@ -51,7 +51,7 @@ private:
 		&debug_components,
 		&render_requests,
 		&colors,
-		&animation_frame,
+		&animations,
 		&rooms,
 		&map_positions,
 		&enemy_states,

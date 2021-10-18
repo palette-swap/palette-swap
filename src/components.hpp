@@ -94,11 +94,16 @@ struct ResolvedProjectile {
 // Struct for denoting the frame that the rendering system should be rendering 
 // to the screen for a spritesheet
 struct Animation {
-	uint8_t frame = 0;
-	uint8_t state = 0;
+	int frame = 0;
+	int state = 0;
+	// Adjusts animation rate to be faster or slower than default
+	// ie. faster things should change more frames. slower things should change less frames
+	float speed_adjustment = 1;
+	float elapsed_time = 0;
 };
 
 // Test Texture Buffer element for enemies
+// TODO: change to animated vertices after bringing player into this 3D element group
 struct EnemyVertex {
 	vec3 position;
 	vec2 texcoord;

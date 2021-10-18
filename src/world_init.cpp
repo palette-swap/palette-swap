@@ -48,6 +48,9 @@ Entity create_enemy(uvec2 position)
 								   { TEXTURE_ASSET_ID::SLIME, EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY });
 	registry.colors.insert(entity, { 1, 1, 1 });
 
+	// TODO: Combine with render_requests above, so animation system handles render requests as a middleman
+	registry.animations.emplace(entity);
+
 	registry.enemy_states.emplace(entity);
 	registry.enemy_nest_positions.emplace(entity, position);
 

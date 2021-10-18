@@ -43,10 +43,6 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 	if (render_request.used_geometry == GEOMETRY_BUFFER_ID::ROOM) {
 		vbo_ibo_offset = registry.rooms.get(entity).type;
 	}
-	// Test for rendering slime offset
-	if (render_request.used_texture == TEXTURE_ASSET_ID::SLIME) {
-		vbo_ibo_offset = 0.8;
-	}
 
 	const GLuint vbo = vertex_buffers.at((int)render_request.used_geometry + vbo_ibo_offset);
 	const GLuint ibo = index_buffers.at((int)render_request.used_geometry + vbo_ibo_offset);
@@ -106,6 +102,12 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 
 		assert(registry.render_requests.has(entity));
 		GLuint texture_id = texture_gl_handles.at((GLuint)registry.render_requests.get(entity).used_texture);
+
+		// Updates frame for entity
+		GLint in_frame_loc = glGetAttribLocation(program, "frame");
+		assert(registry.animations.has(entity));
+		Animation& animation = registry.animations.get(entity);
+		glUniform1i(in_frame_loc, animation.frame);
 
 		glBindTexture(GL_TEXTURE_2D, texture_id);
 		gl_has_errors();

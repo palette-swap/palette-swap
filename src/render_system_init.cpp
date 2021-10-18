@@ -208,6 +208,8 @@ void RenderSystem::initialize_gl_geometry_buffers()
 	//////////////////////////
 	// Initialize sprite
 	// The position corresponds to the center of the texture.
+	// TODO keep sprites that have not been adjusted here for now
+	// Eventually consolidate into a single animatedSpriteVertex
 	std::vector<TexturedVertex> textured_vertices(4);
 	textured_vertices[0].position = { -1.f / 2, +1.f / 2, 0.f };
 	textured_vertices[1].position = { +1.f / 2, +1.f / 2, 0.f };
@@ -223,7 +225,7 @@ void RenderSystem::initialize_gl_geometry_buffers()
 	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::SPRITE, textured_vertices, textured_indices);
 
 	//////////////////////////
-	// TODO: Consolidate all 
+	// TODO: Consolidate all animated sprites (quads) into a single type
 	// Initialize ENEMY sprites
 	// The position corresponds to the center of the texture.
 	std::vector<EnemyVertex> enemy_vertices(4);

@@ -4,12 +4,15 @@ void AnimationSystem::init() {}
 
 void AnimationSystem::update_animations(float elapsed_ms)
 {
-	//auto& animations = registry.animation_frame;
-	//for (uint i = 0; i < animations.size(); i++) {
-	//	Animation& animation = animations.components[i];
-	//	Entity entity = velocity_registry.entities[i];
-	//	WorldPosition& position = registry.world_positions.get(entity);
-	//	float step_seconds = 1.0f * (elapsed_ms / 1000.f);
-	//	position.position += velocity.get_velocity() * step_seconds;
-	//}
+	auto& animations = registry.animations;
+	for (uint i = 0; i < animations.size(); i++) {
+		Animation& animation = animations.components[i];
+
+		animation.elapsed_time += elapsed_ms;
+		if (animation.elapsed_time >= base_animation_speed/animation.speed_adjustment) {
+			animation.elapsed_time = 0;
+			animation.frame = ((animation.frame) + 1) % num_frames;
+		}
+		
+	}
 }

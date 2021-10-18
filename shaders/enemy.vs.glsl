@@ -13,12 +13,14 @@ uniform mat3 projection;
 
 // Value used for sprite size, used for calculating spritesheet offset
 uniform float sprite_size = 32;
+// Denotes current frame_state (frame rendered in animation as well as entity state)
 uniform int frame;
 uniform int state;
 
 void main()
 {
 	texcoord = in_texcoord;
+	texcoord.x += 0.25 * frame;
 	vec3 pos = projection * transform * vec3(in_position.xy, 1.0);
 	gl_Position = vec4(pos.xy, in_position.z, 1.0);
 }
