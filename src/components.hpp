@@ -3,6 +3,7 @@
 #include "common.hpp"
 
 #include <array>
+#include <map>
 #include <unordered_map>
 
 #include "../ext/stb_image/stb_image.h"
@@ -251,9 +252,16 @@ enum class DamageType {
 	Count = Magical + 1,
 };
 
+enum class TargetingType {
+	Adjacent = 0,
+	Projectile = 1,
+	Count = Projectile + 1,
+};
+
 template <typename T> using DamageTypeList = std::array<T, static_cast<size_t>(DamageType::Count)>;
 
 struct Attack {
+	std::string name = "";
 	// Each time an attack is made, a random number is chosen uniformly from [to_hit_min, to_hit_max]
 	// This is added to the attack total
 	int to_hit_min = 1;
@@ -266,6 +274,7 @@ struct Attack {
 
 	// This is used when calculating damage to work out if any of the target's damage_modifiers should apply
 	DamageType damage_type = DamageType::Physical;
+	TargetingType targeting_type = TargetingType::Projectile;
 };
 
 struct Stats {
@@ -299,29 +308,34 @@ struct Stats {
 };
 
 enum class Slot {
-	PrimaryHand,
-	Body,
-	Head,
-	Neck,
-	Hands,
-	Feet,
-	Count,
+	PrimaryHand = 0,
+	Body = PrimaryHand + 1,
+	Head = Body + 1,
+	Neck = Head + 1,
+	Hands = Neck + 1,
+	Feet = Hands + 1,
+	Count = Feet + 1,
 };
 
 template <typename T> using SlotList = std::array<T, static_cast<size_t>(Slot::Count)>;
 
 struct Inventory {
-	std::vector<Entity> inventory;
+	std::map<std::string, Entity> inventory;
 	SlotList<Entity> equipped = { Entity::undefined() };
 };
 
 struct Item {
+	std::string name = "";
 	float weight = 0.f;
 	int value = 0;
 	SlotList<bool> allowed_slots = { false };
 };
 
 struct Weapon {
+	Weapon(std::vector<Attack> given_attacks)
+		: given_attacks(given_attacks)
+	{
+	}
 	// TODO: Potentially replace with intelligent direct/indirect container
 	std::vector<Attack> given_attacks;
 };
