@@ -86,21 +86,18 @@ void AISystem::switch_enemy_state(const Entity& enemy_entity, ENEMY_STATE_ID ene
 		// it here in AI)
 		animation.frame = 0;
 		animation.state = 0;
-		enemy_current_color = { 1, 1, 1 };
 		break;
 
 	case ENEMY_STATE_ID::ACTIVE:
 		enemy_current_state = ENEMY_STATE_ID::ACTIVE;
 		animation.frame = 0;
 		animation.state = 1;
-		enemy_current_color = { 3, 1, 1 };
 		break;
 
 	case ENEMY_STATE_ID::FLINCHED:
 		enemy_current_state = ENEMY_STATE_ID::FLINCHED;
 		animation.frame = 0;
 		animation.state = 2;
-		enemy_current_color = { 1, 1, 1 };
 		break;
 
 	default:
