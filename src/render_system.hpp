@@ -33,8 +33,6 @@ class RenderSystem {
 	const std::array<std::string, texture_count> texture_paths = {
 			textures_path("Paladin_A01.png"),
 			textures_path("./Slime/Slime Spritesheet.png"),
-			textures_path("Slime alert.png"),
-			textures_path("Slime flinched.png"),
 			textures_path("Arrow.png"),
 			textures_path("tile_set.png"), };
 

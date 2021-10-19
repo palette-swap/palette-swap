@@ -136,9 +136,7 @@ struct EnemyVertex {
 enum class TEXTURE_ASSET_ID : uint8_t {
 	PALADIN = 0,
 	SLIME = PALADIN + 1,
-	SLIME_ALERT = SLIME + 1,
-	SLIME_FLINCHED = SLIME_ALERT + 1,
-	ARROW = SLIME_FLINCHED + 1,
+	ARROW = SLIME + 1,
 	TILE_SET = ARROW + 1,
 	TEXTURE_COUNT = TILE_SET + 1
 };
@@ -147,8 +145,6 @@ const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 // Define the scaling factors needed for each textures
 // Note: This needs to stay the same order as TEXTURE_ASSET_ID and texture_paths
 static constexpr std::array<vec2, texture_count> scaling_factors = {
-	vec2(MapUtility::tile_size, MapUtility::tile_size),
-	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size * 0.5, MapUtility::tile_size * 0.5),
