@@ -496,6 +496,30 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 			// TODO: Add better arrow physics potentially?
 			// arrow_velocity.velocity
 			//	= { sin(arrow_motion.angle) * projectile_speed, -cos(arrow_motion.angle) * projectile_speed };
+		} else if (attack.targeting_type == TargetingType::Adjacent && turns->get_active_team() == player) {
+			// Get screen position of mouse
+			dvec2 mouse_screen_pos;
+			glfwGetCursorPos(window, &mouse_screen_pos.x, &mouse_screen_pos.y);
+
+			// Convert to world pos
+			vec2 mouse_world_pos = vec2(mouse_screen_pos) * renderer->screen_scale + renderer->get_top_left();
+
+			// Get map_positions to compare
+			uvec2 mouse_map_pos = MapUtility::screen_position_to_map_position(mouse_world_pos);
+			uvec2 player_pos = registry.map_positions.get(player).position;
+			ivec2 distance = mouse_map_pos - player_pos;
+			if (distance.x > 1 || distance.y > 1
+				|| !turns->execute_team_action(player)) {
+				return;
+			}
+			for (const auto& target : registry.stats.entities) {
+				if (registry.map_positions.get(target).position == mouse_map_pos) {
+					Stats& player_stats = registry.stats.get(player);
+					Stats& enemy_stats = registry.stats.get(target);
+					combat->do_attack(player_stats, attack, enemy_stats);
+				}
+			}
+			turns->complete_team_action(player);
 		}
 	}
 }
