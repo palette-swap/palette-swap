@@ -319,25 +319,25 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 {
 	if (turns && action != GLFW_RELEASE) {
 
-		if (key == GLFW_KEY_RIGHT) {
+		if (key == GLFW_KEY_D) {
 			move_player(Direction::Right);
 		}
 
-		if (key == GLFW_KEY_LEFT) {
+		if (key == GLFW_KEY_A) {
 			move_player(Direction::Left);
 		}
 
-		if (key == GLFW_KEY_UP) {
+		if (key == GLFW_KEY_W) {
 			move_player(Direction::Up);
 		}
 
-		if (key == GLFW_KEY_DOWN) {
+		if (key == GLFW_KEY_S) {
 			move_player(Direction::Down);
 		}
 	}
 
 	// Resetting game
-	if (action == GLFW_RELEASE && key == GLFW_KEY_R) {
+	if (action == GLFW_RELEASE && (mod & GLFW_MOD_ALT) != 0 && key == GLFW_KEY_R) {
 		// int w, h;
 		// glfwGetWindowSize(window, &w, &h);
 
@@ -345,7 +345,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 	}
 
 	// Debugging
-	if (key == GLFW_KEY_D) {
+	if (key == GLFW_KEY_D && (mod & GLFW_MOD_ALT) != 0) {
 		debugging.in_debug_mode = action != GLFW_RELEASE;
 	}
 
