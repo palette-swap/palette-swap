@@ -363,18 +363,7 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 {
 	if (!player_arrow_fired) {
 
-		int w, h;
-		glfwGetFramebufferSize(window, &w, &h);
-		vec2 position = MapUtility::map_position_to_screen_position(registry.map_positions.get(player).position);
-
-		float left = position.x - w * renderer->screen_scale / 2.f;
-		float top = position.y - h * renderer->screen_scale / 2.f;
-
-		vec2 mouse_screen_position = mouse_position * renderer->screen_scale + vec2(left, top);
-
-		// The mouse_position has to be adjusted to screen position (screen position might be a bad naming since it's
-		// actually world position). The above code I borrowed from RenderSystem::create_projection_matrix(). In the
-		// future, we can wrap left/top/right/bottom/screen_scale into camera component, so you can easily access them.
+		vec2 mouse_world_position = mouse_position * renderer->screen_scale + renderer->get_top_left();
 
 		Velocity& arrow_velocity = registry.velocities.get(player_arrow);
 		WorldPosition& arrow_position = registry.world_positions.get(player_arrow);
@@ -383,7 +372,7 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 		vec2 player_screen_position = MapUtility::map_position_to_screen_position(player_map_position.position);
 
 		// Calculated Euclidean difference between player and arrow
-		vec2 eucl_diff = mouse_screen_position - player_screen_position;
+		vec2 eucl_diff = mouse_world_position - player_screen_position;
 
 		// Calculates arrow position based on position of mouse relative to player
 		vec2 new_arrow_position = normalize(eucl_diff) * 20.f + player_screen_position;
