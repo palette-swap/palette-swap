@@ -100,11 +100,17 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 		glActiveTexture(GL_TEXTURE0);
 		gl_has_errors();
 
-		// Updates frame for entity
-		GLint in_frame_loc = glGetUniformLocation(program, "frame");
-		assert(registry.animations.has(entity));
 		Animation& animation = registry.animations.get(entity);
-		glUniform1i(in_frame_loc, animation.frame);
+		assert(registry.animations.has(entity));
+
+		// Updates frame for entity
+		GLint frame_loc = glGetUniformLocation(program, "frame");
+		glUniform1i(frame_loc, animation.frame);	
+		gl_has_errors();
+
+		// Updates frame for entity
+		GLint state_loc = glGetUniformLocation(program, "state");
+		glUniform1i(state_loc, animation.state);
 		gl_has_errors();
 
 		assert(registry.render_requests.has(entity));

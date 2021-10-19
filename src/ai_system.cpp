@@ -74,26 +74,32 @@ void AISystem::step(float /*elapsed_ms*/)
 void AISystem::switch_enemy_state(const Entity& enemy_entity, ENEMY_STATE_ID enemy_state)
 {
 	ENEMY_STATE_ID& enemy_current_state = registry.enemy_states.get(enemy_entity).current_state;
-	TEXTURE_ASSET_ID& enemy_current_textrue = registry.render_requests.get(enemy_entity).used_texture;
+	//TEXTURE_ASSET_ID& enemy_current_textrue = registry.render_requests.get(enemy_entity).used_texture;
 	vec3& enemy_current_color = registry.colors.get(enemy_entity);
+	Animation& animation = registry.animations.get(enemy_entity);
 
 	switch (enemy_state) {
 
 	case ENEMY_STATE_ID::Idle:
 		enemy_current_state = ENEMY_STATE_ID::Idle;
-		enemy_current_textrue = TEXTURE_ASSET_ID::SLIME;
+		// TODO: Change animation setting to call to animation system to change state (instead of changing
+		// it here in AI)
+		animation.frame = 0;
+		animation.state = 0;
 		enemy_current_color = { 1, 1, 1 };
 		break;
 
 	case ENEMY_STATE_ID::ACTIVE:
 		enemy_current_state = ENEMY_STATE_ID::ACTIVE;
-		enemy_current_textrue = TEXTURE_ASSET_ID::SLIME_ALERT;
+		animation.frame = 0;
+		animation.state = 1;
 		enemy_current_color = { 3, 1, 1 };
 		break;
 
 	case ENEMY_STATE_ID::FLINCHED:
 		enemy_current_state = ENEMY_STATE_ID::FLINCHED;
-		enemy_current_textrue = TEXTURE_ASSET_ID::SLIME_FLINCHED;
+		animation.frame = 0;
+		animation.state = 2;
 		enemy_current_color = { 1, 1, 1 };
 		break;
 
