@@ -20,8 +20,9 @@ Entity create_player(uvec2 pos)
 }
 
 // Repurposed into general create_enemy
-// TODO: add additional inputs to specify enemy type, current default is slug
-Entity create_enemy(uvec2 position)
+// TODO: replace input asset ID with general type, allowing system to grab
+// stats as well as behaviour for the enemy type
+Entity create_enemy(uvec2 position, TEXTURE_ASSET_ID enemy_type)
 {
 	auto entity = Entity();
 
@@ -43,9 +44,9 @@ Entity create_enemy(uvec2 position)
 	// Indicates enemy is hittable by objects
 	registry.hittables.emplace(entity);
 
-	// TODO: Switch out basic enemy type based on input (Currently Defaulted to Slime)
+	// TODO: Switch out asset enum with call to animation system to request a specific enemy type)
 	registry.render_requests.insert(entity,
-								   { TEXTURE_ASSET_ID::SLIME, EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY });
+								   { enemy_type, EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY });
 	registry.colors.insert(entity, { 1, 1, 1 });
 
 	// TODO: Combine with render_requests above, so animation system handles render requests as a middleman

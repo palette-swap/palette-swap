@@ -70,7 +70,7 @@ private:
 
 	// Game configuration
 	bool player_arrow_fired = false;
-	// TODO Track why my projectile speed had slowed throughout
+	// TODO: Track why my projectile speed had slowed throughout
 	const size_t projectile_speed = 500;
 
 	// Game state

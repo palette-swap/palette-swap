@@ -28,13 +28,15 @@ class RenderSystem {
 	};
 	
 	// TODO: change all asset paths to reference corresponding folder instead
-	// 	   For each corresponding enemy/player type
+	// for each corresponding enemy/player type, such that it grabs general folder path
+	// and then uses path to grab sprites, stats, and behaviour
 	// Make sure these paths remain in sync with the associated enumerators.
 	const std::array<std::string, texture_count> texture_paths = {
 			textures_path("Paladin_A01.png"),
 			textures_path("./Slime/Slime Spritesheet.png"),
 			textures_path("./Living Armor/Living Armor Spritesheet.png"),
 			textures_path("./Wendigo/Wendigo Spritesheet.png"),
+			textures_path("./Raven/Raven Spritesheet.png"),
 			textures_path("Arrow.png"),
 			textures_path("tile_set.png"), };
 
