@@ -74,8 +74,6 @@ void AISystem::step(float /*elapsed_ms*/)
 void AISystem::switch_enemy_state(const Entity& enemy_entity, ENEMY_STATE_ID enemy_state)
 {
 	ENEMY_STATE_ID& enemy_current_state = registry.enemy_states.get(enemy_entity).current_state;
-	//TEXTURE_ASSET_ID& enemy_current_textrue = registry.render_requests.get(enemy_entity).used_texture;
-	vec3& enemy_current_color = registry.colors.get(enemy_entity);
 	Animation& animation = registry.animations.get(enemy_entity);
 
 	switch (enemy_state) {
