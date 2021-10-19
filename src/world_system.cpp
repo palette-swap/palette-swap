@@ -235,6 +235,10 @@ void WorldSystem::restart_game()
 	// Create a new Player instance and shift player onto a tile
 	player = create_player(player_starting_point);
 	turns->add_team_to_queue(player);
+	// Reset current weapon & attack
+	Inventory& inventory = registry.inventories.get(player);
+	current_weapon = inventory.equipped[static_cast<uint8>(Slot::PrimaryHand)];
+	current_attack = 0;
 
 	// create camera instance
 	camera = create_camera(
@@ -273,7 +277,8 @@ void WorldSystem::handle_collisions()
 				if (registry.stats.has(entity_other)) {
 					Stats& player_stats = registry.stats.get(player);
 					Stats& enemy_stats = registry.stats.get(entity_other);
-					combat->do_attack(player_stats, player_stats.base_attack, enemy_stats);
+					combat->do_attack(
+						player_stats, registry.weapons.get(current_weapon).given_attacks[current_attack], enemy_stats);
 				}
 
 				// Stops projectile motion, adds projectile to list of resolved projectiles
@@ -421,7 +426,9 @@ void WorldSystem::move_player(Direction direction)
 void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 {
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-		if (!player_arrow_fired && turns->execute_team_action(player)) {
+		Attack& attack = registry.weapons.get(current_weapon).given_attacks[current_attack];
+		if (!player_arrow_fired && attack.targeting_type == TargetingType::Projectile
+			&& turns->execute_team_action(player)) {
 			player_arrow_fired = true;
 			// Arrow becomes a projectile the moment it leaves the player, not while it's direction is being selected
 			ActiveProjectile& arrow_projectile = registry.active_projectiles.emplace(player_arrow);
