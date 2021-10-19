@@ -334,6 +334,29 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		if (key == GLFW_KEY_S) {
 			move_player(Direction::Down);
 		}
+
+		// Change weapon
+		if (key == GLFW_KEY_E) {
+			equip_next_weapon();
+		}
+
+		// Change attack
+		// TODO: Generalize for many attacks, check out of bounds
+		// Key Codes for 1-9
+		if (49 <= key && key <= 57) {
+			const std::vector<Attack>& attacks = registry.weapons.get(current_weapon).given_attacks;
+			if (key - 49 < attacks.size()) {
+				current_attack = key - 49;
+				const Attack& attack = attacks[current_attack];
+				printf("%s Attack: %i-%i attack, %i-%i dmg, %s \n",
+					   attack.name.c_str(),
+					   attack.to_hit_min,
+					   attack.to_hit_max,
+					   attack.damage_min,
+					   attack.damage_max,
+					   attack.targeting_type == TargetingType::Projectile ? "projectile" : "adjacent");
+			}
+		}
 	}
 
 	// Resetting game
@@ -419,6 +442,36 @@ void WorldSystem::move_player(Direction direction)
 	}
 	map_pos.position = new_pos;
 	turns->complete_team_action(player);
+}
+
+void WorldSystem::equip_next_weapon()
+{
+	if (turns->get_active_team() != player) {
+		return;
+	}
+	Inventory& inventory = registry.inventories.get(player);
+	Entity& curr = inventory.equipped[static_cast<uint8>(Slot::PrimaryHand)];
+	auto next = inventory.inventory.upper_bound(registry.items.get(curr).name);
+	if (next == inventory.inventory.end()) {
+		next = inventory.inventory.begin();
+	}
+	while (next->second != curr) {
+		if (registry.items.get(next->second).allowed_slots[static_cast<uint8>(Slot::PrimaryHand)]) {
+			break;
+		}
+		if (next == inventory.inventory.end()) {
+			next = inventory.inventory.begin();
+		} else {
+			next++;
+		}
+	};
+	if (curr != next->second && turns->execute_team_action(player)) {
+		curr = next->second;
+		current_weapon = curr;
+		current_attack = 0;
+		printf("Switched weapon to %s\n", registry.items.get(curr).name.c_str());
+		turns->complete_team_action(player);
+	}
 }
 
 // Fires arrow at a preset speed if it has not been fired already
