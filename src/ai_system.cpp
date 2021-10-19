@@ -76,6 +76,7 @@ void AISystem::switch_enemy_state(const Entity& enemy_entity, ENEMY_STATE_ID ene
 	ENEMY_STATE_ID& enemy_current_state = registry.enemy_states.get(enemy_entity).current_state;
 	Animation& animation = registry.animations.get(enemy_entity);
 
+	// Keep 3 primary states in line with the spritesheet format
 	switch (enemy_state) {
 
 	case ENEMY_STATE_ID::Idle:
@@ -83,19 +84,19 @@ void AISystem::switch_enemy_state(const Entity& enemy_entity, ENEMY_STATE_ID ene
 		// TODO: Change animation setting to call to animation system to change state (instead of changing
 		// it here in AI)
 		animation.frame = 0;
-		animation.state = 0;
+		animation.state = (int)enemy_state;
 		break;
 
 	case ENEMY_STATE_ID::ACTIVE:
 		enemy_current_state = ENEMY_STATE_ID::ACTIVE;
 		animation.frame = 0;
-		animation.state = 1;
+		animation.state = (int)enemy_state;
 		break;
 
 	case ENEMY_STATE_ID::FLINCHED:
 		enemy_current_state = ENEMY_STATE_ID::FLINCHED;
 		animation.frame = 0;
-		animation.state = 2;
+		animation.state = (int)enemy_state;
 		break;
 
 	default:
