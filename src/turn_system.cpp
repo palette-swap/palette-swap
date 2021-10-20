@@ -47,7 +47,7 @@ bool TurnSystem::skip_team_action(Entity team)
 	return complete_team_action(team);
 }
 
-TurnSystem::ColorState TurnSystem::get_active_color() { return activeColor; }
+ColorState TurnSystem::get_active_color() { return activeColor; }
 
 bool TurnSystem::set_active_color(ColorState color) { 
 	activeColor = color;

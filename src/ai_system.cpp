@@ -21,9 +21,9 @@ void AISystem::step(float /*elapsed_ms*/)
 	for (const Entity& enemy_entity : registry.enemy_states.entities) {
 		
 		EnemyState enemy_state = registry.enemy_states.get(enemy_entity);
-		uint8_t active_world_color = (uint8_t)turns->get_active_color();
+		ColorState active_world_color = turns->get_active_color();
 
-		if ((active_world_color & enemy_state.team) > 0) {
+		if (((uint8_t)active_world_color & (uint8_t)enemy_state.team) > 0) {
 			switch (enemy_state.current_state) {
 
 			case ENEMY_STATE_ID::Idle:

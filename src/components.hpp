@@ -221,14 +221,17 @@ struct TileMapVertex {
 	vec2 texcoord = vec3(0);
 };
 
+enum class ColorState { None = 0, Red = 1, Blue = 2, All = Blue + 1 };
+
 // Simple 3-state state machine for enemy AI: IDLE, ACTIVE, FLINCHED.
 enum class ENEMY_STATE_ID { Idle = 0, ACTIVE = Idle + 1, FLINCHED = ACTIVE + 1 };
 
 // Structure to store enemy state.
 struct EnemyState {
-	uint8_t team = 0b01; // 00 == None, 01 == Red, 10 == Blue, 11 == Both
+	//uint8_t team = 0b01; // 00 == None, 01 == Red, 10 == Blue, 11 == Both
+	ColorState team = ColorState::Red;
 	ENEMY_STATE_ID current_state = ENEMY_STATE_ID::Idle;
-	EnemyState(uint8_t team) { this->team = team;}
+	EnemyState(ColorState team) { this->team = team; }
 };
 
 // Structure to store enemy nest position.

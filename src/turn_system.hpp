@@ -29,8 +29,6 @@ public:
 	// Instantly start and end the turn of the given team if it's active
 	bool skip_team_action(Entity team);
 
-	enum class ColorState { None = 0, Red = 1, Blue = 2, All = Blue + 1 };
-
 	// Returns currently active color
 	ColorState get_active_color();
 	

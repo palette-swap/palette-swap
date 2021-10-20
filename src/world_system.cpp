@@ -231,7 +231,7 @@ void WorldSystem::restart_game()
 	// Also requires naming scheme for randomly generated enemies, for later reference
 	create_enemy(uvec2(55, 56));
 	create_enemy(uvec2(58, 51));
-	create_enemy(uvec2(58, 52), false, true);
+	create_enemy(uvec2(58, 52), ColorState::Blue);
 }
 
 // Compute collisions between entities
@@ -397,26 +397,26 @@ void WorldSystem::move_player(Direction direction)
 void WorldSystem::change_color() 
 { 
 	switch (turns->get_active_color()) {
-	case TurnSystem::ColorState::Red:
-		turns->set_active_color(TurnSystem::ColorState::Blue);
+	case ColorState::Red:
+		turns->set_active_color(ColorState::Blue);
 		break;
-	case TurnSystem::ColorState::Blue:
-		turns->set_active_color(TurnSystem::ColorState::Red);
+	case ColorState::Blue:
+		turns->set_active_color(ColorState::Red);
 		break;
 	default:
-		turns->set_active_color(TurnSystem::ColorState::Red);
+		turns->set_active_color(ColorState::Red);
 		break;
 	}
 
-	uint8_t active_color = (uint8_t)turns->get_active_color();
-	for (long long i = registry.enemy_states.entities.size() - 1; i >= 0; i--) { 
-		const Entity& enemy_entity = registry.enemy_states.entities[i];
-		if ((registry.enemy_states.get(enemy_entity).team & active_color) == 0) {
-			registry.render_requests.get(enemy_entity).visible = false;
-		} else {
-			registry.render_requests.get(enemy_entity).visible = true;
-		}
-	}
+	//ColorState active_color = turns->get_active_color();
+	//for (long long i = registry.enemy_states.entities.size() - 1; i >= 0; i--) { 
+	//	const Entity& enemy_entity = registry.enemy_states.entities[i];
+	//	if (((uint8_t)registry.enemy_states.get(enemy_entity).team & (uint8_t)active_color) == 0) {
+	//		registry.render_requests.get(enemy_entity).visible = false;
+	//	} else {
+	//		registry.render_requests.get(enemy_entity).visible = true;
+	//	}
+	//}
 }
 
 // Fires arrow at a preset speed if it has not been fired already
