@@ -114,7 +114,7 @@ void MapGeneratorSystem::load_rooms_from_csv()
 			while (std::getline(ss, room_id, ',')) {
 				room_mapping.at(row).at(col) = std::stoi(room_id);
 				col++;
-				if (col == 10) {
+				if (col == room_size) {
 					row++;
 					col = 0;
 				}
