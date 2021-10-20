@@ -243,8 +243,9 @@ void WorldSystem::restart_game()
 	// Create a new player arrow instance
 	vec2 player_location = MapUtility::map_position_to_screen_position(player_starting_point);
 	player_arrow = create_arrow(player_location);
-	// Creates a single enemy instance, (TODO: needs to be updated with position based on grid)
-	// Also requires naming scheme for randomly generated enemies, for later reference
+	// Creates all enemy instance
+	// TODO: Load them throughout the level dynamically/from preset file
+	// TODO: Change input from texture selection to generalized enemy type selection/index
 	Entity armor1 = create_enemy(uvec2(64, 56), TEXTURE_ASSET_ID::WENDIGO);
 	registry.colors.get(armor1) = { 2, 1, 1 };
 	Entity wen1 = create_enemy(uvec2(65, 56), TEXTURE_ASSET_ID::WENDIGO);
