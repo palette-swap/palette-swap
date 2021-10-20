@@ -37,6 +37,7 @@ class RenderSystem {
 			textures_path("./Living Armor/Living Armor Spritesheet.png"),
 			textures_path("./Treeant/Treeant Spritesheet.png"),
 			textures_path("./Raven/Raven Spritesheet.png"),
+			textures_path("./Wraith/Wraith Spritesheet.png"),
 			textures_path("Arrow.png"),
 			textures_path("tile_set.png"), };
 

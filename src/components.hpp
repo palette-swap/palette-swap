@@ -139,7 +139,8 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 	ARMOR = SLIME + 1,
 	TREEANT= ARMOR + 1,
 	RAVEN = TREEANT + 1,
-	ARROW = RAVEN + 1,
+	WRAITH = RAVEN + 1,
+	ARROW = WRAITH + 1,
 	TILE_SET = ARROW + 1,
 	TEXTURE_COUNT = TILE_SET + 1
 };
@@ -148,6 +149,7 @@ const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 // Define the scaling factors needed for each textures
 // Note: This needs to stay the same order as TEXTURE_ASSET_ID and texture_paths
 static constexpr std::array<vec2, texture_count> scaling_factors = {
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
