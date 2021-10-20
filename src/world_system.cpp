@@ -245,12 +245,16 @@ void WorldSystem::restart_game()
 	player_arrow = create_arrow(player_location);
 	// Creates a single enemy instance, (TODO: needs to be updated with position based on grid)
 	// Also requires naming scheme for randomly generated enemies, for later reference
-	Entity armor1 = create_enemy(uvec2(64, 56), TEXTURE_ASSET_ID::ARMOR);
+	Entity armor1 = create_enemy(uvec2(64, 56), TEXTURE_ASSET_ID::WENDIGO);
 	registry.colors.get(armor1) = { 2, 1, 1 };
+	Entity wen1 = create_enemy(uvec2(65, 56), TEXTURE_ASSET_ID::WENDIGO);
+	registry.colors.get(wen1) = { 1, 1, 1 };
+	Entity wen2 = create_enemy(uvec2(66, 56), TEXTURE_ASSET_ID::WENDIGO);
+	registry.colors.get(wen2) = { 1, 1, 1 };
 	Entity armor2 = create_enemy(uvec2(64, 53), TEXTURE_ASSET_ID::ARMOR);
-	registry.colors.get(armor2) = { 2, 1, 1 };
+	registry.colors.get(armor2) = { 1, 1, 2 };
 	Entity raven = create_enemy(uvec2(40, 54), TEXTURE_ASSET_ID::RAVEN);
-	registry.colors.get(raven) = { 1, 1, 2 };
+	registry.colors.get(raven) = { 1, 1, 1 };
 
 }
 
