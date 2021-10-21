@@ -16,17 +16,26 @@ public:
 	ComponentContainer<ScreenState> screen_states;
 	ComponentContainer<DebugComponent> debug_components;
 	ComponentContainer<vec3> colors;
+
+	// Map Generator
 	ComponentContainer<Room> rooms;
 	ComponentContainer<MapPosition> map_positions;
 	ComponentContainer<WorldPosition> world_positions;
 	ComponentContainer<Velocity> velocities;
+
+	// AI
 	ComponentContainer<EnemyState> enemy_states;
 	ComponentContainer<RedDimension> red_entities;
 	ComponentContainer<BlueDimension> blue_entities;
 	ComponentContainer<EnemyNestPosition> enemy_nest_positions;
+
+	// Physics
 	ComponentContainer<Hittable> hittables;
 	ComponentContainer<ActiveProjectile> active_projectiles;
 	ComponentContainer<ResolvedProjectile> resolved_projectiles;
+
+	// Combat
+	ComponentContainer<Stats> stats;
 
 
 private:

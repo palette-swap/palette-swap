@@ -6,12 +6,15 @@
 #include "common.hpp"
 #include "tiny_ecs_registry.hpp"
 
+#include "combat_system.hpp"
 #include "map_generator_system.hpp"
 #include "turn_system.hpp"
 
 class AISystem {
 public:
-	AISystem(std::shared_ptr<MapGeneratorSystem> map_generator, std::shared_ptr<TurnSystem> turns);
+	AISystem(std::shared_ptr<CombatSystem> combat,
+			 std::shared_ptr<MapGeneratorSystem> map_generator,
+			 std::shared_ptr<TurnSystem> turns);
 
 	void step(float elapsed_ms);
 
@@ -45,6 +48,9 @@ private:
 
 	// An entity moves to a targeted map position.
 	bool move(const Entity& entity, const uvec2& map_pos);
+
+	// Shared resource: Combat system.
+	std::shared_ptr<CombatSystem> combat;
 
 	// Shared resource: Map system.
 	std::shared_ptr<MapGeneratorSystem> map_generator;

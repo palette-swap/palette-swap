@@ -223,6 +223,10 @@ struct TileMapVertex {
 
 enum class ColorState { None = 0, Red = 1, Blue = 2, All = Blue + 1 };
 
+//---------------------------------------------------------------------------
+//-------------------------           AI            -------------------------
+//---------------------------------------------------------------------------
+
 // Simple 3-state state machine for enemy AI: IDLE, ACTIVE, FLINCHED.
 enum class ENEMY_STATE_ID { Idle = 0, ACTIVE = Idle + 1, FLINCHED = ACTIVE + 1 };
 
@@ -246,4 +250,61 @@ struct EnemyNestPosition {
 	{
 		assert(position.x < MapUtility::map_size * MapUtility::room_size && position.y < MapUtility::map_size * MapUtility::room_size);
 	};
+};
+
+//---------------------------------------------------------------------------
+//-------------------------         COMBAT          -------------------------
+//---------------------------------------------------------------------------
+
+enum class DamageType {
+	Physical = 0,
+	Magical = Physical + 1,
+	Count = Magical + 1,
+};
+
+template <typename T> using DamageTypeList = std::array<T, static_cast<size_t>(DamageType::Count)>;
+
+struct Attack {
+	// Each time an attack is made, a random number is chosen uniformly from [to_hit_min, to_hit_max]
+	// This is added to the attack total
+	int to_hit_min = 1;
+	int to_hit_max = 20;
+
+	// Each time damage is calculated, a random number is chosen uniformly from [damage_min, damage_max]
+	// This is added to the damage total
+	int damage_min = 10;
+	int damage_max = 25;
+
+	// This is used when calculating damage to work out if any of the target's damage_modifiers should apply
+	DamageType damage_type = DamageType::Physical;
+};
+
+struct Stats {
+
+	// Health and its max
+	int health = 100;
+	int health_max = 100;
+
+	// Mana and its max
+	int mana = 100;
+	int mana_max = 100;
+
+	// Each time an attack is made, this flat amount is added to the attack total
+	int to_hit_bonus = 10;
+
+	// Each time damage is calculated, this flat amount is added to the damage total
+	int damage_bonus = 5;
+
+	// This number is compared to an attack total to see if it hits.
+	// It hits if attack_total >= evasion
+	int evasion = 15;
+
+	// The default attack associated with this entity
+	// TODO: Consider removing when multiple attacks are more readily supported
+	Attack base_attack;
+
+	// Each time damage is calculated, the modifier of the relevant type is added
+	// A positive modifier is a weakness, like a straw golem being weak to fire
+	// A negative modifeir is a resistance, like an iron golem being resistant to sword cuts
+	DamageTypeList<int> damage_modifiers = { 0 };
 };

@@ -59,7 +59,6 @@ bool TurnSystem::execute_team_action(Entity team)
 {
 	if (get_active_team() == team && queue_state == QueueState::Idle) {
 		queue_state = QueueState::Executing;
-
 		return true;
 	}
 	return false;
