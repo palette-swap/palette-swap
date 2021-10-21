@@ -30,7 +30,7 @@ void AISystem::step(float /*elapsed_ms*/)
 			continue;
 		}
     
-    EnemyState enemy_state = registry.enemy_states.entities[i];
+		EnemyState enemy_state = registry.enemy_states.components[i];
 		ColorState active_world_color = turns->get_active_color();
     
 		if (((uint8_t)active_world_color & (uint8_t)enemy_state.team) > 0) {
