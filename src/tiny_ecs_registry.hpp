@@ -21,6 +21,8 @@ public:
 	ComponentContainer<WorldPosition> world_positions;
 	ComponentContainer<Velocity> velocities;
 	ComponentContainer<EnemyState> enemy_states;
+	ComponentContainer<RedDimension> red_entities;
+	ComponentContainer<BlueDimension> blue_entities;
 	ComponentContainer<EnemyNestPosition> enemy_nest_positions;
 	ComponentContainer<Hittable> hittables;
 	ComponentContainer<ActiveProjectile> active_projectiles;
@@ -42,6 +44,8 @@ private:
 		&rooms,
 		&map_positions,
 		&enemy_states,
+		&red_entities,
+		&blue_entities,
 		&enemy_nest_positions,
 		&hittables,
 		&active_projectiles,
