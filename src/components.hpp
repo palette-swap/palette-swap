@@ -167,6 +167,8 @@ struct RenderRequest {
 	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
 	EFFECT_ASSET_ID used_effect = EFFECT_ASSET_ID::EFFECT_COUNT;
 	GEOMETRY_BUFFER_ID used_geometry = GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
+
+	bool visible = true;
 };
 
 // Represent four directions, that could have many uses, e.g. moving player
@@ -219,16 +221,25 @@ struct TileMapVertex {
 	vec2 texcoord = vec3(0);
 };
 
+enum class ColorState { None = 0, Red = 1, Blue = 2, All = Blue + 1 };
+
 //---------------------------------------------------------------------------
 //-------------------------           AI            -------------------------
 //---------------------------------------------------------------------------
 
-// Simple 3-state state machine for enemy AI: IDEL, ACTIVE, FLINCHED.
+// Simple 3-state state machine for enemy AI: IDLE, ACTIVE, FLINCHED.
 enum class ENEMY_STATE_ID { Idle = 0, ACTIVE = Idle + 1, FLINCHED = ACTIVE + 1 };
 
 // Structure to store enemy state.
 struct EnemyState {
+	ColorState team = ColorState::Red;
 	ENEMY_STATE_ID current_state = ENEMY_STATE_ID::Idle;
+	EnemyState(ColorState team) { this->team = team; }
+};
+
+struct RedDimension {
+};
+struct BlueDimension {
 };
 
 // Structure to store enemy nest position.

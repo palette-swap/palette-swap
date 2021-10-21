@@ -29,13 +29,22 @@ public:
 	// Instantly start and end the turn of the given team if it's active
 	bool skip_team_action(Entity team);
 
+	// Returns currently active color
+	ColorState get_active_color();
+	
+	// Sets active color
+	bool set_active_color(ColorState color);
+
 	enum class QueueState { Idle, Executing, Finished };
 
 private:
 	QueueState queue_state = QueueState::Idle;
 
 	std::deque<Entity> team_queue;
+	// Rotates the queue to the next unit and places current unit at the back of the queue.
 	bool cycle_queue();
+
+	ColorState activeColor = ColorState::Red; 
 };
 /*
 struct turn_flag {

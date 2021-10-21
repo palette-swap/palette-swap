@@ -29,42 +29,47 @@ void AISystem::step(float /*elapsed_ms*/)
 			registry.remove_all_components_of(enemy_entity);
 			continue;
 		}
+    
+		EnemyState enemy_state = registry.enemy_states.components[i];
+		ColorState active_world_color = turns->get_active_color();
+    
+		if (((uint8_t)active_world_color & (uint8_t)enemy_state.team) > 0) {
+			switch (enemy_state.current_state) {
 
-		switch (registry.enemy_states.get(enemy_entity).current_state) {
+			case ENEMY_STATE_ID::Idle:
+				if (is_player_spotted(enemy_entity, 3)) {
+					become_alert(enemy_entity);
+					switch_enemy_state(enemy_entity, ENEMY_STATE_ID::ACTIVE);
+				}
+				break;
 
-		case ENEMY_STATE_ID::Idle:
-			if (is_player_spotted(enemy_entity, 3)) {
-				become_alert(enemy_entity);
-				switch_enemy_state(enemy_entity, ENEMY_STATE_ID::ACTIVE);
-			}
-			break;
+			case ENEMY_STATE_ID::ACTIVE:
+				if (is_player_spotted(enemy_entity, 6)) {
+					if (is_player_reachable(enemy_entity, 1)) {
+						attack_player(enemy_entity);
+					} else {
+						approach_player(enemy_entity);
+					}
 
-		case ENEMY_STATE_ID::ACTIVE:
-			if (is_player_spotted(enemy_entity, 6)) {
-				if (is_player_reachable(enemy_entity, 1)) {
-					attack_player(enemy_entity);
+					if (is_afraid(enemy_entity)) {
+						switch_enemy_state(enemy_entity, ENEMY_STATE_ID::FLINCHED);
+					}
 				} else {
-					approach_player(enemy_entity);
+					switch_enemy_state(enemy_entity, ENEMY_STATE_ID::Idle);
 				}
+				break;
 
-				if (is_afraid(enemy_entity)) {
-					switch_enemy_state(enemy_entity, ENEMY_STATE_ID::FLINCHED);
+			case ENEMY_STATE_ID::FLINCHED:
+				if (is_at_nest(enemy_entity)) {
+					switch_enemy_state(enemy_entity, ENEMY_STATE_ID::Idle);
+				} else {
+					approach_nest(enemy_entity);
 				}
-			} else {
-				switch_enemy_state(enemy_entity, ENEMY_STATE_ID::Idle);
-			}
-			break;
+				break;
 
-		case ENEMY_STATE_ID::FLINCHED:
-			if (is_at_nest(enemy_entity)) {
-				switch_enemy_state(enemy_entity, ENEMY_STATE_ID::Idle);
-			} else {
-				approach_nest(enemy_entity);
+			default:
+				throw std::runtime_error("Invalid Enemy State");
 			}
-			break;
-
-		default:
-			throw std::runtime_error("Invalid Enemy State");
 		}
 	}
 

@@ -47,6 +47,14 @@ bool TurnSystem::skip_team_action(Entity team)
 	return complete_team_action(team);
 }
 
+ColorState TurnSystem::get_active_color() { return activeColor; }
+
+bool TurnSystem::set_active_color(ColorState color) { 
+	activeColor = color;
+	printf("Current color: %d\n", activeColor);
+	return true; 
+}
+
 bool TurnSystem::execute_team_action(Entity team)
 {
 	if (get_active_team() == team && queue_state == QueueState::Idle) {
