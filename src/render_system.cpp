@@ -258,13 +258,27 @@ mat3 RenderSystem::create_projection_matrix()
 
 	// set up 4 sides of window based on player
 	Entity player = registry.players.top_entity();
-	vec2 position = MapUtility::map_position_to_screen_position(registry.map_positions.get(player).position);
+	vec2 player_position = MapUtility::map_position_to_screen_position(registry.map_positions.get(player).position);
 
+	Entity camera = registry.cameras.top_entity();
+	MapPosition& camera_map_pos = registry.map_positions.get(camera);
+	vec2 camera_screen_position
+		= MapUtility::map_position_to_screen_position(camera_map_pos.position);
+	vec2 buffer_top_left, buffer_down_right;
+	std::tie(buffer_top_left, buffer_down_right) = CameraUtility::get_buffer_positions(camera_screen_position, w*screen_scale, h*screen_scale);
+
+	printf("window width, height: (%i, %i)\n", w, h);
+	//printf("buffer down right: (%f, %f)\n", buffer_down_right.x, buffer_down_right.y);
+
+	//printf("player position: (%f, %f)\n", player_position.x, player_position.y);
+
+	update_camera_position(camera_map_pos, player_position, buffer_top_left, buffer_down_right);
+	vec2 final_camera_screen_position = MapUtility::map_position_to_screen_position(camera_map_pos.position);
 	
-	float right = position.x + w * screen_scale / 2.f;
-	float left = position.x - w * screen_scale / 2.f;
-	float top = position.y - h * screen_scale / 2.f;
-	float bottom = position.y + h * screen_scale / 2.f;
+	float right = final_camera_screen_position.x + w * screen_scale;
+	float left = final_camera_screen_position.x;
+	float top = final_camera_screen_position.y;
+	float bottom = final_camera_screen_position.y + h * screen_scale;
 
 	float sx = 2.f / (right - left);
 	float sy = 2.f / (top - bottom);
@@ -283,4 +297,34 @@ mat3 RenderSystem::create_projection_matrix()
 	if (this->screen_scale - zoom > 0.1 && this->screen_scale - zoom <= 1.0) {
 		this->screen_scale -= zoom;
 	}
+}
+
+ void RenderSystem::update_camera_position(MapPosition& camera_map_pos,
+								 const vec2& player_pos,
+								 const vec2& buffer_top_left,
+								 const vec2& buffer_down_right)
+{
+	vec2 offset_top_left = player_pos - buffer_top_left;
+	vec2 offset_down_right = player_pos - buffer_down_right;
+
+	if (offset_top_left.x >= 0 && offset_top_left.y >= 0 && offset_down_right.x <= 0 && offset_down_right.y <= 0) {
+		return;
+	}
+
+	if (offset_top_left.x < 0 && camera_map_pos.position.x > CameraUtility::map_top_left) {
+		camera_map_pos.position.x -= 1;
+	}
+
+	if (offset_top_left.y < 0 && camera_map_pos.position.y > CameraUtility::map_top_left) {
+		camera_map_pos.position.y -= 1;
+	}
+
+	if (offset_down_right.x > 0 && camera_map_pos.position.x < CameraUtility::map_down_right) {
+		camera_map_pos.position.x += 1;
+	}
+
+	if (offset_down_right.y > 0 && camera_map_pos.position.y < CameraUtility::map_down_right) {
+		camera_map_pos.position.y += 1;
+	}
+
 }

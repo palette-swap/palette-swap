@@ -66,7 +66,7 @@ GLFWwindow* WorldSystem::create_window(int width, int height)
 #if __APPLE__
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
-	glfwWindowHint(GLFW_RESIZABLE, 0);
+	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
 	// Create the main window (for rendering, keyboard, and mouse input)
 	window = glfwCreateWindow(width, height, "Palette Swap", nullptr, nullptr);
@@ -238,7 +238,7 @@ void WorldSystem::restart_game()
 
 	// create camera instance
 	camera = create_camera(
-		{ (player_starting_point.x - 20), (player_starting_point.y - 20) }, { 23, 23 }, player_starting_point);
+		player_starting_point);
 
 	// Create a new player arrow instance
 	vec2 player_location = MapUtility::map_position_to_screen_position(player_starting_point);

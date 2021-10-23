@@ -93,6 +93,10 @@ private:
 	// Internal drawing functions for each entity type
 	void draw_textured_mesh(Entity entity, const mat3& projection);
 	void draw_to_screen();
+	void update_camera_position(MapPosition& camera_map_pos,
+								const vec2& player_pos,
+								const vec2& buffer_top_left,
+								const vec2& buffer_down_right);
 
 	// Window handle
 	GLFWwindow* window;
