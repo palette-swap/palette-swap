@@ -467,8 +467,10 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 
 			// Denotes arrowhead location the player's arrow, based on firing angle and current scaling
 			arrow_projectile.head_offset
-				= { sin(arrow_velocity.angle) * scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::ARROW)).y / 2,
-					-cos(arrow_velocity.angle) * scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::ARROW)).x / 2 };
+				= { sin(arrow_velocity.angle) * scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::CANNONBALL)).y
+						/ 2,
+				-cos(arrow_velocity.angle) * scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::CANNONBALL)).x / 2
+			};
 
 			arrow_velocity.speed = projectile_speed;
 			// TODO: Add better arrow physics potentially?

@@ -45,7 +45,7 @@ Entity create_enemy(uvec2 position, ColorState team)
 
 	// TODO: Switch out asset enum with call to animation system to request a specific enemy type)
 	registry.render_requests.insert(entity,
-								   { enemy_type, EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY });
+								   { TEXTURE_ASSET_ID::SLIME, EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY });
 	registry.colors.insert(entity, { 1, 1, 1 });
 
 	registry.enemy_states.emplace(entity, team);
@@ -58,7 +58,6 @@ Entity create_enemy(uvec2 position, ColorState team)
 	// TODO: Combine with render_requests above, so animation system handles render requests as a middleman
 	registry.animations.emplace(entity);
 
-	registry.enemy_states.emplace(entity);
 	registry.enemy_nest_positions.emplace(entity, position);
 
 	return entity;
@@ -74,7 +73,7 @@ Entity create_arrow(vec2 position)
 	// Create and (empty) player component to be able to refer to other enttities
 	registry.render_requests.insert(
 		entity,
-		{ TEXTURE_ASSET_ID::ARROW, 
+		{ TEXTURE_ASSET_ID::CANNONBALL, 
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE });
 
