@@ -49,7 +49,7 @@ int main()
 	}
 
 	// initialize the main systems
-	renderer.init(window_width_px, window_height_px, window);
+	renderer.init(window_width_px, window_height_px, window, map);
 	world.init(&renderer);
 	animation.init();
 

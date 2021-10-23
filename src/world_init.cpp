@@ -20,9 +20,8 @@ Entity create_player(uvec2 pos)
 }
 
 // Repurposed into general create_enemy
-// TODO: replace input asset ID with general type, allowing system to grab
-// stats as well as behaviour for the enemy type
-Entity create_enemy(uvec2 position, TEXTURE_ASSET_ID enemy_type)
+// TODO: add additional inputs to specify enemy type, current default is slug
+Entity create_enemy(uvec2 position, ColorState team)
 {
 	auto entity = Entity();
 
@@ -49,6 +48,13 @@ Entity create_enemy(uvec2 position, TEXTURE_ASSET_ID enemy_type)
 								   { enemy_type, EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY });
 	registry.colors.insert(entity, { 1, 1, 1 });
 
+	registry.enemy_states.emplace(entity, team);
+	if (((uint8_t)team & 0b01) > 0) {
+		registry.red_entities.emplace(entity);
+	}
+	if (((uint8_t)team & 0b10) > 0) {
+		registry.blue_entities.emplace(entity);
+	}
 	// TODO: Combine with render_requests above, so animation system handles render requests as a middleman
 	registry.animations.emplace(entity);
 

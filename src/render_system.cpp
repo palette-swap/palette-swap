@@ -275,7 +275,9 @@ void RenderSystem::draw()
 	for (Entity entity : registry.render_requests.entities) {
 		// Note, its not very efficient to access elements indirectly via the entity
 		// albeit iterating through all Sprites in sequence. A good point to optimize
-		draw_textured_mesh(entity, projection_2d);
+		if (registry.render_requests.get(entity).visible) {
+			draw_textured_mesh(entity, projection_2d);
+		}
 	}
 
 	// Truely render to the screen

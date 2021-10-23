@@ -32,13 +32,13 @@ class RenderSystem {
 	// and then uses path to grab sprites, stats, and behaviour
 	// Make sure these paths remain in sync with the associated enumerators.
 	const std::array<std::string, texture_count> texture_paths = {
-			textures_path("Paladin_A01.png"),
+			textures_path("Character.png"),
+			textures_path("cannon_ball.png"),
 			textures_path("./Slime/Slime Spritesheet.png"),
 			textures_path("./Living Armor/Living Armor Spritesheet.png"),
 			textures_path("./Treeant/Treeant Spritesheet.png"),
 			textures_path("./Raven/Raven Spritesheet.png"),
 			textures_path("./Wraith/Wraith Spritesheet.png"),
-			textures_path("Arrow.png"),
 			textures_path("tile_set.png"), };
 
 	std::array<GLuint, effect_count> effects;
@@ -65,9 +65,10 @@ class RenderSystem {
 	// initialize all predefined rooms, based on roomtype
 	void initialize_room_vertices(MapUtility::RoomType roomType);
 
+	std::shared_ptr<MapGeneratorSystem> map_generator;
 public:
 	// Initialize the window
-	bool init(int width, int height, GLFWwindow* window);
+	bool init(int width, int height, GLFWwindow* window, std::shared_ptr<MapGeneratorSystem> map);
 
 	// Modified first argument to gid, which doesn't change behavior and is reasonable,
 	// it also helps the room geometry hack to work...

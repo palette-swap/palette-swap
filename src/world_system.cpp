@@ -231,7 +231,7 @@ void WorldSystem::restart_game()
 	}
 
 	// a random starting position... probably need to update this
-	uvec2 player_starting_point = uvec2(51, 51);
+	uvec2 player_starting_point = uvec2(1, 1);
 	// Create a new Player instance and shift player onto a tile
 	player = create_player(player_starting_point);
 	turns->add_team_to_queue(player);
@@ -243,20 +243,11 @@ void WorldSystem::restart_game()
 	// Create a new player arrow instance
 	vec2 player_location = MapUtility::map_position_to_screen_position(player_starting_point);
 	player_arrow = create_arrow(player_location);
-	// Creates all enemy instance
-	// TODO: Load them throughout the level dynamically/from preset file
-	// TODO: Change input from texture selection to generalized enemy type selection/index
-	//Entity armor1 = create_enemy(uvec2(64, 56), TEXTURE_ASSET_ID::TREEANT);
-	//registry.colors.get(armor1) = { 2, 1, 1 };
-	Entity wraith = create_enemy(uvec2(65, 56), TEXTURE_ASSET_ID::WRAITH);
-	registry.colors.get(wraith) = { 1, 1, 1 };
-	//Entity tree2 = create_enemy(uvec2(66, 56), TEXTURE_ASSET_ID::TREEANT);
-	//registry.colors.get(tree2) = { 1, 1, 1 };
-	Entity armor2 = create_enemy(uvec2(64, 53), TEXTURE_ASSET_ID::ARMOR);
-	registry.colors.get(armor2) = { 2, 1, 1 };
-	Entity raven = create_enemy(uvec2(40, 54), TEXTURE_ASSET_ID::RAVEN);
-	registry.colors.get(raven) = { 1, 1, 1 };
-
+	// Creates a single enemy instance, (TODO: needs to be updated with position based on grid)
+	// Also requires naming scheme for randomly generated enemies, for later reference
+	create_enemy(uvec2(12, 3));
+	create_enemy(uvec2(15, 3));
+	create_enemy(uvec2(15, 4), ColorState::Blue);
 }
 
 // Compute collisions between entities
@@ -327,17 +318,18 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		if (key == GLFW_KEY_RIGHT) {
 			move_player(Direction::Right);
 		}
-
 		if (key == GLFW_KEY_LEFT) {
 			move_player(Direction::Left);
 		}
-
 		if (key == GLFW_KEY_UP) {
 			move_player(Direction::Up);
 		}
-
 		if (key == GLFW_KEY_DOWN) {
 			move_player(Direction::Down);
+		}
+		
+		if (key == GLFW_KEY_EQUAL) {
+			change_color();
 		}
 	}
 
@@ -435,6 +427,31 @@ void WorldSystem::move_player(Direction direction)
 	}
 	map_pos.position = new_pos;
 	turns->complete_team_action(player);
+}
+
+void WorldSystem::change_color() 
+{ 
+	switch (turns->get_active_color()) {
+	case ColorState::Red:
+		turns->set_active_color(ColorState::Blue);
+		break;
+	case ColorState::Blue:
+		turns->set_active_color(ColorState::Red);
+		break;
+	default:
+		turns->set_active_color(ColorState::Red);
+		break;
+	}
+
+	//ColorState active_color = turns->get_active_color();
+	//for (long long i = registry.enemy_states.entities.size() - 1; i >= 0; i--) { 
+	//	const Entity& enemy_entity = registry.enemy_states.entities[i];
+	//	if (((uint8_t)registry.enemy_states.get(enemy_entity).team & (uint8_t)active_color) == 0) {
+	//		registry.render_requests.get(enemy_entity).visible = false;
+	//	} else {
+	//		registry.render_requests.get(enemy_entity).visible = true;
+	//	}
+	//}
 }
 
 // Fires arrow at a preset speed if it has not been fired already

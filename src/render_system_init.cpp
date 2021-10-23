@@ -14,8 +14,10 @@
 #include <sstream>
 
 // World initialization
-bool RenderSystem::init(int width, int height, GLFWwindow* window_arg)
+bool RenderSystem::init(
+	int width, int height, GLFWwindow* window_arg, std::shared_ptr<MapGeneratorSystem> map)
 {
+	map_generator = std::move(map);
 	this->window = window_arg;
 
 	glfwMakeContextCurrent(window);
@@ -74,8 +76,8 @@ void RenderSystem::initialize_gl_textures()
 		}
 		glBindTexture(GL_TEXTURE_2D, texture_gl_handles.at(i));
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, dimensions.x, dimensions.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		// This might be useful for some pictures, will leave it here for reference
 		// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -171,7 +173,7 @@ void RenderSystem::initialize_room_vertices(MapUtility::RoomType roomType)
 		// We have a total of 8*8 tile texture, for a single texture,
 		// top left is 0,0 and bottom right is 1,1
 		float fraction = 32.f / 256.f;
-		uint8_t tile_texture = (room_layouts.at(roomType).at(MapUtility::room_size - row - 1).at(col));
+		uint8_t tile_texture = map_generator->get_tile_id_from_room(roomType, MapUtility::room_size - row - 1, col);
 		vec2 tile_bottom_left_corner
 			= { static_cast<float>(tile_texture % 8) * fraction, static_cast<float>(tile_texture / 8) * fraction };
 		tilemap_vertices[i + 0].texcoord

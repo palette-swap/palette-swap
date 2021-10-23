@@ -3,12 +3,18 @@
 
 #include <queue>
 #include <unordered_map>
+#include <sstream>
 
 #include "glm/gtx/hash.hpp"
+
+using namespace MapUtility;
+
+MapGeneratorSystem::MapGeneratorSystem() { load_rooms_from_csv(); }
 
 // TODO: we want this eventually be procedural generated
 void MapGeneratorSystem::generate_levels()
 {
+	// TODO: generate map procedurally
 	levels.emplace_back(map_layout_1);
 	current_level = 0;
 }
@@ -21,7 +27,7 @@ const MapGeneratorSystem::Mapping& MapGeneratorSystem::current_map() const
 
 bool MapGeneratorSystem::is_on_map(uvec2 pos) const
 {
-	return pos.y / MapUtility::room_size < current_map().size() && pos.x / MapUtility::room_size < current_map().at(0).size();
+	return pos.y / room_size < current_map().size() && pos.x / room_size < current_map().at(0).size();
 }
 
 bool MapGeneratorSystem::walkable(uvec2 pos) const
@@ -30,7 +36,7 @@ bool MapGeneratorSystem::walkable(uvec2 pos) const
 		return false;
 	}
 
-	return MapUtility::walkable_tiles.find(get_tile_id(pos)) != MapUtility::walkable_tiles.end();
+	return walkable_tiles.find(get_tile_id_from_map_pos(pos)) != walkable_tiles.end();
 }
 
 bool MapGeneratorSystem::is_wall(uvec2 pos) const
@@ -39,7 +45,7 @@ bool MapGeneratorSystem::is_wall(uvec2 pos) const
 		return false;
 	}
 
-	return MapUtility::wall_tiles.find(get_tile_id(pos)) != MapUtility::wall_tiles.end();
+	return wall_tiles.find(get_tile_id_from_map_pos(pos)) != wall_tiles.end();
 }
 
 // See https://en.wikipedia.org/wiki/Breadth-first_search for algorithm reference
@@ -86,9 +92,38 @@ std::vector<uvec2> MapGeneratorSystem::shortest_path(uvec2 start_pos, uvec2 targ
 	return std::vector<uvec2>();
 }
 
-MapUtility::TileId MapGeneratorSystem::get_tile_id(uvec2 pos) const
+TileId MapGeneratorSystem::get_tile_id_from_map_pos(uvec2 pos) const
 {
-	MapUtility::RoomType room_index = current_map().at(pos.y / MapUtility::room_size).at(pos.x / MapUtility::room_size);
-	MapUtility::TileId tile_index = room_layouts.at(room_index).at(pos.y % MapUtility::room_size).at(pos.x % MapUtility::room_size);
-	return tile_index;
+	RoomType room_index = current_map().at(pos.y / room_size).at(pos.x / room_size);
+	return get_tile_id_from_room(room_index, pos.y % room_size, pos.x % room_size);
+}
+
+void MapGeneratorSystem::load_rooms_from_csv()
+{
+	for (size_t i = 0; i < room_paths.size(); i++) {
+		Mapping& room_mapping = room_layouts.at(i);
+
+		std::ifstream room_file(room_paths.at(i));
+		std::string line;
+		int col = 0;
+		int row = 0;
+
+		while (std::getline(room_file, line)) {
+			std::string room_id;
+			std::stringstream ss(line);
+			while (std::getline(ss, room_id, ',')) {
+				room_mapping.at(row).at(col) = std::stoi(room_id);
+				col++;
+				if (col == room_size) {
+					row++;
+					col = 0;
+				}
+			}
+		}
+	}
+}
+
+TileId MapGeneratorSystem::get_tile_id_from_room(RoomType room_type, uint8_t row, uint8_t col) const
+{
+	return room_layouts.at(room_type).at(row).at(col);
 }
