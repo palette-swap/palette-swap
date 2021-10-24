@@ -32,46 +32,82 @@ void AISystem::step(float /*elapsed_ms*/)
 
 		ColorState active_world_color = turns->get_active_color();
 		if (((uint8_t)active_world_color & (uint8_t)enemy.team) > 0) {
-			switch (enemy.state) {
 
-			case EnemyState::Idle:
-				if (is_player_spotted(enemy_entity, 3)) {
-					switch_enemy_state(enemy_entity, EnemyState::Active);
-				}
+			switch (enemy.type) {
+			case EnemyType::Slime:
+				execute_Slime(enemy_entity);
 				break;
 
-			case EnemyState::Active:
-				if (is_player_spotted(enemy_entity, 6)) {
-					if (is_player_reachable(enemy_entity, 1)) {
-						attack_player(enemy_entity);
-					} else {
-						approach_player(enemy_entity);
-					}
-
-					if (is_afraid(enemy_entity)) {
-						switch_enemy_state(enemy_entity, EnemyState::Flinched);
-					}
-				} else {
-					switch_enemy_state(enemy_entity, EnemyState::Idle);
-				}
+			case EnemyType::Raven:
+				execute_Raven(enemy_entity);
 				break;
 
-			case EnemyState::Flinched:
-				if (is_at_nest(enemy_entity)) {
-					switch_enemy_state(enemy_entity, EnemyState::Idle);
-				} else {
-					approach_nest(enemy_entity);
-				}
+			case EnemyType::LivingArmor:
+				execute_LivingArmor(enemy_entity);
+				break;
+
+			case EnemyType::TreeAnt:
+				execute_TreeAnt(enemy_entity);
 				break;
 
 			default:
-				throw std::runtime_error("Invalid enemy state.");
+				throw std::runtime_error("Invalid enemy type.");
 			}
 		}
 	}
 
 	turns->complete_team_action(enemy_team);
 }
+
+void AISystem::execute_Slime(const Entity& slime)
+{
+	const Enemy enemy = registry.enemies.get(slime);
+
+	switch (enemy.state) {
+
+	case EnemyState::Idle:
+		if (is_player_in_radius(slime, enemy.radius)) {
+			switch_enemy_state(slime, enemy.type, EnemyState::Active);
+		}
+		break;
+
+	case EnemyState::Active:
+		if (is_player_in_radius(slime, enemy.radius * 2)) {
+			if (is_player_in_attack_range(slime, enemy.attack_range)) {
+				attack_player(slime);
+			} else {
+				approach_player(slime, enemy.speed);
+			}
+
+			if (is_afraid(slime)) {
+				switch_enemy_state(slime, enemy.type, EnemyState::Flinched);
+			}
+		} else {
+			switch_enemy_state(slime, enemy.type, EnemyState::Idle);
+		}
+		break;
+
+	case EnemyState::Flinched:
+		if (is_at_nest(slime)) {
+			switch_enemy_state(slime, enemy.type, EnemyState::Idle);
+		} else {
+			approach_nest(slime, enemy.speed);
+		}
+		break;
+
+	default:
+		throw std::runtime_error("Invalid enemy state of Slime.");
+	}
+}
+
+// TODO
+void AISystem::execute_Raven(const Entity& raven) { }
+
+// TODO
+void AISystem::execute_LivingArmor(const Entity& living_armor) { }
+
+// TODO
+void AISystem::execute_TreeAnt(const Entity& tree_ant) { }
 
 bool AISystem::remove_dead_entity(const Entity& entity)
 {
@@ -83,11 +119,15 @@ bool AISystem::remove_dead_entity(const Entity& entity)
 	return false;
 }
 
-void AISystem::switch_enemy_state(const Entity& enemy_entity, EnemyState enemy_state)
+void AISystem::switch_enemy_state(const Entity& enemy_entity, EnemyType /*enemy_type*/, EnemyState enemy_state)
 {
 	registry.enemies.get(enemy_entity).state = enemy_state;
 
-	// TODO: Animate enemy state switch.
+	// TODO: Animate enemy state switch by a spreadsheet for enemy_type * enemy_state mapping.
+	// Slime:		Idle, Active, Flinched.
+	// Raven:		Idle, Active.
+	// LivingArmor:	Idle, Active, Powerup.
+	// TreeAnt:		Idle, Active, Immortal.
 	TEXTURE_ASSET_ID& enemy_current_textrue = registry.render_requests.get(enemy_entity).used_texture;
 	switch (enemy_state) {
 
@@ -103,12 +143,20 @@ void AISystem::switch_enemy_state(const Entity& enemy_entity, EnemyState enemy_s
 		enemy_current_textrue = TEXTURE_ASSET_ID::SLIME_FLINCHED;
 		break;
 
+	case EnemyState::Powerup:
+		enemy_current_textrue = TEXTURE_ASSET_ID::SLIME_FLINCHED;
+		break;
+
+	case EnemyState::Immortal:
+		enemy_current_textrue = TEXTURE_ASSET_ID::SLIME_FLINCHED;
+		break;
+
 	default:
 		throw std::runtime_error("Invalid enemy state.");
 	}
 }
 
-bool AISystem::is_player_spotted(const Entity& entity, const uint radius)
+bool AISystem::is_player_in_radius(const Entity& entity, const uint radius)
 {
 	uvec2 player_map_pos = registry.map_positions.get(registry.players.top_entity()).position;
 	uvec2 entity_map_pos = registry.map_positions.get(entity).position;
@@ -117,19 +165,15 @@ bool AISystem::is_player_spotted(const Entity& entity, const uint radius)
 	return uint(abs(distance.x)) <= radius && uint(abs(distance.y)) <= radius;
 }
 
-bool AISystem::is_player_reachable(const Entity& entity, const uint attack_range)
+bool AISystem::is_player_in_attack_range(const Entity& entity, const uint attack_range)
 {
-	return is_player_spotted(entity, attack_range);
+	return is_player_in_radius(entity, attack_range);
 }
 
 bool AISystem::is_afraid(const Entity& entity)
 {
-	// TODO: Replace magic number 12 with variable amount
-	if (registry.stats.get(entity).health < 12) {
-		printf("Enemy is afraid...\n");
-		return true;
-	}
-	return false;
+	const Stats& states = registry.stats.get(entity);
+	return states.health < (states.health_max / 4);
 }
 
 bool AISystem::is_at_nest(const Entity& entity)
@@ -143,33 +187,35 @@ bool AISystem::is_at_nest(const Entity& entity)
 void AISystem::attack_player(const Entity& entity)
 {
 	// TODO: Animate attack.
-	printf("Enemy attacks player!\n");
-	Stats& stats = registry.stats.get(entity);
+	char* enemy_type = enemy_type_to_string[registry.enemies.get(entity).type];
+	printf("%s_%u attacks player!\n", enemy_type, (uint)entity);
+
+	Stats& entity_stats = registry.stats.get(entity);
 	Stats& player_stats = registry.stats.get(registry.players.top_entity());
-	combat->do_attack(stats, stats.base_attack, player_stats);
+	combat->do_attack(entity_stats, entity_stats.base_attack, player_stats);
 }
 
-bool AISystem::approach_player(const Entity& entity)
+bool AISystem::approach_player(const Entity& entity, uint speed)
 {
 	uvec2 player_map_pos = registry.map_positions.get(registry.players.top_entity()).position;
 	uvec2 entity_map_pos = registry.map_positions.get(entity).position;
 
 	std::vector<uvec2> shortest_path = map_generator->shortest_path(entity_map_pos, player_map_pos);
 	if (shortest_path.size() > 2) {
-		uvec2 next_map_pos = shortest_path[1];
+		uvec2 next_map_pos = shortest_path[min((size_t)speed, (shortest_path.size() - 2))];
 		return move(entity, next_map_pos);
 	}
 	return false;
 }
 
-bool AISystem::approach_nest(const Entity& entity)
+bool AISystem::approach_nest(const Entity& entity, uint speed)
 {
 	const uvec2& entity_map_pos = registry.map_positions.get(entity).position;
 	const uvec2& nest_map_pos = registry.enemies.get(entity).nest_map_pos;
 
 	std::vector<uvec2> shortest_path = map_generator->shortest_path(entity_map_pos, nest_map_pos);
 	if (shortest_path.size() > 1) {
-		uvec2 next_map_pos = shortest_path[1];
+		uvec2 next_map_pos = shortest_path[min((size_t)speed, (shortest_path.size() - 1))];
 		return move(entity, next_map_pos);
 	}
 	return false;

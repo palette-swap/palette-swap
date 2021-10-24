@@ -66,27 +66,27 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 
 	switch (type) {
 	case EnemyType::Slime:
-		enemy.alert_radius = 3;
-		enemy.move_speed = 1;
+		enemy.radius = 3;
+		enemy.speed = 1;
 		enemy.attack_range = 1;
 		break;
 
 	case EnemyType::Raven:
-		enemy.alert_radius = 6;
-		enemy.move_speed = 2;
-		enemy.attack_range = 1;
+		enemy.radius = 6;
+		enemy.speed = 2;
+		enemy.attack_range = 1 ;
 		break;
 
 	case EnemyType::LivingArmor:
-		enemy.alert_radius = 2;
-		enemy.move_speed = 1;
+		enemy.radius = 2;
+		enemy.speed = 1;
 		enemy.attack_range = 1;
 		break;
 
 	case EnemyType::TreeAnt:
-		enemy.alert_radius = 4;
-		enemy.move_speed = 1;
-		enemy.attack_range = 1;
+		enemy.radius = 3;
+		enemy.speed = 1;
+		enemy.attack_range = 2;
 		break;
 
 	default:

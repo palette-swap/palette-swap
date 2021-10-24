@@ -7,8 +7,8 @@
 
 #include "../ext/stb_image/stb_image.h"
 
-#include <predefined_room.hpp>
 #include "map_generator_system.hpp"
+#include <predefined_room.hpp>
 
 // Player component
 struct Player {
@@ -196,17 +196,18 @@ struct MapPosition {
 struct WorldPosition {
 	vec2 position;
 	WorldPosition(vec2 position)
-		: position(position)
-	{ };
+		: position(position) {};
 };
 
 struct Velocity {
 	float speed;
 	float angle;
 	Velocity(float speed, float angle)
-		: speed(speed), angle(angle) { }
-	vec2 get_velocity() { return { sin(angle) * speed, -cos(angle) * speed };
+		: speed(speed)
+		, angle(angle)
+	{
 	}
+	vec2 get_velocity() { return { sin(angle) * speed, -cos(angle) * speed }; }
 };
 
 struct Room {
@@ -234,19 +235,22 @@ struct BlueDimension {
 //-------------------------           AI            -------------------------
 //---------------------------------------------------------------------------
 
-// Slime (cute coward): weak stats; run away when HP low.
-// Raven (annoying bug): weak stats; large alert radius, fast moving and long attack range.
+// Slime (cute coward): weak stats; run away when HP is low.
+// Raven (annoying bug): weak stats; large radius and fast speed.
 // LivingArmor (Immortal Hulk): normal stats; nearsighted; a certain chance to become immortal for one turn.
-// TreeAnt (Super Saiyan): normal stats; good nose; power up by double its attack damage when HP < 20%.
+// TreeAnt (Super Saiyan): normal stats; long attack range; power up by double its attack damage when HP is low.
+// TODO: Evan might wanna add description and trait for Wraith.
 enum class EnemyType {
 	Slime = 0,
 	Raven = Slime + 1,
 	LivingArmor = Raven + 1,
-	TreeAnt = LivingArmor + 1
+	TreeAnt = LivingArmor + 1,
+	// Wraith = TreeAnt + 1
 };
+extern std::unordered_map<EnemyType, char*> enemy_type_to_string;
 
 // Slime:		Idle, Active, Flinched.
-// Raven:		Idle, Active.
+// Raven:		Idle, Active, Flinched.
 // LivingArmor:	Idle, Active, Powerup.
 // TreeAnt:		Idle, Active, Immortal.
 enum class EnemyState {
@@ -265,8 +269,8 @@ struct Enemy {
 	EnemyState state = EnemyState::Idle;
 	uvec2 nest_map_pos = { 0, 0 };
 
-	uint alert_radius = 3;
-	uint move_speed = 1;
+	uint radius = 3;
+	uint speed = 1;
 	uint attack_range = 1;
 };
 
