@@ -96,6 +96,7 @@ struct ResolvedProjectile {
 // to the screen for a spritesheet
 struct Animation {
 	int frame = 0;
+	int max_frames = 1;
 	int state = 0;
 	// Adjusts animation rate to be faster or slower than default
 	// ie. faster things should change more frames. slower things should change less frames
@@ -169,7 +170,8 @@ static constexpr std::array<vec2, texture_count> scaling_factors = {
 enum class EFFECT_ASSET_ID {
 	LINE = 0,
 	ENEMY = LINE + 1,
-	TEXTURED = ENEMY + 1,
+	PLAYER = ENEMY + 1,
+	TEXTURED = PLAYER + 1,
 	WATER = TEXTURED + 1,
 	TILE_MAP = WATER + 1,
 	EFFECT_COUNT = TILE_MAP + 1

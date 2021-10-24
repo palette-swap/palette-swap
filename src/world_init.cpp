@@ -12,11 +12,14 @@ Entity create_player(uvec2 pos)
 
 	registry.render_requests.insert(entity,
 								   { TEXTURE_ASSET_ID::PALADIN, 
-									 EFFECT_ASSET_ID::ENEMY,
+									 EFFECT_ASSET_ID::PLAYER,
 									 GEOMETRY_BUFFER_ID::PLAYER });
-	registry.animations.emplace(entity);
-	registry.colors.insert(entity, { 1, 1, 1 });
 
+	Animation & player_animation = registry.animations.emplace(entity);
+	player_animation.max_frames = 6;
+
+	registry.colors.insert(entity, { 1, 1, 1 });
+	
 	return entity;
 }
 
@@ -59,7 +62,9 @@ Entity create_enemy(uvec2 position, ColorState team)
 		registry.blue_entities.emplace(entity);
 	}
 	// TODO: Combine with render_requests above, so animation system handles render requests as a middleman
-	registry.animations.emplace(entity);
+	// Update animation number using animation system max frames, instead of this static number
+	Animation& enemy_animation = registry.animations.emplace(entity);
+	enemy_animation.max_frames = 4;
 
 	registry.enemy_nest_positions.emplace(entity, position);
 
@@ -79,6 +84,7 @@ Entity create_arrow(vec2 position)
 		{ TEXTURE_ASSET_ID::CANNONBALL, 
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE });
+	registry.colors.insert(entity, { 1, 1, 1 });
 
 	return entity;
 }

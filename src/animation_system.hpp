@@ -10,8 +10,11 @@
 // Number of actual frames can be adapted to vary from asset to asset
 // TODO: change number of frames for an animation to vary based on the asset
 
-static constexpr int num_frames = 4;
+// Currently this number is used for all enemies animation frames (a total of 4)
+// Moving forward the animation frames by enemy type may chang
+static constexpr int enemy_num_frames = 4;
 static constexpr int base_animation_speed = 150;
+static constexpr int player_frames = 6;
 
 class AnimationSystem {
 

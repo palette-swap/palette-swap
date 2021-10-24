@@ -79,7 +79,7 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 
 		glBindTexture(GL_TEXTURE_2D, texture_id);
 		gl_has_errors();
-	} else if (render_request.used_effect == EFFECT_ASSET_ID::ENEMY) {
+	} else if (render_request.used_effect == EFFECT_ASSET_ID::ENEMY || render_request.used_effect == EFFECT_ASSET_ID::PLAYER) {
 		GLint in_position_loc = glGetAttribLocation(program, "in_position");
 		GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
 		gl_has_errors();
