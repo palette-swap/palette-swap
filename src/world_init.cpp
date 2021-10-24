@@ -56,11 +56,42 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 	}
 
 	// Create enemy component for AI System.
-	registry.enemies.emplace(entity);
-	Enemy& enemy = registry.enemies.get(entity);
+	// TODO: Replace with load from file or auto-generate.
+	Enemy& enemy = registry.enemies.emplace(entity);
+
 	enemy.team = team;
 	enemy.type = type;
+	enemy.state = EnemyState::Idle;
 	enemy.nest_map_pos = map_pos;
+
+	switch (type) {
+	case EnemyType::Slime:
+		enemy.alert_radius = 3;
+		enemy.move_speed = 1;
+		enemy.attack_range = 1;
+		break;
+
+	case EnemyType::Raven:
+		enemy.alert_radius = 6;
+		enemy.move_speed = 2;
+		enemy.attack_range = 1;
+		break;
+
+	case EnemyType::LivingArmor:
+		enemy.alert_radius = 2;
+		enemy.move_speed = 1;
+		enemy.attack_range = 1;
+		break;
+
+	case EnemyType::TreeAnt:
+		enemy.alert_radius = 4;
+		enemy.move_speed = 1;
+		enemy.attack_range = 1;
+		break;
+
+	default:
+		throw std::runtime_error("Invalid enemy type.");
+	}
 
 	return entity;
 }

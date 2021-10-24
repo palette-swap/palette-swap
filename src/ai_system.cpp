@@ -36,7 +36,6 @@ void AISystem::step(float /*elapsed_ms*/)
 
 			case EnemyState::Idle:
 				if (is_player_spotted(enemy_entity, 3)) {
-					become_alert(enemy_entity);
 					switch_enemy_state(enemy_entity, EnemyState::Active);
 				}
 				break;
@@ -139,12 +138,6 @@ bool AISystem::is_at_nest(const Entity& entity)
 	const uvec2& nest_map_pos = registry.enemies.get(entity).nest_map_pos;
 
 	return entity_map_pos == nest_map_pos;
-}
-
-void AISystem::become_alert(const Entity& /*entity*/)
-{
-	// TODO: Animate alert.
-	printf("Enemy becomes alert!\n");
 }
 
 void AISystem::attack_player(const Entity& entity)

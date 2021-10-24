@@ -234,13 +234,21 @@ struct BlueDimension {
 //-------------------------           AI            -------------------------
 //---------------------------------------------------------------------------
 
+// Slime (cute coward): weak stats; run away when HP low.
+// Raven (annoying bug): weak stats; large alert radius, fast moving and long attack range.
+// LivingArmor (Immortal Hulk): normal stats; nearsighted; a certain chance to become immortal for one turn.
+// TreeAnt (Super Saiyan): normal stats; good nose; power up by double its attack damage when HP < 20%.
 enum class EnemyType {
-	Slime = 0,					// IDLE, ACTIVE, FLINCHED.
-	Raven = Slime + 1,			// IDLE, ACTIVE, FLINCHED.
-	LivingArmor = Raven + 1,	// IDLE, ACTIVE, POWERUP.
-	TreeAnt = LivingArmor + 1	// IDLE, ACTIVE, IMMORTAL.
+	Slime = 0,
+	Raven = Slime + 1,
+	LivingArmor = Raven + 1,
+	TreeAnt = LivingArmor + 1
 };
 
+// Slime:		Idle, Active, Flinched.
+// Raven:		Idle, Active.
+// LivingArmor:	Idle, Active, Powerup.
+// TreeAnt:		Idle, Active, Immortal.
 enum class EnemyState {
 	Idle = 0,
 	Active = Idle + 1,
@@ -251,12 +259,14 @@ enum class EnemyState {
 
 // Structure to store enemy information.
 struct Enemy {
+	// Default is a slime.
 	ColorState team = ColorState::Red;
 	EnemyType type = EnemyType::Slime;
 	EnemyState state = EnemyState::Idle;
-
 	uvec2 nest_map_pos = { 0, 0 };
+
 	uint alert_radius = 3;
+	uint move_speed = 1;
 	uint attack_range = 1;
 };
 

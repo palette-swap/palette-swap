@@ -37,9 +37,6 @@ private:
 	// Check if an entity is at its nest.
 	bool is_at_nest(const Entity& entity);
 
-	// An entity becomes alert.
-	void become_alert(const Entity& entity);
-
 	// An entity attackes the player.
 	void attack_player(const Entity& entity);
 
