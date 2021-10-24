@@ -79,7 +79,7 @@ void AISystem::execute_Slime(const Entity& slime)
 				approach_player(slime, enemy.speed);
 			}
 
-			if (is_afraid(slime)) {
+			if (is_health_below(slime, 0.25f)) {
 				switch_enemy_state(slime, enemy.type, EnemyState::Flinched);
 			}
 		} else {
@@ -100,7 +100,8 @@ void AISystem::execute_Slime(const Entity& slime)
 	}
 }
 
-void AISystem::execute_Raven(const Entity& raven) {
+void AISystem::execute_Raven(const Entity& raven)
+{
 	const Enemy& enemy = registry.enemies.get(raven);
 
 	switch (enemy.state) {
@@ -118,12 +119,6 @@ void AISystem::execute_Raven(const Entity& raven) {
 			} else {
 				approach_player(raven, enemy.speed);
 			}
-		} else {
-			if (is_at_nest(raven)) {
-				switch_enemy_state(raven, enemy.type, EnemyState::Idle);
-			} else {
-				approach_nest(raven, enemy.speed);
-			}
 		}
 		break;
 
@@ -132,11 +127,53 @@ void AISystem::execute_Raven(const Entity& raven) {
 	}
 }
 
-// TODO
-void AISystem::execute_LivingArmor(const Entity& living_armor) { }
+void AISystem::execute_LivingArmor(const Entity& living_armor)
+{
+	const Enemy& enemy = registry.enemies.get(living_armor);
+
+	switch (enemy.state) {
+
+	case EnemyState::Idle:
+		if (is_player_in_radius(living_armor, enemy.radius)) {
+			switch_enemy_state(living_armor, enemy.type, EnemyState::Active);
+		}
+		break;
+
+	case EnemyState::Active:
+		if (is_player_in_radius(living_armor, enemy.radius * 2)) {
+			if (is_player_in_attack_range(living_armor, enemy.attack_range)) {
+				attack_player(living_armor);
+			} else {
+				approach_player(living_armor, enemy.speed);
+			}
+
+			if (uniform_dist(rng) < 0.20f) {
+				become_immortal(living_armor, true);
+				switch_enemy_state(living_armor, enemy.type, EnemyState::Immortal);
+			}
+		} else {
+			if (is_at_nest(living_armor)) {
+				switch_enemy_state(living_armor, enemy.type, EnemyState::Idle);
+			} else {
+				approach_nest(living_armor, enemy.speed);
+			}
+		}
+		break;
+
+	case EnemyState::Immortal:
+		become_immortal(living_armor, false);
+		switch_enemy_state(living_armor, enemy.type, EnemyState::Active);
+		break;
+
+	default:
+		throw std::runtime_error("Invalid enemy state of LivingArmor.");
+	}
+}
 
 // TODO
-void AISystem::execute_TreeAnt(const Entity& tree_ant) { }
+void AISystem::execute_TreeAnt(const Entity& tree_ant) {
+	
+}
 
 bool AISystem::remove_dead_entity(const Entity& entity)
 {
@@ -199,12 +236,6 @@ bool AISystem::is_player_in_attack_range(const Entity& entity, const uint attack
 	return is_player_in_radius(entity, attack_range);
 }
 
-bool AISystem::is_afraid(const Entity& entity)
-{
-	const Stats& states = registry.stats.get(entity);
-	return states.health < (states.health_max / 4);
-}
-
 bool AISystem::is_at_nest(const Entity& entity)
 {
 	const uvec2& entity_map_pos = registry.map_positions.get(entity).position;
@@ -259,4 +290,18 @@ bool AISystem::move(const Entity& entity, const uvec2& map_pos)
 		return true;
 	}
 	return false;
+}
+
+bool AISystem::is_health_below(const Entity& entity, float ratio)
+{
+	const Stats& states = registry.stats.get(entity);
+	return static_cast<float>(states.health) < static_cast<float>(states.health_max) * ratio;
+}
+
+void AISystem::become_immortal(const Entity& entity, bool flag)
+{
+	Stats& stats = registry.stats.get(entity);
+	for (int& damage_modifier : stats.damage_modifiers) {
+		damage_modifier = flag ? INT_MIN : 0;
+	}
 }

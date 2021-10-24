@@ -250,9 +250,9 @@ enum class EnemyType {
 extern std::unordered_map<EnemyType, char*> enemy_type_to_string;
 
 // Slime:		Idle, Active, Flinched.
-// Raven:		Idle, Active, Flinched.
-// LivingArmor:	Idle, Active, Powerup.
-// TreeAnt:		Idle, Active, Immortal.
+// Raven:		Idle, Actives.
+// LivingArmor:	Idle, Active, Immortal.
+// TreeAnt:		Idle, Active, Powerup.
 enum class EnemyState {
 	Idle = 0,
 	Active = Idle + 1,

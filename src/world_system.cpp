@@ -245,9 +245,9 @@ void WorldSystem::restart_game()
 	player_arrow = create_arrow(player_location);
 	// Creates a single enemy instance, (TODO: needs to be updated with position based on grid)
 	// Also requires naming scheme for randomly generated enemies, for later reference
-	create_enemy(ColorState::Red, EnemyType::Slime, uvec2(12, 3));
-	create_enemy(ColorState::Red, EnemyType::Raven, uvec2(15, 3));
-	create_enemy(ColorState::Blue, EnemyType::Slime, uvec2(15, 4));
+	create_enemy(ColorState::Red, EnemyType::LivingArmor, uvec2(12, 3));
+	create_enemy(ColorState::Red, EnemyType::LivingArmor, uvec2(15, 3));
+	create_enemy(ColorState::Red, EnemyType::LivingArmor, uvec2(15, 4));
 }
 
 // Compute collisions between entities

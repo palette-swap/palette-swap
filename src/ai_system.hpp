@@ -44,9 +44,6 @@ private:
 	// Check if the player is reachable by an entity within its attack range.
 	bool is_player_in_attack_range(const Entity& entity, uint attack_range);
 
-	// Check if an entity is afraid.
-	bool is_afraid(const Entity& entity);
-
 	// Check if an entity is at its nest.
 	bool is_at_nest(const Entity& entity);
 
@@ -61,6 +58,12 @@ private:
 
 	// An entity moves to a targeted map position.
 	bool move(const Entity& entity, const uvec2& map_pos);
+
+	// Check if an entity's health is below a ratio.
+	bool is_health_below(const Entity& entity, float ratio);
+
+	// An entity become immortal if flag is true. Otherwise cancel immortality.
+	void become_immortal(const Entity& entity, bool flag);
 
 	// Shared resource: Combat system.
 	std::shared_ptr<CombatSystem> combat;
