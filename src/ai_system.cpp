@@ -21,29 +21,27 @@ void AISystem::step(float /*elapsed_ms*/)
 		return;
 	}
 
-	for (long long i = registry.enemy_states.entities.size() - 1; i >= 0; i--) {
-		const Entity& enemy_entity = registry.enemy_states.entities[i];
+	for (long long i = registry.enemies.entities.size() - 1; i >= 0; i--) {
+		const Entity& enemy_entity = registry.enemies.entities[i];
 
-		// TODO: Animate death instead of just removing
-		if (registry.stats.has(enemy_entity) && registry.stats.get(enemy_entity).health <= 0) {
-			registry.remove_all_components_of(enemy_entity);
+		if (remove_dead_entity(enemy_entity)) {
 			continue;
 		}
-    
-		EnemyState enemy_state = registry.enemy_states.components[i];
-		ColorState active_world_color = turns->get_active_color();
-    
-		if (((uint8_t)active_world_color & (uint8_t)enemy_state.team) > 0) {
-			switch (enemy_state.current_state) {
 
-			case ENEMY_STATE_ID::Idle:
+		const Enemy enemy = registry.enemies.components[i];
+
+		ColorState active_world_color = turns->get_active_color();
+		if (((uint8_t)active_world_color & (uint8_t)enemy.team) > 0) {
+			switch (enemy.state) {
+
+			case EnemyState::Idle:
 				if (is_player_spotted(enemy_entity, 3)) {
 					become_alert(enemy_entity);
-					switch_enemy_state(enemy_entity, ENEMY_STATE_ID::ACTIVE);
+					switch_enemy_state(enemy_entity, EnemyState::Active);
 				}
 				break;
 
-			case ENEMY_STATE_ID::ACTIVE:
+			case EnemyState::Active:
 				if (is_player_spotted(enemy_entity, 6)) {
 					if (is_player_reachable(enemy_entity, 1)) {
 						attack_player(enemy_entity);
@@ -52,23 +50,23 @@ void AISystem::step(float /*elapsed_ms*/)
 					}
 
 					if (is_afraid(enemy_entity)) {
-						switch_enemy_state(enemy_entity, ENEMY_STATE_ID::FLINCHED);
+						switch_enemy_state(enemy_entity, EnemyState::Flinched);
 					}
 				} else {
-					switch_enemy_state(enemy_entity, ENEMY_STATE_ID::Idle);
+					switch_enemy_state(enemy_entity, EnemyState::Idle);
 				}
 				break;
 
-			case ENEMY_STATE_ID::FLINCHED:
+			case EnemyState::Flinched:
 				if (is_at_nest(enemy_entity)) {
-					switch_enemy_state(enemy_entity, ENEMY_STATE_ID::Idle);
+					switch_enemy_state(enemy_entity, EnemyState::Idle);
 				} else {
 					approach_nest(enemy_entity);
 				}
 				break;
 
 			default:
-				throw std::runtime_error("Invalid Enemy State");
+				throw std::runtime_error("Invalid enemy state.");
 			}
 		}
 	}
@@ -76,34 +74,38 @@ void AISystem::step(float /*elapsed_ms*/)
 	turns->complete_team_action(enemy_team);
 }
 
-void AISystem::switch_enemy_state(const Entity& enemy_entity, ENEMY_STATE_ID enemy_state)
+bool AISystem::remove_dead_entity(const Entity& entity)
 {
-	ENEMY_STATE_ID& enemy_current_state = registry.enemy_states.get(enemy_entity).current_state;
-	TEXTURE_ASSET_ID& enemy_current_textrue = registry.render_requests.get(enemy_entity).used_texture;
-	vec3& enemy_current_color = registry.colors.get(enemy_entity);
+	// TODO: Animate death.
+	if (registry.stats.has(entity) && registry.stats.get(entity).health <= 0) {
+		registry.remove_all_components_of(entity);
+		return true;
+	}
+	return false;
+}
 
+void AISystem::switch_enemy_state(const Entity& enemy_entity, EnemyState enemy_state)
+{
+	registry.enemies.get(enemy_entity).state = enemy_state;
+
+	// TODO: Animate enemy state switch.
+	TEXTURE_ASSET_ID& enemy_current_textrue = registry.render_requests.get(enemy_entity).used_texture;
 	switch (enemy_state) {
 
-	case ENEMY_STATE_ID::Idle:
-		enemy_current_state = ENEMY_STATE_ID::Idle;
+	case EnemyState::Idle:
 		enemy_current_textrue = TEXTURE_ASSET_ID::SLIME;
-		enemy_current_color = { 1, 1, 1 };
 		break;
 
-	case ENEMY_STATE_ID::ACTIVE:
-		enemy_current_state = ENEMY_STATE_ID::ACTIVE;
+	case EnemyState::Active:
 		enemy_current_textrue = TEXTURE_ASSET_ID::SLIME_ALERT;
-		enemy_current_color = { 3, 1, 1 };
 		break;
 
-	case ENEMY_STATE_ID::FLINCHED:
-		enemy_current_state = ENEMY_STATE_ID::FLINCHED;
+	case EnemyState::Flinched:
 		enemy_current_textrue = TEXTURE_ASSET_ID::SLIME_FLINCHED;
-		enemy_current_color = { 1, 1, 1 };
 		break;
 
 	default:
-		throw std::runtime_error("Invalid Enemy State");
+		throw std::runtime_error("Invalid enemy state.");
 	}
 }
 
@@ -142,13 +144,13 @@ bool AISystem::is_at_nest(const Entity& entity)
 
 void AISystem::become_alert(const Entity& /*entity*/)
 {
-	// TODO: M2 add animation/sound.
+	// TODO: Animate alert.
 	printf("Enemy becomes alert!\n");
 }
 
 void AISystem::attack_player(const Entity& entity)
 {
-	// TODO: M2 add animation/sound and injure player.
+	// TODO: Animate attack.
 	printf("Enemy attacks player!\n");
 	Stats& stats = registry.stats.get(entity);
 	Stats& player_stats = registry.stats.get(registry.players.top_entity());
@@ -184,6 +186,7 @@ bool AISystem::approach_nest(const Entity& entity)
 
 bool AISystem::move(const Entity& entity, const uvec2& map_pos)
 {
+	// TODO: Animate move.
 	MapPosition& entity_map_pos = registry.map_positions.get(entity);
 	if (entity_map_pos.position != map_pos && map_generator->walkable(map_pos)) {
 		entity_map_pos.position = map_pos;

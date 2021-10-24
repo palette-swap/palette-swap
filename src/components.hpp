@@ -228,18 +228,18 @@ enum class ColorState { None = 0, Red = 1, Blue = 2, All = Blue + 1 };
 //-------------------------           AI            -------------------------
 //---------------------------------------------------------------------------
 
-// Simple 3-state state machine for enemy AI: IDLE, ACTIVE, FLINCHED.
-enum class ENEMY_STATE_ID { Idle = 0, ACTIVE = Idle + 1, FLINCHED = ACTIVE + 1 };
+enum class EnemyState { Idle = 0, Active = Idle + 1, Flinched = Active + 1 };
 
-// Structure to store enemy state.
-struct EnemyState {
+// Structure to store enemy information.
+struct Enemy {
 	ColorState team = ColorState::Red;
-	ENEMY_STATE_ID current_state = ENEMY_STATE_ID::Idle;
-	EnemyState(ColorState team) { this->team = team; }
+	EnemyState state = EnemyState::Idle;
+	Enemy(ColorState team) { this->team = team; }
 };
 
 struct RedDimension {
 };
+
 struct BlueDimension {
 };
 

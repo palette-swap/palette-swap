@@ -24,7 +24,7 @@ public:
 	ComponentContainer<Velocity> velocities;
 
 	// AI
-	ComponentContainer<EnemyState> enemy_states;
+	ComponentContainer<Enemy> enemies;
 	ComponentContainer<RedDimension> red_entities;
 	ComponentContainer<BlueDimension> blue_entities;
 	ComponentContainer<EnemyNestPosition> enemy_nest_positions;
@@ -52,7 +52,7 @@ private:
 		&colors,
 		&rooms,
 		&map_positions,
-		&enemy_states,
+		&enemies,
 		&red_entities,
 		&blue_entities,
 		&enemy_nest_positions,

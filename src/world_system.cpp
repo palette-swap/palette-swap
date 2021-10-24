@@ -444,9 +444,9 @@ void WorldSystem::change_color()
 	}
 
 	//ColorState active_color = turns->get_active_color();
-	//for (long long i = registry.enemy_states.entities.size() - 1; i >= 0; i--) { 
-	//	const Entity& enemy_entity = registry.enemy_states.entities[i];
-	//	if (((uint8_t)registry.enemy_states.get(enemy_entity).team & (uint8_t)active_color) == 0) {
+	//for (long long i = registry.enemies.entities.size() - 1; i >= 0; i--) { 
+	//	const Entity& enemy_entity = registry.enemies.entities[i];
+	//	if (((uint8_t)registry.enemies.get(enemy_entity).team & (uint8_t)active_color) == 0) {
 	//		registry.render_requests.get(enemy_entity).visible = false;
 	//	} else {
 	//		registry.render_requests.get(enemy_entity).visible = true;

@@ -19,8 +19,11 @@ public:
 	void step(float elapsed_ms);
 
 private:
+	// Remove an entity if it is dead.
+	bool remove_dead_entity(const Entity& entity);
+
 	// Switch enemy state.
-	void switch_enemy_state(const Entity& enemy_entity, ENEMY_STATE_ID enemy_state);
+	void switch_enemy_state(const Entity& enemy_entity, EnemyState enemy_state);
 
 	// Check if the player is spotted by an entity within its radius.
 	bool is_player_spotted(const Entity& entity, uint radius);

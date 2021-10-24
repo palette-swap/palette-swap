@@ -48,7 +48,7 @@ Entity create_enemy(uvec2 position, ColorState team)
 								   { TEXTURE_ASSET_ID::SLIME, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE });
 	registry.colors.insert(entity, { 1, 1, 1 });
 
-	registry.enemy_states.emplace(entity, team);
+	registry.enemies.emplace(entity, team);
 	if (((uint8_t)team & 0b01) > 0) {
 		registry.red_entities.emplace(entity);
 	}
