@@ -61,7 +61,7 @@ void AISystem::step(float /*elapsed_ms*/)
 
 void AISystem::execute_Slime(const Entity& slime)
 {
-	const Enemy enemy = registry.enemies.get(slime);
+	const Enemy& enemy = registry.enemies.get(slime);
 
 	switch (enemy.state) {
 
@@ -100,8 +100,37 @@ void AISystem::execute_Slime(const Entity& slime)
 	}
 }
 
-// TODO
-void AISystem::execute_Raven(const Entity& raven) { }
+void AISystem::execute_Raven(const Entity& raven) {
+	const Enemy& enemy = registry.enemies.get(raven);
+
+	switch (enemy.state) {
+
+	case EnemyState::Idle:
+		if (is_player_in_radius(raven, enemy.radius)) {
+			switch_enemy_state(raven, enemy.type, EnemyState::Active);
+		}
+		break;
+
+	case EnemyState::Active:
+		if (is_player_in_radius(raven, enemy.radius * 2)) {
+			if (is_player_in_attack_range(raven, enemy.attack_range)) {
+				attack_player(raven);
+			} else {
+				approach_player(raven, enemy.speed);
+			}
+		} else {
+			if (is_at_nest(raven)) {
+				switch_enemy_state(raven, enemy.type, EnemyState::Idle);
+			} else {
+				approach_nest(raven, enemy.speed);
+			}
+		}
+		break;
+
+	default:
+		throw std::runtime_error("Invalid enemy state of Raven.");
+	}
+}
 
 // TODO
 void AISystem::execute_LivingArmor(const Entity& living_armor) { }
