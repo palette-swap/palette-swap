@@ -27,7 +27,6 @@ public:
 	ComponentContainer<Enemy> enemies;
 	ComponentContainer<RedDimension> red_entities;
 	ComponentContainer<BlueDimension> blue_entities;
-	ComponentContainer<EnemyNestPosition> enemy_nest_positions;
 
 	// Physics
 	ComponentContainer<Hittable> hittables;
@@ -55,7 +54,6 @@ private:
 		&enemies,
 		&red_entities,
 		&blue_entities,
-		&enemy_nest_positions,
 		&hittables,
 		&active_projectiles,
 		&resolved_projectiles,

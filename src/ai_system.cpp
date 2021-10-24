@@ -21,7 +21,7 @@ void AISystem::step(float /*elapsed_ms*/)
 		return;
 	}
 
-	for (long long i = registry.enemies.entities.size() - 1; i >= 0; i--) {
+	for (long long i = registry.enemies.entities.size() - 1; i >= 0; --i) {
 		const Entity& enemy_entity = registry.enemies.entities[i];
 
 		if (remove_dead_entity(enemy_entity)) {
@@ -135,11 +135,10 @@ bool AISystem::is_afraid(const Entity& entity)
 
 bool AISystem::is_at_nest(const Entity& entity)
 {
-	assert(registry.enemy_nest_positions.has(entity));
-	uvec2 nest_map_pos = registry.enemy_nest_positions.get(entity).position;
-	uvec2 entity_map_pos = registry.map_positions.get(entity).position;
+	const uvec2& entity_map_pos = registry.map_positions.get(entity).position;
+	const uvec2& nest_map_pos = registry.enemies.get(entity).nest_map_pos;
 
-	return nest_map_pos == entity_map_pos;
+	return entity_map_pos == nest_map_pos;
 }
 
 void AISystem::become_alert(const Entity& /*entity*/)
@@ -172,9 +171,8 @@ bool AISystem::approach_player(const Entity& entity)
 
 bool AISystem::approach_nest(const Entity& entity)
 {
-	assert(registry.enemy_nest_positions.has(entity));
-	uvec2 nest_map_pos = registry.enemy_nest_positions.get(entity).position;
-	uvec2 entity_map_pos = registry.map_positions.get(entity).position;
+	const uvec2& entity_map_pos = registry.map_positions.get(entity).position;
+	const uvec2& nest_map_pos = registry.enemies.get(entity).nest_map_pos;
 
 	std::vector<uvec2> shortest_path = map_generator->shortest_path(entity_map_pos, nest_map_pos);
 	if (shortest_path.size() > 1) {

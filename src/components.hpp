@@ -224,33 +224,40 @@ struct TileMapVertex {
 
 enum class ColorState { None = 0, Red = 1, Blue = 2, All = Blue + 1 };
 
-//---------------------------------------------------------------------------
-//-------------------------           AI            -------------------------
-//---------------------------------------------------------------------------
-
-enum class EnemyState { Idle = 0, Active = Idle + 1, Flinched = Active + 1 };
-
-// Structure to store enemy information.
-struct Enemy {
-	ColorState team = ColorState::Red;
-	EnemyState state = EnemyState::Idle;
-	Enemy(ColorState team) { this->team = team; }
-};
-
 struct RedDimension {
 };
 
 struct BlueDimension {
 };
 
-// Structure to store enemy nest position.
-struct EnemyNestPosition {
-	uvec2 position;
-	EnemyNestPosition(const uvec2& position)
-		: position(position)
-	{
-		assert(position.x < MapUtility::map_size * MapUtility::room_size && position.y < MapUtility::map_size * MapUtility::room_size);
-	};
+//---------------------------------------------------------------------------
+//-------------------------           AI            -------------------------
+//---------------------------------------------------------------------------
+
+enum class EnemyType {
+	Slime = 0,					// IDLE, ACTIVE, FLINCHED.
+	Raven = Slime + 1,			// IDLE, ACTIVE, FLINCHED.
+	LivingArmor = Raven + 1,	// IDLE, ACTIVE, POWERUP.
+	TreeAnt = LivingArmor + 1	// IDLE, ACTIVE, IMMORTAL.
+};
+
+enum class EnemyState {
+	Idle = 0,
+	Active = Idle + 1,
+	Flinched = Active + 1,
+	Powerup = Flinched + 1,
+	Immortal = Powerup + 1
+};
+
+// Structure to store enemy information.
+struct Enemy {
+	ColorState team = ColorState::Red;
+	EnemyType type = EnemyType::Slime;
+	EnemyState state = EnemyState::Idle;
+
+	uvec2 nest_map_pos = { 0, 0 };
+	uint alert_radius = 3;
+	uint attack_range = 1;
 };
 
 //---------------------------------------------------------------------------

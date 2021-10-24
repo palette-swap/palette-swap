@@ -21,11 +21,11 @@ Entity create_player(uvec2 pos)
 
 // Repurposed into general create_enemy
 // TODO: add additional inputs to specify enemy type, current default is slug
-Entity create_enemy(uvec2 position, ColorState team)
+Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 {
 	auto entity = Entity();
 
-	registry.map_positions.emplace(entity, position);
+	registry.map_positions.emplace(entity, map_pos);
 
 	// Set up enemy stats to be weaker than the player
 	// TODO: Replace with load from file or auto-generate
@@ -38,7 +38,7 @@ Entity create_enemy(uvec2 position, ColorState team)
 	stats.base_attack.damage_max = 15;
 
 	// Maps position of enemy to actual position (for reference)
-	vec2 actual_position = MapUtility::map_position_to_screen_position(position);
+	vec2 actual_position = MapUtility::map_position_to_screen_position(map_pos);
 
 	// Indicates enemy is hittable by objects
 	registry.hittables.emplace(entity);
@@ -48,14 +48,19 @@ Entity create_enemy(uvec2 position, ColorState team)
 								   { TEXTURE_ASSET_ID::SLIME, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE });
 	registry.colors.insert(entity, { 1, 1, 1 });
 
-	registry.enemies.emplace(entity, team);
 	if (((uint8_t)team & 0b01) > 0) {
 		registry.red_entities.emplace(entity);
 	}
 	if (((uint8_t)team & 0b10) > 0) {
 		registry.blue_entities.emplace(entity);
 	}
-	registry.enemy_nest_positions.emplace(entity, position);
+
+	// Create enemy component for AI System.
+	registry.enemies.emplace(entity);
+	Enemy& enemy = registry.enemies.get(entity);
+	enemy.team = team;
+	enemy.type = type;
+	enemy.nest_map_pos = map_pos;
 
 	return entity;
 }
