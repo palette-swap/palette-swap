@@ -12,8 +12,9 @@ Entity create_player(uvec2 pos)
 
 	registry.render_requests.insert(entity,
 								   { TEXTURE_ASSET_ID::PALADIN, 
-									 EFFECT_ASSET_ID::TEXTURED,
-									 GEOMETRY_BUFFER_ID::SPRITE });
+									 EFFECT_ASSET_ID::ENEMY,
+									 GEOMETRY_BUFFER_ID::PLAYER });
+	registry.animations.emplace(entity);
 	registry.colors.insert(entity, { 1, 1, 1 });
 
 	return entity;
@@ -45,7 +46,9 @@ Entity create_enemy(uvec2 position, ColorState team)
 
 	// TODO: Switch out asset enum with call to animation system to request a specific enemy type)
 	registry.render_requests.insert(entity,
-								   { TEXTURE_ASSET_ID::SLIME, EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY });
+								   { TEXTURE_ASSET_ID::ARMOR, 
+									EFFECT_ASSET_ID::ENEMY, 
+									GEOMETRY_BUFFER_ID::ENEMY });
 	registry.colors.insert(entity, { 1, 1, 1 });
 
 	registry.enemy_states.emplace(entity, team);

@@ -32,7 +32,7 @@ class RenderSystem {
 	// and then uses path to grab sprites, stats, and behaviour
 	// Make sure these paths remain in sync with the associated enumerators.
 	const std::array<std::string, texture_count> texture_paths = {
-			textures_path("Character.png"),
+			textures_path("./01/Player Spritesheet.png"),
 			textures_path("./Slime/Slime Spritesheet.png"),
 			textures_path("./Living Armor/Living Armor Spritesheet.png"),
 			textures_path("./Treeant/Treeant Spritesheet.png"),
@@ -53,10 +53,12 @@ class RenderSystem {
 	// hierachy between animation and render system
 	// Filler for experimental spritesheet dimensions (3 rows and 4 columns)
 	// Will likely update to a standard square (regardless of rows or columns of actual sprites used)
-	static constexpr float spritesheet_width = 128.f;
-	static constexpr float spritesheet_height = 96.f;
+	static constexpr float spritesheet_width = 4.f;
+	static constexpr float spritesheet_height = 3.f;
 	// Should be kept in tune with tile size, but this remains to be seen
-	static constexpr float sprite_size = 32.f;
+	static constexpr float sprite_size = 1.f;
+	static constexpr float player_spritesheet_width = 8.f;
+	static constexpr float player_spritesheet_height = 4.f;
 
 	std::array<GLuint, geometry_count> vertex_buffers;
 	std::array<GLuint, geometry_count> index_buffers;

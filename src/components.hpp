@@ -110,6 +110,12 @@ struct EnemyVertex {
 	vec2 texcoord;
 };
 
+// Temp struct denoting PlayerVertices (specifies quad proportions from player spritesheet
+struct PlayerVertex {
+	vec3 position;
+	vec2 texcoord;
+};
+
 /**
  * The following enumerators represent global identifiers refering to graphic
  * assets. For example TEXTURE_ASSET_ID are the identifiers of each texture
@@ -173,7 +179,8 @@ constexpr int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 enum class GEOMETRY_BUFFER_ID : uint8_t {
 	SALMON = 0, 
 	SPRITE = SALMON + 1, 
-	ENEMY = SPRITE + 1,
+	PLAYER = SPRITE + 1,
+	ENEMY = PLAYER + 1,
 	LINE = ENEMY + 1,
 	DEBUG_LINE = LINE + 1,
 	SCREEN_TRIANGLE = DEBUG_LINE + 1,
