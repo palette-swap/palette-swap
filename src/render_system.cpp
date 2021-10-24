@@ -247,8 +247,7 @@ void RenderSystem::draw()
 	gl_has_errors();
 }
 
-// TODO: Update projection matrix to be based on camera
-// currently it's based on player
+// projection matrix based on position of camera entity
 mat3 RenderSystem::create_projection_matrix()
 {
 	// Fake projection matrix, scales with respect to window coordinates
@@ -267,13 +266,15 @@ mat3 RenderSystem::create_projection_matrix()
 	vec2 buffer_top_left, buffer_down_right;
 	std::tie(buffer_top_left, buffer_down_right) = CameraUtility::get_buffer_positions(camera_screen_position, w*screen_scale, h*screen_scale);
 
-	printf("window width, height: (%i, %i)\n", w, h);
+	//printf("window width, height: (%i, %i)\n", w, h);
 	//printf("buffer down right: (%f, %f)\n", buffer_down_right.x, buffer_down_right.y);
 
 	//printf("player position: (%f, %f)\n", player_position.x, player_position.y);
 
 	update_camera_position(camera_map_pos, player_position, buffer_top_left, buffer_down_right);
 	vec2 final_camera_screen_position = MapUtility::map_position_to_screen_position(camera_map_pos.position);
+
+	//printf("final camera pos: (%f, %f)\n", final_camera_screen_position.x, final_camera_screen_position.y);
 	
 	float right = final_camera_screen_position.x + w * screen_scale;
 	float left = final_camera_screen_position.x;
@@ -299,6 +300,7 @@ mat3 RenderSystem::create_projection_matrix()
 	}
 }
 
+ // update camera's map position when player move out of buffer
  void RenderSystem::update_camera_position(MapPosition& camera_map_pos,
 								 const vec2& player_pos,
 								 const vec2& buffer_top_left,

@@ -91,10 +91,15 @@ GLFWwindow* WorldSystem::create_window(int width, int height)
 	auto scroll_redirect = [](GLFWwindow* wnd, double /*_0*/, double _1) {
 		static_cast<WorldSystem*>(glfwGetWindowUserPointer(wnd))->on_mouse_scroll(static_cast<float>(_1));
 	};
+	auto resize_redirect = [](GLFWwindow* wnd, int width, int height) {
+		static_cast<WorldSystem*>(glfwGetWindowUserPointer(wnd))->on_resize(width, height);
+	};
 	glfwSetKeyCallback(window, key_redirect);
 	glfwSetCursorPosCallback(window, cursor_pos_redirect);
 	glfwSetMouseButtonCallback(window, mouse_click_redirect);
 	glfwSetScrollCallback(window, scroll_redirect);
+	glfwSetWindowSizeLimits(window, GLFW_DONT_CARE, GLFW_DONT_CARE, 1920, 1080);
+	glfwSetFramebufferSizeCallback(window, resize_redirect);
 
 	//////////////////////////////////////
 	// Loading music and sounds with SDL
@@ -479,3 +484,10 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 }
 
 void WorldSystem::on_mouse_scroll(float offset) { this->renderer->scale_on_scroll(offset); }
+
+// resize callback
+// TODO: update to scale the scene as not changed when window is resized
+void WorldSystem::on_resize(int width, int height) { 
+	glViewport(0, 0, width, height); 
+	printf("resizing\n");
+}
