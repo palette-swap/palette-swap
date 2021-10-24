@@ -29,6 +29,7 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 
 	// Set up enemy stats to be weaker than the player
 	// TODO: Replace with load from file or auto-generate
+	// TODO: Set different stats for each enemy type.
 	Stats& stats = registry.stats.emplace(entity);
 	stats.health = 50;
 	stats.health_max = 50;

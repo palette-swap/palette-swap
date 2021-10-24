@@ -238,7 +238,7 @@ struct BlueDimension {
 // Slime (cute coward): weak stats; run away when HP is low.
 // Raven (annoying bug): weak stats; large radius and fast speed.
 // LivingArmor (Immortal Hulk): normal stats; nearsighted; a certain chance to become immortal for one turn.
-// TreeAnt (Super Saiyan): normal stats; long attack range; power up by double its attack damage when HP is low.
+// TreeAnt (Super Saiyan): normal stats; long attack range; power up attack range and damage when HP is low.
 // TODO: Evan might wanna add description and trait for Wraith.
 enum class EnemyType {
 	Slime = 0,

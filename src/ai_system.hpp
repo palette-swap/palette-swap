@@ -18,7 +18,6 @@ public:
 
 	void step(float elapsed_ms);
 
-
 private:
 	// Execute state machine of Slime.
 	void execute_Slime(const Entity& slime);
@@ -64,6 +63,9 @@ private:
 
 	// An entity become immortal if flag is true. Otherwise cancel immortality.
 	void become_immortal(const Entity& entity, bool flag);
+
+	// An entity become powerup if flag is true. Otherwise cancel powerup.
+	void become_powerup(const Entity& entity, bool flag);
 
 	// Shared resource: Combat system.
 	std::shared_ptr<CombatSystem> combat;

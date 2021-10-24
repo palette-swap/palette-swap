@@ -170,9 +170,54 @@ void AISystem::execute_LivingArmor(const Entity& living_armor)
 	}
 }
 
-// TODO
-void AISystem::execute_TreeAnt(const Entity& tree_ant) {
-	
+void AISystem::execute_TreeAnt(const Entity& tree_ant)
+{
+	const Enemy& enemy = registry.enemies.get(tree_ant);
+
+	switch (enemy.state) {
+
+	case EnemyState::Idle:
+		if (is_player_in_radius(tree_ant, enemy.radius)) {
+			switch_enemy_state(tree_ant, enemy.type, EnemyState::Active);
+		}
+		break;
+
+	case EnemyState::Active:
+		if (is_player_in_radius(tree_ant, enemy.radius * 2)) {
+			if (is_player_in_attack_range(tree_ant, enemy.attack_range)) {
+				attack_player(tree_ant);
+			} else {
+				approach_player(tree_ant, enemy.speed);
+			}
+
+			if (is_health_below(tree_ant, 0.20f)) {
+				become_powerup(tree_ant, true);
+				switch_enemy_state(tree_ant, enemy.type, EnemyState::Powerup);
+			}
+		} else {
+			if (is_at_nest(tree_ant)) {
+				switch_enemy_state(tree_ant, enemy.type, EnemyState::Idle);
+			} else {
+				approach_nest(tree_ant, enemy.speed);
+			}
+		}
+		break;
+
+	case EnemyState::Powerup:
+		if (is_player_in_radius(tree_ant, enemy.radius * 2)) {
+			if (is_player_in_attack_range(tree_ant, enemy.attack_range * 2)) {
+				attack_player(tree_ant);
+			}
+			// TreeAnt can't move when it's powered up.
+		} else {
+			become_powerup(tree_ant, false);
+			switch_enemy_state(tree_ant, enemy.type, EnemyState::Active);
+		}
+		break;
+
+	default:
+		throw std::runtime_error("Invalid enemy state of LivingArmor.");
+	}
 }
 
 bool AISystem::remove_dead_entity(const Entity& entity)
@@ -303,5 +348,25 @@ void AISystem::become_immortal(const Entity& entity, bool flag)
 	Stats& stats = registry.stats.get(entity);
 	for (int& damage_modifier : stats.damage_modifiers) {
 		damage_modifier = flag ? INT_MIN : 0;
+	}
+}
+
+void AISystem::become_powerup(const Entity& entity, bool flag)
+{
+	Stats& stats = registry.stats.get(entity);
+	if (flag) {
+		stats.to_hit_bonus *= 2;
+		stats.base_attack.to_hit_min *= 2;
+		stats.base_attack.to_hit_max *= 2;
+		stats.damage_bonus *= 2;
+		stats.base_attack.damage_min *= 2;
+		stats.base_attack.damage_max *= 2;
+	} else {
+		stats.to_hit_bonus /= 2;
+		stats.base_attack.to_hit_min /= 2;
+		stats.base_attack.to_hit_max /= 2;
+		stats.damage_bonus /= 2;
+		stats.base_attack.damage_min /= 2;
+		stats.base_attack.damage_max /= 2;
 	}
 }
