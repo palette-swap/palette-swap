@@ -321,7 +321,8 @@ template <typename T> using SlotList = std::array<T, static_cast<size_t>(Slot::C
 
 struct Inventory {
 	std::map<std::string, Entity> inventory;
-	SlotList<Entity> equipped = { Entity::undefined() };
+	SlotList<Entity> equipped;
+	Inventory() { equipped.fill(Entity::undefined()); }
 };
 
 struct Item {
