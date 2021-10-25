@@ -334,7 +334,7 @@ struct Item {
 
 struct Weapon {
 	Weapon(std::vector<Attack> given_attacks)
-		: given_attacks(given_attacks)
+		: given_attacks(std::move(given_attacks))
 	{
 	}
 	// TODO: Potentially replace with intelligent direct/indirect container

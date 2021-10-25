@@ -130,21 +130,21 @@ Entity create_team()
 	return entity;
 }
 
-Entity create_item(std::string name, SlotList<bool> allowed_slots)
+Entity create_item(const std::string& name, SlotList<bool> allowed_slots)
 {
 	Entity entity = Entity();
-	registry.items.insert(entity, { std::move(name), 0.f, 0, allowed_slots });
+	registry.items.insert(entity, { name, 0.f, 0, allowed_slots });
 	return entity;
 }
 
-Entity create_weapon(std::string name, std::vector<Attack> attacks)
+Entity create_weapon(const std::string& name, std::vector<Attack> attacks)
 {
 	const SlotList<bool> weapon_slots = [] {
 		SlotList<bool> slots = { false };
 		slots[static_cast<uint8>(Slot::PrimaryHand)] = true;
 		return slots;
 	}();
-	Entity entity = create_item(std::move(name), weapon_slots);
+	Entity entity = create_item(name, weapon_slots);
 	registry.weapons.emplace(entity, std::move(attacks));
 	return entity;
 }
