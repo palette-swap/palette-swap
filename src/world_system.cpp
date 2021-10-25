@@ -237,6 +237,9 @@ void WorldSystem::restart_game()
 	uvec2 player_starting_point = uvec2(1, 1);
 	// Create a new Player instance and shift player onto a tile
 	player = create_player(player_starting_point);
+	// TODO: Should move into create_player (under world init) afterwards
+	animations->initialize_player_animation(player);
+
 	turns->add_team_to_queue(player);
 
 	// create camera instance
@@ -251,7 +254,7 @@ void WorldSystem::restart_game()
 	// Examle of how to assign animation to a specific enemy instance (likely to be changed to within world_init
 	// With create_enemy directly taking these inputs
 	Entity enemy1 = create_enemy(uvec2(12, 3));
-	//animations->create_enemy_animation(enemy1, TEXTURE_ASSET_ID::ARMOR, ColorState::Blue);
+	animations->set_enemy_animation(enemy1, TEXTURE_ASSET_ID::ARMOR, ColorState::Blue);
 	create_enemy(uvec2(15, 3));
 	create_enemy(uvec2(15, 4), ColorState::Blue);
 }

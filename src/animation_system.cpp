@@ -44,3 +44,21 @@ void AnimationSystem::set_enemy_animation(Entity enemy, TEXTURE_ASSET_ID enemy_t
 		enemy_color = { 1, 1, 1 };
 	}
 }
+
+void AnimationSystem:: initialize_player_animation(Entity player) {
+	Animation& player_animation = registry.animations.get(player);
+	vec3& player_color = registry.colors.get(player);
+	RenderRequest& player_render = registry.render_requests.get(player);
+
+	// Sets player rendering/animations to deafult values
+	player_color = { 1, 1, 1 };
+	player_animation.state = (int)player_animation_states::Idle;
+	player_animation.frame = 0;
+	player_animation.max_frames = player_num_frames;
+	player_animation.direction = 1;
+	player_animation.elapsed_time = 0;
+	player_animation.speed_adjustment = player_animation_speed;
+
+	// Loads specific enemy spritesheet desired
+	player_render = { TEXTURE_ASSET_ID::PALADIN, EFFECT_ASSET_ID::PLAYER, GEOMETRY_BUFFER_ID::PLAYER };
+}
