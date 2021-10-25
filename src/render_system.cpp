@@ -163,7 +163,7 @@ void RenderSystem::draw_to_screen()
 	gl_has_errors();
 	// Clearing backbuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, window_width_px, window_height_px);
+	glViewport(0, 0, screen_size.x, screen_size.y);
 	glDepthRange(0, 10);
 	glClearColor(1.f, 0, 0, 1.0);
 	glClearDepth(1.f);
@@ -218,7 +218,7 @@ void RenderSystem::draw()
 	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
 	gl_has_errors();
 	// Clearing backbuffer
-	glViewport(0, 0, window_width_px, window_height_px);
+	glViewport(0, 0, screen_size.x, screen_size.y);
 	glDepthRange(0.00001, 10);
 	glClearColor(0.5, 0.5, 0.5, 1.0);
 	glClearDepth(1.f);
@@ -298,6 +298,14 @@ mat3 RenderSystem::create_projection_matrix()
 	if (this->screen_scale - zoom > 0.1 && this->screen_scale - zoom <= 1.0) {
 		this->screen_scale -= zoom;
 	}
+}
+
+void RenderSystem::on_resize(int width, int height) {
+	screen_size = { width, height };
+
+	glBindTexture(GL_TEXTURE_2D, off_screen_render_buffer_color);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screen_size.x, screen_size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+	gl_has_errors();
 }
 
  // update camera's map position when player move out of buffer

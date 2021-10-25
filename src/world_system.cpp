@@ -487,7 +487,4 @@ void WorldSystem::on_mouse_scroll(float offset) { this->renderer->scale_on_scrol
 
 // resize callback
 // TODO: update to scale the scene as not changed when window is resized
-void WorldSystem::on_resize(int width, int height) { 
-	glViewport(0, 0, width, height); 
-	printf("resizing\n");
-}
+void WorldSystem::on_resize(int width, int height) { renderer->on_resize(width, height); }

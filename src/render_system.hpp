@@ -86,6 +86,8 @@ public:
 	mat3 create_projection_matrix();
 	void scale_on_scroll(float offset);
 
+	void on_resize(int width, int height);
+
 	float screen_scale; // Screen to pixel coordinates scale factor (for apple
 					// retina display?)
 
@@ -107,6 +109,7 @@ private:
 	GLuint off_screen_render_buffer_depth;
 
 	Entity screen_state_entity;
+	ivec2 screen_size = { window_width_px, window_height_px };
 };
 
 bool load_effect_from_file(const std::string& vs_path, const std::string& fs_path, GLuint& out_program);
