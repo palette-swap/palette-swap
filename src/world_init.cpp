@@ -17,6 +17,8 @@ Entity create_player(uvec2 pos)
 
 	Animation & player_animation = registry.animations.emplace(entity);
 	player_animation.max_frames = 6;
+	player_animation.state = 0;
+	player_animation.speed_adjustment = 1.5;
 
 	registry.colors.insert(entity, { 1, 1, 1 });
 	

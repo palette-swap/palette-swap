@@ -404,16 +404,21 @@ void WorldSystem::move_player(Direction direction)
 
 	MapPosition& map_pos = registry.map_positions.get(player);
 	WorldPosition& arrow_position = registry.world_positions.get(player_arrow);
+	Animation& player_animation = registry.animations.get(player);
 	// TODO: this should be removed once we only use map_position
 	uvec2 new_pos = map_pos.position;
 
 	if (direction == Direction::Left && map_pos.position.x > 0) {
 		new_pos = uvec2(map_pos.position.x - 1, map_pos.position.y);
+		// TODO: Change this to animation request instead of calling it here;
+		player_animation.direction = -1;
 	} else if (direction == Direction::Up && map_pos.position.y > 0) {
 		new_pos = uvec2(map_pos.position.x, map_pos.position.y - 1);
 	} else if (direction == Direction::Right
 			   && map_pos.position.x < MapUtility::room_size * MapUtility::tile_size - 1) {
 		new_pos = uvec2(map_pos.position.x + 1, map_pos.position.y);
+		// TODO: Change this to animation request instead of calling it here;
+		player_animation.direction = 1;
 	} else if (direction == Direction::Down && map_pos.position.y < MapUtility::room_size * MapUtility::tile_size - 1) {
 		new_pos = uvec2(map_pos.position.x, map_pos.position.y + 1);
 	}

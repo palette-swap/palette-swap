@@ -38,6 +38,7 @@ class RenderSystem {
 			textures_path("./Treeant/Treeant Spritesheet.png"),
 			textures_path("./Raven/Raven Spritesheet.png"),
 			textures_path("./Wraith/Wraith Spritesheet.png"),
+			textures_path("./Drake/Drake Spritesheet.png"),
 			textures_path("cannon_ball.png"),
 			textures_path("tile_set.png"), };
 

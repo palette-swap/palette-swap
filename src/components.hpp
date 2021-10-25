@@ -95,6 +95,7 @@ struct ResolvedProjectile {
 // Struct for denoting the frame that the rendering system should be rendering 
 // to the screen for a spritesheet
 struct Animation {
+	int direction = 1;
 	int frame = 0;
 	int max_frames = 1;
 	int state = 0;
@@ -148,7 +149,8 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 	TREEANT= ARMOR + 1,
 	RAVEN = TREEANT + 1,
 	WRAITH = RAVEN + 1,
-	CANNONBALL = WRAITH + 1,
+	DRAKE = WRAITH + 1,
+	CANNONBALL = DRAKE + 1,
 	TILE_SET = CANNONBALL + 1,
 	TEXTURE_COUNT = TILE_SET + 1
 };
@@ -157,6 +159,7 @@ const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 // Define the scaling factors needed for each textures
 // Note: This needs to stay the same order as TEXTURE_ASSET_ID and texture_paths
 static constexpr std::array<vec2, texture_count> scaling_factors = {
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
