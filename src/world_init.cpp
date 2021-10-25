@@ -1,5 +1,6 @@
 #include "world_init.hpp"
 #include "tiny_ecs_registry.hpp"
+#include "animation_system.hpp"
 
 Entity create_player(uvec2 pos)
 {
@@ -49,13 +50,6 @@ Entity create_enemy(uvec2 position, ColorState team)
 	// Indicates enemy is hittable by objects
 	registry.hittables.emplace(entity);
 
-	// TODO: Switch out asset enum with call to animation system to request a specific enemy type)
-	registry.render_requests.insert(entity,
-								   { TEXTURE_ASSET_ID::ARMOR, 
-									EFFECT_ASSET_ID::ENEMY, 
-									GEOMETRY_BUFFER_ID::ENEMY });
-	registry.colors.insert(entity, { 1, 1, 1 });
-
 	registry.enemy_states.emplace(entity, team);
 	if (((uint8_t)team & 0b01) > 0) {
 		registry.red_entities.emplace(entity);
@@ -63,6 +57,11 @@ Entity create_enemy(uvec2 position, ColorState team)
 	if (((uint8_t)team & 0b10) > 0) {
 		registry.blue_entities.emplace(entity);
 	}
+
+	// TODO: Switch out asset enum with call to animation system to request a specific enemy type)
+	registry.render_requests.insert(entity,
+									{ TEXTURE_ASSET_ID::ARMOR, EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY });
+	registry.colors.insert(entity, { 1, 1, 1 });
 
 	// TODO: Combine with render_requests above, so animation system handles render requests as a middleman
 	// Update animation number using animation system max frames, instead of this static number

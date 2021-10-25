@@ -25,5 +25,5 @@ public:
 	void init();
 	// Updates all animated entities based on elapsed time, changes their frame based on the time
 	void update_animations(float elapsed_ms);	
-	void create_enemy_animation(Entity enemy, TEXTURE_ASSET_ID enemy_type, ColorState color);
+	void set_enemy_animation(Entity enemy, TEXTURE_ASSET_ID enemy_type, ColorState color);
 };

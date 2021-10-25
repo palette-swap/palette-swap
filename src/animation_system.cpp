@@ -18,7 +18,7 @@ void AnimationSystem::update_animations(float elapsed_ms)
 }
 
 // TODO: Change texture asset id to enemy enum that Franky has implemented
-void AnimationSystem::create_enemy_animation(Entity enemy, TEXTURE_ASSET_ID enemy_type, ColorState color) {
+void AnimationSystem::set_enemy_animation(Entity enemy, TEXTURE_ASSET_ID enemy_type, ColorState color) {
 	Animation& enemy_animation = registry.animations.get(enemy);
 	RenderRequest& enemy_render = registry.render_requests.get(enemy);
 	vec3& enemy_color = registry.colors.get(enemy);
