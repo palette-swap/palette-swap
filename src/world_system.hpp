@@ -68,6 +68,9 @@ private:
 	Entity current_weapon;
 	size_t current_attack = 0;
 
+	// Flips color state.
+	void change_color();
+
 	// OpenGL window handle
 	GLFWwindow* window = nullptr;
 

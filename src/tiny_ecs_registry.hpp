@@ -25,6 +25,8 @@ public:
 
 	// AI
 	ComponentContainer<EnemyState> enemy_states;
+	ComponentContainer<RedDimension> red_entities;
+	ComponentContainer<BlueDimension> blue_entities;
 	ComponentContainer<EnemyNestPosition> enemy_nest_positions;
 
 	// Physics
@@ -62,6 +64,8 @@ private:
 
 		// AI
 		&enemy_states,
+		&red_entities,
+		&blue_entities,
 		&enemy_nest_positions,
 
 		// Physics

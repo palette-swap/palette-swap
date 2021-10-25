@@ -231,7 +231,7 @@ void WorldSystem::restart_game()
 	}
 
 	// a random starting position... probably need to update this
-	uvec2 player_starting_point = uvec2(51, 51);
+	uvec2 player_starting_point = uvec2(1, 1);
 	// Create a new Player instance and shift player onto a tile
 	player = create_player(player_starting_point);
 	turns->add_team_to_queue(player);
@@ -249,8 +249,9 @@ void WorldSystem::restart_game()
 	player_arrow = create_arrow(player_location);
 	// Creates a single enemy instance, (TODO: needs to be updated with position based on grid)
 	// Also requires naming scheme for randomly generated enemies, for later reference
-	create_enemy(uvec2(55, 56));
-	create_enemy(uvec2(58, 51));
+	create_enemy(uvec2(12, 3));
+	create_enemy(uvec2(15, 3));
+	create_enemy(uvec2(15, 4), ColorState::Blue);
 }
 
 // Compute collisions between entities
@@ -322,15 +323,12 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		if (key == GLFW_KEY_D) {
 			move_player(Direction::Right);
 		}
-
 		if (key == GLFW_KEY_A) {
 			move_player(Direction::Left);
 		}
-
 		if (key == GLFW_KEY_W) {
 			move_player(Direction::Up);
 		}
-
 		if (key == GLFW_KEY_S) {
 			move_player(Direction::Down);
 		}
@@ -354,9 +352,13 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 					   attack.to_hit_max,
 					   attack.damage_min,
 					   attack.damage_max,
-					   attack.targeting_type == TargetingType::Projectile ? "projectile" : "adjacent");
+					attack.targeting_type == TargetingType::Projectile ? "projectile" : "adjacent");
 			}
 		}
+	}
+
+	if (key == GLFW_KEY_EQUAL) {
+		change_color();
 	}
 
 	// Resetting game
@@ -472,6 +474,31 @@ void WorldSystem::equip_next_weapon()
 		printf("Switched weapon to %s\n", registry.items.get(curr).name.c_str());
 		turns->complete_team_action(player);
 	}
+}
+
+void WorldSystem::change_color() 
+{ 
+	switch (turns->get_active_color()) {
+	case ColorState::Red:
+		turns->set_active_color(ColorState::Blue);
+		break;
+	case ColorState::Blue:
+		turns->set_active_color(ColorState::Red);
+		break;
+	default:
+		turns->set_active_color(ColorState::Red);
+		break;
+	}
+
+	//ColorState active_color = turns->get_active_color();
+	//for (long long i = registry.enemy_states.entities.size() - 1; i >= 0; i--) { 
+	//	const Entity& enemy_entity = registry.enemy_states.entities[i];
+	//	if (((uint8_t)registry.enemy_states.get(enemy_entity).team & (uint8_t)active_color) == 0) {
+	//		registry.render_requests.get(enemy_entity).visible = false;
+	//	} else {
+	//		registry.render_requests.get(enemy_entity).visible = true;
+	//	}
+	//}
 }
 
 // Fires arrow at a preset speed if it has not been fired already
