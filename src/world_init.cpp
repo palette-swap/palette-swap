@@ -63,6 +63,7 @@ Entity create_enemy(uvec2 position, ColorState team)
 	if (((uint8_t)team & 0b10) > 0) {
 		registry.blue_entities.emplace(entity);
 	}
+
 	// TODO: Combine with render_requests above, so animation system handles render requests as a middleman
 	// Update animation number using animation system max frames, instead of this static number
 	Animation& enemy_animation = registry.animations.emplace(entity);

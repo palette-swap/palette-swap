@@ -25,7 +25,8 @@ public:
 	WorldSystem(Debug& debugging,
 				std::shared_ptr<CombatSystem> combat,
 				std::shared_ptr<MapGeneratorSystem> map,
-				std::shared_ptr<TurnSystem> turns);
+				std::shared_ptr<TurnSystem> turns,
+				std::shared_ptr<AnimationSystem> animations);
 
 	// Creates a window
 	GLFWwindow* create_window(int width, int height);
@@ -95,4 +96,5 @@ private:
 	std::shared_ptr<CombatSystem> combat;
 	std::shared_ptr<MapGeneratorSystem> map_generator;
 	std::shared_ptr<TurnSystem> turns;
+	std::shared_ptr<AnimationSystem> animations;
 };

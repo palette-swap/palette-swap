@@ -12,13 +12,16 @@
 WorldSystem::WorldSystem(Debug& debugging,
 						 std::shared_ptr<CombatSystem> combat,
 						 std::shared_ptr<MapGeneratorSystem> map,
-						 std::shared_ptr<TurnSystem> turns)
+						 std::shared_ptr<TurnSystem> turns,
+						 std::shared_ptr<AnimationSystem> animations)
+					
 	: points(0)
 	, debugging(debugging)
 	, rng(std::make_shared<std::default_random_engine>(std::default_random_engine(std::random_device()())))
 	, combat(std::move(combat))
 	, map_generator(std::move(map))
 	, turns(std::move(turns))
+	, animations(std::move(animations))
 {
 	this->combat->init(rng);
 }
@@ -245,7 +248,10 @@ void WorldSystem::restart_game()
 	player_arrow = create_arrow(player_location);
 	// Creates a single enemy instance, (TODO: needs to be updated with position based on grid)
 	// Also requires naming scheme for randomly generated enemies, for later reference
-	create_enemy(uvec2(12, 3));
+	// Examle of how to assign animation to a specific enemy instance (likely to be changed to within world_init
+	// With create_enemy directly taking these inputs
+	Entity enemy1 = create_enemy(uvec2(12, 3));
+	animations->create_enemy_animation(enemy1, TEXTURE_ASSET_ID::ARMOR, ColorState::Blue);
 	create_enemy(uvec2(15, 3));
 	create_enemy(uvec2(15, 4), ColorState::Blue);
 }

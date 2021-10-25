@@ -16,10 +16,14 @@ static constexpr int enemy_num_frames = 4;
 static constexpr int base_animation_speed = 150;
 static constexpr int player_frames = 6;
 
+static constexpr vec3 default_enemy_red = { 2, 1, 1 };
+static constexpr vec3 default_enemy_blue = { 1, 1, 2 };
+
 class AnimationSystem {
 
 public:
 	void init();
 	// Updates all animated entities based on elapsed time, changes their frame based on the time
 	void update_animations(float elapsed_ms);	
+	void create_enemy_animation(Entity enemy, TEXTURE_ASSET_ID enemy_type, ColorState color);
 };
