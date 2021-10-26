@@ -31,8 +31,13 @@ void AnimationSystem::resolve_event_animations()
 			// Restores animation back to default before event animation was called
 			actual_animation.speed_adjustment = event_animation.restore_speed;
 			actual_animation.state = event_animation.restore_state;
+			bool turn_trigger = event_animation.turn_trigger;
 			// Removes event animation from registry
 			registry.event_animations.remove(animation_entity);
+			// If event animation should trigger turn over for the entity, triggers it here
+			if (turn_trigger == true) {
+
+			}
 		} else {
 			event_animation.frame = actual_animation.frame;
 		}
@@ -110,6 +115,7 @@ void AnimationSystem::player_attack_animation(Entity player) {
 		// Stores restoration states for the player's animations, to be called after animation event is resolved
 		player_melee.restore_speed = player_animation.speed_adjustment;
 		player_melee.restore_state = player_animation.state;
+		player_melee.turn_trigger = true;
 
 		// Sets animation state to be the beginning of the melee animation
 		player_animation.state = (int)player_animation_states::Melee;
@@ -117,6 +123,31 @@ void AnimationSystem::player_attack_animation(Entity player) {
 		player_animation.speed_adjustment = player_melee_speed;
 	}
 
+	// TODO: Add callback after player attack completes
+}
+
+void AnimationSystem::player_running_animation(Entity player)
+{
+	Animation& player_animation = registry.animations.get(player);
+
+	if (!registry.event_animations.has(player)) {
+		Event_Animation player_melee = registry.event_animations.emplace(player);
+
+		// Stores restoration states for the player's animations, to be called after animation event is resolved
+		player_melee.restore_speed = player_animation.speed_adjustment;
+		player_melee.restore_state = player_animation.state;
+
+		// Sets animation state to be the beginning of the melee animation
+		player_animation.state = (int)player_animation_states::Running;
+		player_animation.frame = 0;
+		player_animation.speed_adjustment = player_running_speed;
+	}
 
 	// TODO: Add callback after player attack completes
+}
+
+void AnimationSystem::damage_animation(Entity entity) 
+{ 
+	Animation& entity_animation = registry.animations.get(entity); 
+	vec3& entity_color = registry.colors.get(entity);
 }

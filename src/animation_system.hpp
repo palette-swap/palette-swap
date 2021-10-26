@@ -23,7 +23,7 @@ static constexpr float player_animation_speed = 1.2;
 // Used for melee animation attack speeds for the player
 static constexpr float player_melee_speed = 2;
 static constexpr float player_heavy_melee_speed = 1;
-
+static constexpr float player_running_speed = 2;
 // Value denoting the animation states for the player
 // KEEP ALIGNED WITH STATES REPRESENTED IN PLAYER SPRITESHEET
 enum class player_animation_states { Idle = 0, Spellcast = 1, Melee = 2, Running = 3 };
@@ -38,15 +38,31 @@ public:
 	void init();
 	// Updates all animated entities based on elapsed time, changes their frame based on the time
 	void update_animations(float elapsed_ms);	
-	// helper function, checks event animation components to see if they should be removed, and animation states should be restored
-	void resolve_event_animations();
+	// Sets direction for an animated sprite, such that it faces either left or right
+	void set_sprite_direction(Entity sprite, Sprite_Direction);
+
 	// Sets an enemy entity to have the correct render texture, and color state
 	void set_enemy_animation(Entity enemy, TEXTURE_ASSET_ID enemy_type, ColorState color);
+
 	// initializes animation values for a player entity
 	// NOTE: weird things will happen if the entity initialized as player is not a player
 	void initialize_player_animation(Entity player);
-	// Sets direction for an animated sprite, such that it faces either left or right
-	void set_sprite_direction(Entity sprite, Sprite_Direction);
+	// TODO: Maybe generalize these two event animations to a general one
 	// Triggers attack animation for a entity specified as the player
+
+	// TODO: Add callback to confirm that a turn has ended
 	void player_attack_animation(Entity player);
+	// Triggers running animation for a entity specified as the player
+	void player_running_animation(Entity player);
+
+	// Triggers an animation to display that an entity has taken damage
+	// For now, this is just a colour change. Will change in next version however
+	void damage_animation(Entity entity);
+
+private:
+	// helper function, checks event animation components to see if they should be removed, and animation states should
+	// be restored
+	void resolve_event_animations();
 };
+
+

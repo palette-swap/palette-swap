@@ -443,15 +443,19 @@ void WorldSystem::move_player(Direction direction)
 		new_pos = uvec2(map_pos.position.x - 1, map_pos.position.y);
 		// TODO: Change this to animation request instead of calling it here;
 		player_animation.direction = -1;
+		animations->player_running_animation(player);
 	} else if (direction == Direction::Up && map_pos.position.y > 0) {
 		new_pos = uvec2(map_pos.position.x, map_pos.position.y - 1);
+		animations->player_running_animation(player);
 	} else if (direction == Direction::Right
 			   && map_pos.position.x < MapUtility::room_size * MapUtility::tile_size - 1) {
 		new_pos = uvec2(map_pos.position.x + 1, map_pos.position.y);
 		// TODO: Change this to animation request instead of calling it here;
 		player_animation.direction = 1;
+		animations->player_running_animation(player);
 	} else if (direction == Direction::Down && map_pos.position.y < MapUtility::room_size * MapUtility::tile_size - 1) {
 		new_pos = uvec2(map_pos.position.x, map_pos.position.y + 1);
+		animations->player_running_animation(player);
 	}
 
 	if (map_pos.position == new_pos || !map_generator->walkable(new_pos) || !turns->execute_team_action(player)) {

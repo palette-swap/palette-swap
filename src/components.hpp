@@ -109,6 +109,7 @@ struct Animation {
 // animations after the irregular event animation completes
 // TODO: Replace 
 struct Event_Animation {
+	bool turn_trigger = false;
 	float speed_adjustment = 1;
 	int restore_state = 0;
 	float restore_speed = 1;
