@@ -18,6 +18,7 @@ public:
 	// Rendering
 	ComponentContainer<Animation> animations;
 	ComponentContainer<RenderRequest> render_requests;
+	ComponentContainer<Event_Animation> event_animations;
 	ComponentContainer<vec3> colors;
 
 	// Map Generator
@@ -55,9 +56,12 @@ private:
 		&players,
 		&mesh_ptrs,
 		&screen_states,
+
+		// Rendering/Animations
 		&debug_components,
 		&render_requests,
 		&colors,
+		&event_animations,
 		&animations,
 
 		// Map Generator

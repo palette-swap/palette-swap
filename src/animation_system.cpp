@@ -13,12 +13,37 @@ void AnimationSystem::update_animations(float elapsed_ms)
 			animation.elapsed_time = 0;
 			animation.frame = ((animation.frame) + 1) % animation.max_frames;
 		}
-		
+	}
+
+	resolve_event_animations();
+}
+
+void AnimationSystem::resolve_event_animations()
+{
+	for (Entity animation_entity : registry.event_animations.entities) {
+		Event_Animation& event_animation = registry.event_animations.get(animation_entity);
+		Animation& actual_animation = registry.animations.get(animation_entity);
+
+		// Checks if the animation frame had been reset to 0. If true, this means event animation has completed
+		// TODO: Change to be a different check, this current one is a bit iffy, and is reliant on there being at least two
+		// frames in all event animations (which is technically correct since it's an "animation", but a bit iffy)
+		if (actual_animation.frame < event_animation.frame) {
+			// Restores animation back to default before event animation was called
+			actual_animation.speed_adjustment = event_animation.restore_speed;
+			actual_animation.state = event_animation.restore_state;
+			// Removes event animation from registry
+			registry.event_animations.remove(animation_entity);
+		} else {
+			event_animation.frame = actual_animation.frame;
+		}
+
+
 	}
 }
 
 // TODO: Change texture asset id to enemy enum that Franky has implemented
-void AnimationSystem::set_enemy_animation(Entity enemy, TEXTURE_ASSET_ID enemy_type, ColorState color) {
+void AnimationSystem::set_enemy_animation(Entity enemy, TEXTURE_ASSET_ID enemy_type, ColorState color) 
+{
 	Animation& enemy_animation = registry.animations.get(enemy);
 	RenderRequest& enemy_render = registry.render_requests.get(enemy);
 	vec3& enemy_color = registry.colors.get(enemy);
@@ -74,5 +99,24 @@ void AnimationSystem::set_sprite_direction(Entity sprite, Sprite_Direction direc
 	} else {
 		sprite_animation.direction = 1;	
 	}
+}
 
+void AnimationSystem::player_attack_animation(Entity player) {
+	Animation& player_animation = registry.animations.get(player);
+
+	if (!registry.event_animations.has(player)) {
+		Event_Animation player_melee = registry.event_animations.emplace(player);
+
+		// Stores restoration states for the player's animations, to be called after animation event is resolved
+		player_melee.restore_speed = player_animation.speed_adjustment;
+		player_melee.restore_state = player_animation.state;
+
+		// Sets animation state to be the beginning of the melee animation
+		player_animation.state = (int)player_animation_states::Melee;
+		player_animation.frame = 0;
+		player_animation.speed_adjustment = player_melee_speed;
+	}
+
+
+	// TODO: Add callback after player attack completes
 }

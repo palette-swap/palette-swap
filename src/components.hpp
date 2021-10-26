@@ -105,6 +105,16 @@ struct Animation {
 	float elapsed_time = 0;
 };
 
+// Struct denoting irregular animation events (ie attacking, containing information to restore an entity's
+// animations after the irregular event animation completes
+// TODO: Replace 
+struct Event_Animation {
+	float speed_adjustment = 1;
+	int restore_state = 0;
+	float restore_speed = 1;
+	int frame = 0;
+};
+
 // Test Texture Buffer element for enemies
 // TODO: change to animated vertices after bringing player into this 3D element group
 struct EnemyVertex {

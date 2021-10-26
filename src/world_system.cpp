@@ -347,6 +347,11 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 			equip_next_weapon();
 		}
 
+		// Trigger Attack key (TEMPORARILY, JUST TO CHECK THAT ATTACK ANIMATION IS WORKING)
+		if (key == GLFW_KEY_T) {
+			animations->player_attack_animation(player);
+		}
+
 		// Change attack
 		// TODO: Generalize for many attacks, check out of bounds
 		// Key Codes for 1-9
