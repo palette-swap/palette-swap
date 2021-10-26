@@ -13,7 +13,7 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 	Transform transform;
 	if (registry.map_positions.has(entity)) {
 		MapPosition& map_position = registry.map_positions.get(entity);
-		transform.translate(MapUtility::map_position_to_screen_position(map_position.position));
+		transform.translate(MapUtility::map_position_to_world_position(map_position.position));
 	}
 	else {
 		// Most objects in the game are expected to use MapPosition, exceptions are:
@@ -256,21 +256,27 @@ mat3 RenderSystem::create_projection_matrix()
 	glfwGetFramebufferSize(window, &w, &h);
 	gl_has_errors();
 
+	vec2 top_left = get_top_left();
+	vec2 bottom_right = top_left + (vec2(w,h) * screen_scale);
+
+	float sx = 2.f / (w * screen_scale);
+	float sy = -2.f / (h * screen_scale);
+	float tx = -(bottom_right.x + top_left.x) / (w * screen_scale);
+	float ty = (bottom_right.y + top_left.y) / (h * screen_scale);
+	return { { sx, 0.f, 0.f }, { 0.f, sy, 0.f }, { tx, ty, 1.f } };
+}
+
+vec2 RenderSystem::get_top_left()
+{
+	// Fake projection matrix, scales with respect to window coordinates
+	int w, h;
+	glfwGetFramebufferSize(window, &w, &h);
+	gl_has_errors();
+
 	// set up 4 sides of window based on player
 	Entity player = registry.players.top_entity();
-	vec2 position = MapUtility::map_position_to_screen_position(registry.map_positions.get(player).position);
-
-	
-	float right = position.x + w * screen_scale / 2.f;
-	float left = position.x - w * screen_scale / 2.f;
-	float top = position.y - h * screen_scale / 2.f;
-	float bottom = position.y + h * screen_scale / 2.f;
-
-	float sx = 2.f / (right - left);
-	float sy = 2.f / (top - bottom);
-	float tx = -(right + left) / (right - left);
-	float ty = -(top + bottom) / (top - bottom);
-	return { { sx, 0.f, 0.f }, { 0.f, sy, 0.f }, { tx, ty, 1.f } };
+	vec2 position = MapUtility::map_position_to_world_position(registry.map_positions.get(player).position);
+	return { position.x - w * screen_scale / 2.f, position.y - h * screen_scale / 2.f };
 }
 
  void RenderSystem::scale_on_scroll(float offset)

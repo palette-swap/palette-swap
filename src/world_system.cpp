@@ -235,13 +235,17 @@ void WorldSystem::restart_game()
 	// Create a new Player instance and shift player onto a tile
 	player = create_player(player_starting_point);
 	turns->add_team_to_queue(player);
+	// Reset current weapon & attack
+	Inventory& inventory = registry.inventories.get(player);
+	current_weapon = inventory.equipped[static_cast<uint8>(Slot::PrimaryHand)];
+	current_attack = 0;
 
 	// create camera instance
 	camera = create_camera(
 		{ (player_starting_point.x - 20), (player_starting_point.y - 20) }, { 23, 23 }, player_starting_point);
 
 	// Create a new player arrow instance
-	vec2 player_location = MapUtility::map_position_to_screen_position(player_starting_point);
+	vec2 player_location = MapUtility::map_position_to_world_position(player_starting_point);
 	player_arrow = create_arrow(player_location);
 	// Creates a single enemy instance, (TODO: needs to be updated with position based on grid)
 	// Also requires naming scheme for randomly generated enemies, for later reference
@@ -274,14 +278,15 @@ void WorldSystem::handle_collisions()
 				if (registry.stats.has(entity_other)) {
 					Stats& player_stats = registry.stats.get(player);
 					Stats& enemy_stats = registry.stats.get(entity_other);
-					combat->do_attack(player_stats, player_stats.base_attack, enemy_stats);
+					combat->do_attack(
+						player_stats, registry.weapons.get(current_weapon).given_attacks[current_attack], enemy_stats);
 				}
 
 				// Stops projectile motion, adds projectile to list of resolved projectiles
 				registry.resolved_projectiles.emplace(entity);
 			} else {
 				// Checks if projectile's head has hit a wall
-				uvec2 projectile_location = (MapUtility::screen_position_to_map_position(
+				uvec2 projectile_location = (MapUtility::world_position_to_map_position(
 					registry.world_positions.get(entity).position + projectile.head_offset));
 
 				// Hacky way, using the same check for the player's "walkable"
@@ -315,26 +320,49 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 {
 	if (turns && action != GLFW_RELEASE) {
 
-		if (key == GLFW_KEY_RIGHT) {
+		if (key == GLFW_KEY_D) {
 			move_player(Direction::Right);
 		}
-		if (key == GLFW_KEY_LEFT) {
+		if (key == GLFW_KEY_A) {
 			move_player(Direction::Left);
 		}
-		if (key == GLFW_KEY_UP) {
+		if (key == GLFW_KEY_W) {
 			move_player(Direction::Up);
 		}
-		if (key == GLFW_KEY_DOWN) {
+		if (key == GLFW_KEY_S) {
 			move_player(Direction::Down);
 		}
-		
-		if (key == GLFW_KEY_EQUAL) {
-			change_color();
+
+		// Change weapon
+		if (key == GLFW_KEY_E) {
+			equip_next_weapon();
+		}
+
+		// Change attack
+		// TODO: Generalize for many attacks, check out of bounds
+		// Key Codes for 1-9
+		if (49 <= key && key <= 57) {
+			const std::vector<Attack>& attacks = registry.weapons.get(current_weapon).given_attacks;
+			if (key - 49 < attacks.size()) {
+				current_attack = key - 49;
+				const Attack& attack = attacks[current_attack];
+				printf("%s Attack: %i-%i attack, %i-%i dmg, %s \n",
+					   attack.name.c_str(),
+					   attack.to_hit_min,
+					   attack.to_hit_max,
+					   attack.damage_min,
+					   attack.damage_max,
+					attack.targeting_type == TargetingType::Projectile ? "projectile" : "adjacent");
+			}
 		}
 	}
 
+	if (key == GLFW_KEY_EQUAL) {
+		change_color();
+	}
+
 	// Resetting game
-	if (action == GLFW_RELEASE && key == GLFW_KEY_R) {
+	if (action == GLFW_RELEASE && (mod & GLFW_MOD_ALT) != 0 && key == GLFW_KEY_R) {
 		// int w, h;
 		// glfwGetWindowSize(window, &w, &h);
 
@@ -342,7 +370,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 	}
 
 	// Debugging
-	if (key == GLFW_KEY_D) {
+	if (key == GLFW_KEY_D && (mod & GLFW_MOD_ALT) != 0) {
 		debugging.in_debug_mode = action != GLFW_RELEASE;
 	}
 
@@ -365,27 +393,16 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 {
 	if (!player_arrow_fired) {
 
-		int w, h;
-		glfwGetFramebufferSize(window, &w, &h);
-		vec2 position = MapUtility::map_position_to_screen_position(registry.map_positions.get(player).position);
-
-		float left = position.x - w * renderer->screen_scale / 2.f;
-		float top = position.y - h * renderer->screen_scale / 2.f;
-
-		vec2 mouse_screen_position = mouse_position * renderer->screen_scale + vec2(left, top);
-
-		// The mouse_position has to be adjusted to screen position (screen position might be a bad naming since it's
-		// actually world position). The above code I borrowed from RenderSystem::create_projection_matrix(). In the
-		// future, we can wrap left/top/right/bottom/screen_scale into camera component, so you can easily access them.
+		vec2 mouse_world_position = mouse_position * renderer->screen_scale + renderer->get_top_left();
 
 		Velocity& arrow_velocity = registry.velocities.get(player_arrow);
 		WorldPosition& arrow_position = registry.world_positions.get(player_arrow);
 		MapPosition& player_map_position = registry.map_positions.get(player);
 
-		vec2 player_screen_position = MapUtility::map_position_to_screen_position(player_map_position.position);
+		vec2 player_screen_position = MapUtility::map_position_to_world_position(player_map_position.position);
 
 		// Calculated Euclidean difference between player and arrow
-		vec2 eucl_diff = mouse_screen_position - player_screen_position;
+		vec2 eucl_diff = mouse_world_position - player_screen_position;
 
 		// Calculates arrow position based on position of mouse relative to player
 		vec2 new_arrow_position = normalize(eucl_diff) * 20.f + player_screen_position;
@@ -429,6 +446,36 @@ void WorldSystem::move_player(Direction direction)
 	turns->complete_team_action(player);
 }
 
+void WorldSystem::equip_next_weapon()
+{
+	if (turns->get_active_team() != player) {
+		return;
+	}
+	Inventory& inventory = registry.inventories.get(player);
+	Entity& curr = inventory.equipped[static_cast<uint8>(Slot::PrimaryHand)];
+	auto next = inventory.inventory.upper_bound(registry.items.get(curr).name);
+	if (next == inventory.inventory.end()) {
+		next = inventory.inventory.begin();
+	}
+	while (next->second != curr) {
+		if (registry.items.get(next->second).allowed_slots[static_cast<uint8>(Slot::PrimaryHand)]) {
+			break;
+		}
+		if (next == inventory.inventory.end()) {
+			next = inventory.inventory.begin();
+		} else {
+			next++;
+		}
+	};
+	if (curr != next->second && turns->execute_team_action(player)) {
+		curr = next->second;
+		current_weapon = curr;
+		current_attack = 0;
+		printf("Switched weapon to %s\n", registry.items.get(curr).name.c_str());
+		turns->complete_team_action(player);
+	}
+}
+
 void WorldSystem::change_color() 
 { 
 	switch (turns->get_active_color()) {
@@ -459,7 +506,9 @@ void WorldSystem::change_color()
 void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 {
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-		if (!player_arrow_fired && turns->execute_team_action(player)) {
+		Attack& attack = registry.weapons.get(current_weapon).given_attacks[current_attack];
+		if (!player_arrow_fired && attack.targeting_type == TargetingType::Projectile
+			&& turns->execute_team_action(player)) {
 			player_arrow_fired = true;
 			// Arrow becomes a projectile the moment it leaves the player, not while it's direction is being selected
 			ActiveProjectile& arrow_projectile = registry.active_projectiles.emplace(player_arrow);
@@ -474,6 +523,30 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 			// TODO: Add better arrow physics potentially?
 			// arrow_velocity.velocity
 			//	= { sin(arrow_motion.angle) * projectile_speed, -cos(arrow_motion.angle) * projectile_speed };
+		} else if (attack.targeting_type == TargetingType::Adjacent && turns->get_active_team() == player) {
+			// Get screen position of mouse
+			dvec2 mouse_screen_pos;
+			glfwGetCursorPos(window, &mouse_screen_pos.x, &mouse_screen_pos.y);
+
+			// Convert to world pos
+			vec2 mouse_world_pos = vec2(mouse_screen_pos) * renderer->screen_scale + renderer->get_top_left();
+
+			// Get map_positions to compare
+			uvec2 mouse_map_pos = MapUtility::world_position_to_map_position(mouse_world_pos);
+			uvec2 player_pos = registry.map_positions.get(player).position;
+			ivec2 distance = mouse_map_pos - player_pos;
+			if (abs(distance.x) > 1 || abs(distance.y) > 1
+				|| !turns->execute_team_action(player)) {
+				return;
+			}
+			for (const auto& target : registry.stats.entities) {
+				if (registry.map_positions.get(target).position == mouse_map_pos) {
+					Stats& player_stats = registry.stats.get(player);
+					Stats& enemy_stats = registry.stats.get(target);
+					combat->do_attack(player_stats, attack, enemy_stats);
+				}
+			}
+			turns->complete_team_action(player);
 		}
 	}
 }
