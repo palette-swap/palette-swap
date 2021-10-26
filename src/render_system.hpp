@@ -7,6 +7,8 @@
 #include "components.hpp"
 #include "tiny_ecs.hpp"
 
+#include "map_generator_system.hpp"
+
 // System responsible for setting up OpenGL and for rendering all the
 // visual entities in the game
 class RenderSystem {

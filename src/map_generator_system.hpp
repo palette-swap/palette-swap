@@ -1,12 +1,9 @@
 #pragma once
 
 #include "common.hpp"
+#include "map_utility.hpp"
 
 #include <array>
-
-namespace MapUtility {
-	static constexpr uint8_t num_room = 6;
-}
 
 // Manages and store the generated maps
 class MapGeneratorSystem {
@@ -59,6 +56,9 @@ public:
 
 	// Check if a position on the map is walkable for the player
 	bool walkable(uvec2 pos) const;
+
+	// Check if a position on the map is walkable for the player and there's currently no entity in it
+	bool walkable_and_free(uvec2 pos) const;
 
 	// Check if a position on the map is a wall
 	bool is_wall(uvec2 pos) const;

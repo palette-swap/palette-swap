@@ -2,13 +2,12 @@
 #include "../ext/stb_image/stb_image.h"
 #include "common.hpp"
 
+#include "map_utility.hpp"
+
 #include <array>
 #include <unordered_map>
 
 #include "../ext/stb_image/stb_image.h"
-
-#include <predefined_room.hpp>
-#include "map_generator_system.hpp"
 
 // Player component
 struct Player {

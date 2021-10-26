@@ -1,11 +1,13 @@
 #include "map_generator_system.hpp"
 #include "predefined_room.hpp"
 
+#include "tiny_ecs_registry.hpp"
+
 #include <queue>
 #include <unordered_map>
 #include <sstream>
 
-#include "glm/gtx/hash.hpp"
+#include <glm/gtx/hash.hpp>
 
 using namespace MapUtility;
 
@@ -37,6 +39,16 @@ bool MapGeneratorSystem::walkable(uvec2 pos) const
 	}
 
 	return walkable_tiles.find(get_tile_id_from_map_pos(pos)) != walkable_tiles.end();
+}
+
+bool MapGeneratorSystem::walkable_and_free(uvec2 pos) const
+{
+	if (!walkable(pos)) {
+		return false;
+	}
+	return !std::any_of(registry.map_positions.components.begin(),
+					   registry.map_positions.components.end(),
+					   [pos](const MapPosition& pos2) { return pos2.position == pos; });
 }
 
 bool MapGeneratorSystem::is_wall(uvec2 pos) const
@@ -74,10 +86,10 @@ std::vector<uvec2> MapGeneratorSystem::shortest_path(uvec2 start_pos, uvec2 targ
 
 		// Otherwise, add all unvisited neighbours to the queue
 		// Currently, diagonal movement is not supported
-		for (uvec2 movement : { uvec2(1, 0), uvec2(-1, 0), uvec2(0, 1), uvec2(0, -1) }) {
-			uvec2 neighbour = curr + movement;
+		for (uvec2 neighbour :
+			 { curr + uvec2(1, 0), uvec2(curr.x - 1, curr.y), curr + uvec2(0, 1), uvec2(curr.x, curr.y - 1) }) {
 			// Check if neighbour is not already visited, and is walkable
-			if (walkable(neighbour) && parent.find(neighbour) == parent.end()) {
+			if (walkable_and_free(neighbour) && parent.find(neighbour) == parent.end()) {
 				// Enqueue neighbour
 				frontier.push(neighbour);
 				// Set curr as the parent of neighbour
