@@ -11,6 +11,21 @@ Entity create_player(uvec2 pos)
 	registry.map_positions.emplace(entity, pos);
 	registry.stats.emplace(entity);
 
+	Inventory& inventory = registry.inventories.emplace(entity);
+
+	// Setup Bow
+	Attack bow_swipe = { "Swipe", 1, 15, 4, 10, DamageType::Physical, TargetingType::Adjacent };
+	Attack bow_shoot = { "Shoot", 1, 20, 10, 25, DamageType::Physical, TargetingType::Projectile };
+	inventory.inventory.emplace("Bow", create_weapon("Bow", std::vector<Attack>({ bow_shoot, bow_swipe })));
+
+	// Setup Sword
+	Attack sword_light = { "Light", 4, 18, 12, 22, DamageType::Physical, TargetingType::Adjacent };
+	Attack sword_heavy = { "Heavy", 1, 14, 20, 30, DamageType::Physical, TargetingType::Adjacent };
+	Entity sword = create_weapon("Sword", std::vector<Attack>({ sword_light, sword_heavy }));
+	inventory.inventory.emplace("Sword", sword);
+
+	inventory.equipped.at(static_cast<uint8>(Slot::PrimaryHand)) = sword;
+
 	registry.render_requests.insert(entity,
 								   { TEXTURE_ASSET_ID::PALADIN, 
 									 EFFECT_ASSET_ID::PLAYER,
@@ -45,7 +60,7 @@ Entity create_enemy(uvec2 position, ColorState team)
 	stats.base_attack.damage_max = 15;
 
 	// Maps position of enemy to actual position (for reference)
-	vec2 actual_position = MapUtility::map_position_to_screen_position(position);
+	vec2 actual_position = MapUtility::map_position_to_world_position(position);
 
 	// Indicates enemy is hittable by objects
 	registry.hittables.emplace(entity);
@@ -137,5 +152,24 @@ Entity create_camera(vec2 /*pos*/, vec2 size, ivec2 central)
 Entity create_team()
 {
 	Entity entity = Entity();
+	return entity;
+}
+
+Entity create_item(const std::string& name, SlotList<bool> allowed_slots)
+{
+	Entity entity = Entity();
+	registry.items.insert(entity, { name, 0.f, 0, allowed_slots });
+	return entity;
+}
+
+Entity create_weapon(const std::string& name, std::vector<Attack> attacks)
+{
+	const SlotList<bool> weapon_slots = [] {
+		SlotList<bool> slots = { false };
+		slots[static_cast<uint8>(Slot::PrimaryHand)] = true;
+		return slots;
+	}();
+	Entity entity = create_item(name, weapon_slots);
+	registry.weapons.emplace(entity, std::move(attacks));
 	return entity;
 }
