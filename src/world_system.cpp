@@ -216,6 +216,7 @@ void WorldSystem::restart_game()
 	vec2 middle = { window_width_px / 2, window_height_px / 2 };
 
 	const MapGeneratorSystem::Mapping& mapping = map_generator->current_map();
+	auto & room_rotations = map_generator->current_rooms_rotation();
 	vec2 top_left_corner_pos = middle
 		- vec2(MapUtility::tile_size * MapUtility::room_size * MapUtility::map_size / 2,
 			   MapUtility::tile_size * MapUtility::room_size * MapUtility::map_size / 2);
@@ -226,12 +227,14 @@ void WorldSystem::restart_game()
 					   MapUtility::tile_size * MapUtility::room_size / 2)
 				+ vec2(col * MapUtility::tile_size * MapUtility::room_size,
 					   row * MapUtility::tile_size * MapUtility::room_size);
-			create_room(position, mapping.at(row).at(col));
+			create_room(position, mapping.at(row).at(col), direction_to_angle(room_rotations.at(row).at(col)));
 		}
 	}
 
+	create_picture(vec2(window_width_px / 2, window_height_px / 2));
+
 	// a random starting position... probably need to update this
-	uvec2 player_starting_point = uvec2(1, 1);
+	uvec2 player_starting_point = uvec2(50, 50);
 	// Create a new Player instance and shift player onto a tile
 	player = create_player(player_starting_point);
 	turns->add_team_to_queue(player);
@@ -249,9 +252,9 @@ void WorldSystem::restart_game()
 	player_arrow = create_arrow(player_location);
 	// Creates a single enemy instance, (TODO: needs to be updated with position based on grid)
 	// Also requires naming scheme for randomly generated enemies, for later reference
-	create_enemy(uvec2(12, 3));
-	create_enemy(uvec2(15, 3));
-	create_enemy(uvec2(15, 4), ColorState::Blue);
+	//create_enemy(uvec2(12, 3));
+	//create_enemy(uvec2(15, 3));
+	//create_enemy(uvec2(15, 4), ColorState::Blue);
 }
 
 // Compute collisions between entities

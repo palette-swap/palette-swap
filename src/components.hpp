@@ -122,7 +122,8 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 	SLIME_FLINCHED = SLIME_ALERT + 1,
 	ARROW = SLIME_FLINCHED + 1,
 	TILE_SET = ARROW + 1,
-	TEXTURE_COUNT = TILE_SET + 1
+	HELP_PIC = TILE_SET + 1,
+	TEXTURE_COUNT = HELP_PIC + 1
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 
@@ -135,6 +136,7 @@ static constexpr std::array<vec2, texture_count> scaling_factors = {
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size * 0.5, MapUtility::tile_size * 0.5),
 	vec2(MapUtility::tile_size* MapUtility::room_size, MapUtility::tile_size* MapUtility::room_size),
+	vec2(MapUtility::tile_size* MapUtility::room_size * 3, MapUtility::tile_size* MapUtility::room_size * 2),
 };
 
 enum class EFFECT_ASSET_ID {
@@ -155,14 +157,14 @@ enum class GEOMETRY_BUFFER_ID : uint8_t {
 
 	// Note: Keep ROOM at the bottom because of hacky implementation,
 	// this is somewhat hacky, this is actually a single geometry related to a room, but
-	// we don't want to update the Enum every time we add a new room. It's MapUtility::num_room - 1
+	// we don't want to update the Enum every time we add a new room. It's MapUtility::num_rooms - 1
 	// because we want to bind vertex buffer for each room but not for the ROOM enum, it's
 	// just a placeholder to tell us it's a room geometry, which geometry will be defined
 	// by the room struct
 	ROOM = SCREEN_TRIANGLE + 1,
 	GEOMETRY_COUNT = ROOM + 1
 };
-const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT + MapUtility::num_room - 1;
+const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT + MapUtility::num_rooms - 1;
 
 struct RenderRequest {
 	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
@@ -170,14 +172,6 @@ struct RenderRequest {
 	GEOMETRY_BUFFER_ID used_geometry = GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 
 	bool visible = true;
-};
-
-// Represent four directions, that could have many uses, e.g. moving player
-enum class Direction : uint8_t {
-	Left,
-	Up,
-	Right,
-	Down,
 };
 
 // Represents the position on the map,

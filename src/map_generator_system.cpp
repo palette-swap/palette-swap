@@ -18,7 +18,7 @@ MapGeneratorSystem::MapGeneratorSystem() { load_rooms_from_csv(); }
 void MapGeneratorSystem::generate_levels()
 {
 	// TODO: generate map procedurally
-	levels.emplace_back(map_layout_1);
+	load_levels_from_csv();
 	current_level = 0;
 }
 
@@ -167,7 +167,8 @@ std::vector<uvec2> MapGeneratorSystem::bfs(uvec2 start_pos, uvec2 target) const
 TileId MapGeneratorSystem::get_tile_id_from_map_pos(uvec2 pos) const
 {
 	RoomType room_index = current_map().at(pos.y / room_size).at(pos.x / room_size);
-	return get_tile_id_from_room(room_index, pos.y % room_size, pos.x % room_size);
+	Direction room_rotation = level_room_rotations.at(current_level).at(pos.y / room_size).at(pos.x / room_size);
+	return get_tile_id_from_room(room_index, pos.y % room_size, pos.x % room_size, room_rotation);
 }
 
 void MapGeneratorSystem::load_rooms_from_csv()
@@ -181,10 +182,10 @@ void MapGeneratorSystem::load_rooms_from_csv()
 		int row = 0;
 
 		while (std::getline(room_file, line)) {
-			std::string room_id;
+			std::string tile_id;
 			std::stringstream ss(line);
-			while (std::getline(ss, room_id, ',')) {
-				room_mapping.at(row).at(col) = std::stoi(room_id);
+			while (std::getline(ss, tile_id, ',')) {
+				room_mapping.at(row).at(col) = std::stoi(tile_id);
 				col++;
 				if (col == room_size) {
 					row++;
@@ -195,7 +196,99 @@ void MapGeneratorSystem::load_rooms_from_csv()
 	}
 }
 
-TileId MapGeneratorSystem::get_tile_id_from_room(RoomType room_type, uint8_t row, uint8_t col) const
+TileId MapGeneratorSystem::get_tile_id_from_room(RoomType room_type, uint8_t row, uint8_t col, Direction rotation) const
 {
+	switch (rotation) {
+	case Direction::Up:
+		break;
+	case Direction::Left: {
+		uint8_t tmp = row;
+		row = col;
+		col = room_size - 1 - tmp;
+	} break;
+	case Direction::Down: {
+		row = room_size - 1 - row;
+		col = room_size - 1 - col;
+	} break;
+	case Direction::Right: {
+		uint8_t tmp = row;
+		row = room_size - 1 - col;
+		col = tmp;
+	} break;
+	default:
+		break;
+	}
 	return room_layouts.at(room_type).at(row).at(col);
+}
+
+void MapGeneratorSystem::load_levels_from_csv() {
+	// Pre-allocate vector size
+	levels.resize(level_paths.size());
+	for (size_t i = 0; i < level_paths.size(); i++) {
+		Mapping& level_mapping = levels.at(i);
+
+		std::ifstream level_file(level_paths.at(i));
+		std::string line;
+		int col = 0;
+		int row = 0;
+
+		while (std::getline(level_file, line)) {
+			std::string room_id;
+			std::stringstream ss(line);
+			while (std::getline(ss, room_id, ',')) {
+				level_mapping.at(row).at(col) = std::stoi(room_id);
+				col++;
+				if (col == room_size) {
+					row++;
+					col = 0;
+				}
+			}
+		}
+	}
+
+	// load rooms rotations
+	level_room_rotations.resize(room_rotation_paths.size());
+	for (size_t i = 0; i < room_rotation_paths.size(); i++) {
+		auto & room_rotations = level_room_rotations.at(i);
+
+		std::ifstream rotations_file(room_rotation_paths.at(i));
+		std::string line;
+		int col = 0;
+		int row = 0;
+
+		while (std::getline(rotations_file, line)) {
+			std::string room_id;
+			std::stringstream ss(line);
+			while (std::getline(ss, room_id, ',')) {
+				room_rotations.at(row).at(col) = integer_to_direction(std::stoi(room_id));
+				col++;
+				if (col == room_size) {
+					row++;
+					col = 0;
+				}
+			}
+		}
+	}
+}
+
+Direction MapGeneratorSystem::integer_to_direction(int direction) {
+	switch (direction) {
+	case 0:
+		return Direction::Up;
+	case 1:
+		return Direction::Right;
+	case 2:
+		return Direction::Down;
+	case 3:
+		return Direction::Left;
+	default:
+		assert(false && "Unexpected direction");
+	}
+	return Direction::Up;
+}
+
+const std::array<std::array<Direction, MapUtility::map_size>, MapUtility::map_size> &
+MapGeneratorSystem::current_rooms_rotation() const
+{
+	return level_room_rotations.at(current_level);
 }

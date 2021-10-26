@@ -34,7 +34,6 @@ inline std::string shader_path(const std::string& name)
 inline std::string textures_path(const std::string& name) { return data_path() + "/textures/" + std::string(name); };
 inline std::string audio_path(const std::string& name) { return data_path() + "/audio/" + std::string(name); };
 inline std::string mesh_path(const std::string& name) { return data_path() + "/meshes/" + std::string(name); };
-inline std::string rooms_layout_path(const std::string& name) { return data_path() + "/rooms/" + std::string(name); };
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846f
@@ -120,4 +119,28 @@ namespace MapUtility {
 		return uvec2(((screen_pos.x) - top_left_corner.x) / tile_size,
 					 ((screen_pos.y) - top_left_corner.y) / tile_size);
     }
+}
+
+// Represent four directions, that could have many uses, e.g. moving player
+enum class Direction : uint8_t {
+	Left,
+	Up,
+	Right,
+	Down,
+};
+
+static float direction_to_angle(Direction direction) {
+	switch (direction) {
+	case Direction::Left:
+		return 3 * M_PI / 2;
+	case Direction::Up:
+		return 0;
+	case Direction::Right:
+		return M_PI / 2;
+	case Direction::Down:
+		return M_PI;
+	default:
+		assert(false && "direction to angle: unexpected direction");
+	}
+	return 0.f;
 }

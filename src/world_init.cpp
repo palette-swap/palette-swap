@@ -102,11 +102,12 @@ Entity create_line(vec2 position)
 }
 
 // Creates a room entity, with room type referencing to the predefined room
-Entity create_room(vec2 position, MapUtility::RoomType roomType)
+Entity create_room(vec2 position, MapUtility::RoomType roomType, float angle)
 {
 	auto entity = Entity();
 
 	registry.world_positions.emplace(entity, position);
+	registry.velocities.emplace(entity, 0, angle);
 
 	Room& room = registry.rooms.emplace(entity);
 	room.type = roomType;
@@ -152,5 +153,19 @@ Entity create_weapon(const std::string& name, std::vector<Attack> attacks)
 	}();
 	Entity entity = create_item(name, weapon_slots);
 	registry.weapons.emplace(entity, std::move(attacks));
+	return entity;
+}
+
+Entity create_picture(vec2 pos)
+{
+	auto entity = Entity();
+
+	// Create and (empty) player component to be able to refer to other enttities
+	registry.world_positions.emplace(entity, pos);
+
+	registry.render_requests.insert(
+		entity, { TEXTURE_ASSET_ID::HELP_PIC, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE });
+	//registry.colors.insert(entity, { 1, 1, 1 });
+
 	return entity;
 }

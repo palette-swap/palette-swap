@@ -173,7 +173,7 @@ void RenderSystem::initialize_room_vertices(MapUtility::RoomType roomType)
 		// We have a total of 8*8 tile texture, for a single texture,
 		// top left is 0,0 and bottom right is 1,1
 		float fraction = 32.f / 256.f;
-		uint8_t tile_texture = map_generator->get_tile_id_from_room(roomType, MapUtility::room_size - row - 1, col);
+		uint8_t tile_texture = map_generator->get_tile_id_from_room(roomType, MapUtility::room_size - row - 1, col, Direction::Up);
 		vec2 tile_bottom_left_corner
 			= { static_cast<float>(tile_texture % 8) * fraction, static_cast<float>(tile_texture / 8) * fraction };
 		tilemap_vertices[i + 0].texcoord
@@ -194,7 +194,7 @@ void RenderSystem::initialize_room_vertices(MapUtility::RoomType roomType)
 	for (int i = 0; i < total_vertices; i++) {
 		tilemap_indices[i] = static_cast<uint16_t>(i);
 	}
-	bind_vbo_and_ibo(geometry_count - MapUtility::num_room + roomType, tilemap_vertices, tilemap_indices);
+	bind_vbo_and_ibo(geometry_count - MapUtility::num_rooms + roomType, tilemap_vertices, tilemap_indices);
 }
 
 void RenderSystem::initialize_gl_geometry_buffers()
@@ -224,7 +224,7 @@ void RenderSystem::initialize_gl_geometry_buffers()
 	const std::vector<uint16_t> textured_indices = { 0, 3, 1, 1, 3, 2 };
 	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::SPRITE, textured_vertices, textured_indices);
 
-	for (uint8_t i = 0; i < MapUtility::num_room; i++) {
+	for (uint8_t i = 0; i < MapUtility::num_rooms; i++) {
 		initialize_room_vertices(i);
 	}
 
