@@ -535,7 +535,7 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 			uvec2 mouse_map_pos = MapUtility::world_position_to_map_position(mouse_world_pos);
 			uvec2 player_pos = registry.map_positions.get(player).position;
 			ivec2 distance = mouse_map_pos - player_pos;
-			if (distance.x > 1 || distance.y > 1
+			if (abs(distance.x) > 1 || abs(distance.y) > 1
 				|| !turns->execute_team_action(player)) {
 				return;
 			}
