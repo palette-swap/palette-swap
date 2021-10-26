@@ -41,6 +41,8 @@ private:
 	// list of files to read will be from room_paths
 	void load_rooms_from_csv();
 
+	std::vector<uvec2> MapGeneratorSystem::bfs(uvec2 start_pos, uvec2 target) const;
+
 public:
 	MapGeneratorSystem();
 
@@ -65,7 +67,7 @@ public:
 
 	// Computes the shortest path from start to the first element of end that it encounters via BFS
 	// Returns the path, or an empty vector if no path was found
-	std::vector<uvec2> shortest_path(uvec2 start, uvec2 target) const;
+	std::vector<uvec2> shortest_path(uvec2 start, uvec2 target, bool use_a_star = true) const;
 
 	MapUtility::TileId get_tile_id_from_room(MapUtility::RoomType room_type, uint8_t row, uint8_t col) const;
 };
