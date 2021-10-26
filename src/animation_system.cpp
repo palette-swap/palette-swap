@@ -62,3 +62,17 @@ void AnimationSystem:: initialize_player_animation(Entity player) {
 	// Loads specific enemy spritesheet desired
 	player_render = { TEXTURE_ASSET_ID::PALADIN, EFFECT_ASSET_ID::PLAYER, GEOMETRY_BUFFER_ID::PLAYER };
 }
+
+void AnimationSystem::set_sprite_direction(Entity sprite, Sprite_Direction direction) { 
+	Animation& sprite_animation = registry.animations.get(sprite);
+
+	if (direction == Sprite_Direction::SPRITE_LEFT) {
+		sprite_animation.direction = -1;
+	} else if (direction == Sprite_Direction::SPRITE_RIGHT) {
+		sprite_animation.direction = 1;	
+	// Sets direction to be facing right by default
+	} else {
+		sprite_animation.direction = 1;	
+	}
+
+}

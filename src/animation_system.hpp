@@ -39,4 +39,6 @@ public:
 	// initializes animation values for a player entity
 	// NOTE: weird things will happen if the entity initialized as player is not a player
 	void initialize_player_animation(Entity player);
+	// Sets direction for an animated sprite, such that it faces either left or right
+	void set_sprite_direction(Entity sprite, Sprite_Direction);
 };

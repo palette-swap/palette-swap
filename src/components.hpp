@@ -209,6 +209,8 @@ struct RenderRequest {
 	bool visible = true;
 };
 
+// Represents allowed directions for an animated sprite (e.g whether the sprite is facing left or right)
+enum class Sprite_Direction : uint8_t { SPRITE_LEFT, SPRITE_RIGHT};
 // Represent four directions, that could have many uses, e.g. moving player
 enum class Direction : uint8_t {
 	Left,
