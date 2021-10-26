@@ -1,7 +1,6 @@
 #include "animation_system.hpp"
 
-AnimationSystem::AnimationSystem(std::shared_ptr<TurnSystem> turns)
-	: turns(std::move(turns))
+void AnimationSystem::init()
 {
 }
 
@@ -37,10 +36,6 @@ void AnimationSystem::resolve_event_animations()
 			bool turn_trigger = event_animation.turn_trigger;
 			// Removes event animation from registry
 			registry.event_animations.remove(animation_entity);
-			// If event animation should trigger turn over for the entity, triggers it here
-			if (turn_trigger == true) {
-
-			}
 		} else {
 			event_animation.frame = actual_animation.frame;
 		}
@@ -147,6 +142,8 @@ void AnimationSystem::player_running_animation(Entity player)
 
 	// TODO: Add call after player's attack animation completes
 }
+
+bool AnimationSystem::animation_events_completed() { return (registry.event_animations.size() == 0); }
 
 void AnimationSystem::damage_animation(Entity entity) 
 { 

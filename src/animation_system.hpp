@@ -5,7 +5,6 @@
 #include "components.hpp"
 #include "tiny_ecs.hpp"
 #include "tiny_ecs_registry.hpp"
-#include "turn_system.hpp"
 
 // Total number of frames in a spritesheet. Currently used for some test spritesheets.
 // Number of actual frames can be adapted to vary from asset to asset
@@ -36,7 +35,8 @@ static constexpr vec3 default_enemy_blue = { 1, 1, 2 };
 class AnimationSystem {
 
 public:
-	AnimationSystem(std::shared_ptr<TurnSystem> turns);
+	// Initializes the animation system
+	void init();
 	// Updates all animated entities based on elapsed time, changes their frame based on the time
 	void update_animations(float elapsed_ms);	
 	// Sets direction for an animated sprite, such that it faces either left or right
@@ -60,13 +60,15 @@ public:
 	// For now, this is just a colour change. Will change in next version however
 	void damage_animation(Entity entity);
 
+	// Returns a boolean denoting whether or not all "irregular animations" such as attack
+	// or damage calculations have been completed
+	bool animation_events_completed();
+
 private:
 	// helper function, checks event animation components to see if they should be removed, and animation states should
 	// be restored
 	void resolve_event_animations();
 
-	// Shared resource: Turn system.
-	std::shared_ptr<TurnSystem> turns;
 };
 
 
