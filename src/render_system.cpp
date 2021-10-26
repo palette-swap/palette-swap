@@ -13,7 +13,7 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 	Transform transform;
 	if (registry.map_positions.has(entity)) {
 		MapPosition& map_position = registry.map_positions.get(entity);
-		transform.translate(MapUtility::map_position_to_screen_position(map_position.position));
+		transform.translate(MapUtility::map_position_to_world_position(map_position.position));
 	}
 	else {
 		// Most objects in the game are expected to use MapPosition, exceptions are:
@@ -275,7 +275,7 @@ vec2 RenderSystem::get_top_left()
 
 	// set up 4 sides of window based on player
 	Entity player = registry.players.top_entity();
-	vec2 position = MapUtility::map_position_to_screen_position(registry.map_positions.get(player).position);
+	vec2 position = MapUtility::map_position_to_world_position(registry.map_positions.get(player).position);
 	return { position.x - w * screen_scale / 2.f, position.y - h * screen_scale / 2.f };
 }
 

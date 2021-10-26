@@ -51,7 +51,7 @@ Entity create_enemy(uvec2 position, ColorState team)
 	stats.base_attack.damage_max = 15;
 
 	// Maps position of enemy to actual position (for reference)
-	vec2 actual_position = MapUtility::map_position_to_screen_position(position);
+	vec2 actual_position = MapUtility::map_position_to_world_position(position);
 
 	// Indicates enemy is hittable by objects
 	registry.hittables.emplace(entity);

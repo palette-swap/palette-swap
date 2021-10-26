@@ -245,7 +245,7 @@ void WorldSystem::restart_game()
 		{ (player_starting_point.x - 20), (player_starting_point.y - 20) }, { 23, 23 }, player_starting_point);
 
 	// Create a new player arrow instance
-	vec2 player_location = MapUtility::map_position_to_screen_position(player_starting_point);
+	vec2 player_location = MapUtility::map_position_to_world_position(player_starting_point);
 	player_arrow = create_arrow(player_location);
 	// Creates a single enemy instance, (TODO: needs to be updated with position based on grid)
 	// Also requires naming scheme for randomly generated enemies, for later reference
@@ -286,7 +286,7 @@ void WorldSystem::handle_collisions()
 				registry.resolved_projectiles.emplace(entity);
 			} else {
 				// Checks if projectile's head has hit a wall
-				uvec2 projectile_location = (MapUtility::screen_position_to_map_position(
+				uvec2 projectile_location = (MapUtility::world_position_to_map_position(
 					registry.world_positions.get(entity).position + projectile.head_offset));
 
 				// Hacky way, using the same check for the player's "walkable"
@@ -399,7 +399,7 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 		WorldPosition& arrow_position = registry.world_positions.get(player_arrow);
 		MapPosition& player_map_position = registry.map_positions.get(player);
 
-		vec2 player_screen_position = MapUtility::map_position_to_screen_position(player_map_position.position);
+		vec2 player_screen_position = MapUtility::map_position_to_world_position(player_map_position.position);
 
 		// Calculated Euclidean difference between player and arrow
 		vec2 eucl_diff = mouse_world_position - player_screen_position;
@@ -532,7 +532,7 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 			vec2 mouse_world_pos = vec2(mouse_screen_pos) * renderer->screen_scale + renderer->get_top_left();
 
 			// Get map_positions to compare
-			uvec2 mouse_map_pos = MapUtility::screen_position_to_map_position(mouse_world_pos);
+			uvec2 mouse_map_pos = MapUtility::world_position_to_map_position(mouse_world_pos);
 			uvec2 player_pos = registry.map_positions.get(player).position;
 			ivec2 distance = mouse_map_pos - player_pos;
 			if (distance.x > 1 || distance.y > 1

@@ -59,7 +59,7 @@ void PhysicsSystem::step(float elapsed_ms, float /*window_width*/, float /*windo
 			continue;
 		}
 		WorldPosition& position_i = world_positions.components[i];
-		uvec2 map_position_i = MapUtility::screen_position_to_map_position(position_i.position);
+		uvec2 map_position_i = MapUtility::world_position_to_map_position(position_i.position);
 
 		// Check if the map position is occupy
 		for (uint j = 0; j < map_positions.components.size(); j++) {
