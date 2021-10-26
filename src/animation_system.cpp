@@ -1,6 +1,9 @@
 #include "animation_system.hpp"
 
-void AnimationSystem::init() {}
+AnimationSystem::AnimationSystem(std::shared_ptr<TurnSystem> turns)
+	: turns(std::move(turns))
+{
+}
 
 void AnimationSystem::update_animations(float elapsed_ms)
 {
@@ -41,8 +44,6 @@ void AnimationSystem::resolve_event_animations()
 		} else {
 			event_animation.frame = actual_animation.frame;
 		}
-
-
 	}
 }
 
@@ -115,6 +116,7 @@ void AnimationSystem::player_attack_animation(Entity player) {
 		// Stores restoration states for the player's animations, to be called after animation event is resolved
 		player_melee.restore_speed = player_animation.speed_adjustment;
 		player_melee.restore_state = player_animation.state;
+		// Tells the turn system that the player entity's turn should end after this animation plays out
 		player_melee.turn_trigger = true;
 
 		// Sets animation state to be the beginning of the melee animation
@@ -143,7 +145,7 @@ void AnimationSystem::player_running_animation(Entity player)
 		player_animation.speed_adjustment = player_running_speed;
 	}
 
-	// TODO: Add callback after player attack completes
+	// TODO: Add call after player's attack animation completes
 }
 
 void AnimationSystem::damage_animation(Entity entity) 
