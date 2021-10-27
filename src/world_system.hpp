@@ -12,7 +12,7 @@
 #include <SDL.h>
 #define WITH_SDL2 1
 #include "soloud.h"
-#include "soloud_wav.h"
+#include "soloud_wavstream.h"
 
 #include "combat_system.hpp"
 #include "map_generator_system.hpp"
@@ -94,8 +94,8 @@ private:
 	Debug& debugging;
 
 	// music references
-	SoLoud::Wav bgm_red_wav;
-	SoLoud::Wav bgm_blue_wav;
+	SoLoud::WavStream bgm_red_wav;
+	SoLoud::WavStream bgm_blue_wav;
 	SoLoud::handle bgm_red;
 	SoLoud::handle bgm_blue;
 
