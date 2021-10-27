@@ -13,6 +13,7 @@ WorldSystem::WorldSystem(Debug& debugging,
 						 std::shared_ptr<CombatSystem> combat,
 						 std::shared_ptr<MapGeneratorSystem> map,
 						 std::shared_ptr<TurnSystem> turns)
+					
 	: points(0)
 	, debugging(debugging)
 	, rng(std::make_shared<std::default_random_engine>(std::default_random_engine(std::random_device()())))
@@ -234,6 +235,9 @@ void WorldSystem::restart_game()
 	uvec2 player_starting_point = uvec2(1, 1);
 	// Create a new Player instance and shift player onto a tile
 	player = create_player(player_starting_point);
+	// TODO: Should move into create_player (under world init) afterwards
+	animations->set_player_animation(player);
+
 	turns->add_team_to_queue(player);
 	// Reset current weapon & attack
 	Inventory& inventory = registry.inventories.get(player);
@@ -338,7 +342,10 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		// Change weapon
 		if (key == GLFW_KEY_E) {
 			equip_next_weapon();
+			// TODO: Need to confirm that this does actually change to the correct state
+			animations->player_toggle_weapon(player);
 		}
+
 
 		// Change attack
 		// TODO: Generalize for many attacks, check out of bounds
@@ -423,18 +430,27 @@ void WorldSystem::move_player(Direction direction)
 
 	MapPosition& map_pos = registry.map_positions.get(player);
 	WorldPosition& arrow_position = registry.world_positions.get(player_arrow);
+	Animation& player_animation = registry.animations.get(player);
 	// TODO: this should be removed once we only use map_position
 	uvec2 new_pos = map_pos.position;
 
 	if (direction == Direction::Left && map_pos.position.x > 0) {
 		new_pos = uvec2(map_pos.position.x - 1, map_pos.position.y);
+		// TODO: Change this to animation request instead of calling it here;
+		player_animation.direction = -1;
+		animations->player_running_animation(player);
 	} else if (direction == Direction::Up && map_pos.position.y > 0) {
 		new_pos = uvec2(map_pos.position.x, map_pos.position.y - 1);
+		animations->player_running_animation(player);
 	} else if (direction == Direction::Right
 			   && map_pos.position.x < MapUtility::room_size * MapUtility::tile_size - 1) {
 		new_pos = uvec2(map_pos.position.x + 1, map_pos.position.y);
+		// TODO: Change this to animation request instead of calling it here;
+		player_animation.direction = 1;
+		animations->player_running_animation(player);
 	} else if (direction == Direction::Down && map_pos.position.y < MapUtility::room_size * MapUtility::tile_size - 1) {
 		new_pos = uvec2(map_pos.position.x, map_pos.position.y + 1);
+		animations->player_running_animation(player);
 	}
 
 	if (map_pos.position == new_pos || !map_generator->walkable(new_pos) || !turns->execute_team_action(player)) {
@@ -518,8 +534,10 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 
 			// Denotes arrowhead location the player's arrow, based on firing angle and current scaling
 			arrow_projectile.head_offset
-				= { sin(arrow_velocity.angle) * scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::ARROW)).y / 2,
-					-cos(arrow_velocity.angle) * scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::ARROW)).x / 2 };
+				= { sin(arrow_velocity.angle) * scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::CANNONBALL)).y
+						/ 2,
+				-cos(arrow_velocity.angle) * scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::CANNONBALL)).x / 2
+			};
 
 			arrow_velocity.speed = projectile_speed;
 			// TODO: Add better arrow physics potentially?
@@ -546,6 +564,7 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 					Stats& player_stats = registry.stats.get(player);
 					Stats& enemy_stats = registry.stats.get(target);
 					combat->do_attack(player_stats, attack, enemy_stats);
+					animations->player_attack_animation(player);
 				}
 			}
 			turns->complete_team_action(player);
