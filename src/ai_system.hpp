@@ -35,7 +35,7 @@ private:
 	bool remove_dead_entity(const Entity& entity);
 
 	// Switch enemy state.
-	void switch_enemy_state(const Entity& enemy_entity, EnemyType enemy_type, EnemyState enemy_state);
+	void switch_enemy_state(const Entity& enemy_entity, EnemyState new_state);
 
 	// Check if the player is spotted by an entity within its radius.
 	bool is_player_spotted(const Entity& entity, uint radius);

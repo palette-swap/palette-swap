@@ -67,7 +67,7 @@ void AISystem::execute_Slime(const Entity& slime)
 
 	case EnemyState::Idle:
 		if (is_player_spotted(slime, enemy.radius)) {
-			switch_enemy_state(slime, enemy.type, EnemyState::Active);
+			switch_enemy_state(slime, EnemyState::Active);
 		}
 		break;
 
@@ -80,16 +80,16 @@ void AISystem::execute_Slime(const Entity& slime)
 			}
 
 			if (is_health_below(slime, 0.25f)) {
-				switch_enemy_state(slime, enemy.type, EnemyState::Flinched);
+				switch_enemy_state(slime, EnemyState::Flinched);
 			}
 		} else {
-			switch_enemy_state(slime, enemy.type, EnemyState::Idle);
+			switch_enemy_state(slime, EnemyState::Idle);
 		}
 		break;
 
 	case EnemyState::Flinched:
 		if (is_at_nest(slime)) {
-			switch_enemy_state(slime, enemy.type, EnemyState::Idle);
+			switch_enemy_state(slime, EnemyState::Idle);
 		} else {
 			approach_nest(slime, enemy.speed);
 		}
@@ -108,7 +108,7 @@ void AISystem::execute_Raven(const Entity& raven)
 
 	case EnemyState::Idle:
 		if (is_player_spotted(raven, enemy.radius)) {
-			switch_enemy_state(raven, enemy.type, EnemyState::Active);
+			switch_enemy_state(raven, EnemyState::Active);
 		}
 		break;
 
@@ -120,7 +120,7 @@ void AISystem::execute_Raven(const Entity& raven)
 				approach_player(raven, enemy.speed);
 			}
 		} else {
-			switch_enemy_state(raven, enemy.type, EnemyState::Idle);
+			switch_enemy_state(raven, EnemyState::Idle);
 		}
 		break;
 
@@ -137,7 +137,7 @@ void AISystem::execute_LivingArmor(const Entity& living_armor)
 
 	case EnemyState::Idle:
 		if (is_player_spotted(living_armor, enemy.radius)) {
-			switch_enemy_state(living_armor, enemy.type, EnemyState::Active);
+			switch_enemy_state(living_armor, EnemyState::Active);
 		}
 		break;
 
@@ -151,11 +151,11 @@ void AISystem::execute_LivingArmor(const Entity& living_armor)
 
 			if (uniform_dist(rng) < 0.20f) {
 				become_immortal(living_armor, true);
-				switch_enemy_state(living_armor, enemy.type, EnemyState::Immortal);
+				switch_enemy_state(living_armor, EnemyState::Immortal);
 			}
 		} else {
 			if (is_at_nest(living_armor)) {
-				switch_enemy_state(living_armor, enemy.type, EnemyState::Idle);
+				switch_enemy_state(living_armor, EnemyState::Idle);
 			} else {
 				approach_nest(living_armor, enemy.speed);
 			}
@@ -164,7 +164,7 @@ void AISystem::execute_LivingArmor(const Entity& living_armor)
 
 	case EnemyState::Immortal:
 		become_immortal(living_armor, false);
-		switch_enemy_state(living_armor, enemy.type, EnemyState::Active);
+		switch_enemy_state(living_armor, EnemyState::Active);
 		break;
 
 	default:
@@ -180,7 +180,7 @@ void AISystem::execute_TreeAnt(const Entity& tree_ant)
 
 	case EnemyState::Idle:
 		if (is_player_spotted(tree_ant, enemy.radius)) {
-			switch_enemy_state(tree_ant, enemy.type, EnemyState::Active);
+			switch_enemy_state(tree_ant, EnemyState::Active);
 		}
 		break;
 
@@ -194,11 +194,11 @@ void AISystem::execute_TreeAnt(const Entity& tree_ant)
 
 			if (is_health_below(tree_ant, 0.20f)) {
 				become_powerup(tree_ant, true);
-				switch_enemy_state(tree_ant, enemy.type, EnemyState::Powerup);
+				switch_enemy_state(tree_ant, EnemyState::Powerup);
 			}
 		} else {
 			if (is_at_nest(tree_ant)) {
-				switch_enemy_state(tree_ant, enemy.type, EnemyState::Idle);
+				switch_enemy_state(tree_ant, EnemyState::Idle);
 			} else {
 				approach_nest(tree_ant, enemy.speed);
 			}
@@ -213,7 +213,7 @@ void AISystem::execute_TreeAnt(const Entity& tree_ant)
 			// TreeAnt can't move when it's powered up.
 		} else {
 			become_powerup(tree_ant, false);
-			switch_enemy_state(tree_ant, enemy.type, EnemyState::Active);
+			switch_enemy_state(tree_ant, EnemyState::Active);
 		}
 		break;
 
@@ -232,17 +232,23 @@ bool AISystem::remove_dead_entity(const Entity& entity)
 	return false;
 }
 
-void AISystem::switch_enemy_state(const Entity& enemy_entity, EnemyType /*enemy_type*/, EnemyState enemy_state)
+void AISystem::switch_enemy_state(const Entity& enemy_entity, EnemyState new_state)
 {
-	registry.enemies.get(enemy_entity).state = enemy_state;
+	
+	Enemy& enemy = registry.enemies.get(enemy_entity);
+	enemy.state = new_state;
 
 	// TODO: Animate enemy state switch by a spreadsheet for enemy_type * enemy_state mapping.
 	// Slime:		Idle, Active, Flinched.
 	// Raven:		Idle, Active.
 	// LivingArmor:	Idle, Active, Powerup.
 	// TreeAnt:		Idle, Active, Immortal.
+	
+	//Animation& animation = registry.animations.get(enemy_entity);
+	//animation.switchTexture(enemy.team, enemy.type, enemy.state);
+
 	TEXTURE_ASSET_ID& enemy_current_textrue = registry.render_requests.get(enemy_entity).used_texture;
-	switch (enemy_state) {
+	switch (enemy.state) {
 
 	case EnemyState::Idle:
 		enemy_current_textrue = TEXTURE_ASSET_ID::SLIME;
