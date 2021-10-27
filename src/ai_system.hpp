@@ -58,6 +58,8 @@ private:
 	// An entity moves to a targeted map position.
 	bool move(const Entity& entity, const uvec2& map_pos);
 
+	void recover_health(const Entity& entity, float ratio);
+
 	// Check if an entity's health is below a ratio.
 	bool is_health_below(const Entity& entity, float ratio);
 

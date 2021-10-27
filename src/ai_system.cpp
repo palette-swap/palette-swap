@@ -89,6 +89,7 @@ void AISystem::execute_Slime(const Entity& slime)
 
 	case EnemyState::Flinched:
 		if (is_at_nest(slime)) {
+			recover_health(slime , 1.f);
 			switch_enemy_state(slime, EnemyState::Idle);
 		} else {
 			approach_nest(slime, enemy.speed);
@@ -350,10 +351,17 @@ bool AISystem::move(const Entity& entity, const uvec2& map_pos)
 	return false;
 }
 
+void AISystem::recover_health(const Entity& entity, float ratio)
+{
+	Stats& stats = registry.stats.get(entity);
+	stats.health += static_cast<int>(static_cast<float>(stats.health_max) * ratio);
+	stats.health = min(stats.health, stats.health_max);
+}
+
 bool AISystem::is_health_below(const Entity& entity, float ratio)
 {
-	const Stats& states = registry.stats.get(entity);
-	return static_cast<float>(states.health) < static_cast<float>(states.health_max) * ratio;
+	const Stats& stats = registry.stats.get(entity);
+	return static_cast<float>(stats.health) < static_cast<float>(stats.health_max) * ratio;
 }
 
 void AISystem::become_immortal(const Entity& entity, bool flag)
