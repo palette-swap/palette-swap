@@ -43,14 +43,15 @@ Entity create_player(uvec2 pos)
 
 // Repurposed into general create_enemy
 // TODO: add additional inputs to specify enemy type, current default is slug
-Entity create_enemy(uvec2 position, ColorState team)
+Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 {
 	auto entity = Entity();
 
-	registry.map_positions.emplace(entity, position);
+	registry.map_positions.emplace(entity, map_pos);
 
 	// Set up enemy stats to be weaker than the player
 	// TODO: Replace with load from file or auto-generate
+	// TODO: Set different stats for each enemy type.
 	Stats& stats = registry.stats.emplace(entity);
 	stats.health = 50;
 	stats.health_max = 50;
@@ -60,30 +61,59 @@ Entity create_enemy(uvec2 position, ColorState team)
 	stats.base_attack.damage_max = 15;
 
 	// Maps position of enemy to actual position (for reference)
-	vec2 actual_position = MapUtility::map_position_to_world_position(position);
+	vec2 actual_position = MapUtility::map_position_to_world_position(map_pos);
 
 	// Indicates enemy is hittable by objects
 	registry.hittables.emplace(entity);
 
-	registry.enemy_states.emplace(entity, team);
-	if (((uint8_t)team & 0b01) > 0) {
-		registry.red_entities.emplace(entity);
-	}
-	if (((uint8_t)team & 0b10) > 0) {
-		registry.blue_entities.emplace(entity);
+	// TODO: Switch out basic enemy type based on input (Currently Defaulted to Slug)
+	registry.render_requests.insert(entity,
+									{ TEXTURE_ASSET_ID::SLIME, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE });
+	registry.colors.insert(entity, { 1, 1, 1 });
+
+	// Create enemy component for AI System.
+	// TODO: Replace with load from file or auto-generate.
+	Enemy& enemy = registry.enemies.emplace(entity);
+
+	enemy.team = team;
+	enemy.type = type;
+	enemy.state = EnemyState::Idle;
+	enemy.nest_map_pos = map_pos;
+
+	switch (type) {
+	case EnemyType::Slime:
+		enemy.radius = 3;
+		enemy.speed = 1;
+		enemy.attack_range = 1;
+		break;
+
+	case EnemyType::Raven:
+		enemy.radius = 6;
+		enemy.speed = 2;
+		enemy.attack_range = 1 ;
+		break;
+
+	case EnemyType::LivingArmor:
+		enemy.radius = 2;
+		enemy.speed = 1;
+		enemy.attack_range = 1;
+		break;
+
+	case EnemyType::TreeAnt:
+		enemy.radius = 3;
+		enemy.speed = 1;
+		enemy.attack_range = 2;
+		break;
+
+	default:
+		throw std::runtime_error("Invalid enemy type.");
 	}
 
-	// TODO: Switch out asset enum with call to animation system to request a specific enemy type)
-	registry.render_requests.insert(entity,
-									{ TEXTURE_ASSET_ID::ARMOR, EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY });
-	registry.colors.insert(entity, { 1, 1, 1 });
 
 	// TODO: Combine with render_requests above, so animation system handles render requests as a middleman
 	// Update animation number using animation system max frames, instead of this static number
 	Animation& enemy_animation = registry.animations.emplace(entity);
 	enemy_animation.max_frames = 4;
-
-	registry.enemy_nest_positions.emplace(entity, position);
 
 	return entity;
 }

@@ -28,10 +28,7 @@ public:
 	ComponentContainer<Velocity> velocities;
 
 	// AI
-	ComponentContainer<EnemyState> enemy_states;
-	ComponentContainer<RedDimension> red_entities;
-	ComponentContainer<BlueDimension> blue_entities;
-	ComponentContainer<EnemyNestPosition> enemy_nest_positions;
+	ComponentContainer<Enemy> enemies;
 
 	// Physics
 	ComponentContainer<Hittable> hittables;
@@ -71,10 +68,7 @@ private:
 		&velocities,
 
 		// AI
-		&enemy_states,
-		&red_entities,
-		&blue_entities,
-		&enemy_nest_positions,
+		& enemies,
 
 		// Physics
 		&hittables,
@@ -89,7 +83,6 @@ private:
 		&weapons,
 		&inventories,
 	};
-
 
 public:
 

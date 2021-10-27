@@ -10,6 +10,9 @@
 
 #include "../ext/stb_image/stb_image.h"
 
+#include "map_generator_system.hpp"
+#include <predefined_room.hpp>
+
 // Player component
 struct Player {
 };
@@ -249,17 +252,18 @@ struct MapPosition {
 struct WorldPosition {
 	vec2 position;
 	WorldPosition(vec2 position)
-		: position(position)
-	{ };
+		: position(position) {};
 };
 
 struct Velocity {
 	float speed;
 	float angle;
 	Velocity(float speed, float angle)
-		: speed(speed), angle(angle) { }
-	vec2 get_velocity() { return { sin(angle) * speed, -cos(angle) * speed };
+		: speed(speed)
+		, angle(angle)
+	{
 	}
+	vec2 get_velocity() { return { sin(angle) * speed, -cos(angle) * speed }; }
 };
 
 struct Room {
@@ -281,29 +285,43 @@ enum class ColorState { None = 0, Red = 1, Blue = 2, All = Blue + 1 };
 //-------------------------           AI            -------------------------
 //---------------------------------------------------------------------------
 
-// Simple 3-state state machine for enemy AI: IDLE, ACTIVE, FLINCHED.
-enum class ENEMY_STATE_ID { Idle = 0, ACTIVE = Idle + 1, FLINCHED = ACTIVE + 1 };
+// Slime (cute coward): weak stats; run away when HP is low.
+// Raven (annoying bug): weak stats; large radius and fast speed.
+// LivingArmor (Immortal Hulk): normal stats; nearsighted; a certain chance to become immortal for one turn.
+// TreeAnt (Super Saiyan): normal stats; long attack range; power up attack range and damage when HP is low.
+// TODO: Evan might wanna add description and trait for Wraith.
+enum class EnemyType {
+	Slime = 0,
+	Raven = Slime + 1,
+	LivingArmor = Raven + 1,
+	TreeAnt = LivingArmor + 1,
+	// Wraith = TreeAnt + 1
+};
+extern std::unordered_map<EnemyType, char*> enemy_type_to_string;
 
-// Structure to store enemy state.
-struct EnemyState {
+// Slime:		Idle, Active, Flinched.
+// Raven:		Idle, Actives.
+// LivingArmor:	Idle, Active, Immortal.
+// TreeAnt:		Idle, Active, Powerup.
+enum class EnemyState {
+	Idle = 0,
+	Active = Idle + 1,
+	Flinched = Active + 1,
+	Powerup = Flinched + 1,
+	Immortal = Powerup + 1
+};
+
+// Structure to store enemy information.
+struct Enemy {
+	// Default is a slime.
 	ColorState team = ColorState::Red;
-	ENEMY_STATE_ID current_state = ENEMY_STATE_ID::Idle;
-	EnemyState(ColorState team) { this->team = team; }
-};
+	EnemyType type = EnemyType::Slime;
+	EnemyState state = EnemyState::Idle;
+	uvec2 nest_map_pos = { 0, 0 };
 
-struct RedDimension {
-};
-struct BlueDimension {
-};
-
-// Structure to store enemy nest position.
-struct EnemyNestPosition {
-	uvec2 position;
-	EnemyNestPosition(const uvec2& position)
-		: position(position)
-	{
-		assert(position.x < MapUtility::map_size * MapUtility::room_size && position.y < MapUtility::map_size * MapUtility::room_size);
-	};
+	uint radius = 3;
+	uint speed = 1;
+	uint attack_range = 1;
 };
 
 //---------------------------------------------------------------------------

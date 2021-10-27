@@ -253,12 +253,11 @@ void WorldSystem::restart_game()
 	player_arrow = create_arrow(player_location);
 	// Creates a single enemy instance, (TODO: needs to be updated with position based on grid)
 	// Also requires naming scheme for randomly generated enemies, for later reference
-	// Examle of how to assign animation to a specific enemy instance (likely to be changed to within world_init
-	// With create_enemy directly taking these inputs
-	Entity enemy1 = create_enemy(uvec2(12, 3));
-	animations->set_enemy_animation(enemy1, TEXTURE_ASSET_ID::ARMOR, ColorState::Blue);
-	create_enemy(uvec2(15, 3));
-	create_enemy(uvec2(15, 4), ColorState::Blue);
+	create_enemy(ColorState::Red, EnemyType::Slime, uvec2(8, 1));
+	create_enemy(ColorState::Red, EnemyType::Raven, uvec2(8, 2));
+	create_enemy(ColorState::Red, EnemyType::LivingArmor, uvec2(8, 3));
+	create_enemy(ColorState::Red, EnemyType::TreeAnt, uvec2(8, 4));
+	create_enemy(ColorState::Blue, EnemyType::Slime, uvec2(8, 8));
 }
 
 // Compute collisions between entities
@@ -518,9 +517,9 @@ void WorldSystem::change_color()
 	}
 
 	//ColorState active_color = turns->get_active_color();
-	//for (long long i = registry.enemy_states.entities.size() - 1; i >= 0; i--) { 
-	//	const Entity& enemy_entity = registry.enemy_states.entities[i];
-	//	if (((uint8_t)registry.enemy_states.get(enemy_entity).team & (uint8_t)active_color) == 0) {
+	//for (long long i = registry.enemies.entities.size() - 1; i >= 0; i--) { 
+	//	const Entity& enemy_entity = registry.enemies.entities[i];
+	//	if (((uint8_t)registry.enemies.get(enemy_entity).team & (uint8_t)active_color) == 0) {
 	//		registry.render_requests.get(enemy_entity).visible = false;
 	//	} else {
 	//		registry.render_requests.get(enemy_entity).visible = true;

@@ -8,6 +8,11 @@
 #include <iostream>
 #include <sstream>
 
+std::unordered_map<EnemyType, char*> enemy_type_to_string({ { EnemyType::Slime, "Slime" },
+															{ EnemyType::Raven, "Raven" },
+															{ EnemyType::LivingArmor, "LivingArmor" },
+															{ EnemyType::TreeAnt, "TreeAnt" } });
+
 // Very, VERY simple OBJ loader from https://github.com/opengl-tutorials/ogl tutorial 7
 // (modified to also read vertex color and omit uv and normals)
 bool Mesh::load_from_obj_file(const std::string& obj_path,
