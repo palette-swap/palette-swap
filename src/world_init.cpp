@@ -1,5 +1,6 @@
-#include "world_init.hpp"
 #include "tiny_ecs_registry.hpp"
+#include "world_init.hpp"
+
 
 Entity create_player(uvec2 pos)
 {
@@ -25,23 +26,32 @@ Entity create_player(uvec2 pos)
 
 	inventory.equipped.at(static_cast<uint8>(Slot::PrimaryHand)) = sword;
 
-	registry.render_requests.insert(
-		entity, { TEXTURE_ASSET_ID::PALADIN, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE });
-	registry.colors.insert(entity, { 1, 1, 1 });
+	registry.render_requests.insert(entity,
+								   { TEXTURE_ASSET_ID::PALADIN, 
+									 EFFECT_ASSET_ID::PLAYER,
+									 GEOMETRY_BUFFER_ID::PLAYER });
 
+	Animation & player_animation = registry.animations.emplace(entity);
+	player_animation.max_frames = 6;
+	player_animation.state = 0;
+	player_animation.speed_adjustment = 1.5;
+
+	registry.colors.insert(entity, { 1, 1, 1 });
+	
 	return entity;
 }
 
 // Repurposed into general create_enemy
 // TODO: add additional inputs to specify enemy type, current default is slug
-Entity create_enemy(uvec2 position, ColorState team)
+Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 {
 	auto entity = Entity();
 
-	registry.map_positions.emplace(entity, position);
+	registry.map_positions.emplace(entity, map_pos);
 
 	// Set up enemy stats to be weaker than the player
 	// TODO: Replace with load from file or auto-generate
+	// TODO: Set different stats for each enemy type.
 	Stats& stats = registry.stats.emplace(entity);
 	stats.health = 50;
 	stats.health_max = 50;
@@ -51,24 +61,59 @@ Entity create_enemy(uvec2 position, ColorState team)
 	stats.base_attack.damage_max = 15;
 
 	// Maps position of enemy to actual position (for reference)
-	vec2 actual_position = MapUtility::map_position_to_world_position(position);
+	vec2 actual_position = MapUtility::map_position_to_world_position(map_pos);
 
 	// Indicates enemy is hittable by objects
 	registry.hittables.emplace(entity);
 
 	// TODO: Switch out basic enemy type based on input (Currently Defaulted to Slug)
 	registry.render_requests.insert(entity,
-									{ TEXTURE_ASSET_ID::SLIME, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE });
+									{ TEXTURE_ASSET_ID::SLIME, EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY });
 	registry.colors.insert(entity, { 1, 1, 1 });
 
-	registry.enemy_states.emplace(entity, team);
-	if (((uint8_t)team & 0b01) > 0) {
-		registry.red_entities.emplace(entity);
+	// Create enemy component for AI System.
+	// TODO: Replace with load from file or auto-generate.
+	Enemy& enemy = registry.enemies.emplace(entity);
+
+	enemy.team = team;
+	enemy.type = type;
+	enemy.state = EnemyState::Idle;
+	enemy.nest_map_pos = map_pos;
+
+	switch (type) {
+	case EnemyType::Slime:
+		enemy.radius = 3;
+		enemy.speed = 1;
+		enemy.attack_range = 1;
+		break;
+
+	case EnemyType::Raven:
+		enemy.radius = 6;
+		enemy.speed = 2;
+		enemy.attack_range = 1 ;
+		break;
+
+	case EnemyType::LivingArmor:
+		enemy.radius = 2;
+		enemy.speed = 1;
+		enemy.attack_range = 1;
+		break;
+
+	case EnemyType::TreeAnt:
+		enemy.radius = 3;
+		enemy.speed = 1;
+		enemy.attack_range = 2;
+		break;
+
+	default:
+		throw std::runtime_error("Invalid enemy type.");
 	}
-	if (((uint8_t)team & 0b10) > 0) {
-		registry.blue_entities.emplace(entity);
-	}
-	registry.enemy_nest_positions.emplace(entity, position);
+
+
+	// TODO: Combine with render_requests above, so animation system handles render requests as a middleman
+	// Update animation number using animation system max frames, instead of this static number
+	Animation& enemy_animation = registry.animations.emplace(entity);
+	enemy_animation.max_frames = 4;
 
 	return entity;
 }
@@ -81,8 +126,12 @@ Entity create_arrow(vec2 position)
 	registry.velocities.emplace(entity, 0.f, 0.f);
 
 	// Create and (empty) player component to be able to refer to other enttities
-	registry.render_requests.insert(entity,
-									{ TEXTURE_ASSET_ID::ARROW, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE });
+	registry.render_requests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::CANNONBALL, 
+			EFFECT_ASSET_ID::TEXTURED,
+			GEOMETRY_BUFFER_ID::SPRITE });
+	registry.colors.insert(entity, { 1, 1, 1 });
 
 	return entity;
 }

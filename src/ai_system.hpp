@@ -19,35 +19,53 @@ public:
 	void step(float elapsed_ms);
 
 private:
+	// Execute state machine of Slime.
+	void execute_Slime(const Entity& slime);
+
+	// Execute state machine of Raven.
+	void execute_Raven(const Entity& raven);
+
+	// Execute state machine of Living Armor.
+	void execute_LivingArmor(const Entity& living_armor);
+
+	// Execute state machine of Tree Ant.
+	void execute_TreeAnt(const Entity& tree_ant);
+
+	// Remove an entity if it is dead.
+	bool remove_dead_entity(const Entity& entity);
+
 	// Switch enemy state.
-	void switch_enemy_state(const Entity& enemy_entity, ENEMY_STATE_ID enemy_state);
+	void switch_enemy_state(const Entity& enemy_entity, EnemyState new_state);
 
 	// Check if the player is spotted by an entity within its radius.
 	bool is_player_spotted(const Entity& entity, uint radius);
 
 	// Check if the player is reachable by an entity within its attack range.
-	bool is_player_reachable(const Entity& entity, uint attack_range);
-
-	// Check if an entity is afraid.
-	bool is_afraid(const Entity& entity);
+	bool is_player_in_attack_range(const Entity& entity, uint attack_range);
 
 	// Check if an entity is at its nest.
 	bool is_at_nest(const Entity& entity);
-
-	// An entity becomes alert.
-	void become_alert(const Entity& entity);
 
 	// An entity attackes the player.
 	void attack_player(const Entity& entity);
 
 	// An entity approaches the player.
-	bool approach_player(const Entity& entity);
+	bool approach_player(const Entity& entity, uint speed);
 
 	// An entity approaches its nest.
-	bool approach_nest(const Entity& entity);
+	bool approach_nest(const Entity& entity, uint speed);
 
 	// An entity moves to a targeted map position.
 	bool move(const Entity& entity, const uvec2& map_pos);
+
+	// Check if an entity's health is below a ratio.
+	bool is_health_below(const Entity& entity, float ratio);
+
+	// An entity become immortal if flag is true. Otherwise cancel immortality.
+	void become_immortal(const Entity& entity, bool flag);
+
+	// An entity become powerup if flag is true. Otherwise cancel powerup.
+	void become_powerup(const Entity& entity, bool flag);
 
 	// Shared resource: Combat system.
 	std::shared_ptr<CombatSystem> combat;
