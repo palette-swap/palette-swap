@@ -68,7 +68,7 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 
 	// TODO: Switch out basic enemy type based on input (Currently Defaulted to Slug)
 	registry.render_requests.insert(entity,
-									{ TEXTURE_ASSET_ID::SLIME, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE });
+									{ TEXTURE_ASSET_ID::SLIME, EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY });
 	registry.colors.insert(entity, { 1, 1, 1 });
 
 	// Create enemy component for AI System.
