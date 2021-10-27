@@ -111,7 +111,6 @@ void AnimationSystem:: set_player_animation(Entity player) {
 }
 
 // Will eventually combine this into a general toggle between player states
-
 void AnimationSystem::player_idle_animation(Entity player)
 {
 	Animation& player_animation = registry.animations.get(player);
@@ -125,6 +124,12 @@ void AnimationSystem::player_spellcast_animation(Entity player)
 	player_animation.state = (int)player_animation_states::Spellcast;
 	player_animation.frame = 0;
 }
+
+void AnimationSystem::player_toggle_weapon(Entity player) {
+	Animation& player_animation = registry.animations.get(player);
+	player_animation.state = (player_animation.state + 1) % player_weapon_states;
+}
+
 
 void AnimationSystem::player_attack_animation(Entity player) {
 	Animation& player_animation = registry.animations.get(player);

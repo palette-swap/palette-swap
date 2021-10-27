@@ -342,6 +342,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		// Change weapon
 		if (key == GLFW_KEY_E) {
 			equip_next_weapon();
+			animations->player_toggle_weapon(player);
 		}
 
 		// TODO: This will likely change based on player's current item equip (or perhaps have specific

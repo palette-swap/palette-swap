@@ -19,6 +19,7 @@ static constexpr int enemy_num_frames = 4;
 
 // These values are used for the default setting for the player
 static constexpr int player_num_frames = 6;
+static constexpr int player_weapon_states = 2;
 static constexpr float player_animation_speed = 1.2;
 // Used for melee animation attack speeds for the player
 static constexpr float player_melee_speed = 2.5;
@@ -50,10 +51,12 @@ public:
 	// initializes animation values for a player entity
 	// NOTE: weird things will happen if the entity initialized as player is not a player
 	void set_player_animation(Entity player);
-	// Sets player's animation to idle;
+	// Sets player's animation to idle
 	void player_idle_animation(Entity player);
-	// Sets player's animation to spellcast;
+	// Sets player's animation to spellcast
 	void player_spellcast_animation(Entity player);
+	// Toggles player's weapon selection
+	void AnimationSystem::player_toggle_weapon(Entity player);
 	// TODO: Maybe generalize these two event animations to a general one
 	// Triggers attack animation for a entity specified as the player
 	// TODO: Add callback to confirm that a turn has ended
