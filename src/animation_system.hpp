@@ -23,7 +23,7 @@ static constexpr float player_animation_speed = 1.2;
 // Used for melee animation attack speeds for the player
 static constexpr float player_melee_speed = 2.5;
 static constexpr float player_heavy_melee_speed = 1;
-static constexpr float player_running_speed = 2;
+static constexpr float player_running_speed = 1.8;
 // Value denoting the animation states for the player
 // KEEP ALIGNED WITH STATES REPRESENTED IN PLAYER SPRITESHEET
 enum class player_animation_states { Idle = 0, Spellcast = 1, Melee = 2, Running = 3 };

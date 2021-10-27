@@ -345,10 +345,16 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 			equip_next_weapon();
 		}
 
-		// Trigger Attack key (Just here for testing, can hook this up anywhere that you want to trigger an attack animation for the player)
-		if (key == GLFW_KEY_T) {
-			animations->player_attack_animation(player);
+		// TODO: This will likely change based on player's current item equip (or perhaps have specific
+		// keys to switch to each of the combat options
+		if (key == GLFW_KEY_1) {
+			animations->player_idle_animation(player);
 		}
+
+		if (key == GLFW_KEY_2) {
+			animations->player_spellcast_animation(player);
+		}
+
 
 		// Change attack
 		// TODO: Generalize for many attacks, check out of bounds
@@ -567,6 +573,7 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 					Stats& player_stats = registry.stats.get(player);
 					Stats& enemy_stats = registry.stats.get(target);
 					combat->do_attack(player_stats, attack, enemy_stats);
+					animations->player_attack_animation(player);
 				}
 			}
 			turns->complete_team_action(player);
