@@ -65,6 +65,8 @@ int main()
 		physics.step(elapsed_ms, window_width_px, window_height_px);
 		world.handle_collisions();
 		renderer.draw();
+
+		map->step();
 	}
 
 	return EXIT_SUCCESS;

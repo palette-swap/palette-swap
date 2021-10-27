@@ -8,6 +8,9 @@
 
 #include "physics_system.hpp"
 
+// Json Library
+#include "rapidjson/pointer.h"
+
 // Create the world
 WorldSystem::WorldSystem(Debug& debugging,
 						 std::shared_ptr<CombatSystem> combat,
@@ -146,6 +149,11 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	// Remove debug info from the last step
 	while (!registry.debug_components.entities.empty()) {
 		registry.remove_all_components_of(registry.debug_components.entities.back());
+	}
+
+	if (registry.level_clearing_requests.size() != 0) {
+		serialize_and_clear_states(registry.level_clearing_requests.components[0].current_snap_shot);
+		return true;
 	}
 
 	// Processing the player state
@@ -423,6 +431,15 @@ void WorldSystem::move_player(Direction direction)
 	}
 
 	MapPosition& map_pos = registry.map_positions.get(player);
+	if (map_generator->is_next_level_tile(map_pos.position)) {
+		map_generator->load_next_level();
+		return;
+	}
+	if (map_generator->is_last_level_tile(map_pos.position)) {
+		map_generator->load_last_level();
+		return;
+	}
+
 	WorldPosition& arrow_position = registry.world_positions.get(player_arrow);
 	// TODO: this should be removed once we only use map_position
 	uvec2 new_pos = map_pos.position;
@@ -555,3 +572,12 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 }
 
 void WorldSystem::on_mouse_scroll(float offset) { this->renderer->scale_on_scroll(offset); }
+
+void WorldSystem::serialize_and_clear_states(std::unique_ptr<rapidjson::Document>& json)
+{
+	rapidjson::CreateValueByPointer(*json, "/enemies/0");
+
+	rapidjson::SetValueByPointer(*json, "/enemies/0/entity", 3);	
+
+	
+}

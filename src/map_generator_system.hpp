@@ -5,6 +5,16 @@
 
 #include <array>
 
+namespace MapUtility {
+	//////////////////////////////////////////
+	// Defines different types of tiles
+	static const std::set<uint8_t> walkable_tiles = { 0, 14, 20 };
+	static const std::set<uint8_t> wall_tiles
+		= { 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 15, 17, 18, 19, 23, 25, 26, 27, 33, 35, 41, 42, 43 };
+	static const uint8_t tile_next_level = 14;
+	static const uint8_t tile_last_level = 20;
+}
+
 // Manages and store the generated maps
 class MapGeneratorSystem {
 public:
@@ -48,7 +58,6 @@ private:
 																		  room_rotations_path("level_two.csv") };
 
 	int current_level = -1;
-
 	// the (procedural) generated levels, each level contains a full map(max 10*10 rooms),
 	// index of the vector will be the map id
 	std::vector<Mapping> levels;
@@ -80,6 +89,16 @@ private:
 	// 3 - LEFT
 	Direction integer_to_direction(int direction);
 
+	// Involving all dynamic components on a map, stored in json format
+	std::vector<std::string> level_snap_shots;
+
+	// Clear current level
+	void clear_level();
+
+	// Load level specified, if snap shot exists, load from it,
+	// Otherwise load from statically defined files(TODO: use procedural generation instead)
+	void load_level(int level);
+
 public:
 	MapGeneratorSystem();
 
@@ -109,4 +128,15 @@ public:
 	std::vector<uvec2> shortest_path(uvec2 start, uvec2 target, bool use_a_star = true) const;
 
 	MapUtility::TileId get_tile_id_from_room(MapUtility::RoomType room_type, uint8_t row, uint8_t col, Direction rotation) const;
+
+	bool is_next_level_tile(uvec2 pos) const;
+	bool is_last_level_tile(uvec2 pos) const;
+
+	// Save current level and load the next level
+	void load_next_level();
+
+	// Save current level and load the last level
+	void load_last_level();
+
+	void step();
 };

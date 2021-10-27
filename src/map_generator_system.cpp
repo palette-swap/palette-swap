@@ -10,9 +10,15 @@
 
 #include <glm/gtx/hash.hpp>
 
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/writer.h"
+
 using namespace MapUtility;
 
-MapGeneratorSystem::MapGeneratorSystem() { load_rooms_from_csv(); }
+MapGeneratorSystem::MapGeneratorSystem() : levels(num_rooms), level_room_rotations(num_rooms), level_snap_shots(num_rooms) {
+	load_rooms_from_csv(); 
+	// Load level files + send level loading request
+}
 
 // TODO: we want this eventually be procedural generated
 void MapGeneratorSystem::generate_levels()
@@ -291,4 +297,60 @@ const std::array<std::array<Direction, MapUtility::map_size>, MapUtility::map_si
 MapGeneratorSystem::current_rooms_rotation() const
 {
 	return level_room_rotations.at(current_level);
+}
+
+bool MapGeneratorSystem::is_next_level_tile(uvec2 pos) const
+{
+	return get_tile_id_from_map_pos(pos) == tile_next_level;
+}
+
+bool MapGeneratorSystem::is_last_level_tile(uvec2 pos) const
+{
+	return get_tile_id_from_map_pos(pos) == tile_last_level;
+}
+
+void MapGeneratorSystem::clear_level()
+{
+	Entity entity = Entity();
+	registry.level_clearing_requests.emplace(entity, std::make_unique<rapidjson::Document>());
+}
+
+void MapGeneratorSystem::load_level(int level) {
+	assert(level != num_levels);
+	// Read from snapshots first, if not exists, read from pre-configured file
+}
+
+void MapGeneratorSystem::load_next_level()
+{
+	if (static_cast<size_t>(current_level) == levels.size()) {
+		fprintf(stderr, "is already on last level");
+		assert(false && "cannot load any new levels");
+	}
+
+	clear_level();
+	load_level(current_level + 1);
+}
+
+void MapGeneratorSystem::load_last_level() {
+
+}
+
+void MapGeneratorSystem::step()
+{
+	// This is actually a very simple state machine
+	// States: in level -> Clear level -> Load level
+	if (registry.level_clearing_requests.size() != 0) {
+		LevelClearingRequest& level_clearing = registry.level_clearing_requests.components[0];
+		if (!level_clearing.level_cleared) {
+			return;
+		}
+		
+		rapidjson::StringBuffer buffer;
+		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+		level_clearing.current_snap_shot->Accept(writer);
+		level_snap_shots.at(current_level) = buffer.GetString();
+
+		// Load next level
+		load_level(current_level + 1);
+	}
 }

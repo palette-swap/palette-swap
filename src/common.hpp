@@ -68,11 +68,6 @@ namespace MapUtility {
     using TileId = uint8_t;
     using MapId = uint8_t;
 
-    static const std::set<uint8_t> walkable_tiles = { 0, 14 };
-    static const std::set<uint8_t> wall_tiles = {
-        1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 15,
-        17, 18, 19, 23, 25, 26, 27, 33, 35, 41, 42, 43 };
-
     // Calculates virtual position of top left corner of map given screen and mapsystem constants
     // Currently used for actual_position to render_position convertion
     static constexpr vec2 top_left_corner = vec2((window_width_px - tile_size * room_size * map_size) / 2,
