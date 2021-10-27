@@ -18,3 +18,7 @@ Entity create_line(vec2 position);
 Entity create_room(vec2 position, MapUtility::RoomType roomType);
 // Creates a team that encompasses a group of units
 Entity create_team();
+// Creates an item
+Entity create_item(const std::string& name, const SlotList<bool> allowed_slots);
+// Creates a weapon (also an item)
+Entity create_weapon(const std::string& name, std::vector<Attack> attacks);

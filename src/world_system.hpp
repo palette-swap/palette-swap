@@ -61,6 +61,13 @@ private:
 	// if the tile is blocked by a wall, player won't move
 	void move_player(Direction direction);
 
+	// Equip the next weapon in alphabetical order
+	void equip_next_weapon();
+
+	// Currently mouse-controlled attack
+	Entity current_weapon;
+	size_t current_attack = 0;
+
 	// Flips color state.
 	void change_color();
 

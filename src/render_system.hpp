@@ -7,6 +7,8 @@
 #include "components.hpp"
 #include "tiny_ecs.hpp"
 
+#include "map_generator_system.hpp"
+
 // System responsible for setting up OpenGL and for rendering all the
 // visual entities in the game
 class RenderSystem {
@@ -84,6 +86,7 @@ public:
 	void draw();
 
 	mat3 create_projection_matrix();
+	vec2 get_top_left();
 	void scale_on_scroll(float offset);
 
 	float screen_scale; // Screen to pixel coordinates scale factor (for apple
