@@ -66,13 +66,13 @@ void AISystem::execute_Slime(const Entity& slime)
 	switch (enemy.state) {
 
 	case EnemyState::Idle:
-		if (is_player_in_radius(slime, enemy.radius)) {
+		if (is_player_spotted(slime, enemy.radius)) {
 			switch_enemy_state(slime, enemy.type, EnemyState::Active);
 		}
 		break;
 
 	case EnemyState::Active:
-		if (is_player_in_radius(slime, enemy.radius * 2)) {
+		if (is_player_spotted(slime, enemy.radius * 2)) {
 			if (is_player_in_attack_range(slime, enemy.attack_range)) {
 				attack_player(slime);
 			} else {
@@ -107,13 +107,13 @@ void AISystem::execute_Raven(const Entity& raven)
 	switch (enemy.state) {
 
 	case EnemyState::Idle:
-		if (is_player_in_radius(raven, enemy.radius)) {
+		if (is_player_spotted(raven, enemy.radius)) {
 			switch_enemy_state(raven, enemy.type, EnemyState::Active);
 		}
 		break;
 
 	case EnemyState::Active:
-		if (is_player_in_radius(raven, enemy.radius * 2)) {
+		if (is_player_spotted(raven, enemy.radius * 2)) {
 			if (is_player_in_attack_range(raven, enemy.attack_range)) {
 				attack_player(raven);
 			} else {
@@ -134,13 +134,13 @@ void AISystem::execute_LivingArmor(const Entity& living_armor)
 	switch (enemy.state) {
 
 	case EnemyState::Idle:
-		if (is_player_in_radius(living_armor, enemy.radius)) {
+		if (is_player_spotted(living_armor, enemy.radius)) {
 			switch_enemy_state(living_armor, enemy.type, EnemyState::Active);
 		}
 		break;
 
 	case EnemyState::Active:
-		if (is_player_in_radius(living_armor, enemy.radius * 2)) {
+		if (is_player_spotted(living_armor, enemy.radius * 2)) {
 			if (is_player_in_attack_range(living_armor, enemy.attack_range)) {
 				attack_player(living_armor);
 			} else {
@@ -177,13 +177,13 @@ void AISystem::execute_TreeAnt(const Entity& tree_ant)
 	switch (enemy.state) {
 
 	case EnemyState::Idle:
-		if (is_player_in_radius(tree_ant, enemy.radius)) {
+		if (is_player_spotted(tree_ant, enemy.radius)) {
 			switch_enemy_state(tree_ant, enemy.type, EnemyState::Active);
 		}
 		break;
 
 	case EnemyState::Active:
-		if (is_player_in_radius(tree_ant, enemy.radius * 2)) {
+		if (is_player_spotted(tree_ant, enemy.radius * 2)) {
 			if (is_player_in_attack_range(tree_ant, enemy.attack_range)) {
 				attack_player(tree_ant);
 			} else {
@@ -204,7 +204,7 @@ void AISystem::execute_TreeAnt(const Entity& tree_ant)
 		break;
 
 	case EnemyState::Powerup:
-		if (is_player_in_radius(tree_ant, enemy.radius * 2)) {
+		if (is_player_spotted(tree_ant, enemy.radius * 2)) {
 			if (is_player_in_attack_range(tree_ant, enemy.attack_range * 2)) {
 				attack_player(tree_ant);
 			}
@@ -267,7 +267,7 @@ void AISystem::switch_enemy_state(const Entity& enemy_entity, EnemyType /*enemy_
 	}
 }
 
-bool AISystem::is_player_in_radius(const Entity& entity, const uint radius)
+bool AISystem::is_player_spotted(const Entity& entity, const uint radius)
 {
 	uvec2 player_map_pos = registry.map_positions.get(registry.players.top_entity()).position;
 	uvec2 entity_map_pos = registry.map_positions.get(entity).position;
@@ -278,7 +278,7 @@ bool AISystem::is_player_in_radius(const Entity& entity, const uint radius)
 
 bool AISystem::is_player_in_attack_range(const Entity& entity, const uint attack_range)
 {
-	return is_player_in_radius(entity, attack_range);
+	return is_player_spotted(entity, attack_range);
 }
 
 bool AISystem::is_at_nest(const Entity& entity)

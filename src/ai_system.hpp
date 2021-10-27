@@ -38,7 +38,7 @@ private:
 	void switch_enemy_state(const Entity& enemy_entity, EnemyType enemy_type, EnemyState enemy_state);
 
 	// Check if the player is spotted by an entity within its radius.
-	bool is_player_in_radius(const Entity& entity, uint radius);
+	bool is_player_spotted(const Entity& entity, uint radius);
 
 	// Check if the player is reachable by an entity within its attack range.
 	bool is_player_in_attack_range(const Entity& entity, uint attack_range);
