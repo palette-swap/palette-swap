@@ -237,6 +237,7 @@ void AISystem::switch_enemy_state(const Entity& enemy_entity, EnemyState new_sta
 	
 	Enemy& enemy = registry.enemies.get(enemy_entity);
 	enemy.state = new_state;
+	Animation& enemy_animation = registry.animations.get(enemy_entity);
 
 	// TODO: Animate enemy state switch by a spreadsheet for enemy_type * enemy_state mapping.
 	// Slime:		Idle, Active, Flinched.
@@ -247,27 +248,26 @@ void AISystem::switch_enemy_state(const Entity& enemy_entity, EnemyState new_sta
 	//Animation& animation = registry.animations.get(enemy_entity);
 	//animation.switchTexture(enemy.team, enemy.type, enemy.state);
 
-	TEXTURE_ASSET_ID& enemy_current_textrue = registry.render_requests.get(enemy_entity).used_texture;
 	switch (enemy.state) {
 
 	case EnemyState::Idle:
-		enemy_current_textrue = TEXTURE_ASSET_ID::SLIME;
+		enemy_animation.state = 0;
 		break;
 
 	case EnemyState::Active:
-		enemy_current_textrue = TEXTURE_ASSET_ID::SLIME_ALERT;
+		enemy_animation.state = 1;
 		break;
 
 	case EnemyState::Flinched:
-		enemy_current_textrue = TEXTURE_ASSET_ID::SLIME_FLINCHED;
+		enemy_animation.state = 2;
 		break;
 
 	case EnemyState::Powerup:
-		enemy_current_textrue = TEXTURE_ASSET_ID::SLIME_FLINCHED;
+		enemy_animation.state = 2;
 		break;
 
 	case EnemyState::Immortal:
-		enemy_current_textrue = TEXTURE_ASSET_ID::SLIME_FLINCHED;
+		enemy_animation.state = 2;
 		break;
 
 	default:

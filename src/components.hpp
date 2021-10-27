@@ -22,11 +22,6 @@ struct Camera {
 	uvec2 size, central;
 };
 
-// struct denoting a currently active projectile
-struct ActiveProjectile {
-	vec2 head_offset = { 0, 0 };
-};
-
 // Struct indicating an object is hittable (Currently limited to projectiles
 struct Hittable {
 };
@@ -89,9 +84,55 @@ struct Mesh {
 	std::vector<uint16_t> vertex_indices;
 };
 
+
+// struct denoting a currently active projectile
+struct ActiveProjectile {
+	vec2 head_offset = { 0, 0 };
+};
+
 // Struct for resolving projectiles, including the arrow fired by the player
 struct ResolvedProjectile {
 	float counter = 2000;
+};
+
+// Struct for denoting the frame that the rendering system should be rendering 
+// to the screen for a spritesheet
+struct Animation {
+	int direction = 1;
+	int frame = 0;
+	int max_frames = 1;
+	int state = 0;
+	// Adjusts animation rate to be faster or slower than default
+	// ie. faster things should change more frames. slower things should change less frames
+	float speed_adjustment = 1;
+	float elapsed_time = 0;
+};
+
+// Struct denoting irregular animation events (ie attacking, containing information to restore an entity's
+// animations after the irregular event animation completes
+// TODO: Replace 
+struct Event_Animation {
+	bool turn_trigger = false;
+	float speed_adjustment = 1;
+	vec3 restore_color = { 1, 1, 1 };
+
+	int restore_state = 0;
+	float restore_speed = 1;
+	int frame = 0;
+
+};
+
+// Test Texture Buffer element for enemies
+// TODO: change to animated vertices after bringing player into this 3D element group
+struct EnemyVertex {
+	vec3 position;
+	vec2 texcoord;
+};
+
+// Temp struct denoting PlayerVertices (specifies quad proportions from player spritesheet
+struct PlayerVertex {
+	vec3 position;
+	vec2 texcoord;
 };
 
 /**
@@ -121,10 +162,13 @@ struct ResolvedProjectile {
 enum class TEXTURE_ASSET_ID : uint8_t {
 	PALADIN = 0,
 	SLIME = PALADIN + 1,
-	SLIME_ALERT = SLIME + 1,
-	SLIME_FLINCHED = SLIME_ALERT + 1,
-	ARROW = SLIME_FLINCHED + 1,
-	TILE_SET = ARROW + 1,
+	ARMOR = SLIME + 1,
+	TREEANT= ARMOR + 1,
+	RAVEN = TREEANT + 1,
+	WRAITH = RAVEN + 1,
+	DRAKE = WRAITH + 1,
+	CANNONBALL = DRAKE + 1,
+	TILE_SET = CANNONBALL + 1,
 	TEXTURE_COUNT = TILE_SET + 1
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
@@ -136,13 +180,18 @@ static constexpr std::array<vec2, texture_count> scaling_factors = {
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size * 0.5, MapUtility::tile_size * 0.5),
 	vec2(MapUtility::tile_size* MapUtility::room_size, MapUtility::tile_size* MapUtility::room_size),
 };
 
 enum class EFFECT_ASSET_ID {
 	LINE = 0,
-	TEXTURED = LINE + 1,
+	ENEMY = LINE + 1,
+	PLAYER = ENEMY + 1,
+	TEXTURED = PLAYER + 1,
 	WATER = TEXTURED + 1,
 	TILE_MAP = WATER + 1,
 	EFFECT_COUNT = TILE_MAP + 1
@@ -150,9 +199,11 @@ enum class EFFECT_ASSET_ID {
 constexpr int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 
 enum class GEOMETRY_BUFFER_ID : uint8_t {
-	SALMON = 0,
-	SPRITE = SALMON + 1,
-	LINE = SPRITE + 1,
+	SALMON = 0, 
+	SPRITE = SALMON + 1, 
+	PLAYER = SPRITE + 1,
+	ENEMY = PLAYER + 1,
+	LINE = ENEMY + 1,
 	DEBUG_LINE = LINE + 1,
 	SCREEN_TRIANGLE = DEBUG_LINE + 1,
 
@@ -175,6 +226,8 @@ struct RenderRequest {
 	bool visible = true;
 };
 
+// Represents allowed directions for an animated sprite (e.g whether the sprite is facing left or right)
+enum class Sprite_Direction : uint8_t { SPRITE_LEFT, SPRITE_RIGHT};
 // Represent four directions, that could have many uses, e.g. moving player
 enum class Direction : uint8_t {
 	Left,

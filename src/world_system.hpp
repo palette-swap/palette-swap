@@ -16,6 +16,7 @@
 #include "map_generator_system.hpp"
 #include "render_system.hpp"
 #include "turn_system.hpp"
+#include "animation_system.hpp"
 
 // Container for all our entities and game logic. Individual rendering / update is
 // deferred to the relative update() methods
@@ -79,7 +80,7 @@ private:
 
 	// Game configuration
 	bool player_arrow_fired = false;
-	// TODO Track why my projectile speed had slowed throughout
+	// TODO: Track why my projectile speed had slowed throughout
 	const size_t projectile_speed = 500;
 
 	// Game state
@@ -101,4 +102,5 @@ private:
 	std::shared_ptr<CombatSystem> combat;
 	std::shared_ptr<MapGeneratorSystem> map_generator;
 	std::shared_ptr<TurnSystem> turns;
+	std::shared_ptr<AnimationSystem> animations;
 };

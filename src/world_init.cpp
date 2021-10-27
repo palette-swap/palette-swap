@@ -1,5 +1,6 @@
-#include "world_init.hpp"
 #include "tiny_ecs_registry.hpp"
+#include "world_init.hpp"
+
 
 Entity create_player(uvec2 pos)
 {
@@ -25,10 +26,18 @@ Entity create_player(uvec2 pos)
 
 	inventory.equipped.at(static_cast<uint8>(Slot::PrimaryHand)) = sword;
 
-	registry.render_requests.insert(
-		entity, { TEXTURE_ASSET_ID::PALADIN, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE });
-	registry.colors.insert(entity, { 1, 1, 1 });
+	registry.render_requests.insert(entity,
+								   { TEXTURE_ASSET_ID::PALADIN, 
+									 EFFECT_ASSET_ID::PLAYER,
+									 GEOMETRY_BUFFER_ID::PLAYER });
 
+	Animation & player_animation = registry.animations.emplace(entity);
+	player_animation.max_frames = 6;
+	player_animation.state = 0;
+	player_animation.speed_adjustment = 1.5;
+
+	registry.colors.insert(entity, { 1, 1, 1 });
+	
 	return entity;
 }
 
@@ -59,7 +68,7 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 
 	// TODO: Switch out basic enemy type based on input (Currently Defaulted to Slug)
 	registry.render_requests.insert(entity,
-									{ TEXTURE_ASSET_ID::SLIME, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE });
+									{ TEXTURE_ASSET_ID::SLIME, EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY });
 	registry.colors.insert(entity, { 1, 1, 1 });
 
 	// Create enemy component for AI System.
@@ -100,6 +109,12 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 		throw std::runtime_error("Invalid enemy type.");
 	}
 
+
+	// TODO: Combine with render_requests above, so animation system handles render requests as a middleman
+	// Update animation number using animation system max frames, instead of this static number
+	Animation& enemy_animation = registry.animations.emplace(entity);
+	enemy_animation.max_frames = 4;
+
 	return entity;
 }
 
@@ -111,8 +126,12 @@ Entity create_arrow(vec2 position)
 	registry.velocities.emplace(entity, 0.f, 0.f);
 
 	// Create and (empty) player component to be able to refer to other enttities
-	registry.render_requests.insert(entity,
-									{ TEXTURE_ASSET_ID::ARROW, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE });
+	registry.render_requests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::CANNONBALL, 
+			EFFECT_ASSET_ID::TEXTURED,
+			GEOMETRY_BUFFER_ID::SPRITE });
+	registry.colors.insert(entity, { 1, 1, 1 });
 
 	return entity;
 }
