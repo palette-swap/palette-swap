@@ -342,17 +342,8 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		// Change weapon
 		if (key == GLFW_KEY_E) {
 			equip_next_weapon();
+			// TODO: Need to confirm that this does actually change to the correct state
 			animations->player_toggle_weapon(player);
-		}
-
-		// TODO: This will likely change based on player's current item equip (or perhaps have specific
-		// keys to switch to each of the combat options
-		if (key == GLFW_KEY_1) {
-			animations->player_idle_animation(player);
-		}
-
-		if (key == GLFW_KEY_2) {
-			animations->player_spellcast_animation(player);
 		}
 
 
