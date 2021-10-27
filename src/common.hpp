@@ -56,6 +56,7 @@ static constexpr int window_width_px = 1920;
 static constexpr int window_height_px = 1080;
 static constexpr float window_default_scale = 0.5;
 
+
 namespace MapUtility {
     // Each tile is 32x32 pixels
     static constexpr float tile_size = 32.f;

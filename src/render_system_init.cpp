@@ -210,6 +210,8 @@ void RenderSystem::initialize_gl_geometry_buffers()
 	//////////////////////////
 	// Initialize sprite
 	// The position corresponds to the center of the texture.
+	// TODO keep sprites that have not been adjusted here for now
+	// Eventually consolidate into a single animatedSpriteVertex
 	std::vector<TexturedVertex> textured_vertices(4);
 	textured_vertices[0].position = { -1.f / 2, +1.f / 2, 0.f };
 	textured_vertices[1].position = { +1.f / 2, +1.f / 2, 0.f };
@@ -223,6 +225,43 @@ void RenderSystem::initialize_gl_geometry_buffers()
 	// Counterclockwise as it's the default opengl front winding direction.
 	const std::vector<uint16_t> textured_indices = { 0, 3, 1, 1, 3, 2 };
 	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::SPRITE, textured_vertices, textured_indices);
+
+	//////////////////////////
+	// TODO: Consolidate all animated sprites (quads) into a single type
+	// Initialize ENEMY sprites
+	// The position corresponds to the center of the texture.
+	std::vector<EnemyVertex> enemy_vertices(4);
+	enemy_vertices[0].position = { -1.f / 2, +1.f / 2, 0.f };
+	enemy_vertices[1].position = { +1.f / 2, +1.f / 2, 0.f };
+	enemy_vertices[2].position = { +1.f / 2, -1.f / 2, 0.f };
+	enemy_vertices[3].position = { -1.f / 2, -1.f / 2, 0.f };
+	enemy_vertices[0].texcoord = { 0, sprite_size/spritesheet_height};
+	enemy_vertices[1].texcoord = { sprite_size / spritesheet_width, sprite_size / spritesheet_height };
+	enemy_vertices[2].texcoord = { sprite_size / spritesheet_width, 0 };
+	enemy_vertices[3].texcoord = { 0, 0 };
+
+	// Counterclockwise as it's the default opengl front winding direction.
+	const std::vector<uint16_t> enemy_indices = { 0, 3, 1, 1, 3, 2 };
+	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::ENEMY, enemy_vertices, enemy_indices);
+
+	//////////////////////////
+	// TODO: Consolidate all animated sprites (quads) into a single type
+	// Initialize PLAYER geometry
+	// The position corresponds to the center of the texture.
+	std::vector<PlayerVertex> player_vertices(4);
+	player_vertices[0].position = { -1.f / 2, +1.f / 2, 0.f };
+	player_vertices[1].position = { +1.f / 2, +1.f / 2, 0.f };
+	player_vertices[2].position = { +1.f / 2, -1.f / 2, 0.f };
+	player_vertices[3].position = { -1.f / 2, -1.f / 2, 0.f };
+	player_vertices[0].texcoord = { 0, sprite_size / player_spritesheet_height };
+	player_vertices[1].texcoord = { sprite_size / player_spritesheet_width, sprite_size / player_spritesheet_height };
+	player_vertices[2].texcoord = { sprite_size / player_spritesheet_width, 0 };
+	player_vertices[3].texcoord = { 0, 0 };
+
+	// Counterclockwise as it's the default opengl front winding direction.
+	const std::vector<uint16_t> player_indices = { 0, 3, 1, 1, 3, 2 };
+	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::PLAYER, player_vertices, player_indices);
+
 
 	for (uint8_t i = 0; i < MapUtility::num_rooms; i++) {
 		initialize_room_vertices(i);

@@ -18,6 +18,7 @@
 #include "map_generator_system.hpp"
 #include "render_system.hpp"
 #include "turn_system.hpp"
+#include "animation_system.hpp"
 
 // Container for all our entities and game logic. Individual rendering / update is
 // deferred to the relative update() methods
@@ -81,7 +82,7 @@ private:
 
 	// Game configuration
 	bool player_arrow_fired = false;
-	// TODO Track why my projectile speed had slowed throughout
+	// TODO: Track why my projectile speed had slowed throughout
 	const size_t projectile_speed = 500;
 
 	// Game state
@@ -93,7 +94,8 @@ private:
 	Debug& debugging;
 
 	// music references
-	Mix_Music* background_music = nullptr;
+	Mix_Music* bgm_red = nullptr;
+	Mix_Music* bgm_blue = nullptr;
 	Mix_Chunk* salmon_dead_sound = nullptr;
 
 	// C++ random number generator
@@ -106,4 +108,5 @@ private:
 
 	// Serialize current world states and append to the given Json object
 	void serialize_and_clear_states(std::unique_ptr<rapidjson::Document> &json);
+	std::shared_ptr<AnimationSystem> animations;
 };

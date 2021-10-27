@@ -16,6 +16,7 @@ WorldSystem::WorldSystem(Debug& debugging,
 						 std::shared_ptr<CombatSystem> combat,
 						 std::shared_ptr<MapGeneratorSystem> map,
 						 std::shared_ptr<TurnSystem> turns)
+					
 	: points(0)
 	, debugging(debugging)
 	, rng(std::make_shared<std::default_random_engine>(std::default_random_engine(std::random_device()())))
@@ -29,8 +30,11 @@ WorldSystem::WorldSystem(Debug& debugging,
 WorldSystem::~WorldSystem()
 {
 	// Destroy music components
-	if (background_music != nullptr) {
-		Mix_FreeMusic(background_music);
+	if (bgm_red != nullptr) {
+		Mix_FreeMusic(bgm_red);
+	}
+	if (bgm_blue != nullptr) {
+		Mix_FreeMusic(bgm_blue);
 	}
 	Mix_CloseAudio();
 
@@ -111,14 +115,22 @@ GLFWwindow* WorldSystem::create_window(int width, int height)
 		return nullptr;
 	}
 
-	background_music = Mix_LoadMUS(audio_path("henry_martin.wav").c_str());
+	bgm_red = Mix_LoadMUS(audio_path("henry_martin.wav").c_str());
+	bgm_blue = Mix_LoadMUS(audio_path("famous_flower_of_serving_men.wav").c_str());
 	// Example left to demonstrate loading of WAV instead of MUS, need to check difference
 	salmon_dead_sound = Mix_LoadWAV(audio_path("salmon_dead.wav").c_str());
 
-	if (background_music == nullptr) {
+	if (bgm_red == nullptr) {
 		fprintf(stderr,
 				"Failed to load sounds\n %s\n make sure the data directory is present",
-				audio_path("overworld.wav").c_str());
+				audio_path("henry_martin.wav").c_str());
+		return nullptr;
+	}
+
+	if (bgm_blue == nullptr) {
+		fprintf(stderr,
+				"Failed to load sounds\n %s\n make sure the data directory is present",
+				audio_path("famous_flower_of_serving_men.wav").c_str());
 		return nullptr;
 	}
 
@@ -129,7 +141,7 @@ void WorldSystem::init(RenderSystem* renderer_arg)
 {
 	this->renderer = renderer_arg;
 	// Playing background music indefinitely
-	Mix_PlayMusic(background_music, -1);
+	Mix_PlayMusic(bgm_red, -1);
 	fprintf(stderr, "Loaded music\n");
 
 	// Set all states to default
@@ -245,6 +257,9 @@ void WorldSystem::restart_game()
 	uvec2 player_starting_point = uvec2(50, 50);
 	// Create a new Player instance and shift player onto a tile
 	player = create_player(player_starting_point);
+	// TODO: Should move into create_player (under world init) afterwards
+	animations->set_player_animation(player);
+
 	turns->add_team_to_queue(player);
 	// Reset current weapon & attack
 	Inventory& inventory = registry.inventories.get(player);
@@ -260,9 +275,11 @@ void WorldSystem::restart_game()
 	player_arrow = create_arrow(player_location);
 	// Creates a single enemy instance, (TODO: needs to be updated with position based on grid)
 	// Also requires naming scheme for randomly generated enemies, for later reference
-	//create_enemy(uvec2(12, 3));
-	//create_enemy(uvec2(15, 3));
-	//create_enemy(uvec2(15, 4), ColorState::Blue);
+	create_enemy(ColorState::Red, EnemyType::Slime, uvec2(8, 1));
+	create_enemy(ColorState::Red, EnemyType::Raven, uvec2(8, 2));
+	create_enemy(ColorState::Red, EnemyType::LivingArmor, uvec2(8, 3));
+	create_enemy(ColorState::Red, EnemyType::TreeAnt, uvec2(8, 4));
+	create_enemy(ColorState::Blue, EnemyType::Slime, uvec2(8, 8));
 }
 
 // Compute collisions between entities
@@ -347,7 +364,10 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		// Change weapon
 		if (key == GLFW_KEY_E) {
 			equip_next_weapon();
+			// TODO: Need to confirm that this does actually change to the correct state
+			animations->player_toggle_weapon(player);
 		}
+
 
 		// Change attack
 		// TODO: Generalize for many attacks, check out of bounds
@@ -368,7 +388,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		}
 	}
 
-	if (key == GLFW_KEY_EQUAL) {
+	if (action == GLFW_RELEASE && key == GLFW_KEY_EQUAL) {
 		change_color();
 	}
 
@@ -441,18 +461,27 @@ void WorldSystem::move_player(Direction direction)
 	}
 
 	WorldPosition& arrow_position = registry.world_positions.get(player_arrow);
+	Animation& player_animation = registry.animations.get(player);
 	// TODO: this should be removed once we only use map_position
 	uvec2 new_pos = map_pos.position;
 
 	if (direction == Direction::Left && map_pos.position.x > 0) {
 		new_pos = uvec2(map_pos.position.x - 1, map_pos.position.y);
+		// TODO: Change this to animation request instead of calling it here;
+		player_animation.direction = -1;
+		animations->player_running_animation(player);
 	} else if (direction == Direction::Up && map_pos.position.y > 0) {
 		new_pos = uvec2(map_pos.position.x, map_pos.position.y - 1);
+		animations->player_running_animation(player);
 	} else if (direction == Direction::Right
 			   && map_pos.position.x < MapUtility::room_size * MapUtility::tile_size - 1) {
 		new_pos = uvec2(map_pos.position.x + 1, map_pos.position.y);
+		// TODO: Change this to animation request instead of calling it here;
+		player_animation.direction = 1;
+		animations->player_running_animation(player);
 	} else if (direction == Direction::Down && map_pos.position.y < MapUtility::room_size * MapUtility::tile_size - 1) {
 		new_pos = uvec2(map_pos.position.x, map_pos.position.y + 1);
+		animations->player_running_animation(player);
 	}
 
 	if (map_pos.position == new_pos || !map_generator->walkable(new_pos) || !turns->execute_team_action(player)) {
@@ -501,9 +530,13 @@ void WorldSystem::change_color()
 	switch (turns->get_active_color()) {
 	case ColorState::Red:
 		turns->set_active_color(ColorState::Blue);
+		Mix_FadeOutMusic(250);
+		Mix_FadeInMusic(bgm_blue, -1, 500);
 		break;
 	case ColorState::Blue:
 		turns->set_active_color(ColorState::Red);
+		Mix_FadeOutMusic(250);
+		Mix_FadeInMusic(bgm_red, -1, 500);
 		break;
 	default:
 		turns->set_active_color(ColorState::Red);
@@ -511,9 +544,9 @@ void WorldSystem::change_color()
 	}
 
 	//ColorState active_color = turns->get_active_color();
-	//for (long long i = registry.enemy_states.entities.size() - 1; i >= 0; i--) { 
-	//	const Entity& enemy_entity = registry.enemy_states.entities[i];
-	//	if (((uint8_t)registry.enemy_states.get(enemy_entity).team & (uint8_t)active_color) == 0) {
+	//for (long long i = registry.enemies.entities.size() - 1; i >= 0; i--) { 
+	//	const Entity& enemy_entity = registry.enemies.entities[i];
+	//	if (((uint8_t)registry.enemies.get(enemy_entity).team & (uint8_t)active_color) == 0) {
 	//		registry.render_requests.get(enemy_entity).visible = false;
 	//	} else {
 	//		registry.render_requests.get(enemy_entity).visible = true;
@@ -536,8 +569,10 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 
 			// Denotes arrowhead location the player's arrow, based on firing angle and current scaling
 			arrow_projectile.head_offset
-				= { sin(arrow_velocity.angle) * scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::ARROW)).y / 2,
-					-cos(arrow_velocity.angle) * scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::ARROW)).x / 2 };
+				= { sin(arrow_velocity.angle) * scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::CANNONBALL)).y
+						/ 2,
+				-cos(arrow_velocity.angle) * scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::CANNONBALL)).x / 2
+			};
 
 			arrow_velocity.speed = projectile_speed;
 			// TODO: Add better arrow physics potentially?
@@ -564,6 +599,7 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 					Stats& player_stats = registry.stats.get(player);
 					Stats& enemy_stats = registry.stats.get(target);
 					combat->do_attack(player_stats, attack, enemy_stats);
+					animations->player_attack_animation(player);
 				}
 			}
 			turns->complete_team_action(player);
