@@ -292,10 +292,10 @@ enum class ColorState { None = 0, Red = 1, Blue = 2, All = Blue + 1 };
 // TODO: Evan might wanna add description and trait for Wraith.
 enum class EnemyType {
 	Slime = 0,
-	Raven = Slime + 1,
-	LivingArmor = Raven + 1,
+	LivingArmor = Slime + 1,
 	TreeAnt = LivingArmor + 1,
-	// Wraith = TreeAnt + 1
+	Raven = TreeAnt + 1,
+	Wraith = Raven + 1
 };
 extern std::unordered_map<EnemyType, char*> enemy_type_to_string;
 

@@ -66,9 +66,9 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 	// Indicates enemy is hittable by objects
 	registry.hittables.emplace(entity);
 
-	// TODO: Switch out basic enemy type based on input (Currently Defaulted to Slug)
+	// TODO: Change texture selected to map value, rather than this + 1 being used right now
 	registry.render_requests.insert(entity,
-									{ TEXTURE_ASSET_ID::SLIME, EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY });
+									{ (TEXTURE_ASSET_ID) ((int) type + 1), EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY });
 	registry.colors.insert(entity, { 1, 1, 1 });
 
 	// Create enemy component for AI System.
