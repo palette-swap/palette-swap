@@ -91,7 +91,8 @@ private:
 	Debug& debugging;
 
 	// music references
-	Mix_Music* background_music = nullptr;
+	Mix_Music* bgm_red = nullptr;
+	Mix_Music* bgm_blue = nullptr;
 	Mix_Chunk* salmon_dead_sound = nullptr;
 
 	// C++ random number generator

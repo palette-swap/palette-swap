@@ -26,8 +26,11 @@ WorldSystem::WorldSystem(Debug& debugging,
 WorldSystem::~WorldSystem()
 {
 	// Destroy music components
-	if (background_music != nullptr) {
-		Mix_FreeMusic(background_music);
+	if (bgm_red != nullptr) {
+		Mix_FreeMusic(bgm_red);
+	}
+	if (bgm_blue != nullptr) {
+		Mix_FreeMusic(bgm_blue);
 	}
 	Mix_CloseAudio();
 
@@ -108,14 +111,22 @@ GLFWwindow* WorldSystem::create_window(int width, int height)
 		return nullptr;
 	}
 
-	background_music = Mix_LoadMUS(audio_path("henry_martin.wav").c_str());
+	bgm_red = Mix_LoadMUS(audio_path("henry_martin.wav").c_str());
+	bgm_blue = Mix_LoadMUS(audio_path("famous_flower_of_serving_men.wav").c_str());
 	// Example left to demonstrate loading of WAV instead of MUS, need to check difference
 	salmon_dead_sound = Mix_LoadWAV(audio_path("salmon_dead.wav").c_str());
 
-	if (background_music == nullptr) {
+	if (bgm_red == nullptr) {
 		fprintf(stderr,
 				"Failed to load sounds\n %s\n make sure the data directory is present",
-				audio_path("overworld.wav").c_str());
+				audio_path("henry_martin.wav").c_str());
+		return nullptr;
+	}
+
+	if (bgm_blue == nullptr) {
+		fprintf(stderr,
+				"Failed to load sounds\n %s\n make sure the data directory is present",
+				audio_path("famous_flower_of_serving_men.wav").c_str());
 		return nullptr;
 	}
 
@@ -126,7 +137,7 @@ void WorldSystem::init(RenderSystem* renderer_arg)
 {
 	this->renderer = renderer_arg;
 	// Playing background music indefinitely
-	Mix_PlayMusic(background_music, -1);
+	Mix_PlayMusic(bgm_red, -1);
 	fprintf(stderr, "Loaded music\n");
 
 	// Set all states to default
@@ -357,7 +368,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		}
 	}
 
-	if (key == GLFW_KEY_EQUAL) {
+	if (action == GLFW_RELEASE && key == GLFW_KEY_EQUAL) {
 		change_color();
 	}
 
@@ -481,9 +492,13 @@ void WorldSystem::change_color()
 	switch (turns->get_active_color()) {
 	case ColorState::Red:
 		turns->set_active_color(ColorState::Blue);
+		Mix_FadeOutMusic(250);
+		Mix_FadeInMusic(bgm_blue, -1, 500);
 		break;
 	case ColorState::Blue:
 		turns->set_active_color(ColorState::Red);
+		Mix_FadeOutMusic(250);
+		Mix_FadeInMusic(bgm_red, -1, 500);
 		break;
 	default:
 		turns->set_active_color(ColorState::Red);
