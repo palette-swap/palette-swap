@@ -1,6 +1,6 @@
-#include "world_init.hpp"
 #include "tiny_ecs_registry.hpp"
-#include "animation_system.hpp"
+#include "world_init.hpp"
+
 
 Entity create_player(uvec2 pos)
 {

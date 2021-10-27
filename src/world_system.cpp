@@ -236,7 +236,7 @@ void WorldSystem::restart_game()
 	// Create a new Player instance and shift player onto a tile
 	player = create_player(player_starting_point);
 	// TODO: Should move into create_player (under world init) afterwards
-	animations->initialize_player_animation(player);
+	animations->set_player_animation(player);
 
 	turns->add_team_to_queue(player);
 	// Reset current weapon & attack
@@ -345,7 +345,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 			equip_next_weapon();
 		}
 
-		// Trigger Attack key (TEMPORARILY, JUST TO CHECK THAT ATTACK ANIMATION IS WORKING)
+		// Trigger Attack key (Just here for testing, can hook this up anywhere that you want to trigger an attack animation for the player)
 		if (key == GLFW_KEY_T) {
 			animations->player_attack_animation(player);
 		}
