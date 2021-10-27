@@ -119,6 +119,8 @@ void AISystem::execute_Raven(const Entity& raven)
 			} else {
 				approach_player(raven, enemy.speed);
 			}
+		} else {
+			switch_enemy_state(raven, enemy.type, EnemyState::Idle);
 		}
 		break;
 
