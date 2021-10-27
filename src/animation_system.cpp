@@ -110,7 +110,7 @@ void AnimationSystem:: set_player_animation(Entity player) {
 	player_render = { TEXTURE_ASSET_ID::PALADIN, EFFECT_ASSET_ID::PLAYER, GEOMETRY_BUFFER_ID::PLAYER };
 }
 
-// Will eventually combine this into a general toggle between player states
+// TODO: Will eventually combine this into a general toggle between player states
 void AnimationSystem::player_idle_animation(Entity player)
 {
 	Animation& player_animation = registry.animations.get(player);
