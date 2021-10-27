@@ -49,13 +49,6 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 								   { TEXTURE_ASSET_ID::SLIME, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE });
 	registry.colors.insert(entity, { 1, 1, 1 });
 
-	if (((uint8_t)team & 0b01) > 0) {
-		registry.red_entities.emplace(entity);
-	}
-	if (((uint8_t)team & 0b10) > 0) {
-		registry.blue_entities.emplace(entity);
-	}
-
 	// Create enemy component for AI System.
 	// TODO: Replace with load from file or auto-generate.
 	Enemy& enemy = registry.enemies.emplace(entity);

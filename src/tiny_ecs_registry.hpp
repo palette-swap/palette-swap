@@ -25,8 +25,6 @@ public:
 
 	// AI
 	ComponentContainer<Enemy> enemies;
-	ComponentContainer<RedDimension> red_entities;
-	ComponentContainer<BlueDimension> blue_entities;
 
 	// Physics
 	ComponentContainer<Hittable> hittables;
@@ -52,8 +50,6 @@ private:
 		&rooms,
 		&map_positions,
 		&enemies,
-		&red_entities,
-		&blue_entities,
 		&hittables,
 		&active_projectiles,
 		&resolved_projectiles,
