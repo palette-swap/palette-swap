@@ -310,8 +310,8 @@ void AISystem::attack_player(const Entity& entity)
 
 bool AISystem::approach_player(const Entity& entity, uint speed)
 {
-	uvec2 player_map_pos = registry.map_positions.get(registry.players.top_entity()).position;
-	uvec2 entity_map_pos = registry.map_positions.get(entity).position;
+	const uvec2 player_map_pos = registry.map_positions.get(registry.players.top_entity()).position;
+	const uvec2 entity_map_pos = registry.map_positions.get(entity).position;
 
 	std::vector<uvec2> shortest_path = map_generator->shortest_path(entity_map_pos, player_map_pos);
 	if (shortest_path.size() > 2) {
@@ -323,12 +323,17 @@ bool AISystem::approach_player(const Entity& entity, uint speed)
 
 bool AISystem::approach_nest(const Entity& entity, uint speed)
 {
+	const uvec2 player_map_pos = registry.map_positions.get(registry.players.top_entity()).position;
 	const uvec2& entity_map_pos = registry.map_positions.get(entity).position;
 	const uvec2& nest_map_pos = registry.enemies.get(entity).nest_map_pos;
 
 	std::vector<uvec2> shortest_path = map_generator->shortest_path(entity_map_pos, nest_map_pos);
 	if (shortest_path.size() > 1) {
 		uvec2 next_map_pos = shortest_path[min((size_t)speed, (shortest_path.size() - 1))];
+		// A special case that the player occupies the nest, so the entity won't move in (overlap).
+		if (next_map_pos == nest_map_pos && nest_map_pos == player_map_pos) {
+			return false;
+		}
 		return move(entity, next_map_pos);
 	}
 	return false;
