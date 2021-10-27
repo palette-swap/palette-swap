@@ -192,8 +192,14 @@ endif()
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${GLFW_INCLUDE_DIRS})
 target_include_directories(${PROJECT_NAME} PUBLIC ${SDL2_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/ext/soloud/include")
 
-target_link_libraries(${PROJECT_NAME} PUBLIC ${GLFW_LIBRARIES} ${SDL2_LIBRARIES} ${SDL2MIXER_LIBRARIES} glm::glm)
+set(SDL2_LIBRARY_TEMP ${SDL2_LIBRARIES})
+set(SDL2_INCLUDE_DIR ${SDL2_INCLUDE_DIRS})
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/ext/soloud/contrib")
+set_property(TARGET soloud PROPERTY IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/ext/soloud/bin/soloud.lib")
+
+target_link_libraries(${PROJECT_NAME} PUBLIC ${GLFW_LIBRARIES} ${SDL2_LIBRARIES} ${SDL2MIXER_LIBRARIES} soloud glm::glm)
 
 # Needed to add this
 if(IS_OS_LINUX)
