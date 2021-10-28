@@ -57,8 +57,8 @@ class RenderSystem {
 	// hierachy between animation and render system
 	// Filler for experimental spritesheet dimensions (3 rows and 4 columns)
 	// Will likely update to a standard square (regardless of rows or columns of actual sprites used)
-	static constexpr float spritesheet_width = 4.f;
-	static constexpr float spritesheet_height = 3.f;
+	static constexpr float spritesheet_width = 8.f;
+	static constexpr float spritesheet_height = 8.f;
 	// Should be kept in tune with tile size, but this remains to be seen
 	static constexpr float sprite_size = 1.f;
 	static constexpr float player_spritesheet_width = 8.f;
