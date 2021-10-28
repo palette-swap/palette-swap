@@ -89,8 +89,10 @@ void AISystem::execute_Slime(const Entity& slime)
 
 	case EnemyState::Flinched:
 		if (is_at_nest(slime)) {
-			recover_health(slime , 1.f);
-			switch_enemy_state(slime, EnemyState::Idle);
+			if (!is_player_spotted(slime, 6)) {
+				recover_health(slime, 1.f);
+				switch_enemy_state(slime, EnemyState::Idle);
+			}
 		} else {
 			approach_nest(slime, enemy.speed);
 		}
