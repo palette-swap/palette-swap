@@ -49,7 +49,7 @@ void AnimationSystem::resolve_event_animations()
 			// Restores animation back to default before event animation was called
 			actual_animation.speed_adjustment = event_animation.restore_speed;
 			actual_animation.state = event_animation.restore_state;
-			entity_color = event_animation.restore_color;
+			 entity_color = event_animation.restore_color;
 			// Removes event animation from registry
 			registry.event_animations.remove(animation_entity);
 		} else {
@@ -89,6 +89,22 @@ void AnimationSystem::set_enemy_animation(Entity enemy, TEXTURE_ASSET_ID enemy_t
 
 void AnimationSystem::enemy_attack_animation(Entity enemy) {
 	// TODO: Add enemy attack animations to spritesheets, and add to event animations
+	Animation& enemy_animation = registry.animations.get(enemy);
+	vec3& entity_color = registry.colors.get(enemy);
+
+	if (!registry.event_animations.has(enemy)) {
+		Event_Animation& enemy_attack = registry.event_animations.emplace(enemy);
+
+		// Stores restoration states for the player's animations, to be called after animation event is resolved
+		enemy_attack.restore_speed = enemy_animation.speed_adjustment;
+		enemy_attack.restore_state = enemy_animation.state;
+		enemy_attack.restore_color = entity_color;
+
+		// Sets animation state to be the beginning of the melee animation
+		enemy_animation.state = (int)enemy_animation_events::Attack;
+		enemy_animation.frame = 0;
+		enemy_animation.speed_adjustment = enemy_attack_speed;
+	}
 }
 
 

@@ -16,18 +16,21 @@ static constexpr int base_animation_speed = 150;
 // Currently this number is used for all enemies animation frames (a total of 4)
 // Moving forward the animation frames by enemy type may change
 static constexpr int enemy_num_frames = 4;
+static constexpr float enemy_attack_speed = 1.5;
 
 // These values are used for the default setting for the player
 static constexpr int player_num_frames = 6;
 static constexpr int player_weapon_states = 2;
 static constexpr float player_animation_speed = 1.2;
-// Used for melee animation attack speeds for the player
+
+// Used for animatio events for the player
 static constexpr float player_melee_speed = 2.5;
 static constexpr float player_heavy_melee_speed = 1;
 static constexpr float player_running_speed = 1.8;
 // Value denoting the animation states for the player
 // KEEP ALIGNED WITH STATES REPRESENTED IN PLAYER SPRITESHEET
 enum class player_animation_states { Idle = 0, Spellcast = 1, Melee = 2, Running = 3 };
+enum class enemy_animation_events { Attack = 3};
 
 static constexpr vec3 default_enemy_red = { 2, 1, 1 };
 static constexpr vec3 default_enemy_blue = { 1, 1, 2 };

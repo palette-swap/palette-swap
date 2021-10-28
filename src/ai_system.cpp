@@ -5,10 +5,12 @@
 // AI logic
 AISystem::AISystem(std::shared_ptr<CombatSystem> combat,
 				   std::shared_ptr<MapGeneratorSystem> map_generator,
-				   std::shared_ptr<TurnSystem> turns)
+				   std::shared_ptr<TurnSystem> turns,
+				   std::shared_ptr<AnimationSystem> animations)
 	: combat(std::move(combat))
 	, map_generator(std::move(map_generator))
 	, turns(std::move(turns))
+	, animations(std::move(animations))
 {
 	registry.debug_components.emplace(enemy_team);
 
@@ -302,9 +304,12 @@ void AISystem::attack_player(const Entity& entity)
 	// TODO: Animate attack.
 	char* enemy_type = enemy_type_to_string[registry.enemies.get(entity).type];
 	printf("%s_%u attacks player!\n", enemy_type, (uint)entity);
-
+	
 	Stats& entity_stats = registry.stats.get(entity);
 	Stats& player_stats = registry.stats.get(registry.players.top_entity());
+	// TODO: move attack animation to combat system potentially
+	// Triggers attack for a enemy entity
+	animations->enemy_attack_animation(entity);
 	combat->do_attack(entity_stats, entity_stats.base_attack, player_stats);
 }
 
