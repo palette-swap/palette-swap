@@ -48,6 +48,8 @@ public:
 
 	// Sets an enemy entity to have the correct render texture, and color state
 	void set_enemy_animation(Entity enemy, TEXTURE_ASSET_ID enemy_type, ColorState color);
+	// Changes an enemy's animation state
+	void set_enemy_state(Entity enemy, int state);
 	// triggers an enemy attack animation
 	void enemy_attack_animation(Entity enemy);
 

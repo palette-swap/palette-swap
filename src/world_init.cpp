@@ -107,7 +107,7 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 
 	// TODO: Change all of this to reference constants, currently that is in animation system
 	registry.render_requests.insert(
-		entity, { (TEXTURE_ASSET_ID)((int)type + 1), EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY });
+		entity, { enemy_type_to_texture[type], EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY });
 	if (team == ColorState::Red) {
 		registry.colors.insert(entity, { 2.5, 1, 1 });
 	} else if (team == ColorState::Blue) {

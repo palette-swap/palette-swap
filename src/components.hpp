@@ -299,6 +299,16 @@ enum class EnemyType {
 };
 extern std::unordered_map<EnemyType, char*> enemy_type_to_string;
 
+// Maps enemy types to corresponding texture asset
+// Remember to add a mapping to a new texture (or use a default such as a slime)
+// This will help load the animation by enemy type when you load enemies
+static std::map<EnemyType, TEXTURE_ASSET_ID> enemy_type_to_texture = 
+	  { { EnemyType::Slime, TEXTURE_ASSET_ID::SLIME }, 
+		{ EnemyType::LivingArmor, TEXTURE_ASSET_ID::ARMOR },
+		{ EnemyType::TreeAnt, TEXTURE_ASSET_ID::TREEANT },
+		{ EnemyType::Raven, TEXTURE_ASSET_ID::RAVEN },
+		{ EnemyType::Wraith, TEXTURE_ASSET_ID::WRAITH } };
+
 // Slime:		Idle, Active, Flinched.
 // Raven:		Idle, Actives.
 // LivingArmor:	Idle, Active, Immortal.
@@ -310,6 +320,16 @@ enum class EnemyState {
 	Powerup = Flinched + 1,
 	Immortal = Powerup + 1
 };
+
+// Maps enemy states to corresponding rows used in the spritesheet
+// Based on how enemy states work for M2 currently
+static std::map<EnemyState, int> enemy_state_to_animation_state = 
+		{ { EnemyState::Idle, 0 },
+		{ EnemyState::Active, 1 },
+		{ EnemyState::Flinched, 2 },
+		{ EnemyState::Powerup, 2 },
+		{ EnemyState::Immortal, 2 } };
+
 
 // Structure to store enemy information.
 struct Enemy {
