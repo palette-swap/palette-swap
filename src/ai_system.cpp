@@ -69,7 +69,7 @@ void AISystem::do_attack_callback(const Entity& attacker, const Entity& target)
 	if (registry.players.has(attacker)) {
 		Enemy& enemy = registry.enemies.get(target);
 		if ((enemy.state == EnemyState::Idle && !is_player_spotted(target, enemy.radius))
-			|| (enemy.state == EnemyState::Idle && !is_player_spotted(target, enemy.radius * 2))) {
+			|| (enemy.state != EnemyState::Idle && !is_player_spotted(target, enemy.radius * 2))) {
 			enemy.radius = MapUtility::room_size * MapUtility::map_size;
 		}
 	}
