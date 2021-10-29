@@ -167,7 +167,7 @@ void AnimationSystem::player_red_blue_animation(Entity player, ColorState color)
 	vec3& player_color = registry.colors.get(player);
 
 	if (!registry.event_animations.has(player)) {
-		Event_Animation player_melee = registry.event_animations.emplace(player);
+		Event_Animation& player_melee = registry.event_animations.emplace(player);
 
 		//// Stores restoration states for the player's animations, to be called after animation event is resolved
 		//player_melee.restore_speed = player_animation.speed_adjustment;
@@ -230,7 +230,7 @@ void AnimationSystem::resolve_event_animations()
 	}
 }
 
-void AnimationSystem::animation_event_setup(Animation animation, Event_Animation event_animation, vec3 color) 
+void AnimationSystem::animation_event_setup(Animation& animation, Event_Animation& event_animation, vec3& color) 
 {
 	// Stores restoration states for the player's animations, to be called after animation event is resolved
 	event_animation.restore_speed = animation.speed_adjustment;
