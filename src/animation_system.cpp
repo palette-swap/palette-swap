@@ -16,7 +16,6 @@ void AnimationSystem::update_animations(float elapsed_ms)
 			animation.frame = ((animation.frame) + 1) % animation.max_frames;
 		}
 	}
-
 	resolve_event_animations();
 }
 
@@ -152,7 +151,7 @@ void AnimationSystem::player_attack_animation(Entity player) {
 	vec3& entity_color = registry.colors.get(player);
 
 	if (!registry.event_animations.has(player)) {
-		Event_Animation player_melee = registry.event_animations.emplace(player);
+		Event_Animation& player_melee = registry.event_animations.emplace(player);
 
 		// Stores restoration states for the player's animations, to be called after animation event is resolved
 		player_melee.restore_speed = player_animation.speed_adjustment;
