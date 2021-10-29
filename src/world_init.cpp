@@ -150,6 +150,21 @@ Entity create_line(vec2 position)
 	return entity;
 }
 
+Entity create_path_point(vec2 position)
+{
+	Entity entity = Entity();
+
+	registry.debug_components.emplace(entity);
+
+	registry.world_positions.emplace(entity, position);
+
+	// TODO: Replace CANNONBALL with other suitable texture.
+	registry.render_requests.insert(
+		entity, { TEXTURE_ASSET_ID::CANNONBALL, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE });
+
+	return entity;
+}
+
 // Creates a room entity, with room type referencing to the predefined room
 Entity create_room(vec2 position, MapUtility::RoomType roomType)
 {
