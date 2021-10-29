@@ -11,7 +11,7 @@
 // TODO: change number of frames for an animation to vary based on the asset
 
 // Base animation speed for all animated entities
-static constexpr int base_animation_speed = 150;
+static constexpr int base_animation_speed = 100;
 
 // Currently this number is used for all enemies animation frames (a total of 4)
 // Moving forward the animation frames by enemy type may change
