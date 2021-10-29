@@ -23,8 +23,9 @@ bool CombatSystem::do_attack(Stats& attacker, Attack& attack, Stats& target)
 	}
 
 	// TODO: replace Entity a and t with args of do_attack() after Dylan's restructure of combat system.
-	Entity a = registry.players.top_entity();
-	Entity t = registry.enemies.top_entity();
+	// This currently has no effects.
+	Entity a;
+	Entity t;
 	for (const auto& callback : do_attack_callbacks) {
 		callback(a, t);
 	}
