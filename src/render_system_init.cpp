@@ -17,6 +17,7 @@
 bool RenderSystem::init(
 	int width, int height, GLFWwindow* window_arg, std::shared_ptr<MapGeneratorSystem> map)
 {
+	screen_size = { width, height };
 	map_generator = std::move(map);
 	this->window = window_arg;
 

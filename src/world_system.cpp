@@ -8,6 +8,8 @@
 
 #include "physics_system.hpp"
 
+SoLoud::Soloud so_loud; // SoLoud engine
+
 // Create the world
 WorldSystem::WorldSystem(Debug& debugging,
 						 std::shared_ptr<CombatSystem> combat,
@@ -27,13 +29,7 @@ WorldSystem::WorldSystem(Debug& debugging,
 WorldSystem::~WorldSystem()
 {
 	// Destroy music components
-	if (bgm_red != nullptr) {
-		Mix_FreeMusic(bgm_red);
-	}
-	if (bgm_blue != nullptr) {
-		Mix_FreeMusic(bgm_blue);
-	}
-	Mix_CloseAudio();
+	so_loud.deinit();
 
 	// Destroy all created components
 	registry.clear_all_components();
@@ -70,7 +66,7 @@ GLFWwindow* WorldSystem::create_window(int width, int height)
 #if __APPLE__
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
-	glfwWindowHint(GLFW_RESIZABLE, 0);
+	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
 	// Create the main window (for rendering, keyboard, and mouse input)
 	window = glfwCreateWindow(width, height, "Palette Swap", nullptr, nullptr);
@@ -95,41 +91,24 @@ GLFWwindow* WorldSystem::create_window(int width, int height)
 	auto scroll_redirect = [](GLFWwindow* wnd, double /*_0*/, double _1) {
 		static_cast<WorldSystem*>(glfwGetWindowUserPointer(wnd))->on_mouse_scroll(static_cast<float>(_1));
 	};
+	auto resize_redirect = [](GLFWwindow* wnd, int width, int height) {
+		static_cast<WorldSystem*>(glfwGetWindowUserPointer(wnd))->on_resize(width, height);
+	};
 	glfwSetKeyCallback(window, key_redirect);
 	glfwSetCursorPosCallback(window, cursor_pos_redirect);
 	glfwSetMouseButtonCallback(window, mouse_click_redirect);
 	glfwSetScrollCallback(window, scroll_redirect);
+	glfwSetWindowSizeLimits(window, GLFW_DONT_CARE, GLFW_DONT_CARE, 1920, 1080);
+	glfwSetFramebufferSizeCallback(window, resize_redirect);
 
 	//////////////////////////////////////
 	// Loading music and sounds with SDL
-	if (SDL_Init(SDL_INIT_AUDIO) < 0) {
-		fprintf(stderr, "Failed to initialize SDL Audio");
-		return nullptr;
-	}
-	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) == -1) {
-		fprintf(stderr, "Failed to open audio device");
-		fprintf(stderr, "Failed to open audio device");
-		return nullptr;
-	}
+	so_loud.init();
 
-	bgm_red = Mix_LoadMUS(audio_path("henry_martin.wav").c_str());
-	bgm_blue = Mix_LoadMUS(audio_path("famous_flower_of_serving_men.wav").c_str());
-	// Example left to demonstrate loading of WAV instead of MUS, need to check difference
-	salmon_dead_sound = Mix_LoadWAV(audio_path("salmon_dead.wav").c_str());
-
-	if (bgm_red == nullptr) {
-		fprintf(stderr,
-				"Failed to load sounds\n %s\n make sure the data directory is present",
-				audio_path("henry_martin.wav").c_str());
-		return nullptr;
-	}
-
-	if (bgm_blue == nullptr) {
-		fprintf(stderr,
-				"Failed to load sounds\n %s\n make sure the data directory is present",
-				audio_path("famous_flower_of_serving_men.wav").c_str());
-		return nullptr;
-	}
+	bgm_red_wav.load(audio_path("henry_martin.wav").c_str());
+	bgm_red_wav.setLooping(true);
+	bgm_blue_wav.load(audio_path("famous_flower_of_serving_men.wav").c_str());
+	bgm_blue_wav.setLooping(true);
 
 	return window;
 }
@@ -138,7 +117,8 @@ void WorldSystem::init(RenderSystem* renderer_arg)
 {
 	this->renderer = renderer_arg;
 	// Playing background music indefinitely
-	Mix_PlayMusic(bgm_red, -1);
+	bgm_red = so_loud.play(bgm_red_wav);
+	bgm_blue = so_loud.play(bgm_blue_wav, 0.f);
 	fprintf(stderr, "Loaded music\n");
 
 	// Set all states to default
@@ -257,7 +237,7 @@ void WorldSystem::restart_game()
 
 	// create camera instance
 	camera = create_camera(
-		{ (player_starting_point.x - 20), (player_starting_point.y - 20) }, { 23, 23 }, player_starting_point);
+		player_starting_point);
 
 	// Create a new player arrow instance
 	vec2 player_location = MapUtility::map_position_to_world_position(player_starting_point);
@@ -510,13 +490,13 @@ void WorldSystem::change_color()
 	switch (turns->get_active_color()) {
 	case ColorState::Red:
 		turns->set_active_color(ColorState::Blue);
-		Mix_FadeOutMusic(250);
-		Mix_FadeInMusic(bgm_blue, -1, 500);
+		so_loud.fadeVolume(bgm_blue, -1, .25);
+		so_loud.fadeVolume(bgm_red, 0, .25);
 		break;
 	case ColorState::Blue:
 		turns->set_active_color(ColorState::Red);
-		Mix_FadeOutMusic(250);
-		Mix_FadeInMusic(bgm_red, -1, 500);
+		so_loud.fadeVolume(bgm_red, -1, .25);
+		so_loud.fadeVolume(bgm_blue, 0, .25);
 		break;
 	default:
 		turns->set_active_color(ColorState::Red);
@@ -588,3 +568,7 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 }
 
 void WorldSystem::on_mouse_scroll(float offset) { this->renderer->scale_on_scroll(offset); }
+
+// resize callback
+// TODO: update to scale the scene as not changed when window is resized
+void WorldSystem::on_resize(int width, int height) { renderer->on_resize(width, height); }
