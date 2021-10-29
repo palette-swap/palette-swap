@@ -357,7 +357,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		}
 	}
 
-	if (action == GLFW_RELEASE && key == GLFW_KEY_EQUAL) {
+	if (action == GLFW_RELEASE && key == GLFW_KEY_SPACE) {
 		change_color();
 		animations->player_red_blue_animation(player, turns->get_active_color());
 	}
