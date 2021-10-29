@@ -83,6 +83,8 @@ private:
 	// helper function, checks event animation components to see if they should be removed, and animation states should
 	// be restored
 	void resolve_event_animations();
+	// helper function for setting animation events
+	void animation_event_restore(Animation animation, Event_Animation event_animation);
 
 };
 
