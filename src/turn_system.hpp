@@ -4,9 +4,12 @@
 
 #include "common.hpp"
 #include "tiny_ecs_registry.hpp"
+#include "animation_system.hpp"
 
 class TurnSystem {
 public:
+	void step();
+
 	// Returns the entity who can start their turn / is in their turn
 	Entity get_active_team();
 	// std::deque<Entity>::iterator getTeamPositionInQueue(Entity team);
@@ -38,11 +41,13 @@ public:
 	enum class QueueState { Idle, Executing, Finished };
 
 private:
+	std::shared_ptr<AnimationSystem> animations;
+
 	QueueState queue_state = QueueState::Idle;
 
 	std::deque<Entity> team_queue;
 	// Rotates the queue to the next unit and places current unit at the back of the queue.
-	bool cycle_queue();
+	bool try_cycle_queue();
 
 	ColorState activeColor = ColorState::Red; 
 };
