@@ -1,5 +1,4 @@
 #include "map_generator_system.hpp"
-#include "predefined_room.hpp"
 
 #include "tiny_ecs_registry.hpp"
 
@@ -12,20 +11,68 @@
 
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
+#include "rapidjson/pointer.h"
 
 using namespace MapUtility;
 
-MapGeneratorSystem::MapGeneratorSystem() : levels(num_rooms), level_room_rotations(num_rooms), level_snap_shots(num_rooms) {
+MapGeneratorSystem::MapGeneratorSystem()
+	: levels(num_levels)
+	, level_room_rotations(num_levels)
+	, level_snap_shots(num_levels)
+{
 	load_rooms_from_csv(); 
-	// Load level files + send level loading request
+	load_levels_from_csv();
+	load_level_configurations();
+	current_level = -1;
 }
+
+////////////////////////////////////
+// Functions to load different entities, e.g. enemy
+static void load_enemy(int enemy_index, const rapidjson::Document & json_doc)
+{
+	auto entity = Entity();
+	std::string enemy_prefix = "/enemies/" + std::to_string(enemy_index);
+	Enemy& enemy_component = registry.enemies.emplace(entity);
+	enemy_component.deserialize(enemy_prefix, json_doc);
+
+	MapPosition& map_position_component = registry.map_positions.emplace(entity, uvec2(0, 0));
+	map_position_component.deserialize(enemy_prefix, json_doc);
+
+	Stats& stats = registry.stats.emplace(entity);
+	stats.deserialize(enemy_prefix + "/stats", json_doc);
+
+	// Indicates enemy is hittable by objects
+	registry.hittables.emplace(entity);
+
+	// TODO: Switch out basic enemy type based on input (Currently Defaulted to Slug)
+	registry.render_requests.insert(entity,
+									{ TEXTURE_ASSET_ID::SLIME, EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY });
+	registry.colors.insert(entity, { 1, 1, 1 });
+
+	// TODO: Combine with render_requests above, so animation system handles render requests as a middleman
+	// Update animation number using animation system max frames, instead of this static number
+	Animation& enemy_animation = registry.animations.emplace(entity);
+	enemy_animation.max_frames = 4;
+}
+
+void MapGeneratorSystem::create_picture()
+{
+	help_picture = Entity();
+
+	// Create and (empty) player component to be able to refer to other enttities
+	registry.world_positions.emplace(help_picture, vec2(window_width_px / 2, window_height_px / 2));
+
+	registry.render_requests.insert(
+		help_picture, { TEXTURE_ASSET_ID::HELP_PIC, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE });
+	// registry.colors.insert(entity, { 1, 1, 1 });
+}
+
 
 // TODO: we want this eventually be procedural generated
 void MapGeneratorSystem::generate_levels()
 {
 	// TODO: generate map procedurally
-	load_levels_from_csv();
-	current_level = 0;
+	
 }
 
 const MapGeneratorSystem::Mapping& MapGeneratorSystem::current_map() const
@@ -229,7 +276,6 @@ TileId MapGeneratorSystem::get_tile_id_from_room(RoomType room_type, uint8_t row
 
 void MapGeneratorSystem::load_levels_from_csv() {
 	// Pre-allocate vector size
-	levels.resize(level_paths.size());
 	for (size_t i = 0; i < level_paths.size(); i++) {
 		Mapping& level_mapping = levels.at(i);
 
@@ -277,6 +323,16 @@ void MapGeneratorSystem::load_levels_from_csv() {
 	}
 }
 
+void MapGeneratorSystem::load_level_configurations() {
+	for (size_t i = 0; i < level_configuration_paths.size(); i++) {
+		std::ifstream config(level_configuration_paths.at(i));
+		std::stringstream buffer;
+		buffer << config.rdbuf();
+		level_snap_shots.at(i) = buffer.str();
+	}
+	
+}
+
 Direction MapGeneratorSystem::integer_to_direction(int direction) {
 	switch (direction) {
 	case 0:
@@ -309,15 +365,85 @@ bool MapGeneratorSystem::is_last_level_tile(uvec2 pos) const
 	return get_tile_id_from_map_pos(pos) == tile_last_level;
 }
 
-void MapGeneratorSystem::clear_level()
+void MapGeneratorSystem::snapshot_level()
 {
-	Entity entity = Entity();
-	registry.level_clearing_requests.emplace(entity, std::make_unique<rapidjson::Document>());
+	rapidjson::Document level_snapshot;
+	level_snapshot.Parse(level_snap_shots.at(current_level).c_str());
+	rapidjson::CreateValueByPointer(level_snapshot, rapidjson::Pointer("/enemies/0"));
+
+	// Serialize enemies
+	for (size_t i = 0; i < registry.enemies.size(); i++) {
+		Entity entity = registry.enemies.entities[i];
+		std::string enemy_prefix = "/enemies/" + std::to_string(i);
+
+		Enemy& enemy = registry.enemies.get(entity);
+		enemy.serialize(enemy_prefix, level_snapshot);
+
+		MapPosition& map_position = registry.map_positions.get(entity);
+		map_position.serialize(enemy_prefix, level_snapshot);
+
+		Stats& stats = registry.stats.get(entity);
+		stats.serialize(enemy_prefix + "/stats", level_snapshot);
+	}
+
+	rapidjson::StringBuffer buffer;
+	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+	level_snapshot.Accept(writer);
+	level_snap_shots.at(current_level) = buffer.GetString();
 }
 
 void MapGeneratorSystem::load_level(int level) {
-	assert(level != num_levels);
+	if (level == num_levels) {
+		fprintf(stderr, "Level Cleared!!!!!!");
+		assert(0);
+	}
+
+	// Load the new map
+	create_map(level);
 	// Read from snapshots first, if not exists, read from pre-configured file
+	const std::string& snapshot = level_snap_shots.at(level);
+	assert(!snapshot.empty());
+
+	rapidjson::Document json_doc;
+	json_doc.Parse(snapshot.c_str());
+	const rapidjson::Value& enemies = json_doc["enemies"];
+	assert(enemies.IsArray());
+
+	for (auto i = 0; i < enemies.Size(); i++) {
+		if (!enemies[i].IsNull()) {
+			load_enemy(i, json_doc);
+		}
+	}
+
+	if (level == 0) {
+		if (help_picture == Entity::undefined() || !registry.render_requests.has(help_picture)) {
+			create_picture();
+		}
+		registry.render_requests.get(help_picture).visible = true;
+	}
+}
+
+void MapGeneratorSystem::clear_level() {
+
+	// Clear the created rooms
+	std::list<Entity> entities_to_clear;
+	for (int i = 0; i < registry.rooms.size(); i++) {
+		Entity room_entity = registry.rooms.entities[i];
+		entities_to_clear.emplace_back(room_entity);
+	}
+	// Clear the enemies
+	for (int i = 0; i < registry.enemies.size(); i++) {
+		Entity enemy_entity = registry.enemies.entities[i];
+		entities_to_clear.emplace_back(enemy_entity);
+	}
+
+	for (Entity e : entities_to_clear) {
+		registry.remove_all_components_of(e);
+	}
+
+	if (current_level == 0) {
+		registry.render_requests.get(help_picture).visible = false;
+	}
 }
 
 void MapGeneratorSystem::load_next_level()
@@ -327,12 +453,34 @@ void MapGeneratorSystem::load_next_level()
 		assert(false && "cannot load any new levels");
 	}
 
-	clear_level();
-	load_level(current_level + 1);
+	if (current_level != -1) {
+		// We don't need to snapshot and clear when loading the very first level
+		snapshot_level();
+		clear_level();
+	}
+	load_level(++current_level);
 }
 
-void MapGeneratorSystem::load_last_level() {
+void MapGeneratorSystem::load_last_level()
+{
+	if (static_cast<size_t>(current_level) == levels.size()) {
+		fprintf(stderr, "is already on first level");
+		assert(false && "cannot load any new levels");
+	}
 
+	snapshot_level();
+	clear_level();
+	load_level(--current_level);
+}
+
+void MapGeneratorSystem::load_initial_level()
+{
+	if (current_level != -1) {
+		load_level_configurations();
+		clear_level();
+	}
+	load_level(0);
+	current_level = 0;
 }
 
 void MapGeneratorSystem::step()
@@ -341,9 +489,9 @@ void MapGeneratorSystem::step()
 	// States: in level -> Clear level -> Load level
 	if (registry.level_clearing_requests.size() != 0) {
 		LevelClearingRequest& level_clearing = registry.level_clearing_requests.components[0];
-		if (!level_clearing.level_cleared) {
-			return;
-		}
+		//if (!level_clearing.level_cleared) {
+		//	return;
+		//}
 		
 		rapidjson::StringBuffer buffer;
 		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
@@ -353,4 +501,67 @@ void MapGeneratorSystem::step()
 		// Load next level
 		load_level(current_level + 1);
 	}
+}
+
+// Creates a room entity, with room type referencing to the predefined room
+Entity MapGeneratorSystem::create_room(vec2 position, MapUtility::RoomType roomType, float angle) const
+{
+	auto entity = Entity();
+
+	registry.world_positions.emplace(entity, position);
+	registry.velocities.emplace(entity, 0, angle);
+
+	Room& room = registry.rooms.emplace(entity);
+	room.type = roomType;
+
+	// Place the rooms at bottom
+	RenderRequest & request = registry.render_requests.push_front(entity);
+	request.used_texture = TEXTURE_ASSET_ID::TILE_SET;
+	request.used_effect = EFFECT_ASSET_ID::TILE_MAP;
+	request.used_geometry = GEOMETRY_BUFFER_ID::ROOM;
+
+	return entity;
+}
+
+void MapGeneratorSystem::create_map(int level) const {
+	vec2 middle = { window_width_px / 2, window_height_px / 2 };
+
+	const MapGeneratorSystem::Mapping& mapping = levels[level];
+	const auto& room_rotations = level_room_rotations[level];
+	vec2 top_left_corner_pos = middle
+		- vec2(tile_size * room_size * map_size / 2,
+			   tile_size * room_size * map_size / 2);
+	for (size_t row = 0; row < mapping.size(); row++) {
+		for (size_t col = 0; col < mapping[0].size(); col++) {
+			vec2 position = top_left_corner_pos + vec2(tile_size * room_size / 2, tile_size * room_size / 2)
+				+ vec2(col * tile_size * room_size, row * tile_size * room_size);
+			create_room(position, mapping.at(row).at(col), direction_to_angle(room_rotations.at(row).at(col)));
+		}
+	}
+}
+
+uvec2 MapGeneratorSystem::get_player_start_position() const
+{
+	uvec2 pos;
+	rapidjson::Document json_doc;
+	json_doc.Parse(level_snap_shots.at(current_level).c_str());
+
+	const auto* x = rapidjson::GetValueByPointer(json_doc, rapidjson::Pointer("/player/start_position/x"));
+	pos.x = x->GetInt();
+	const auto* y = rapidjson::GetValueByPointer(json_doc, rapidjson::Pointer("/player/start_position/y"));
+	pos.y = y->GetInt();
+	return pos;
+}
+
+uvec2 MapGeneratorSystem::get_player_end_position() const
+{
+	uvec2 pos;
+	rapidjson::Document json_doc;
+	json_doc.Parse(level_snap_shots.at(current_level).c_str());
+
+	const auto* x = rapidjson::GetValueByPointer(json_doc, rapidjson::Pointer("/player/end_position/x"));
+	pos.x = x->GetInt();
+	const auto* y = rapidjson::GetValueByPointer(json_doc, rapidjson::Pointer("/player/end_position/y"));
+	pos.y = y->GetInt();
+	return pos;
 }

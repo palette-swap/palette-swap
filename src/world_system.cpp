@@ -5,6 +5,7 @@
 // stlib
 #include <cassert>
 #include <sstream>
+#include <iostream>
 
 #include "physics_system.hpp"
 
@@ -163,11 +164,6 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		registry.remove_all_components_of(registry.debug_components.entities.back());
 	}
 
-	if (registry.level_clearing_requests.size() != 0) {
-		serialize_and_clear_states(registry.level_clearing_requests.components[0].current_snap_shot);
-		return true;
-	}
-
 	// Processing the player state
 	assert(registry.screen_states.components.size() <= 1);
 	// ScreenState& screen = registry.screen_states.components[0];
@@ -230,31 +226,12 @@ void WorldSystem::restart_game()
 	// Debugging for memory/component leaks
 	registry.list_all_components();
 
-	// Generate the levels
-	map_generator->generate_levels();
+	map_generator->load_initial_level();
 
 	vec2 middle = { window_width_px / 2, window_height_px / 2 };
 
-	const MapGeneratorSystem::Mapping& mapping = map_generator->current_map();
-	auto & room_rotations = map_generator->current_rooms_rotation();
-	vec2 top_left_corner_pos = middle
-		- vec2(MapUtility::tile_size * MapUtility::room_size * MapUtility::map_size / 2,
-			   MapUtility::tile_size * MapUtility::room_size * MapUtility::map_size / 2);
-	for (size_t row = 0; row < mapping.size(); row++) {
-		for (size_t col = 0; col < mapping[0].size(); col++) {
-			vec2 position = top_left_corner_pos
-				+ vec2(MapUtility::tile_size * MapUtility::room_size / 2,
-					   MapUtility::tile_size * MapUtility::room_size / 2)
-				+ vec2(col * MapUtility::tile_size * MapUtility::room_size,
-					   row * MapUtility::tile_size * MapUtility::room_size);
-			create_room(position, mapping.at(row).at(col), direction_to_angle(room_rotations.at(row).at(col)));
-		}
-	}
-
-	create_picture(vec2(window_width_px / 2, window_height_px / 2));
-
 	// a random starting position... probably need to update this
-	uvec2 player_starting_point = uvec2(50, 50);
+	uvec2 player_starting_point = map_generator->get_player_start_position();
 	// Create a new Player instance and shift player onto a tile
 	player = create_player(player_starting_point);
 	// TODO: Should move into create_player (under world init) afterwards
@@ -273,13 +250,6 @@ void WorldSystem::restart_game()
 	// Create a new player arrow instance
 	vec2 player_location = MapUtility::map_position_to_world_position(player_starting_point);
 	player_arrow = create_arrow(player_location);
-	// Creates a single enemy instance, (TODO: needs to be updated with position based on grid)
-	// Also requires naming scheme for randomly generated enemies, for later reference
-	create_enemy(ColorState::Red, EnemyType::Slime, uvec2(8, 1));
-	create_enemy(ColorState::Red, EnemyType::Raven, uvec2(8, 2));
-	create_enemy(ColorState::Red, EnemyType::LivingArmor, uvec2(8, 3));
-	create_enemy(ColorState::Red, EnemyType::TreeAnt, uvec2(8, 4));
-	create_enemy(ColorState::Blue, EnemyType::Slime, uvec2(8, 8));
 }
 
 // Compute collisions between entities
@@ -451,19 +421,12 @@ void WorldSystem::move_player(Direction direction)
 	}
 
 	MapPosition& map_pos = registry.map_positions.get(player);
-	if (map_generator->is_next_level_tile(map_pos.position)) {
-		map_generator->load_next_level();
-		return;
-	}
-	if (map_generator->is_last_level_tile(map_pos.position)) {
-		map_generator->load_last_level();
-		return;
-	}
-
 	WorldPosition& arrow_position = registry.world_positions.get(player_arrow);
 	Animation& player_animation = registry.animations.get(player);
 	// TODO: this should be removed once we only use map_position
 	uvec2 new_pos = map_pos.position;
+
+	std::cout << "player position: " << new_pos.x << ", " << new_pos.y << std::endl;
 
 	if (direction == Direction::Left && map_pos.position.x > 0) {
 		new_pos = uvec2(map_pos.position.x - 1, map_pos.position.y);
@@ -487,11 +450,23 @@ void WorldSystem::move_player(Direction direction)
 	if (map_pos.position == new_pos || !map_generator->walkable(new_pos) || !turns->execute_team_action(player)) {
 		return;
 	}
+
 	// Temp update for arrow position
 	if (!player_arrow_fired) {
 		arrow_position.position += (vec2(new_pos) - vec2(map_pos.position)) * MapUtility::tile_size;
 	}
-	map_pos.position = new_pos;
+	if (map_generator->is_next_level_tile(new_pos)) {
+		map_generator->load_next_level();
+		registry.map_positions.get(player).position = map_generator->get_player_start_position();
+	} else if (map_generator->is_last_level_tile(new_pos)) {
+		map_generator->load_last_level();
+		registry.map_positions.get(player).position = map_generator->get_player_end_position();
+	} else {
+		// Because we modified map position lists, so we need to directly update the registry
+		// Otherwise we can update the reference
+		map_pos.position = new_pos;
+	}
+	
 	turns->complete_team_action(player);
 }
 
@@ -608,12 +583,3 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 }
 
 void WorldSystem::on_mouse_scroll(float offset) { this->renderer->scale_on_scroll(offset); }
-
-void WorldSystem::serialize_and_clear_states(std::unique_ptr<rapidjson::Document>& json)
-{
-	rapidjson::CreateValueByPointer(*json, "/enemies/0");
-
-	rapidjson::SetValueByPointer(*json, "/enemies/0/entity", 3);	
-
-	
-}

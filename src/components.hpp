@@ -12,7 +12,6 @@
 #include "rapidjson/document.h"
 
 #include "map_generator_system.hpp"
-#include <predefined_room.hpp>
 
 // Player component
 struct Player {
@@ -241,6 +240,9 @@ struct MapPosition {
 	{
 		assert(position.x < 99 && position.y < 99);
 	};
+
+	void serialize(const std::string& prefix, rapidjson::Document& json) const;
+	void deserialize(const std::string& prefix, const rapidjson::Document& json);
 };
 
 // Represents the world position,
@@ -318,6 +320,9 @@ struct Enemy {
 	uint radius = 3;
 	uint speed = 1;
 	uint attack_range = 1;
+
+	void serialize(const std::string & prefix, rapidjson::Document &json) const;
+	void deserialize(const std::string& prefix, const rapidjson::Document& json);
 };
 
 //---------------------------------------------------------------------------
@@ -353,6 +358,9 @@ struct Attack {
 	// This is used when calculating damage to work out if any of the target's damage_modifiers should apply
 	DamageType damage_type = DamageType::Physical;
 	TargetingType targeting_type = TargetingType::Projectile;
+
+	void serialize(const std::string& prefix, rapidjson::Document& json) const;
+	void deserialize(const std::string& prefix, const rapidjson::Document& json);
 };
 
 struct Stats {
@@ -383,6 +391,9 @@ struct Stats {
 	// A positive modifier is a weakness, like a straw golem being weak to fire
 	// A negative modifeir is a resistance, like an iron golem being resistant to sword cuts
 	DamageTypeList<int> damage_modifiers = { 0 };
+
+	void serialize(const std::string& prefix, rapidjson::Document& json) const;
+	void deserialize(const std::string& prefix, const rapidjson::Document& json);
 };
 
 enum class Slot {

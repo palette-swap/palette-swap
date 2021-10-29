@@ -29,12 +29,16 @@ private:
 	};
 	static std::string levels_path(const std::string& name)
 	{
-		return data_path() + "/levels/" + std::string(name);
+		return data_path() + "/level_rooms/" + std::string(name);
 	};
 	static std::string room_rotations_path(const std::string& name)
 	{
 		return data_path() + "/level_room_rotations/" + std::string(name);
 	};
+	static std::string level_configurations_path(const std::string& name)
+	{
+		return data_path() + "/level_configurations/" + std::string(name);
+	}
 
 	////////////////////////////////
 	/// Actual file paths
@@ -50,23 +54,34 @@ private:
 		rooms_layout_path("room_big_side_top.csv"), // 8
 		rooms_layout_path("room_void.csv"), // 9
 		rooms_layout_path("room_next_level_help.csv"), // 10
+		rooms_layout_path("room_last_level.csv"), // 11
+		rooms_layout_path("room_bot_opening.csv"), // 12
+		rooms_layout_path("room_left_opening.csv"), // 13
+		rooms_layout_path("room_right_opening.csv"), // 14
+		rooms_layout_path("room_top_opening.csv"), // 15
+		rooms_layout_path("room_vertical.csv"), // 16
+		rooms_layout_path("room_horizontal.csv"), // 17
 	};
 	const std::array<std::string, MapUtility::num_levels> level_paths
 		= { levels_path("help_level.csv"), levels_path("level_one.csv"), levels_path("level_two.csv") };
-	const std::array<std::string, MapUtility::num_levels> room_rotation_paths = { room_rotations_path("help_level.csv"),
-																		  room_rotations_path("level_one.csv"),
-																		  room_rotations_path("level_two.csv") };
-
-	int current_level = -1;
-	// the (procedural) generated levels, each level contains a full map(max 10*10 rooms),
-	// index of the vector will be the map id
-	std::vector<Mapping> levels;
-
-	std::vector<std::array<std::array<Direction, MapUtility::map_size>, MapUtility::map_size>> level_room_rotations;
-
-	// get the tile texture id, of the position on a map
-	MapUtility::TileId get_tile_id_from_map_pos(uvec2 pos) const;
+	const std::array<std::string, MapUtility::num_levels> room_rotation_paths
+		= { room_rotations_path("help_level.csv"),
+			room_rotations_path("level_one.csv"),
+			room_rotations_path("level_two.csv") };
+	const std::array<std::string, MapUtility::num_levels> level_configuration_paths = {
+		level_configurations_path("help_level.json"),
+		level_configurations_path("level_one.json"),
+		level_configurations_path("level_two.json"),
+	};
 	
+	/////////////////////////////////////
+	// Loaders
+	void load_rooms_from_csv(); 
+	void load_levels_from_csv(); // load both level and rooms rotations
+	void load_level_configurations();
+
+	///////////////////////////////////////////////////////////
+	// Data structures thats saving the information loaded
 
 	// Defines the structure used for these rooms, which is a 2-d array
 	// The index will be the room ID that uniquely identifies a room
@@ -74,13 +89,26 @@ private:
 	// Room layout should be populated in the constructor before doing
 	// any operations on map system
 	std::array<Mapping, MapUtility::num_rooms> room_layouts;
+	// the (procedural) generated levels, each level contains a full map(max 10*10 rooms),
+	// index of the vector will be the map id
+	std::vector<Mapping> levels;
+	std::vector<std::array<std::array<Direction, MapUtility::map_size>, MapUtility::map_size>> level_room_rotations;
+	// Involving all dynamic components on a map, stored in json format
+	std::vector<std::string> level_snap_shots;
 
-	// Load the predefined rooms from csv files to room_layouts,
-	// list of files to read will be from room_paths
-	void load_rooms_from_csv();
+	// End of file loaders
+	/////////////////////////////
+
+	int current_level = -1;
+	
+	// Entity for the help picture
+	Entity help_picture = Entity::undefined();
+	void create_picture();
+
+	// get the tile texture id, of the position on a map
+	MapUtility::TileId get_tile_id_from_map_pos(uvec2 pos) const;
 
 	std::vector<uvec2> MapGeneratorSystem::bfs(uvec2 start_pos, uvec2 target) const;
-	void load_levels_from_csv();
 
 	// helper to convert an integer to Direction, as we save integers in csv files
 	// 0 - UP(no rotation)
@@ -89,8 +117,8 @@ private:
 	// 3 - LEFT
 	Direction integer_to_direction(int direction);
 
-	// Involving all dynamic components on a map, stored in json format
-	std::vector<std::string> level_snap_shots;
+	// Take current level snapshot
+	void snapshot_level();
 
 	// Clear current level
 	void clear_level();
@@ -98,6 +126,11 @@ private:
 	// Load level specified, if snap shot exists, load from it,
 	// Otherwise load from statically defined files(TODO: use procedural generation instead)
 	void load_level(int level);
+
+	// Create the current map
+	void create_map(int level) const;
+	// Create a room
+	Entity create_room(vec2 position, MapUtility::RoomType roomType, float angle) const;
 
 public:
 	MapGeneratorSystem();
@@ -137,6 +170,14 @@ public:
 
 	// Save current level and load the last level
 	void load_last_level();
+
+	// Load the first level
+	void load_initial_level();
+
+	// Get player initial position on current level
+	uvec2 get_player_start_position() const;
+
+	uvec2 get_player_end_position() const;
 
 	void step();
 };

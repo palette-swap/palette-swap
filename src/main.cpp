@@ -72,8 +72,6 @@ int main()
 		world.handle_collisions();
 		animations->update_animations(elapsed_ms);
 		renderer.draw();
-
-		map->step();
 	}
 
 	return EXIT_SUCCESS;
