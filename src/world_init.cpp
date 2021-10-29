@@ -162,6 +162,8 @@ Entity create_path_point(vec2 position)
 	registry.render_requests.insert(
 		entity, { TEXTURE_ASSET_ID::CANNONBALL, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE });
 
+	registry.colors.insert(entity, { 0, 1, 0 });
+
 	return entity;
 }
 
