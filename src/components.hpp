@@ -429,10 +429,3 @@ struct Weapon {
 	// TODO: Potentially replace with intelligent direct/indirect container
 	std::vector<Attack> given_attacks;
 };
-
-struct LevelClearingRequest {
-	std::unique_ptr<rapidjson::Document> current_snap_shot;
-	bool level_cleared;
-	LevelClearingRequest(std::unique_ptr<rapidjson::Document> snap_shot)
-		: current_snap_shot(std::move(snap_shot)), level_cleared(false) {};
-};

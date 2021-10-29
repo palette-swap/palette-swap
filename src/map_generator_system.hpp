@@ -178,6 +178,4 @@ public:
 	uvec2 get_player_start_position() const;
 
 	uvec2 get_player_end_position() const;
-
-	void step();
 };

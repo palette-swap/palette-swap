@@ -43,10 +43,6 @@ public:
 	ComponentContainer<Weapon> weapons;
 	ComponentContainer<Inventory> inventories;
 
-	// Level Clearing / Loading
-	ComponentContainer<LevelClearingRequest> level_clearing_requests;
-
-
 private:
 	// IMPORTANT: Don't forget to add any newly added containers!
 
@@ -85,9 +81,6 @@ private:
 		&items,
 		&weapons,
 		&inventories,
-
-		// Level clearing & loading
-		&level_clearing_requests,
 	};
 
 public:

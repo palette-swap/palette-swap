@@ -12,8 +12,6 @@
 #include <SDL.h>
 #include <SDL_mixer.h>
 
-#include "rapidjson/document.h"
-
 #include "combat_system.hpp"
 #include "map_generator_system.hpp"
 #include "render_system.hpp"
@@ -105,8 +103,5 @@ private:
 	std::shared_ptr<CombatSystem> combat;
 	std::shared_ptr<MapGeneratorSystem> map_generator;
 	std::shared_ptr<TurnSystem> turns;
-
-	// Serialize current world states and append to the given Json object
-	void serialize_and_clear_states(std::unique_ptr<rapidjson::Document> &json);
 	std::shared_ptr<AnimationSystem> animations;
 };

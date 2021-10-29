@@ -5,12 +5,8 @@
 // stlib
 #include <cassert>
 #include <sstream>
-#include <iostream>
 
 #include "physics_system.hpp"
-
-// Json Library
-#include "rapidjson/pointer.h"
 
 // Create the world
 WorldSystem::WorldSystem(Debug& debugging,
@@ -423,10 +419,7 @@ void WorldSystem::move_player(Direction direction)
 	MapPosition& map_pos = registry.map_positions.get(player);
 	WorldPosition& arrow_position = registry.world_positions.get(player_arrow);
 	Animation& player_animation = registry.animations.get(player);
-	// TODO: this should be removed once we only use map_position
 	uvec2 new_pos = map_pos.position;
-
-	std::cout << "player position: " << new_pos.x << ", " << new_pos.y << std::endl;
 
 	if (direction == Direction::Left && map_pos.position.x > 0) {
 		new_pos = uvec2(map_pos.position.x - 1, map_pos.position.y);

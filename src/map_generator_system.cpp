@@ -483,26 +483,6 @@ void MapGeneratorSystem::load_initial_level()
 	current_level = 0;
 }
 
-void MapGeneratorSystem::step()
-{
-	// This is actually a very simple state machine
-	// States: in level -> Clear level -> Load level
-	if (registry.level_clearing_requests.size() != 0) {
-		LevelClearingRequest& level_clearing = registry.level_clearing_requests.components[0];
-		//if (!level_clearing.level_cleared) {
-		//	return;
-		//}
-		
-		rapidjson::StringBuffer buffer;
-		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-		level_clearing.current_snap_shot->Accept(writer);
-		level_snap_shots.at(current_level) = buffer.GetString();
-
-		// Load next level
-		load_level(current_level + 1);
-	}
-}
-
 // Creates a room entity, with room type referencing to the predefined room
 Entity MapGeneratorSystem::create_room(vec2 position, MapUtility::RoomType roomType, float angle) const
 {
