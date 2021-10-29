@@ -2,8 +2,10 @@
 
 void CombatSystem::init(std::shared_ptr<std::default_random_engine> rng) { this->rng = std::move(rng); }
 
-bool CombatSystem::do_attack(Stats& attacker, Attack& attack, Stats& target)
+bool CombatSystem::do_attack(Entity attacker_entity, Attack& attack, Entity target_entity)
 {
+	Stats& attacker = registry.stats.get(attacker_entity);
+	Stats& target = registry.stats.get(target_entity);
 	// Roll a random to hit between min and max (inclusive), add attacker's to_hit_bonus
 	std::uniform_int_distribution<int> attack_roller(attack.to_hit_min, attack.to_hit_max);
 	int attack_roll = attack_roller(*rng) + attacker.to_hit_bonus;

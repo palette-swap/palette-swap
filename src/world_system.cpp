@@ -273,10 +273,8 @@ void WorldSystem::handle_collisions()
 
 				// Attack the other entity if it can be attacked
 				if (registry.stats.has(entity_other)) {
-					Stats& player_stats = registry.stats.get(player);
-					Stats& enemy_stats = registry.stats.get(entity_other);
 					combat->do_attack(
-						player_stats, registry.weapons.get(current_weapon).given_attacks[current_attack], enemy_stats);
+						player, registry.weapons.get(current_weapon).given_attacks[current_attack], entity_other);
 				}
 
 				// Stops projectile motion, adds projectile to list of resolved projectiles
@@ -556,9 +554,7 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 			}
 			for (const auto& target : registry.stats.entities) {
 				if (registry.map_positions.get(target).position == mouse_map_pos) {
-					Stats& player_stats = registry.stats.get(player);
-					Stats& enemy_stats = registry.stats.get(target);
-					combat->do_attack(player_stats, attack, enemy_stats);
+					combat->do_attack(player, attack, target);
 					animations->player_attack_animation(player);
 				}
 			}

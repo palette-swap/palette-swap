@@ -10,7 +10,7 @@
 
 class CombatSystem {
 public:
-	bool do_attack(Stats& attacker, Attack& attack, Stats& target);
+	bool do_attack(Entity attacker, Attack& attack, Entity target);
 	void init(std::shared_ptr<std::default_random_engine> rng);
 
 private:

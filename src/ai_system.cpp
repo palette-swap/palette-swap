@@ -306,9 +306,7 @@ void AISystem::attack_player(const Entity& entity)
 	char* enemy_type = enemy_type_to_string[registry.enemies.get(entity).type];
 	printf("%s_%u attacks player!\n", enemy_type, (uint)entity);
 
-	Stats& entity_stats = registry.stats.get(entity);
-	Stats& player_stats = registry.stats.get(registry.players.top_entity());
-	combat->do_attack(entity_stats, entity_stats.base_attack, player_stats);
+	combat->do_attack(entity, registry.stats.get(entity).base_attack, registry.players.top_entity());
 }
 
 bool AISystem::approach_player(const Entity& entity, uint speed)
