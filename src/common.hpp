@@ -57,6 +57,7 @@ static constexpr int window_width_px = 1920;
 static constexpr int window_height_px = 1080;
 static constexpr float window_default_scale = 0.5;
 
+
 namespace MapUtility {
     // Each tile is 32x32 pixels
     static constexpr float tile_size = 32.f;
@@ -108,15 +109,17 @@ namespace MapUtility {
                                             (1920, 1080)
                                             (99,99)
     */
-    inline vec2 map_position_to_screen_position(uvec2 map_pos)
+    inline vec2 map_position_to_world_position(uvec2 map_pos)
     {
-      return vec2(map_pos.x * 32 + top_left_corner.x, map_pos.y * 32 + top_left_corner.y) + vec2(tile_size / 2, tile_size / 2);
+		return vec2(map_pos.x * tile_size + top_left_corner.x, map_pos.y * tile_size + top_left_corner.y)
+			+ vec2(tile_size / 2, tile_size / 2);
     }
 
     // Calculates which square an entity is currently overlapping
-    inline uvec2 screen_position_to_map_position(vec2 screen_pos)
+    inline uvec2 world_position_to_map_position(vec2 screen_pos)
     {
-      return uvec2(((screen_pos.x) - top_left_corner.x) / 32, ((screen_pos.y) - top_left_corner.y) / 32);
+		return uvec2(((screen_pos.x) - top_left_corner.x) / tile_size,
+					 ((screen_pos.y) - top_left_corner.y) / tile_size);
     }
 }
 

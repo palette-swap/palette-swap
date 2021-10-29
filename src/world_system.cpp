@@ -13,6 +13,7 @@ WorldSystem::WorldSystem(Debug& debugging,
 						 std::shared_ptr<CombatSystem> combat,
 						 std::shared_ptr<MapGeneratorSystem> map,
 						 std::shared_ptr<TurnSystem> turns)
+					
 	: points(0)
 	, debugging(debugging)
 	, rng(std::make_shared<std::default_random_engine>(std::default_random_engine(std::random_device()())))
@@ -26,8 +27,11 @@ WorldSystem::WorldSystem(Debug& debugging,
 WorldSystem::~WorldSystem()
 {
 	// Destroy music components
-	if (background_music != nullptr) {
-		Mix_FreeMusic(background_music);
+	if (bgm_red != nullptr) {
+		Mix_FreeMusic(bgm_red);
+	}
+	if (bgm_blue != nullptr) {
+		Mix_FreeMusic(bgm_blue);
 	}
 	Mix_CloseAudio();
 
@@ -113,14 +117,22 @@ GLFWwindow* WorldSystem::create_window(int width, int height)
 		return nullptr;
 	}
 
-	background_music = Mix_LoadMUS(audio_path("henry_martin.wav").c_str());
+	bgm_red = Mix_LoadMUS(audio_path("henry_martin.wav").c_str());
+	bgm_blue = Mix_LoadMUS(audio_path("famous_flower_of_serving_men.wav").c_str());
 	// Example left to demonstrate loading of WAV instead of MUS, need to check difference
 	salmon_dead_sound = Mix_LoadWAV(audio_path("salmon_dead.wav").c_str());
 
-	if (background_music == nullptr) {
+	if (bgm_red == nullptr) {
 		fprintf(stderr,
 				"Failed to load sounds\n %s\n make sure the data directory is present",
-				audio_path("overworld.wav").c_str());
+				audio_path("henry_martin.wav").c_str());
+		return nullptr;
+	}
+
+	if (bgm_blue == nullptr) {
+		fprintf(stderr,
+				"Failed to load sounds\n %s\n make sure the data directory is present",
+				audio_path("famous_flower_of_serving_men.wav").c_str());
 		return nullptr;
 	}
 
@@ -131,7 +143,7 @@ void WorldSystem::init(RenderSystem* renderer_arg)
 {
 	this->renderer = renderer_arg;
 	// Playing background music indefinitely
-	Mix_PlayMusic(background_music, -1);
+	Mix_PlayMusic(bgm_red, -1);
 	fprintf(stderr, "Loaded music\n");
 
 	// Set all states to default
@@ -239,20 +251,29 @@ void WorldSystem::restart_game()
 	uvec2 player_starting_point = uvec2(1, 1);
 	// Create a new Player instance and shift player onto a tile
 	player = create_player(player_starting_point);
+	// TODO: Should move into create_player (under world init) afterwards
+	animations->set_player_animation(player);
+
 	turns->add_team_to_queue(player);
+	// Reset current weapon & attack
+	Inventory& inventory = registry.inventories.get(player);
+	current_weapon = inventory.equipped[static_cast<uint8>(Slot::PrimaryHand)];
+	current_attack = 0;
 
 	// create camera instance
 	camera = create_camera(
 		player_starting_point);
 
 	// Create a new player arrow instance
-	vec2 player_location = MapUtility::map_position_to_screen_position(player_starting_point);
+	vec2 player_location = MapUtility::map_position_to_world_position(player_starting_point);
 	player_arrow = create_arrow(player_location);
 	// Creates a single enemy instance, (TODO: needs to be updated with position based on grid)
 	// Also requires naming scheme for randomly generated enemies, for later reference
-	create_enemy(uvec2(12, 3));
-	create_enemy(uvec2(15, 3));
-	create_enemy(uvec2(15, 4), ColorState::Blue);
+	create_enemy(ColorState::Red, EnemyType::Slime, uvec2(8, 1));
+	create_enemy(ColorState::Red, EnemyType::Raven, uvec2(8, 2));
+	create_enemy(ColorState::Red, EnemyType::LivingArmor, uvec2(8, 3));
+	create_enemy(ColorState::Red, EnemyType::TreeAnt, uvec2(8, 4));
+	create_enemy(ColorState::Blue, EnemyType::Slime, uvec2(8, 8));
 }
 
 // Compute collisions between entities
@@ -279,14 +300,15 @@ void WorldSystem::handle_collisions()
 				if (registry.stats.has(entity_other)) {
 					Stats& player_stats = registry.stats.get(player);
 					Stats& enemy_stats = registry.stats.get(entity_other);
-					combat->do_attack(player_stats, player_stats.base_attack, enemy_stats);
+					combat->do_attack(
+						player_stats, registry.weapons.get(current_weapon).given_attacks[current_attack], enemy_stats);
 				}
 
 				// Stops projectile motion, adds projectile to list of resolved projectiles
 				registry.resolved_projectiles.emplace(entity);
 			} else {
 				// Checks if projectile's head has hit a wall
-				uvec2 projectile_location = (MapUtility::screen_position_to_map_position(
+				uvec2 projectile_location = (MapUtility::world_position_to_map_position(
 					registry.world_positions.get(entity).position + projectile.head_offset));
 
 				// Hacky way, using the same check for the player's "walkable"
@@ -320,26 +342,52 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 {
 	if (turns && action != GLFW_RELEASE) {
 
-		if (key == GLFW_KEY_RIGHT) {
+		if (key == GLFW_KEY_D) {
 			move_player(Direction::Right);
 		}
-		if (key == GLFW_KEY_LEFT) {
+		if (key == GLFW_KEY_A) {
 			move_player(Direction::Left);
 		}
-		if (key == GLFW_KEY_UP) {
+		if (key == GLFW_KEY_W) {
 			move_player(Direction::Up);
 		}
-		if (key == GLFW_KEY_DOWN) {
+		if (key == GLFW_KEY_S) {
 			move_player(Direction::Down);
 		}
-		
-		if (key == GLFW_KEY_EQUAL) {
-			change_color();
+
+		// Change weapon
+		if (key == GLFW_KEY_E) {
+			equip_next_weapon();
+			// TODO: Need to confirm that this does actually change to the correct state
+			animations->player_toggle_weapon(player);
+		}
+
+
+		// Change attack
+		// TODO: Generalize for many attacks, check out of bounds
+		// Key Codes for 1-9
+		if (49 <= key && key <= 57) {
+			const std::vector<Attack>& attacks = registry.weapons.get(current_weapon).given_attacks;
+			if (key - 49 < attacks.size()) {
+				current_attack = key - 49;
+				const Attack& attack = attacks[current_attack];
+				printf("%s Attack: %i-%i attack, %i-%i dmg, %s \n",
+					   attack.name.c_str(),
+					   attack.to_hit_min,
+					   attack.to_hit_max,
+					   attack.damage_min,
+					   attack.damage_max,
+					attack.targeting_type == TargetingType::Projectile ? "projectile" : "adjacent");
+			}
 		}
 	}
 
+	if (action == GLFW_RELEASE && key == GLFW_KEY_EQUAL) {
+		change_color();
+	}
+
 	// Resetting game
-	if (action == GLFW_RELEASE && key == GLFW_KEY_R) {
+	if (action == GLFW_RELEASE && (mod & GLFW_MOD_ALT) != 0 && key == GLFW_KEY_R) {
 		// int w, h;
 		// glfwGetWindowSize(window, &w, &h);
 
@@ -347,7 +395,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 	}
 
 	// Debugging
-	if (key == GLFW_KEY_D) {
+	if (key == GLFW_KEY_D && (mod & GLFW_MOD_ALT) != 0) {
 		debugging.in_debug_mode = action != GLFW_RELEASE;
 	}
 
@@ -370,27 +418,16 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 {
 	if (!player_arrow_fired) {
 
-		int w, h;
-		glfwGetFramebufferSize(window, &w, &h);
-		vec2 position = MapUtility::map_position_to_screen_position(registry.map_positions.get(player).position);
-
-		float left = position.x - w * renderer->screen_scale / 2.f;
-		float top = position.y - h * renderer->screen_scale / 2.f;
-
-		vec2 mouse_screen_position = mouse_position * renderer->screen_scale + vec2(left, top);
-
-		// The mouse_position has to be adjusted to screen position (screen position might be a bad naming since it's
-		// actually world position). The above code I borrowed from RenderSystem::create_projection_matrix(). In the
-		// future, we can wrap left/top/right/bottom/screen_scale into camera component, so you can easily access them.
+		vec2 mouse_world_position = mouse_position * renderer->screen_scale + renderer->get_top_left();
 
 		Velocity& arrow_velocity = registry.velocities.get(player_arrow);
 		WorldPosition& arrow_position = registry.world_positions.get(player_arrow);
 		MapPosition& player_map_position = registry.map_positions.get(player);
 
-		vec2 player_screen_position = MapUtility::map_position_to_screen_position(player_map_position.position);
+		vec2 player_screen_position = MapUtility::map_position_to_world_position(player_map_position.position);
 
 		// Calculated Euclidean difference between player and arrow
-		vec2 eucl_diff = mouse_screen_position - player_screen_position;
+		vec2 eucl_diff = mouse_world_position - player_screen_position;
 
 		// Calculates arrow position based on position of mouse relative to player
 		vec2 new_arrow_position = normalize(eucl_diff) * 20.f + player_screen_position;
@@ -409,18 +446,27 @@ void WorldSystem::move_player(Direction direction)
 
 	MapPosition& map_pos = registry.map_positions.get(player);
 	WorldPosition& arrow_position = registry.world_positions.get(player_arrow);
+	Animation& player_animation = registry.animations.get(player);
 	// TODO: this should be removed once we only use map_position
 	uvec2 new_pos = map_pos.position;
 
 	if (direction == Direction::Left && map_pos.position.x > 0) {
 		new_pos = uvec2(map_pos.position.x - 1, map_pos.position.y);
+		// TODO: Change this to animation request instead of calling it here;
+		player_animation.direction = -1;
+		animations->player_running_animation(player);
 	} else if (direction == Direction::Up && map_pos.position.y > 0) {
 		new_pos = uvec2(map_pos.position.x, map_pos.position.y - 1);
+		animations->player_running_animation(player);
 	} else if (direction == Direction::Right
 			   && map_pos.position.x < MapUtility::room_size * MapUtility::tile_size - 1) {
 		new_pos = uvec2(map_pos.position.x + 1, map_pos.position.y);
+		// TODO: Change this to animation request instead of calling it here;
+		player_animation.direction = 1;
+		animations->player_running_animation(player);
 	} else if (direction == Direction::Down && map_pos.position.y < MapUtility::room_size * MapUtility::tile_size - 1) {
 		new_pos = uvec2(map_pos.position.x, map_pos.position.y + 1);
+		animations->player_running_animation(player);
 	}
 
 	if (map_pos.position == new_pos || !map_generator->walkable(new_pos) || !turns->execute_team_action(player)) {
@@ -434,14 +480,48 @@ void WorldSystem::move_player(Direction direction)
 	turns->complete_team_action(player);
 }
 
+void WorldSystem::equip_next_weapon()
+{
+	if (turns->get_active_team() != player) {
+		return;
+	}
+	Inventory& inventory = registry.inventories.get(player);
+	Entity& curr = inventory.equipped[static_cast<uint8>(Slot::PrimaryHand)];
+	auto next = inventory.inventory.upper_bound(registry.items.get(curr).name);
+	if (next == inventory.inventory.end()) {
+		next = inventory.inventory.begin();
+	}
+	while (next->second != curr) {
+		if (registry.items.get(next->second).allowed_slots[static_cast<uint8>(Slot::PrimaryHand)]) {
+			break;
+		}
+		if (next == inventory.inventory.end()) {
+			next = inventory.inventory.begin();
+		} else {
+			next++;
+		}
+	};
+	if (curr != next->second && turns->execute_team_action(player)) {
+		curr = next->second;
+		current_weapon = curr;
+		current_attack = 0;
+		printf("Switched weapon to %s\n", registry.items.get(curr).name.c_str());
+		turns->complete_team_action(player);
+	}
+}
+
 void WorldSystem::change_color() 
 { 
 	switch (turns->get_active_color()) {
 	case ColorState::Red:
 		turns->set_active_color(ColorState::Blue);
+		Mix_FadeOutMusic(250);
+		Mix_FadeInMusic(bgm_blue, -1, 500);
 		break;
 	case ColorState::Blue:
 		turns->set_active_color(ColorState::Red);
+		Mix_FadeOutMusic(250);
+		Mix_FadeInMusic(bgm_red, -1, 500);
 		break;
 	default:
 		turns->set_active_color(ColorState::Red);
@@ -449,9 +529,9 @@ void WorldSystem::change_color()
 	}
 
 	//ColorState active_color = turns->get_active_color();
-	//for (long long i = registry.enemy_states.entities.size() - 1; i >= 0; i--) { 
-	//	const Entity& enemy_entity = registry.enemy_states.entities[i];
-	//	if (((uint8_t)registry.enemy_states.get(enemy_entity).team & (uint8_t)active_color) == 0) {
+	//for (long long i = registry.enemies.entities.size() - 1; i >= 0; i--) { 
+	//	const Entity& enemy_entity = registry.enemies.entities[i];
+	//	if (((uint8_t)registry.enemies.get(enemy_entity).team & (uint8_t)active_color) == 0) {
 	//		registry.render_requests.get(enemy_entity).visible = false;
 	//	} else {
 	//		registry.render_requests.get(enemy_entity).visible = true;
@@ -464,7 +544,9 @@ void WorldSystem::change_color()
 void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 {
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-		if (!player_arrow_fired && turns->execute_team_action(player)) {
+		Attack& attack = registry.weapons.get(current_weapon).given_attacks[current_attack];
+		if (!player_arrow_fired && attack.targeting_type == TargetingType::Projectile
+			&& turns->execute_team_action(player)) {
 			player_arrow_fired = true;
 			// Arrow becomes a projectile the moment it leaves the player, not while it's direction is being selected
 			ActiveProjectile& arrow_projectile = registry.active_projectiles.emplace(player_arrow);
@@ -472,13 +554,40 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 
 			// Denotes arrowhead location the player's arrow, based on firing angle and current scaling
 			arrow_projectile.head_offset
-				= { sin(arrow_velocity.angle) * scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::ARROW)).y / 2,
-					-cos(arrow_velocity.angle) * scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::ARROW)).x / 2 };
+				= { sin(arrow_velocity.angle) * scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::CANNONBALL)).y
+						/ 2,
+				-cos(arrow_velocity.angle) * scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::CANNONBALL)).x / 2
+			};
 
 			arrow_velocity.speed = projectile_speed;
 			// TODO: Add better arrow physics potentially?
 			// arrow_velocity.velocity
 			//	= { sin(arrow_motion.angle) * projectile_speed, -cos(arrow_motion.angle) * projectile_speed };
+		} else if (attack.targeting_type == TargetingType::Adjacent && turns->get_active_team() == player) {
+			// Get screen position of mouse
+			dvec2 mouse_screen_pos;
+			glfwGetCursorPos(window, &mouse_screen_pos.x, &mouse_screen_pos.y);
+
+			// Convert to world pos
+			vec2 mouse_world_pos = vec2(mouse_screen_pos) * renderer->screen_scale + renderer->get_top_left();
+
+			// Get map_positions to compare
+			uvec2 mouse_map_pos = MapUtility::world_position_to_map_position(mouse_world_pos);
+			uvec2 player_pos = registry.map_positions.get(player).position;
+			ivec2 distance = mouse_map_pos - player_pos;
+			if (abs(distance.x) > 1 || abs(distance.y) > 1
+				|| !turns->execute_team_action(player)) {
+				return;
+			}
+			for (const auto& target : registry.stats.entities) {
+				if (registry.map_positions.get(target).position == mouse_map_pos) {
+					Stats& player_stats = registry.stats.get(player);
+					Stats& enemy_stats = registry.stats.get(target);
+					combat->do_attack(player_stats, attack, enemy_stats);
+					animations->player_attack_animation(player);
+				}
+			}
+			turns->complete_team_action(player);
 		}
 	}
 }

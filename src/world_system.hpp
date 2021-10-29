@@ -16,6 +16,7 @@
 #include "map_generator_system.hpp"
 #include "render_system.hpp"
 #include "turn_system.hpp"
+#include "animation_system.hpp"
 
 // Container for all our entities and game logic. Individual rendering / update is
 // deferred to the relative update() methods
@@ -62,6 +63,13 @@ private:
 	// if the tile is blocked by a wall, player won't move
 	void move_player(Direction direction);
 
+	// Equip the next weapon in alphabetical order
+	void equip_next_weapon();
+
+	// Currently mouse-controlled attack
+	Entity current_weapon;
+	size_t current_attack = 0;
+
 	// Flips color state.
 	void change_color();
 
@@ -73,7 +81,7 @@ private:
 
 	// Game configuration
 	bool player_arrow_fired = false;
-	// TODO Track why my projectile speed had slowed throughout
+	// TODO: Track why my projectile speed had slowed throughout
 	const size_t projectile_speed = 500;
 
 	// Game state
@@ -85,7 +93,8 @@ private:
 	Debug& debugging;
 
 	// music references
-	Mix_Music* background_music = nullptr;
+	Mix_Music* bgm_red = nullptr;
+	Mix_Music* bgm_blue = nullptr;
 	Mix_Chunk* salmon_dead_sound = nullptr;
 
 	// C++ random number generator
@@ -95,4 +104,5 @@ private:
 	std::shared_ptr<CombatSystem> combat;
 	std::shared_ptr<MapGeneratorSystem> map_generator;
 	std::shared_ptr<TurnSystem> turns;
+	std::shared_ptr<AnimationSystem> animations;
 };

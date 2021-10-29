@@ -12,9 +12,13 @@ public:
 	ComponentContainer<Player> players;
 	ComponentContainer<Camera> cameras;
 	ComponentContainer<Mesh*> mesh_ptrs;
-	ComponentContainer<RenderRequest> render_requests;
 	ComponentContainer<ScreenState> screen_states;
 	ComponentContainer<DebugComponent> debug_components;
+
+	// Rendering
+	ComponentContainer<Animation> animations;
+	ComponentContainer<RenderRequest> render_requests;
+	ComponentContainer<Event_Animation> event_animations;
 	ComponentContainer<vec3> colors;
 
 	// Map Generator
@@ -24,10 +28,7 @@ public:
 	ComponentContainer<Velocity> velocities;
 
 	// AI
-	ComponentContainer<EnemyState> enemy_states;
-	ComponentContainer<RedDimension> red_entities;
-	ComponentContainer<BlueDimension> blue_entities;
-	ComponentContainer<EnemyNestPosition> enemy_nest_positions;
+	ComponentContainer<Enemy> enemies;
 
 	// Physics
 	ComponentContainer<Hittable> hittables;
@@ -36,6 +37,11 @@ public:
 
 	// Combat
 	ComponentContainer<Stats> stats;
+
+	// Items
+	ComponentContainer<Item> items;
+	ComponentContainer<Weapon> weapons;
+	ComponentContainer<Inventory> inventories;
 
 
 private:
@@ -46,23 +52,37 @@ private:
 		&collisions,
 		&players,
 		&mesh_ptrs,
-		&render_requests,
 		&screen_states,
+
+		// Rendering/Animations
 		&debug_components,
+		&render_requests,
 		&colors,
+		&event_animations,
+		&animations,
+
+		// Map Generator
 		&rooms,
 		&map_positions,
-		&enemy_states,
-		&red_entities,
-		&blue_entities,
-		&enemy_nest_positions,
+		&world_positions,
+		&velocities,
+
+		// AI
+		& enemies,
+
+		// Physics
 		&hittables,
 		&active_projectiles,
 		&resolved_projectiles,
-		&world_positions,
-		&velocities,
-	};
 
+		// Combat
+		&stats,
+
+		// Items
+		&items,
+		&weapons,
+		&inventories,
+	};
 
 public:
 

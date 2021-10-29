@@ -2,13 +2,16 @@
 #include "../ext/stb_image/stb_image.h"
 #include "common.hpp"
 
+#include "map_utility.hpp"
+
 #include <array>
+#include <map>
 #include <unordered_map>
 
 #include "../ext/stb_image/stb_image.h"
 
-#include <predefined_room.hpp>
 #include "map_generator_system.hpp"
+#include <predefined_room.hpp>
 
 // Player component
 struct Player {
@@ -17,11 +20,6 @@ struct Player {
 // Camera component
 struct Camera {
 	uvec2 size, central;
-};
-
-// struct denoting a currently active projectile
-struct ActiveProjectile {
-	vec2 head_offset = { 0, 0 };
 };
 
 // Struct indicating an object is hittable (Currently limited to projectiles
@@ -86,9 +84,55 @@ struct Mesh {
 	std::vector<uint16_t> vertex_indices;
 };
 
+
+// struct denoting a currently active projectile
+struct ActiveProjectile {
+	vec2 head_offset = { 0, 0 };
+};
+
 // Struct for resolving projectiles, including the arrow fired by the player
 struct ResolvedProjectile {
 	float counter = 2000;
+};
+
+// Struct for denoting the frame that the rendering system should be rendering 
+// to the screen for a spritesheet
+struct Animation {
+	int direction = 1;
+	int frame = 0;
+	int max_frames = 1;
+	int state = 0;
+	// Adjusts animation rate to be faster or slower than default
+	// ie. faster things should change more frames. slower things should change less frames
+	float speed_adjustment = 1;
+	float elapsed_time = 0;
+};
+
+// Struct denoting irregular animation events (ie attacking, containing information to restore an entity's
+// animations after the irregular event animation completes
+// TODO: Replace 
+struct Event_Animation {
+	bool turn_trigger = false;
+	float speed_adjustment = 1;
+	vec3 restore_color = { 1, 1, 1 };
+
+	int restore_state = 0;
+	float restore_speed = 1;
+	int frame = 0;
+
+};
+
+// Test Texture Buffer element for enemies
+// TODO: change to animated vertices after bringing player into this 3D element group
+struct EnemyVertex {
+	vec3 position;
+	vec2 texcoord;
+};
+
+// Temp struct denoting PlayerVertices (specifies quad proportions from player spritesheet
+struct PlayerVertex {
+	vec3 position;
+	vec2 texcoord;
 };
 
 /**
@@ -118,10 +162,13 @@ struct ResolvedProjectile {
 enum class TEXTURE_ASSET_ID : uint8_t {
 	PALADIN = 0,
 	SLIME = PALADIN + 1,
-	SLIME_ALERT = SLIME + 1,
-	SLIME_FLINCHED = SLIME_ALERT + 1,
-	ARROW = SLIME_FLINCHED + 1,
-	TILE_SET = ARROW + 1,
+	ARMOR = SLIME + 1,
+	TREEANT= ARMOR + 1,
+	RAVEN = TREEANT + 1,
+	WRAITH = RAVEN + 1,
+	DRAKE = WRAITH + 1,
+	CANNONBALL = DRAKE + 1,
+	TILE_SET = CANNONBALL + 1,
 	TEXTURE_COUNT = TILE_SET + 1
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
@@ -133,13 +180,18 @@ static constexpr std::array<vec2, texture_count> scaling_factors = {
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size * 0.5, MapUtility::tile_size * 0.5),
 	vec2(MapUtility::tile_size* MapUtility::room_size, MapUtility::tile_size* MapUtility::room_size),
 };
 
 enum class EFFECT_ASSET_ID {
 	LINE = 0,
-	TEXTURED = LINE + 1,
+	ENEMY = LINE + 1,
+	PLAYER = ENEMY + 1,
+	TEXTURED = PLAYER + 1,
 	WATER = TEXTURED + 1,
 	TILE_MAP = WATER + 1,
 	EFFECT_COUNT = TILE_MAP + 1
@@ -147,9 +199,11 @@ enum class EFFECT_ASSET_ID {
 constexpr int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 
 enum class GEOMETRY_BUFFER_ID : uint8_t {
-	SALMON = 0,
-	SPRITE = SALMON + 1,
-	LINE = SPRITE + 1,
+	SALMON = 0, 
+	SPRITE = SALMON + 1, 
+	PLAYER = SPRITE + 1,
+	ENEMY = PLAYER + 1,
+	LINE = ENEMY + 1,
 	DEBUG_LINE = LINE + 1,
 	SCREEN_TRIANGLE = DEBUG_LINE + 1,
 
@@ -172,6 +226,8 @@ struct RenderRequest {
 	bool visible = true;
 };
 
+// Represents allowed directions for an animated sprite (e.g whether the sprite is facing left or right)
+enum class Sprite_Direction : uint8_t { SPRITE_LEFT, SPRITE_RIGHT};
 // Represent four directions, that could have many uses, e.g. moving player
 enum class Direction : uint8_t {
 	Left,
@@ -196,17 +252,18 @@ struct MapPosition {
 struct WorldPosition {
 	vec2 position;
 	WorldPosition(vec2 position)
-		: position(position)
-	{ };
+		: position(position) {};
 };
 
 struct Velocity {
 	float speed;
 	float angle;
 	Velocity(float speed, float angle)
-		: speed(speed), angle(angle) { }
-	vec2 get_velocity() { return { sin(angle) * speed, -cos(angle) * speed };
+		: speed(speed)
+		, angle(angle)
+	{
 	}
+	vec2 get_velocity() { return { sin(angle) * speed, -cos(angle) * speed }; }
 };
 
 struct Room {
@@ -228,29 +285,43 @@ enum class ColorState { None = 0, Red = 1, Blue = 2, All = Blue + 1 };
 //-------------------------           AI            -------------------------
 //---------------------------------------------------------------------------
 
-// Simple 3-state state machine for enemy AI: IDLE, ACTIVE, FLINCHED.
-enum class ENEMY_STATE_ID { Idle = 0, ACTIVE = Idle + 1, FLINCHED = ACTIVE + 1 };
+// Slime (cute coward): weak stats; run away when HP is low.
+// Raven (annoying bug): weak stats; large radius and fast speed.
+// LivingArmor (Immortal Hulk): normal stats; nearsighted; a certain chance to become immortal for one turn.
+// TreeAnt (Super Saiyan): normal stats; long attack range; power up attack range and damage when HP is low.
+// TODO: Evan might wanna add description and trait for Wraith.
+enum class EnemyType {
+	Slime = 0,
+	Raven = Slime + 1,
+	LivingArmor = Raven + 1,
+	TreeAnt = LivingArmor + 1,
+	// Wraith = TreeAnt + 1
+};
+extern std::unordered_map<EnemyType, char*> enemy_type_to_string;
 
-// Structure to store enemy state.
-struct EnemyState {
+// Slime:		Idle, Active, Flinched.
+// Raven:		Idle, Actives.
+// LivingArmor:	Idle, Active, Immortal.
+// TreeAnt:		Idle, Active, Powerup.
+enum class EnemyState {
+	Idle = 0,
+	Active = Idle + 1,
+	Flinched = Active + 1,
+	Powerup = Flinched + 1,
+	Immortal = Powerup + 1
+};
+
+// Structure to store enemy information.
+struct Enemy {
+	// Default is a slime.
 	ColorState team = ColorState::Red;
-	ENEMY_STATE_ID current_state = ENEMY_STATE_ID::Idle;
-	EnemyState(ColorState team) { this->team = team; }
-};
+	EnemyType type = EnemyType::Slime;
+	EnemyState state = EnemyState::Idle;
+	uvec2 nest_map_pos = { 0, 0 };
 
-struct RedDimension {
-};
-struct BlueDimension {
-};
-
-// Structure to store enemy nest position.
-struct EnemyNestPosition {
-	uvec2 position;
-	EnemyNestPosition(const uvec2& position)
-		: position(position)
-	{
-		assert(position.x < MapUtility::map_size * MapUtility::room_size && position.y < MapUtility::map_size * MapUtility::room_size);
-	};
+	uint radius = 3;
+	uint speed = 1;
+	uint attack_range = 1;
 };
 
 //---------------------------------------------------------------------------
@@ -263,9 +334,16 @@ enum class DamageType {
 	Count = Magical + 1,
 };
 
+enum class TargetingType {
+	Adjacent = 0,
+	Projectile = 1,
+	Count = Projectile + 1,
+};
+
 template <typename T> using DamageTypeList = std::array<T, static_cast<size_t>(DamageType::Count)>;
 
 struct Attack {
+	std::string name = "";
 	// Each time an attack is made, a random number is chosen uniformly from [to_hit_min, to_hit_max]
 	// This is added to the attack total
 	int to_hit_min = 1;
@@ -278,6 +356,7 @@ struct Attack {
 
 	// This is used when calculating damage to work out if any of the target's damage_modifiers should apply
 	DamageType damage_type = DamageType::Physical;
+	TargetingType targeting_type = TargetingType::Projectile;
 };
 
 struct Stats {
@@ -308,4 +387,38 @@ struct Stats {
 	// A positive modifier is a weakness, like a straw golem being weak to fire
 	// A negative modifeir is a resistance, like an iron golem being resistant to sword cuts
 	DamageTypeList<int> damage_modifiers = { 0 };
+};
+
+enum class Slot {
+	PrimaryHand = 0,
+	Body = PrimaryHand + 1,
+	Head = Body + 1,
+	Neck = Head + 1,
+	Hands = Neck + 1,
+	Feet = Hands + 1,
+	Count = Feet + 1,
+};
+
+template <typename T> using SlotList = std::array<T, static_cast<size_t>(Slot::Count)>;
+
+struct Inventory {
+	std::map<std::string, Entity> inventory;
+	SlotList<Entity> equipped;
+	Inventory() { equipped.fill(Entity::undefined()); }
+};
+
+struct Item {
+	std::string name = "";
+	float weight = 0.f;
+	int value = 0;
+	SlotList<bool> allowed_slots = { false };
+};
+
+struct Weapon {
+	Weapon(std::vector<Attack> given_attacks)
+		: given_attacks(std::move(given_attacks))
+	{
+	}
+	// TODO: Potentially replace with intelligent direct/indirect container
+	std::vector<Attack> given_attacks;
 };
