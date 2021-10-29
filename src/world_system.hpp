@@ -10,7 +10,9 @@
 
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
-#include <SDL_mixer.h>
+#define WITH_SDL2 1
+#include "soloud.h"
+#include "soloud_wavstream.h"
 
 #include "combat_system.hpp"
 #include "map_generator_system.hpp"
@@ -92,9 +94,10 @@ private:
 	Debug& debugging;
 
 	// music references
-	Mix_Music* bgm_red = nullptr;
-	Mix_Music* bgm_blue = nullptr;
-	Mix_Chunk* salmon_dead_sound = nullptr;
+	SoLoud::WavStream bgm_red_wav;
+	SoLoud::WavStream bgm_blue_wav;
+	SoLoud::handle bgm_red;
+	SoLoud::handle bgm_blue;
 
 	// C++ random number generator
 	std::shared_ptr <std::default_random_engine> rng;
