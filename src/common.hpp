@@ -22,6 +22,8 @@ using namespace glm;
 
 #include "tiny_ecs.hpp"
 
+#include "soloud.h"
+
 // Simple utility functions to avoid mistyping directory name
 // audio_path("audio.ogg") -> data/audio/audio.ogg
 // Get defintion of PROJECT_SOURCE_DIR from:
@@ -195,3 +197,5 @@ namespace CameraUtility {
 	  (if camera located at (0, 0) and player is at the left of buffer, camera won't update since it's already at the edge of map)
 										
 */
+
+extern SoLoud::Soloud so_loud; // SoLoud engine

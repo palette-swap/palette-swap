@@ -8,8 +8,6 @@
 
 #include "physics_system.hpp"
 
-SoLoud::Soloud so_loud; // SoLoud engine
-
 // Create the world
 WorldSystem::WorldSystem(Debug& debugging,
 						 std::shared_ptr<CombatSystem> combat,
@@ -28,9 +26,6 @@ WorldSystem::WorldSystem(Debug& debugging,
 
 WorldSystem::~WorldSystem()
 {
-	// Destroy music components
-	so_loud.deinit();
-
 	// Destroy all created components
 	registry.clear_all_components();
 
@@ -103,12 +98,13 @@ GLFWwindow* WorldSystem::create_window(int width, int height)
 
 	//////////////////////////////////////
 	// Loading music and sounds with SDL
-	so_loud.init();
-
 	bgm_red_wav.load(audio_path("henry_martin.wav").c_str());
 	bgm_red_wav.setLooping(true);
 	bgm_blue_wav.load(audio_path("famous_flower_of_serving_men.wav").c_str());
 	bgm_blue_wav.setLooping(true);
+
+	light_sword_wav.load(audio_path("sword1.wav").c_str());
+	cannon_wav.load(audio_path("cannon.wav").c_str());
 
 	return window;
 }
@@ -334,7 +330,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		}
 	}
 
-	if (action == GLFW_RELEASE && key == GLFW_KEY_EQUAL) {
+	if (action == GLFW_RELEASE && key == GLFW_KEY_SPACE) {
 		change_color();
 	}
 
@@ -526,6 +522,7 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 			// TODO: Add better arrow physics potentially?
 			// arrow_velocity.velocity
 			//	= { sin(arrow_motion.angle) * projectile_speed, -cos(arrow_motion.angle) * projectile_speed };
+			so_loud.play(cannon_wav);
 		} else if (attack.targeting_type == TargetingType::Adjacent && turns->get_active_team() == player) {
 			// Get screen position of mouse
 			dvec2 mouse_screen_pos;
@@ -548,6 +545,7 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 					Stats& enemy_stats = registry.stats.get(target);
 					combat->do_attack(player_stats, attack, enemy_stats);
 					animations->player_attack_animation(player);
+					so_loud.play(light_sword_wav);
 				}
 			}
 			turns->complete_team_action(player);

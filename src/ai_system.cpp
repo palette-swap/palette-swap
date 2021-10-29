@@ -13,6 +13,8 @@ AISystem::AISystem(std::shared_ptr<CombatSystem> combat,
 	registry.debug_components.emplace(enemy_team);
 
 	this->turns->add_team_to_queue(enemy_team);
+
+	enemy_attack1_wav.load(audio_path("enemy_attack1.wav").c_str());
 }
 
 void AISystem::step(float /*elapsed_ms*/)
@@ -309,6 +311,7 @@ void AISystem::attack_player(const Entity& entity)
 	Stats& entity_stats = registry.stats.get(entity);
 	Stats& player_stats = registry.stats.get(registry.players.top_entity());
 	combat->do_attack(entity_stats, entity_stats.base_attack, player_stats);
+	so_loud.play(enemy_attack1_wav);
 }
 
 bool AISystem::approach_player(const Entity& entity, uint speed)

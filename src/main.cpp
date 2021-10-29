@@ -50,6 +50,7 @@ int main()
 	}
 
 	// initialize the main systems
+	so_loud.init();
 	renderer.init(window_width_px, window_height_px, window, map);
 	world.init(&renderer);
 	animations->init();
@@ -73,6 +74,8 @@ int main()
 		animations->update_animations(elapsed_ms);
 		renderer.draw();
 	}
+	// Destroy music components
+	so_loud.deinit();
 
 	return EXIT_SUCCESS;
 }
