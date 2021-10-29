@@ -149,7 +149,7 @@ void AnimationSystem::player_running_animation(Entity player)
 	vec3& player_color = registry.colors.get(player);
 
 	if (!registry.event_animations.has(player)) {
-		Event_Animation player_running = registry.event_animations.emplace(player);
+		Event_Animation& player_running = registry.event_animations.emplace(player);
 
 		this->animation_event_setup(player_animation, player_running, player_color);
 
