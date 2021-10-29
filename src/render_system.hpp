@@ -111,6 +111,8 @@ public:
 	vec2 get_top_left();
 	void scale_on_scroll(float offset);
 
+	void on_resize(int width, int height);
+
 	float screen_scale; // Screen to pixel coordinates scale factor (for apple
 					// retina display?)
 
@@ -118,6 +120,10 @@ private:
 	// Internal drawing functions for each entity type
 	void draw_textured_mesh(Entity entity, const mat3& projection);
 	void draw_to_screen();
+	void update_camera_position(MapPosition& camera_map_pos,
+								const vec2& player_pos,
+								const vec2& buffer_top_left,
+								const vec2& buffer_down_right);
 
 	// Window handle
 	GLFWwindow* window;
@@ -128,6 +134,7 @@ private:
 	GLuint off_screen_render_buffer_depth;
 
 	Entity screen_state_entity;
+	ivec2 screen_size = { window_width_px, window_height_px };
 };
 
 bool load_effect_from_file(const std::string& vs_path, const std::string& fs_path, GLuint& out_program);

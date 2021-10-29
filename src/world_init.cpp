@@ -151,15 +151,15 @@ Entity create_line(vec2 position)
 	return entity;
 }
 
-Entity create_camera(vec2 /*pos*/, vec2 size, ivec2 central)
+Entity create_camera(uvec2 pos)
 {
 	auto entity = Entity();
 
 	// Setting initial position for camera
-	// MapPosition& map_position = registry.map_positions.emplace(entity, pos);
 	Camera& camera = registry.cameras.emplace(entity);
-	camera.size = size;
-	camera.central = central;
+	
+	registry.map_positions.emplace(entity, pos);
+
 	return entity;
 }
 

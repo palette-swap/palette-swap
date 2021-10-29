@@ -208,7 +208,7 @@ void RenderSystem::draw_to_screen()
 	gl_has_errors();
 	// Clearing backbuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, window_width_px, window_height_px);
+	glViewport(0, 0, screen_size.x, screen_size.y);
 	glDepthRange(0, 10);
 	glClearColor(1.f, 0, 0, 1.0);
 	glClearDepth(1.f);
@@ -263,7 +263,7 @@ void RenderSystem::draw()
 	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
 	gl_has_errors();
 	// Clearing backbuffer
-	glViewport(0, 0, window_width_px, window_height_px);
+	glViewport(0, 0, screen_size.x, screen_size.y);
 	glDepthRange(0.00001, 10);
 	glClearColor(0.5, 0.5, 0.5, 1.0);
 	glClearDepth(1.f);
@@ -292,8 +292,7 @@ void RenderSystem::draw()
 	gl_has_errors();
 }
 
-// TODO: Update projection matrix to be based on camera
-// currently it's based on player
+// projection matrix based on position of camera entity
 mat3 RenderSystem::create_projection_matrix()
 {
 	// Fake projection matrix, scales with respect to window coordinates
@@ -334,4 +333,43 @@ vec2 RenderSystem::get_top_left()
 	if (this->screen_scale - zoom > 0.1 && this->screen_scale - zoom <= 1.0) {
 		this->screen_scale -= zoom;
 	}
+}
+
+void RenderSystem::on_resize(int width, int height) {
+	screen_size = { width, height };
+
+	glBindTexture(GL_TEXTURE_2D, off_screen_render_buffer_color);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screen_size.x, screen_size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+	gl_has_errors();
+}
+
+ // update camera's map position when player move out of buffer
+ void RenderSystem::update_camera_position(MapPosition& camera_map_pos,
+								 const vec2& player_pos,
+								 const vec2& buffer_top_left,
+								 const vec2& buffer_down_right)
+{
+	vec2 offset_top_left = player_pos - buffer_top_left;
+	vec2 offset_down_right = player_pos - buffer_down_right;
+
+	if (offset_top_left.x >= 0 && offset_top_left.y >= 0 && offset_down_right.x <= 0 && offset_down_right.y <= 0) {
+		return;
+	}
+
+	if (offset_top_left.x < 0 && camera_map_pos.position.x > CameraUtility::map_top_left) {
+		camera_map_pos.position.x -= 1;
+	}
+
+	if (offset_top_left.y < 0 && camera_map_pos.position.y > CameraUtility::map_top_left) {
+		camera_map_pos.position.y -= 1;
+	}
+
+	if (offset_down_right.x > 0 && camera_map_pos.position.x < CameraUtility::map_down_right) {
+		camera_map_pos.position.x += 1;
+	}
+
+	if (offset_down_right.y > 0 && camera_map_pos.position.y < CameraUtility::map_down_right) {
+		camera_map_pos.position.y += 1;
+	}
+
 }

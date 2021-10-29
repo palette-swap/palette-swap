@@ -30,4 +30,5 @@
 !ext/
 !template/ext/
 !CMakeSettings.json
+!ext/soloud/contrib/**/*.cmake
 ext/project_path.hpp
