@@ -84,7 +84,7 @@ private:
 	// be restored
 	void resolve_event_animations();
 	// helper function for setting animation events
-	void animation_event_restore(Animation animation, Event_Animation event_animation);
+	void animation_event_setup(Animation animation, Event_Animation event_animation, vec3 color);
 
 };
 
