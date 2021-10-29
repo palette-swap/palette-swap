@@ -27,6 +27,7 @@ static constexpr float player_animation_speed = 1.2;
 static constexpr float player_melee_speed = 2.5;
 static constexpr float player_heavy_melee_speed = 1;
 static constexpr float player_running_speed = 1.8;
+static constexpr float player_blue_red_switch_speed = 1.5;
 // Value denoting the animation states for the player
 // KEEP ALIGNED WITH STATES REPRESENTED IN PLAYER SPRITESHEET
 enum class player_animation_states { Idle = 0, Spellcast = 1, Melee = 2, Running = 3 };
@@ -61,13 +62,14 @@ public:
 	// Sets player's animation to spellcast
 	void player_spellcast_animation(Entity player);
 	// Toggles player's weapon selection
-	void AnimationSystem::player_toggle_weapon(Entity player);
+	void player_toggle_weapon(Entity player);
 	// TODO: Maybe generalize these two event animations to a general one
 	// Triggers attack animation for a entity specified as the player
-	// TODO: Add callback to confirm that a turn has ended
 	void player_attack_animation(Entity player);
 	// Triggers running animation for a entity specified as the player
 	void player_running_animation(Entity player);
+	// Triggers player transition between red/blue
+	void player_red_blue_animation(Entity player, ColorState color);
 
 	// Triggers an animation to display that an entity has taken damage
 	// For now, this is just a colour change. Will change in next version however

@@ -359,6 +359,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 
 	if (action == GLFW_RELEASE && key == GLFW_KEY_EQUAL) {
 		change_color();
+		animations->player_red_blue_animation(player, turns->get_active_color());
 	}
 
 	// Resetting game
@@ -428,7 +429,7 @@ void WorldSystem::move_player(Direction direction)
 	if (direction == Direction::Left && map_pos.position.x > 0) {
 		new_pos = uvec2(map_pos.position.x - 1, map_pos.position.y);
 		// TODO: Change this to animation request instead of calling it here;
-		player_animation.direction = -1;
+		animations->set_sprite_direction(player, Sprite_Direction::SPRITE_LEFT);
 		animations->player_running_animation(player);
 	} else if (direction == Direction::Up && map_pos.position.y > 0) {
 		new_pos = uvec2(map_pos.position.x, map_pos.position.y - 1);
@@ -437,7 +438,7 @@ void WorldSystem::move_player(Direction direction)
 			   && map_pos.position.x < MapUtility::room_size * MapUtility::tile_size - 1) {
 		new_pos = uvec2(map_pos.position.x + 1, map_pos.position.y);
 		// TODO: Change this to animation request instead of calling it here;
-		player_animation.direction = 1;
+		animations->set_sprite_direction(player, Sprite_Direction::SPRITE_RIGHT);
 		animations->player_running_animation(player);
 	} else if (direction == Direction::Down && map_pos.position.y < MapUtility::room_size * MapUtility::tile_size - 1) {
 		new_pos = uvec2(map_pos.position.x, map_pos.position.y + 1);

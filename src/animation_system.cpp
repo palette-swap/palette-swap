@@ -191,8 +191,38 @@ void AnimationSystem::player_running_animation(Entity player)
 	}
 }
 
+// TODO: Change based on red/blue animation currently displays a blue shift only
+void AnimationSystem::player_red_blue_animation(Entity player, ColorState color) 
+{
+	Animation& player_animation = registry.animations.get(player);
+	vec3& player_color = registry.colors.get(player);
 
-bool AnimationSystem::animation_events_completed() { return (registry.event_animations.size() == 0); }
+	if (!registry.event_animations.has(player)) {
+		Event_Animation player_melee = registry.event_animations.emplace(player);
+
+		// Stores restoration states for the player's animations, to be called after animation event is resolved
+		player_melee.restore_speed = player_animation.speed_adjustment;
+		player_melee.restore_state = player_animation.state;
+		player_melee.restore_color = player_color;
+
+		// Sets animation state to be the beginning of the melee animation
+		player_animation.frame = 0;
+		player_animation.speed_adjustment = player_blue_red_switch_speed;
+
+		switch (color) {
+		case ColorState::Red:
+			player_color = { 2, 0.8, 0.8 };
+			break;
+		case ColorState::Blue:
+			player_color = { 0.5, 0.5, 3 };
+			break;
+		default:
+			player_color = { 1, 1, 1 };
+			break;
+		}
+		
+	}
+}
 
 void AnimationSystem::damage_animation(Entity entity)
 {
@@ -202,3 +232,5 @@ void AnimationSystem::damage_animation(Entity entity)
 		Event_Animation damaged_entity = registry.event_animations.emplace(entity);
 	}
 }
+
+bool AnimationSystem::animation_events_completed() { return (registry.event_animations.size() == 0); }
