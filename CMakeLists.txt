@@ -112,7 +112,9 @@ if (IS_OS_LINUX OR IS_OS_MAC)
     pkg_search_module(GLFW REQUIRED glfw3)
 
     pkg_search_module(SDL2 REQUIRED sdl2)
-    pkg_search_module(SDL2TTF REQUIRED sdl2_ttf)
+    pkg_search_module(SDL2_TTF REQUIRED sdl2_ttf)
+    pkg_search_module(FREETYPE freetype2)
+    pkg_search_module(ZLIB zlib)
 
     # Link Frameworks on OSX
     if (IS_OS_MAC)
