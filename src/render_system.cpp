@@ -319,36 +319,8 @@ vec2 RenderSystem::get_top_left()
 
 	// set up 4 sides of window based on player
 	Entity player = registry.players.top_entity();
-	vec2 player_position = MapUtility::map_position_to_world_position(registry.map_positions.get(player).position);
-
-	Entity camera = registry.cameras.top_entity();
-	MapPosition& camera_map_pos = registry.map_positions.get(camera);
-	vec2 camera_screen_position
-		= MapUtility::map_position_to_world_position(camera_map_pos.position);
-	vec2 buffer_top_left, buffer_down_right;
-	std::tie(buffer_top_left, buffer_down_right) = CameraUtility::get_buffer_positions(camera_screen_position, w*screen_scale, h*screen_scale);
-
-	//printf("window width, height: (%i, %i)\n", w, h);
-	//printf("buffer down right: (%f, %f)\n", buffer_down_right.x, buffer_down_right.y);
-
-	//printf("player position: (%f, %f)\n", player_position.x, player_position.y);
-
-	update_camera_position(camera_map_pos, player_position, buffer_top_left, buffer_down_right);
-	vec2 final_camera_screen_position = MapUtility::map_position_to_world_position(camera_map_pos.position);
-
-	//printf("final camera pos: (%f, %f)\n", final_camera_screen_position.x, final_camera_screen_position.y);
-	
-	float right = final_camera_screen_position.x + w * screen_scale;
-	float left = final_camera_screen_position.x;
-	float top = final_camera_screen_position.y;
-	float bottom = final_camera_screen_position.y + h * screen_scale;
-
-	float sx = 2.f / (right - left);
-	float sy = 2.f / (top - bottom);
-	float tx = -(right + left) / (right - left);
-	float ty = -(top + bottom) / (top - bottom);
-	/*return { { sx, 0.f, 0.f }, { 0.f, sy, 0.f }, { tx, ty, 1.f } };*/
-	return final_camera_screen_position;
+	vec2 position = MapUtility::map_position_to_world_position(registry.map_positions.get(player).position);
+	return { position.x - w * screen_scale / 2.f, position.y - h * screen_scale / 2.f };
 }
 
  void RenderSystem::scale_on_scroll(float offset)
