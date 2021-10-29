@@ -248,7 +248,7 @@ void WorldSystem::restart_game()
 	/*create_enemy(ColorState::Red, EnemyType::Treeant, uvec2(8, 2));*/
 	//create_enemy(ColorState::Red, EnemyType::LivingArmor, uvec2(8, 3));
 	create_enemy(ColorState::Red, EnemyType::Slime, uvec2(8, 4));
-	create_enemy(ColorState::Blue, EnemyType::Slime, uvec2(8, 8));
+	create_enemy(ColorState::Blue, EnemyType::LivingArmor, uvec2(8, 8));
 }
 
 // Compute collisions between entities

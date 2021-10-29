@@ -65,8 +65,15 @@ void AnimationSystem::set_enemy_animation(Entity enemy, TEXTURE_ASSET_ID enemy_t
 
 void AnimationSystem::set_enemy_state(Entity enemy, int state) {
 	Animation& enemy_animation = registry.animations.get(enemy);
-	enemy_animation.state = state;
-	enemy_animation.frame = 0;
+
+	if (registry.event_animations.has(enemy)) {
+		Event_Animation& enemy_event = registry.event_animations.get(enemy);
+		enemy_event.restore_state = state;
+	} else {
+		enemy_animation.state = state;
+		enemy_animation.frame = 0;
+	}
+	
 }
 
 void AnimationSystem::enemy_attack_animation(Entity enemy) {
@@ -205,7 +212,6 @@ void AnimationSystem::damage_animation(Entity entity)
 }
 
 bool AnimationSystem::animation_events_completed() { return (registry.event_animations.size() == 0); }
-
 
 void AnimationSystem::resolve_event_animations()
 {
