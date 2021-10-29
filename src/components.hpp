@@ -169,13 +169,14 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 	DRAKE = WRAITH + 1,
 	CANNONBALL = DRAKE + 1,
 	TILE_SET = CANNONBALL + 1,
-	TEXTURE_COUNT = TILE_SET + 1
+	HELLO_WORLD = TILE_SET + 1,
+	TEXTURE_COUNT = HELLO_WORLD + 1
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 
 // Define the scaling factors needed for each textures
 // Note: This needs to stay the same order as TEXTURE_ASSET_ID and texture_paths
-static constexpr std::array<vec2, texture_count> scaling_factors = {
+static constexpr std::array<vec2, texture_count+1> scaling_factors = {
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
@@ -185,6 +186,8 @@ static constexpr std::array<vec2, texture_count> scaling_factors = {
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size * 0.5, MapUtility::tile_size * 0.5),
 	vec2(MapUtility::tile_size* MapUtility::room_size, MapUtility::tile_size* MapUtility::room_size),
+	vec2(MapUtility::tile_size * 3, MapUtility::tile_size * 1.4),
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
 };
 
 enum class EFFECT_ASSET_ID {
@@ -205,7 +208,8 @@ enum class GEOMETRY_BUFFER_ID : uint8_t {
 	ENEMY = PLAYER + 1,
 	LINE = ENEMY + 1,
 	DEBUG_LINE = LINE + 1,
-	SCREEN_TRIANGLE = DEBUG_LINE + 1,
+	TEXT = DEBUG_LINE + 1,
+	SCREEN_TRIANGLE = TEXT + 1,
 
 	// Note: Keep ROOM at the bottom because of hacky implementation,
 	// this is somewhat hacky, this is actually a single geometry related to a room, but

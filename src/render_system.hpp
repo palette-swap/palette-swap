@@ -2,6 +2,8 @@
 
 #include <array>
 #include <utility>
+#define SDL_MAIN_HANDLED
+#include <SDL_ttf.h>
 
 #include "common.hpp"
 #include "components.hpp"
@@ -33,7 +35,7 @@ class RenderSystem {
 	// for each corresponding enemy/player type, such that it grabs general folder path
 	// and then uses path to grab sprites, stats, and behaviour
 	// Make sure these paths remain in sync with the associated enumerators.
-	const std::array<std::string, texture_count> texture_paths = {
+	const std::array<std::string, texture_count-1> texture_paths = {
 			textures_path("./01/Player Spritesheet.png"),
 			textures_path("./Slime/Slime Spritesheet.png"),
 			textures_path("./Living Armor/Living Armor Spritesheet.png"),
@@ -125,6 +127,8 @@ private:
 	GLuint frame_buffer;
 	GLuint off_screen_render_buffer_color;
 	GLuint off_screen_render_buffer_depth;
+
+	TTF_Font* font;
 
 	Entity screen_state_entity;
 };

@@ -59,6 +59,9 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 		gl_has_errors();
 		assert(in_texcoord_loc >= 0);
 
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 		glEnableVertexAttribArray(in_position_loc);
 		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), nullptr);
 		gl_has_errors();

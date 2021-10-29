@@ -244,6 +244,12 @@ void WorldSystem::restart_game()
 	create_enemy(ColorState::Red, EnemyType::LivingArmor, uvec2(8, 3));
 	create_enemy(ColorState::Red, EnemyType::TreeAnt, uvec2(8, 4));
 	create_enemy(ColorState::Blue, EnemyType::Slime, uvec2(8, 8));
+
+	Entity test;
+	MapPosition& text_pos = registry.map_positions.insert(test, registry.map_positions.get(player));
+	text_pos.position += uvec2(2, 1);
+	registry.render_requests.insert(test,
+									{ TEXTURE_ASSET_ID::HELLO_WORLD, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::TEXT });
 }
 
 // Compute collisions between entities
