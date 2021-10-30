@@ -112,6 +112,7 @@ public:
 			entities.pop_back();
 			// Note, one could mark the id for re-use
 		}
+		assert(entities.size() == map_entity_component_id.size());
 	};
 
 	// Remove all components of type 'Component'
@@ -143,5 +144,19 @@ public:
 		// Fill the new hashmap
 		for (unsigned int i = 0; i < entities.size(); i++)
 			map_entity_component_id[entities[i]] = i;
+	}
+
+	template <typename... Args> Component & push_front(Entity e, Args&&... args)
+	{
+		assert(!(has(e)) && "Entity already contained in ECS registry");
+		Component component(std::forward<Args>(args)...);
+		for (auto& iter : map_entity_component_id) {
+			iter.second ++;
+		}
+		map_entity_component_id[e] = 0;
+		components.insert(components.begin(), component);
+		entities.insert(entities.begin(), e);
+		assert(entities.size() == map_entity_component_id.size());
+		return components.front();
 	}
 };
