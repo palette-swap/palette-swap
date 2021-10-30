@@ -296,7 +296,6 @@ void WorldSystem::handle_collisions()
 			}
 		}
 	}
-
 	// Remove all collisions from this simulation step
 	registry.collisions.clear();
 }

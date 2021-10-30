@@ -31,7 +31,7 @@ int main()
 	std::shared_ptr<TurnSystem> turns = std::make_shared<TurnSystem>();
 
 	//// Animation System
-	std::shared_ptr < AnimationSystem > animations = std::make_shared<AnimationSystem>();
+	std::shared_ptr <AnimationSystem > animations = std::make_shared<AnimationSystem>();
 
 	// Global systems
 	Debug debugging;
