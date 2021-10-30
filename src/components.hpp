@@ -293,7 +293,8 @@ enum class EnemyType {
 	LivingArmor = Slime + 1,
 	TreeAnt = LivingArmor + 1,
 	Raven = TreeAnt + 1,
-	Wraith = Raven + 1
+	Wraith = Raven + 1,
+	EnemyCount = Wraith + 1
 };
 extern std::unordered_map<EnemyType, char*> enemy_type_to_string;
 

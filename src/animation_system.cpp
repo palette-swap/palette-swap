@@ -102,7 +102,7 @@ void AnimationSystem::enemy_attack_animation(const Entity& enemy)
 		this->animation_event_setup(enemy_animation, enemy_attack, enemy_color);
 
 		// Sets animation state to be the beginning of the melee animation
-		enemy_animation.state = (int)enemy_animation_events::Attack;
+		enemy_animation.state = static_cast<int>(enemy_animation_events::Attack);
 		enemy_animation.frame = 0;
 		enemy_animation.speed_adjustment = enemy_attack_speed;
 	}
@@ -116,7 +116,7 @@ void AnimationSystem::set_player_animation(const Entity& player)
 
 	// Sets player rendering/animations to deafult values
 	player_color = { 1, 1, 1 };
-	player_animation.state = (int)player_animation_states::Idle;
+	player_animation.state = static_cast<int>(player_animation_states::Idle);
 	player_animation.frame = 0;
 	player_animation.max_frames = player_num_frames;
 	player_animation.direction = 1;
@@ -130,14 +130,14 @@ void AnimationSystem::set_player_animation(const Entity& player)
 void AnimationSystem::player_idle_animation(const Entity& player)
 {
 	Animation& player_animation = registry.animations.get(player);
-	player_animation.state = (int)player_animation_states::Idle;
+	player_animation.state = static_cast<int>(player_animation_states::Idle);
 	player_animation.frame = 0;
 }
 
 void AnimationSystem::player_spellcast_animation(const Entity& player)
 {
 	Animation& player_animation = registry.animations.get(player);
-	player_animation.state = (int)player_animation_states::Spellcast;
+	player_animation.state = static_cast<int>(player_animation_states::Spellcast);
 	player_animation.frame = 0;
 }
 
@@ -159,7 +159,7 @@ void AnimationSystem::player_attack_animation(const Entity& player)
 		this->animation_event_setup(player_animation, player_melee, player_color);
 
 		// Sets animation state to be the beginning of the melee animation
-		player_animation.state = (int)player_animation_states::Melee;
+		player_animation.state = static_cast<int>(player_animation_states::Melee);
 		player_animation.frame = 0;
 		player_animation.speed_adjustment = player_melee_speed;
 	}
@@ -176,7 +176,7 @@ void AnimationSystem::player_running_animation(const Entity& player)
 		this->animation_event_setup(player_animation, player_running, player_color);
 
 		// Sets animation state to be the beginning of the melee animation
-		player_animation.state = (int)player_animation_states::Running;
+		player_animation.state = static_cast<int>(player_animation_states::Running);
 		player_animation.frame = 0;
 		player_animation.speed_adjustment = player_running_speed;
 	}
