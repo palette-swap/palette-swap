@@ -12,7 +12,7 @@
   "enemies": [
     {
       "team": 1,
-      "type": 0,
+      "type": 1,
       "state": 0,
       "radius": 3,
       "speed": 1,
