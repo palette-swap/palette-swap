@@ -198,6 +198,65 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 	gl_has_errors();
 }
 
+void RenderSystem::draw_healthbar(Entity entity, const Stats& stats, const mat3& projection)
+{
+	Transform transform;
+	if (registry.map_positions.has(entity)) {
+		MapPosition& map_position = registry.map_positions.get(entity);
+		transform.translate(MapUtility::map_position_to_world_position(map_position.position));
+	}
+	transform.translate(vec2(2-MapUtility::tile_size / 2, -MapUtility::tile_size / 2));
+	transform.scale(vec2(MapUtility::tile_size - 4, 3));
+
+	const auto program = (GLuint)effects.at((uint8) EFFECT_ASSET_ID::HEALTH);
+
+	// Setting shaders
+	glUseProgram(program);
+	gl_has_errors();
+
+	const GLuint vbo = vertex_buffers.at((int)GEOMETRY_BUFFER_ID::HEALTH);
+	const GLuint ibo = index_buffers.at((int)GEOMETRY_BUFFER_ID::HEALTH);
+
+	// Setting vertex and index buffers
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+	gl_has_errors();
+
+	GLint in_position_loc = glGetAttribLocation(program, "in_position");
+	gl_has_errors();
+
+	GLint in_color_loc = glGetAttribLocation(program, "in_color");
+	gl_has_errors();
+
+	glEnableVertexAttribArray(in_position_loc);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), (void*)0);
+	gl_has_errors();
+
+	glEnableVertexAttribArray(in_color_loc);
+	glVertexAttribPointer(in_color_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), (void*)sizeof(vec3));
+	gl_has_errors();
+
+	// Get number of indices from index buffer, which has elements uint16_t
+	GLint size = 0;
+	glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
+	gl_has_errors();
+
+	GLsizei num_indices = size / sizeof(uint16_t);
+	// GLsizei num_triangles = num_indices / 3;
+
+	// Setting uniform values to the currently bound program
+	GLint transform_loc = glGetUniformLocation(program, "transform");
+	glUniformMatrix3fv(transform_loc, 1, GL_FALSE, glm::value_ptr(transform.mat));
+	GLint projection_loc = glGetUniformLocation(program, "projection");
+	glUniformMatrix3fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
+	GLint health_loc = glGetUniformLocation(program, "health");
+	glUniform1f(health_loc, max(static_cast<float>(stats.health), 0.f) / static_cast<float>(stats.health_max));
+	gl_has_errors();
+	// Drawing of num_indices/3 triangles specified in the index buffer
+	glDrawElements(GL_TRIANGLES, num_indices, GL_UNSIGNED_SHORT, nullptr);
+	gl_has_errors();
+}
+
 // draw the intermediate texture to the screen, with some distortion to simulate
 // water
 void RenderSystem::draw_to_screen()
@@ -282,6 +341,10 @@ void RenderSystem::draw()
 		if (registry.render_requests.get(entity).visible) {
 			draw_textured_mesh(entity, projection_2d);
 		}
+	}
+
+	for (int i = 0; i < registry.stats.size(); i++) {
+		draw_healthbar(registry.stats.entities[i], registry.stats.components[i], projection_2d);
 	}
 
 	// Truely render to the screen

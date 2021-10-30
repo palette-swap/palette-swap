@@ -49,6 +49,7 @@ class RenderSystem {
 	const std::array<std::string, effect_count> effect_paths = { shader_path("line"),
 																 shader_path("enemy"), 
 																 shader_path("player"),
+																 shader_path("health_bar"),
 																 shader_path("textured"),
 																 shader_path("water"),
 																 shader_path("tilemap") };
@@ -118,6 +119,7 @@ public:
 private:
 	// Internal drawing functions for each entity type
 	void draw_textured_mesh(Entity entity, const mat3& projection);
+	void draw_healthbar(Entity entity, const Stats& stats, const mat3& projection);
 	void draw_to_screen();
 	void update_camera_position(MapPosition& camera_map_pos,
 								const vec2& player_pos,
