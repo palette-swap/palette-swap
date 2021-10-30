@@ -330,7 +330,8 @@ struct Enemy {
 
 enum class DamageType {
 	Physical = 0,
-	Magical = Physical + 1,
+	Fire = Physical + 1,
+	Magical = Fire + 1,
 	Count = Magical + 1,
 };
 
