@@ -312,15 +312,26 @@ mat3 RenderSystem::create_projection_matrix()
 
 vec2 RenderSystem::get_top_left()
 {
-	// Fake projection matrix, scales with respect to window coordinates
 	int w, h;
 	glfwGetFramebufferSize(window, &w, &h);
 	gl_has_errors();
 
-	// set up 4 sides of window based on player
 	Entity player = registry.players.top_entity();
-	vec2 position = MapUtility::map_position_to_world_position(registry.map_positions.get(player).position);
-	return { position.x - w * screen_scale / 2.f, position.y - h * screen_scale / 2.f };
+	vec2 player_pos = MapUtility::map_position_to_world_position(registry.map_positions.get(player).position);
+	
+	Entity camera = registry.cameras.top_entity();
+	MapPosition& camera_map_pos = registry.map_positions.get(camera);
+
+	vec2 buffer_top_left, buffer_down_right;
+	
+	std::tie(buffer_top_left, buffer_down_right)
+		= CameraUtility::get_buffer_positions(MapUtility::map_position_to_world_position(camera_map_pos.position), w * screen_scale, h * screen_scale);
+
+	update_camera_position(camera_map_pos, player_pos, buffer_top_left, buffer_down_right);
+
+	vec2 final_camera_pos = MapUtility::map_position_to_world_position(camera_map_pos.position);
+
+	return { final_camera_pos.x, final_camera_pos.y};
 }
 
  void RenderSystem::scale_on_scroll(float offset)
