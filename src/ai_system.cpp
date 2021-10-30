@@ -114,6 +114,8 @@ void AISystem::execute_Slime(const Entity& slime)
 	case EnemyState::Idle:
 		if (is_player_spotted(slime, enemy.radius)) {
 			switch_enemy_state(slime, EnemyState::Active);
+			execute_Slime(slime);
+			return;
 		}
 		break;
 
@@ -159,6 +161,8 @@ void AISystem::execute_Raven(const Entity& raven)
 	case EnemyState::Idle:
 		if (is_player_spotted(raven, enemy.radius)) {
 			switch_enemy_state(raven, EnemyState::Active);
+			execute_Raven(raven);
+			return;
 		}
 		break;
 
@@ -188,6 +192,8 @@ void AISystem::execute_LivingArmor(const Entity& living_armor)
 	case EnemyState::Idle:
 		if (is_player_spotted(living_armor, enemy.radius)) {
 			switch_enemy_state(living_armor, EnemyState::Active);
+			execute_LivingArmor(living_armor);
+			return;
 		}
 		break;
 
@@ -227,6 +233,8 @@ void AISystem::execute_TreeAnt(const Entity& tree_ant)
 	case EnemyState::Idle:
 		if (is_player_spotted(tree_ant, enemy.radius)) {
 			switch_enemy_state(tree_ant, EnemyState::Active);
+			execute_TreeAnt(tree_ant);
+			return;
 		}
 		break;
 
