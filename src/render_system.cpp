@@ -75,7 +75,7 @@ RenderSystem::TextData RenderSystem::generate_text(const Text& text)
 	}
 
 	// Render the text using SDL
-	SDL_Surface* surface = TTF_RenderUTF8_Blended(font, text.text.c_str(), SDL_Color({ 0, 0, 0, 0 }));
+	SDL_Surface* surface = TTF_RenderText_Blended_Wrapped(font, text.text.c_str(), SDL_Color({ 0, 0, 0, 0 }), screen_size.x);
 	SDL_LockSurface(surface);
 	text_data.texture_width = surface->w;
 	text_data.texture_height = surface->h;
