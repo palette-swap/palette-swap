@@ -10,8 +10,7 @@ AISystem::AISystem(const Debug& debugging,
 				   std::shared_ptr<TurnSystem> turns,
 				   std::shared_ptr<AnimationSystem> animations)
 	: combat(std::move(combat))
-	: debugging(debugging)
-	, combat(std::move(combat))
+	, debugging(debugging)
 	, map_generator(std::move(map_generator))
 	, turns(std::move(turns))
 	, animations(std::move(animations))
