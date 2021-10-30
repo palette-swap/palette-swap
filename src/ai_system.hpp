@@ -19,6 +19,10 @@ public:
 
 	void step(float elapsed_ms);
 
+	// Observer Pattern: a callback of CombatSystem::do_attack().
+	// Maximize the target's radius if the player attacks but cannot be spotted.
+	void do_attack_callback(const Entity& attacker, const Entity& target);
+
 private:
 	// Execute state machine of Slime.
 	void execute_Slime(const Entity& slime);

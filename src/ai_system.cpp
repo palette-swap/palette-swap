@@ -16,6 +16,11 @@ AISystem::AISystem(const Debug& debugging,
 	registry.debug_components.emplace(enemy_team);
 
 	this->turns->add_team_to_queue(enemy_team);
+
+	std::vector<std::function<void(const Entity& attacker, const Entity& target)>> callbacks;
+
+	this->combat->attach_do_attack_callback(
+		[this](const Entity& attacker, const Entity& target) { this->do_attack_callback(attacker, target); });
 }
 
 void AISystem::step(float /*elapsed_ms*/)
@@ -89,9 +94,20 @@ void AISystem::step(float /*elapsed_ms*/)
 	}
 }
 
+void AISystem::do_attack_callback(const Entity& attacker, const Entity& target)
+{
+	if (registry.players.has(attacker)) {
+		Enemy& enemy = registry.enemies.get(target);
+		if ((enemy.state == EnemyState::Idle && !is_player_spotted(target, enemy.radius))
+			|| (enemy.state != EnemyState::Idle && !is_player_spotted(target, enemy.radius * 2))) {
+			enemy.radius = MapUtility::room_size * MapUtility::map_size;
+		}
+	}
+}
+
 void AISystem::execute_Slime(const Entity& slime)
 {
-	const Enemy& enemy = registry.enemies.get(slime);
+	Enemy& enemy = registry.enemies.get(slime);
 
 	switch (enemy.state) {
 
@@ -119,7 +135,8 @@ void AISystem::execute_Slime(const Entity& slime)
 
 	case EnemyState::Flinched:
 		if (is_at_nest(slime)) {
-			if (!is_player_spotted(slime, 6)) {
+			enemy.radius = 3;
+			if (!is_player_spotted(slime, enemy.radius * 2)) {
 				recover_health(slime, 1.f);
 				switch_enemy_state(slime, EnemyState::Idle);
 			}
