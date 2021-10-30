@@ -14,11 +14,16 @@
 
 class AISystem {
 public:
-	AISystem(std::shared_ptr<CombatSystem> combat,
+	AISystem(const Debug& debugging,
+			 std::shared_ptr<CombatSystem> combat,
 			 std::shared_ptr<MapGeneratorSystem> map_generator,
 			 std::shared_ptr<TurnSystem> turns);
 
 	void step(float elapsed_ms);
+
+	// Observer Pattern: a callback of CombatSystem::do_attack().
+	// Maximize the target's radius if the player attacks but cannot be spotted.
+	void do_attack_callback(const Entity& attacker, const Entity& target);
 
 private:
 	// Execute state machine of Slime.
@@ -70,6 +75,9 @@ private:
 
 	// An entity become powerup if flag is true. Otherwise cancel powerup.
 	void become_powerup(const Entity& entity, bool flag);
+
+	// Debugging
+	const Debug& debugging;
 
 	// Shared resource: Combat system.
 	std::shared_ptr<CombatSystem> combat;

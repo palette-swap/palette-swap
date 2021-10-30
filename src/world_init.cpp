@@ -151,6 +151,23 @@ Entity create_line(vec2 position)
 	return entity;
 }
 
+Entity create_path_point(vec2 position)
+{
+	Entity entity = Entity();
+
+	registry.debug_components.emplace(entity);
+
+	registry.world_positions.emplace(entity, position);
+
+	// TODO: Replace CANNONBALL with other suitable texture.
+	registry.render_requests.insert(
+		entity, { TEXTURE_ASSET_ID::CANNONBALL, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE });
+
+	registry.colors.insert(entity, { 0, 1, 0 });
+
+	return entity;
+}
+
 Entity create_camera(uvec2 pos)
 {
 	auto entity = Entity();

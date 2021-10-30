@@ -38,7 +38,7 @@ int main()
 	WorldSystem world(debugging, combat, map, turns);
 	RenderSystem renderer;
 	PhysicsSystem physics(debugging, map);
-	AISystem ai(combat, map, turns);
+	AISystem ai(debugging, combat, map, turns);
 
 	// Initializing window
 	GLFWwindow* window = world.create_window(window_width_px, window_height_px);
@@ -73,6 +73,7 @@ int main()
 		world.handle_collisions();
 		animations->update_animations(elapsed_ms);
 		renderer.draw();
+		turns->step();
 	}
 	// Destroy music components
 	so_loud.deinit();
