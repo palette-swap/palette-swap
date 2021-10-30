@@ -92,7 +92,7 @@ struct ActiveProjectile {
 
 // Struct for resolving projectiles, including the arrow fired by the player
 struct ResolvedProjectile {
-	float counter = 2000;
+	float counter = 400;
 };
 
 // Struct for denoting the frame that the rendering system should be rendering 
