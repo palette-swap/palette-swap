@@ -1,6 +1,12 @@
 // internal
 #include "turn_system.hpp"
 
+void TurnSystem::step() { 
+	if (queue_state == QueueState::Finished) {
+		try_cycle_queue();
+	}
+}
+
 Entity TurnSystem::get_active_team()
 {
 	if (!team_queue.empty()) {
@@ -70,16 +76,18 @@ bool TurnSystem::complete_team_action(Entity team)
 	if ((queue_state == QueueState::Executing || queue_state == QueueState::Idle) && get_active_team() == team) {
 		queue_state = QueueState::Finished;
 		// Perform post-execution actions
-		cycle_queue();
-		return true;
+		return try_cycle_queue();
 	}
 	return false;
 }
 
-bool TurnSystem::cycle_queue()
+bool TurnSystem::try_cycle_queue()
 {
-	team_queue.push_back(team_queue.front());
-	team_queue.pop_front();
-	queue_state = QueueState::Idle;
-	return true;
+	if (animations->animation_events_completed() && queue_state == QueueState::Finished) {
+		team_queue.push_back(team_queue.front());
+		team_queue.pop_front();
+		queue_state = QueueState::Idle;
+		return true;
+	}
+	return false;
 }
