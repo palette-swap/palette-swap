@@ -64,10 +64,13 @@ std::string CombatSystem::make_attack_list(const Entity entity, size_t current_a
 		} else {
 			attacks << "\n " << i + 1 << "  ";
 		}
-		attacks << attack.name << ": " << attack.to_hit_min << "-" << attack.to_hit_max
+		attacks << attack.name;
+		// Note we could log more details, but it's a bit much visually
+		// Maybe on some sort of menu?
+		/*attacks << ": " << attack.to_hit_min << "-" << attack.to_hit_max
 				<< " to hit, " << attack.damage_min << "-" << attack.damage_max << " "
 				<< get_name(attack.damage_type) << " dmg ("
-				<< ((attack.targeting_type == TargetingType::Projectile) ? "Projectile)" : "Melee)");
+				<< ((attack.targeting_type == TargetingType::Projectile) ? "Projectile)" : "Melee)");*/
 	}
 	return attacks.str();
 }
