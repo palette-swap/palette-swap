@@ -222,6 +222,9 @@ void WorldSystem::restart_game()
 	// Create a new player arrow instance
 	vec2 player_location = MapUtility::map_position_to_world_position(player_starting_point);
 	player_arrow = create_arrow(player_location);
+	registry.render_requests.get(player_arrow).visible
+		= registry.weapons.get(current_weapon).given_attacks.at(current_attack).targeting_type
+		== TargetingType::Projectile;
 }
 
 // Compute collisions between entities
@@ -246,10 +249,8 @@ void WorldSystem::handle_collisions()
 
 				// Attack the other entity if it can be attacked
 				if (registry.stats.has(entity_other)) {
-					Stats& player_stats = registry.stats.get(player);
-					Stats& enemy_stats = registry.stats.get(entity_other);
 					combat->do_attack(
-						player_stats, registry.weapons.get(current_weapon).given_attacks[current_attack], enemy_stats);
+						player, registry.weapons.get(current_weapon).given_attacks[current_attack], entity_other);
 				}
 
 				// Stops projectile motion, adds projectile to list of resolved projectiles
@@ -325,7 +326,8 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 					   attack.to_hit_max,
 					   attack.damage_min,
 					   attack.damage_max,
-					attack.targeting_type == TargetingType::Projectile ? "projectile" : "adjacent");
+					   attack.targeting_type == TargetingType::Projectile ? "projectile" : "adjacent");
+				registry.render_requests.get(player_arrow).visible = attack.targeting_type == TargetingType::Projectile;
 			}
 		}
 	}
@@ -464,6 +466,9 @@ void WorldSystem::equip_next_weapon()
 		curr = next->second;
 		current_weapon = curr;
 		current_attack = 0;
+		registry.render_requests.get(player_arrow).visible
+			= registry.weapons.get(current_weapon).given_attacks.at(current_attack).targeting_type
+			== TargetingType::Projectile;
 		printf("Switched weapon to %s\n", registry.items.get(curr).name.c_str());
 		turns->complete_team_action(player);
 	}
@@ -541,9 +546,7 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 			}
 			for (const auto& target : registry.stats.entities) {
 				if (registry.map_positions.get(target).position == mouse_map_pos) {
-					Stats& player_stats = registry.stats.get(player);
-					Stats& enemy_stats = registry.stats.get(target);
-					combat->do_attack(player_stats, attack, enemy_stats);
+					combat->do_attack(player, attack, target);
 					animations->player_attack_animation(player);
 					so_loud.play(light_sword_wav);
 				}

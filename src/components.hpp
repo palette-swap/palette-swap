@@ -92,7 +92,7 @@ struct ActiveProjectile {
 
 // Struct for resolving projectiles, including the arrow fired by the player
 struct ResolvedProjectile {
-	float counter = 2000;
+	float counter = 400;
 };
 
 // Struct for denoting the frame that the rendering system should be rendering 
@@ -193,7 +193,8 @@ enum class EFFECT_ASSET_ID {
 	LINE = 0,
 	ENEMY = LINE + 1,
 	PLAYER = ENEMY + 1,
-	TEXTURED = PLAYER + 1,
+	HEALTH = PLAYER + 1,
+	TEXTURED = HEALTH + 1,
 	WATER = TEXTURED + 1,
 	TILE_MAP = WATER + 1,
 	EFFECT_COUNT = TILE_MAP + 1
@@ -205,7 +206,8 @@ enum class GEOMETRY_BUFFER_ID : uint8_t {
 	SPRITE = SALMON + 1, 
 	PLAYER = SPRITE + 1,
 	ENEMY = PLAYER + 1,
-	LINE = ENEMY + 1,
+	HEALTH = ENEMY + 1,
+	LINE = HEALTH + 1,
 	DEBUG_LINE = LINE + 1,
 	SCREEN_TRIANGLE = DEBUG_LINE + 1,
 
@@ -331,7 +333,8 @@ struct Enemy {
 
 enum class DamageType {
 	Physical = 0,
-	Magical = Physical + 1,
+	Fire = Physical + 1,
+	Magical = Fire + 1,
 	Count = Magical + 1,
 };
 
