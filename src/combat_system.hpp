@@ -10,9 +10,17 @@
 
 class CombatSystem {
 public:
-	bool do_attack(Entity attacker, Attack& attack, Entity target);
 	void init(std::shared_ptr<std::default_random_engine> rng);
 
+	bool do_attack(Entity attacker, Attack& attack, Entity target);
+
+	// Observer Pattern: attach a callback of do_attack().
+	void attach_do_attack_callback(
+		const std::function<void(const Entity& attacker, const Entity& target)>& do_attack_callback);
+
 private:
+	// Observer Pattern: callbacks of do_attack().
+	std::vector<std::function<void(const Entity& attacker, const Entity& target)>> do_attack_callbacks;
+
 	std::shared_ptr<std::default_random_engine> rng;
 };
