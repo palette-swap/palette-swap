@@ -117,6 +117,8 @@ void AISystem::execute_Slime(const Entity& slime)
 	case EnemyState::Idle:
 		if (is_player_spotted(slime, enemy.radius)) {
 			switch_enemy_state(slime, EnemyState::Active);
+			execute_Slime(slime);
+			return;
 		}
 		break;
 
@@ -162,6 +164,8 @@ void AISystem::execute_Raven(const Entity& raven)
 	case EnemyState::Idle:
 		if (is_player_spotted(raven, enemy.radius)) {
 			switch_enemy_state(raven, EnemyState::Active);
+			execute_Raven(raven);
+			return;
 		}
 		break;
 
@@ -191,6 +195,8 @@ void AISystem::execute_LivingArmor(const Entity& living_armor)
 	case EnemyState::Idle:
 		if (is_player_spotted(living_armor, enemy.radius)) {
 			switch_enemy_state(living_armor, EnemyState::Active);
+			execute_LivingArmor(living_armor);
+			return;
 		}
 		break;
 
@@ -230,6 +236,8 @@ void AISystem::execute_TreeAnt(const Entity& tree_ant)
 	case EnemyState::Idle:
 		if (is_player_spotted(tree_ant, enemy.radius)) {
 			switch_enemy_state(tree_ant, EnemyState::Active);
+			execute_TreeAnt(tree_ant);
+			return;
 		}
 		break;
 
@@ -349,13 +357,11 @@ void AISystem::attack_player(const Entity& entity)
 	printf("%s_%u attacks player!\n", enemy_type, (uint)entity);
 	Entity& player = registry.players.top_entity();
 
-	Stats& entity_stats = registry.stats.get(entity);
-	Stats& player_stats = registry.stats.get(player);
+	combat->do_attack(entity, registry.stats.get(entity).base_attack, registry.players.top_entity());
 	// TODO: move attack animation to combat system potentially
 	// Triggers attack for a enemy entity
 	animations->enemy_attack_animation(entity);
 	animations->damage_animation(player);
-	combat->do_attack(entity_stats, entity_stats.base_attack, player_stats);
 	so_loud.play(enemy_attack1_wav);
 }
 

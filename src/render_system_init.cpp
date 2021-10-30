@@ -268,6 +268,35 @@ void RenderSystem::initialize_gl_geometry_buffers()
 		initialize_room_vertices(i);
 	}
 
+	//////////////////////////////////
+	// Initialize health bars
+	std::vector<ColoredVertex> health_vertices;
+	std::vector<uint16_t> health_indices;
+
+	constexpr float depth = 0.8f;
+	constexpr vec3 red = { 0.8, 0.1, 0.1 };
+	constexpr vec3 black = { 0, 0, 0 };
+
+	// Corner points
+	health_vertices = {
+		{ { 0, -.5, depth }, red },
+		{ { 0, .5, depth }, red },
+		{ { 1, .5, depth }, red },
+		{ { 1, -.5, depth }, red },
+		{ { 0, -.5, depth }, black },
+		{ { 0, .5, depth }, black },
+		{ { 1, .5, depth }, black },
+		{ { 1, -.5, depth }, black },
+	};
+
+	// Two triangles
+	health_indices = { 4, 5, 7, 5, 6, 7, 0, 1, 3, 1, 2, 3 };
+
+	Mesh& health = meshes.at((int)GEOMETRY_BUFFER_ID::HEALTH);
+	health.vertices = health_vertices;
+	health.vertex_indices = health_indices;
+	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::HEALTH, health_vertices, health_indices);
+
 	////////////////////////
 	// Initialize pebble
 	std::vector<ColoredVertex> pebble_vertices;
@@ -298,9 +327,6 @@ void RenderSystem::initialize_gl_geometry_buffers()
 	// Initialize debug line
 	std::vector<ColoredVertex> line_vertices;
 	std::vector<uint16_t> line_indices;
-
-	constexpr float depth = 0.5f;
-	constexpr vec3 red = { 0.8, 0.1, 0.1 };
 
 	// Corner points
 	line_vertices = {
