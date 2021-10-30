@@ -93,8 +93,8 @@ void PhysicsSystem::step(float elapsed_ms, float /*window_width*/, float /*windo
 			// visualize the radius with two axis-aligned lines
 			const vec2 bonding_box = get_bounding_box();
 			float radius = sqrt(dot(bonding_box / 2.f, bonding_box / 2.f));
-			/*Entity line1 =*/create_line(position_i.position);
-			/*Entity line2 =*/create_line(position_i.position);
+			//Entity line1 = create_line(position_i.position);
+			//Entity line2 = create_line(position_i.position);
 		}
 	}
 }
