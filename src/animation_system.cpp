@@ -91,7 +91,6 @@ void AnimationSystem::set_enemy_state(const Entity& enemy, int state)
 
 void AnimationSystem::enemy_attack_animation(const Entity& enemy)
 {
-	
 	Animation& enemy_animation = registry.animations.get(enemy);
 	vec3& enemy_color = registry.colors.get(enemy);
 
@@ -110,6 +109,7 @@ void AnimationSystem::enemy_attack_animation(const Entity& enemy)
 
 void AnimationSystem::set_player_animation(const Entity& player)
 {
+	assert(registry.players.has(player));
 	Animation& player_animation = registry.animations.get(player);
 	vec3& player_color = registry.colors.get(player);
 	RenderRequest& player_render = registry.render_requests.get(player);
@@ -129,6 +129,7 @@ void AnimationSystem::set_player_animation(const Entity& player)
 
 void AnimationSystem::player_idle_animation(const Entity& player)
 {
+	assert(registry.players.has(player));
 	Animation& player_animation = registry.animations.get(player);
 	player_animation.state = static_cast<int>(player_animation_states::Idle);
 	player_animation.frame = 0;
@@ -136,6 +137,7 @@ void AnimationSystem::player_idle_animation(const Entity& player)
 
 void AnimationSystem::player_spellcast_animation(const Entity& player)
 {
+	assert(registry.players.has(player));
 	Animation& player_animation = registry.animations.get(player);
 	player_animation.state = static_cast<int>(player_animation_states::Spellcast);
 	player_animation.frame = 0;
@@ -143,6 +145,7 @@ void AnimationSystem::player_spellcast_animation(const Entity& player)
 
 void AnimationSystem::player_toggle_weapon(const Entity& player)
 {
+	assert(registry.players.has(player));
 	Animation& player_animation = registry.animations.get(player);
 	player_animation.state = (player_animation.state + 1) % player_weapon_states;
 }
@@ -150,6 +153,7 @@ void AnimationSystem::player_toggle_weapon(const Entity& player)
 
 void AnimationSystem::player_attack_animation(const Entity& player)
 {
+	assert(registry.players.has(player));
 	Animation& player_animation = registry.animations.get(player);
 	vec3& player_color = registry.colors.get(player);
 
@@ -167,6 +171,7 @@ void AnimationSystem::player_attack_animation(const Entity& player)
 
 void AnimationSystem::player_running_animation(const Entity& player)
 {
+	assert(registry.players.has(player));
 	Animation& player_animation = registry.animations.get(player);
 	vec3& player_color = registry.colors.get(player);
 
