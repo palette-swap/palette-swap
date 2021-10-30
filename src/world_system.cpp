@@ -242,6 +242,10 @@ void WorldSystem::restart_game()
 	// Create a new player arrow instance
 	vec2 player_location = MapUtility::map_position_to_world_position(player_starting_point);
 	player_arrow = create_arrow(player_location);
+	registry.render_requests.get(player_arrow).visible
+		= registry.weapons.get(current_weapon).given_attacks.at(current_attack).targeting_type
+		== TargetingType::Projectile;
+
 	// Creates a single enemy instance, (TODO: needs to be updated with position based on grid)
 	// Also requires naming scheme for randomly generated enemies, for later reference
 	create_enemy(ColorState::Red, EnemyType::Slime, uvec2(8, 1));
@@ -350,7 +354,8 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 					   attack.to_hit_max,
 					   attack.damage_min,
 					   attack.damage_max,
-					attack.targeting_type == TargetingType::Projectile ? "projectile" : "adjacent");
+					   attack.targeting_type == TargetingType::Projectile ? "projectile" : "adjacent");
+				registry.render_requests.get(player_arrow).visible = attack.targeting_type == TargetingType::Projectile;
 			}
 		}
 	}
@@ -478,6 +483,9 @@ void WorldSystem::equip_next_weapon()
 		curr = next->second;
 		current_weapon = curr;
 		current_attack = 0;
+		registry.render_requests.get(player_arrow).visible
+			= registry.weapons.get(current_weapon).given_attacks.at(current_attack).targeting_type
+			== TargetingType::Projectile;
 		printf("Switched weapon to %s\n", registry.items.get(curr).name.c_str());
 		turns->complete_team_action(player);
 	}
