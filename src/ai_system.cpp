@@ -275,7 +275,6 @@ void AISystem::switch_enemy_state(const Entity& enemy_entity, EnemyState new_sta
 	// Animation& animation = registry.animations.get(enemy_entity);
 	// animation.switchTexture(enemy.team, enemy.type, enemy.state);
 
-	// Note, need to update this mapping if 
 	if (enemy_state_to_animation_state.count(enemy.state)) {
 		int new_state = enemy_state_to_animation_state[enemy.state];
 		animations->set_enemy_state(enemy_entity, new_state);

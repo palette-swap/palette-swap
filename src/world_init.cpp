@@ -65,8 +65,6 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 
 	// Indicates enemy is hittable by objects
 	registry.hittables.emplace(entity);
-
-	// TODO: Change texture selected to map value, rather than this + 1 being used right now
 	// Create enemy component for AI System.
 	// TODO: Replace with load from file or auto-generate.
 	Enemy& enemy = registry.enemies.emplace(entity);
@@ -105,19 +103,17 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 		throw std::runtime_error("Invalid enemy type.");
 	}
 
-	// TODO: Change all of this to reference constants, currently that is in animation system
 	registry.render_requests.insert(
 		entity, { enemy_type_to_texture[type], EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY });
 	if (team == ColorState::Red) {
-		registry.colors.insert(entity, { 2.5, 1, 1 });
+		registry.colors.insert(entity, AnimationUtility::default_enemy_red);
 	} else if (team == ColorState::Blue) {
-		registry.colors.insert(entity, { 1, 1, 2 });
+		registry.colors.insert(entity, { AnimationUtility::default_enemy_blue });
 	} else {
 		registry.colors.insert(entity, { 1, 1, 1 });
 	}
 
-	// TODO: Combine with render_requests above, so animation system handles render requests as a middleman
-	// Update animation number using animation system max frames, instead of this static number
+
 	Animation& enemy_animation = registry.animations.emplace(entity);
 	enemy_animation.max_frames = 4;
 

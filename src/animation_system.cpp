@@ -47,7 +47,6 @@ void AnimationSystem::damage_animation(const Entity& entity)
 	}
 }
 
-// TODO: Change texture asset id to enemy enum that Franky has implemented
 void AnimationSystem::set_enemy_animation(const Entity& enemy, TEXTURE_ASSET_ID enemy_type, ColorState color) 
 {
 	Animation& enemy_animation = registry.animations.get(enemy);
@@ -92,7 +91,7 @@ void AnimationSystem::set_enemy_state(const Entity& enemy, int state)
 
 void AnimationSystem::enemy_attack_animation(const Entity& enemy)
 {
-	// TODO: Add enemy attack animations to spritesheets, and add to event animations
+	
 	Animation& enemy_animation = registry.animations.get(enemy);
 	vec3& enemy_color = registry.colors.get(enemy);
 
@@ -128,7 +127,6 @@ void AnimationSystem::set_player_animation(const Entity& player)
 	player_render = { TEXTURE_ASSET_ID::PALADIN, EFFECT_ASSET_ID::PLAYER, GEOMETRY_BUFFER_ID::PLAYER };
 }
 
-// TODO: Will eventually combine this into a general toggle between player states
 void AnimationSystem::player_idle_animation(const Entity& player)
 {
 	Animation& player_animation = registry.animations.get(player);
@@ -184,7 +182,6 @@ void AnimationSystem::player_running_animation(const Entity& player)
 	}
 }
 
-// TODO: Change based on red/blue animation currently displays a blue shift only
 void AnimationSystem::player_red_blue_animation(const Entity& player, ColorState color)
 {
 	Animation& player_animation = registry.animations.get(player);
