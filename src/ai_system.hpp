@@ -12,7 +12,8 @@
 
 class AISystem {
 public:
-	AISystem(std::shared_ptr<CombatSystem> combat,
+	AISystem(const Debug& debugging,
+			 std::shared_ptr<CombatSystem> combat,
 			 std::shared_ptr<MapGeneratorSystem> map_generator,
 			 std::shared_ptr<TurnSystem> turns);
 
@@ -68,6 +69,9 @@ private:
 
 	// An entity become powerup if flag is true. Otherwise cancel powerup.
 	void become_powerup(const Entity& entity, bool flag);
+
+	// Debugging
+	const Debug& debugging;
 
 	// Shared resource: Combat system.
 	std::shared_ptr<CombatSystem> combat;
