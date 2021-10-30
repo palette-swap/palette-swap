@@ -105,7 +105,7 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 	}
 
 	registry.render_requests.insert(
-		entity, { enemy_type_to_texture[type], EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY });
+		entity, { enemy_type_textures[static_cast<int>(type)], EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY });
 	if (team == ColorState::Red) {
 		registry.colors.insert(entity, AnimationUtility::default_enemy_red);
 	} else if (team == ColorState::Blue) {
