@@ -1,73 +1,121 @@
 // internal
 #include "ai_system.hpp"
 #include "components.hpp"
+#include "world_init.hpp"
 
 // AI logic
-AISystem::AISystem(std::shared_ptr<CombatSystem> combat,
+AISystem::AISystem(const Debug& debugging,
+				   std::shared_ptr<CombatSystem> combat,
 				   std::shared_ptr<MapGeneratorSystem> map_generator,
 				   std::shared_ptr<TurnSystem> turns)
-	: combat(std::move(combat))
+	: debugging(debugging)
+	, combat(std::move(combat))
 	, map_generator(std::move(map_generator))
 	, turns(std::move(turns))
 {
 	registry.debug_components.emplace(enemy_team);
 
 	this->turns->add_team_to_queue(enemy_team);
+
+	std::vector<std::function<void(const Entity& attacker, const Entity& target)>> callbacks;
+
+	this->combat->attach_do_attack_callback(
+		[this](const Entity& attacker, const Entity& target) { this->do_attack_callback(attacker, target); });
 }
 
 void AISystem::step(float /*elapsed_ms*/)
 {
-	if (!turns->execute_team_action(enemy_team)) {
-		return;
-	}
+	if (turns->execute_team_action(enemy_team)) {
+		for (long long i = registry.enemies.entities.size() - 1; i >= 0; --i) {
+			const Entity& enemy_entity = registry.enemies.entities[i];
 
-	for (long long i = registry.enemies.entities.size() - 1; i >= 0; --i) {
-		const Entity& enemy_entity = registry.enemies.entities[i];
+			if (remove_dead_entity(enemy_entity)) {
+				continue;
+			}
 
-		if (remove_dead_entity(enemy_entity)) {
-			continue;
+			const Enemy& enemy = registry.enemies.components[i];
+
+			ColorState active_world_color = turns->get_active_color();
+			if (((uint8_t)active_world_color & (uint8_t)enemy.team) > 0) {
+
+				switch (enemy.type) {
+				case EnemyType::Slime:
+					execute_Slime(enemy_entity);
+					break;
+
+				case EnemyType::Raven:
+					execute_Raven(enemy_entity);
+					break;
+
+				case EnemyType::LivingArmor:
+					execute_LivingArmor(enemy_entity);
+					break;
+
+				case EnemyType::TreeAnt:
+					execute_TreeAnt(enemy_entity);
+					break;
+
+				default:
+					throw std::runtime_error("Invalid enemy type.");
+				}
+			}
 		}
 
-		const Enemy enemy = registry.enemies.components[i];
+		turns->complete_team_action(enemy_team);
+	}
 
-		ColorState active_world_color = turns->get_active_color();
-		if (((uint8_t)active_world_color & (uint8_t)enemy.team) > 0) {
+	// Debugging for the shortest paths of enemies.
+	if (debugging.in_debug_mode) {
+		for (long long i = registry.enemies.entities.size() - 1; i >= 0; --i) {
+			const Entity& enemy_entity = registry.enemies.entities[i];
+			const Enemy& enemy = registry.enemies.components[i];
 
-			switch (enemy.type) {
-			case EnemyType::Slime:
-				execute_Slime(enemy_entity);
-				break;
+			ColorState active_world_color = turns->get_active_color();
+			if (((uint8_t)active_world_color & (uint8_t)enemy.team) > 0) {
+				const uvec2& entity_map_pos = registry.map_positions.get(enemy_entity).position;
 
-			case EnemyType::Raven:
-				execute_Raven(enemy_entity);
-				break;
+				if (enemy.state == EnemyState::Flinched) {
+					const uvec2& nest_map_pos = registry.enemies.get(enemy_entity).nest_map_pos;
+					std::vector<uvec2> shortest_path = map_generator->shortest_path(entity_map_pos, nest_map_pos);
 
-			case EnemyType::LivingArmor:
-				execute_LivingArmor(enemy_entity);
-				break;
+					for (const uvec2& path_point : shortest_path) {
+						create_path_point(MapUtility::map_position_to_world_position(path_point));
+					}
+				} else if (enemy.state != EnemyState::Idle && is_player_spotted(enemy_entity, enemy.radius * 2)) {
+					const uvec2& player_map_pos = registry.map_positions.get(registry.players.top_entity()).position;
+					std::vector<uvec2> shortest_path = map_generator->shortest_path(entity_map_pos, player_map_pos);
 
-			case EnemyType::TreeAnt:
-				execute_TreeAnt(enemy_entity);
-				break;
-
-			default:
-				throw std::runtime_error("Invalid enemy type.");
+					for (const uvec2& path_point : shortest_path) {
+						create_path_point(MapUtility::map_position_to_world_position(path_point));
+					}
+				}
 			}
 		}
 	}
+}
 
-	turns->complete_team_action(enemy_team);
+void AISystem::do_attack_callback(const Entity& attacker, const Entity& target)
+{
+	if (registry.players.has(attacker)) {
+		Enemy& enemy = registry.enemies.get(target);
+		if ((enemy.state == EnemyState::Idle && !is_player_spotted(target, enemy.radius))
+			|| (enemy.state != EnemyState::Idle && !is_player_spotted(target, enemy.radius * 2))) {
+			enemy.radius = MapUtility::room_size * MapUtility::map_size;
+		}
+	}
 }
 
 void AISystem::execute_Slime(const Entity& slime)
 {
-	const Enemy& enemy = registry.enemies.get(slime);
+	Enemy& enemy = registry.enemies.get(slime);
 
 	switch (enemy.state) {
 
 	case EnemyState::Idle:
 		if (is_player_spotted(slime, enemy.radius)) {
 			switch_enemy_state(slime, EnemyState::Active);
+			execute_Slime(slime);
+			return;
 		}
 		break;
 
@@ -89,7 +137,11 @@ void AISystem::execute_Slime(const Entity& slime)
 
 	case EnemyState::Flinched:
 		if (is_at_nest(slime)) {
-			switch_enemy_state(slime, EnemyState::Idle);
+			enemy.radius = 3;
+			if (!is_player_spotted(slime, enemy.radius * 2)) {
+				recover_health(slime, 1.f);
+				switch_enemy_state(slime, EnemyState::Idle);
+			}
 		} else {
 			approach_nest(slime, enemy.speed);
 		}
@@ -109,6 +161,8 @@ void AISystem::execute_Raven(const Entity& raven)
 	case EnemyState::Idle:
 		if (is_player_spotted(raven, enemy.radius)) {
 			switch_enemy_state(raven, EnemyState::Active);
+			execute_Raven(raven);
+			return;
 		}
 		break;
 
@@ -138,6 +192,8 @@ void AISystem::execute_LivingArmor(const Entity& living_armor)
 	case EnemyState::Idle:
 		if (is_player_spotted(living_armor, enemy.radius)) {
 			switch_enemy_state(living_armor, EnemyState::Active);
+			execute_LivingArmor(living_armor);
+			return;
 		}
 		break;
 
@@ -154,11 +210,7 @@ void AISystem::execute_LivingArmor(const Entity& living_armor)
 				switch_enemy_state(living_armor, EnemyState::Immortal);
 			}
 		} else {
-			if (is_at_nest(living_armor)) {
-				switch_enemy_state(living_armor, EnemyState::Idle);
-			} else {
-				approach_nest(living_armor, enemy.speed);
-			}
+			switch_enemy_state(living_armor, EnemyState::Idle);
 		}
 		break;
 
@@ -181,6 +233,8 @@ void AISystem::execute_TreeAnt(const Entity& tree_ant)
 	case EnemyState::Idle:
 		if (is_player_spotted(tree_ant, enemy.radius)) {
 			switch_enemy_state(tree_ant, EnemyState::Active);
+			execute_TreeAnt(tree_ant);
+			return;
 		}
 		break;
 
@@ -197,11 +251,7 @@ void AISystem::execute_TreeAnt(const Entity& tree_ant)
 				switch_enemy_state(tree_ant, EnemyState::Powerup);
 			}
 		} else {
-			if (is_at_nest(tree_ant)) {
-				switch_enemy_state(tree_ant, EnemyState::Idle);
-			} else {
-				approach_nest(tree_ant, enemy.speed);
-			}
+			switch_enemy_state(tree_ant, EnemyState::Idle);
 		}
 		break;
 
@@ -234,7 +284,7 @@ bool AISystem::remove_dead_entity(const Entity& entity)
 
 void AISystem::switch_enemy_state(const Entity& enemy_entity, EnemyState new_state)
 {
-	
+
 	Enemy& enemy = registry.enemies.get(enemy_entity);
 	enemy.state = new_state;
 	Animation& enemy_animation = registry.animations.get(enemy_entity);
@@ -244,9 +294,9 @@ void AISystem::switch_enemy_state(const Entity& enemy_entity, EnemyState new_sta
 	// Raven:		Idle, Active.
 	// LivingArmor:	Idle, Active, Powerup.
 	// TreeAnt:		Idle, Active, Immortal.
-	
-	//Animation& animation = registry.animations.get(enemy_entity);
-	//animation.switchTexture(enemy.team, enemy.type, enemy.state);
+
+	// Animation& animation = registry.animations.get(enemy_entity);
+	// animation.switchTexture(enemy.team, enemy.type, enemy.state);
 
 	switch (enemy.state) {
 
@@ -303,15 +353,13 @@ void AISystem::attack_player(const Entity& entity)
 	char* enemy_type = enemy_type_to_string[registry.enemies.get(entity).type];
 	printf("%s_%u attacks player!\n", enemy_type, (uint)entity);
 
-	Stats& entity_stats = registry.stats.get(entity);
-	Stats& player_stats = registry.stats.get(registry.players.top_entity());
-	combat->do_attack(entity_stats, entity_stats.base_attack, player_stats);
+	combat->do_attack(entity, registry.stats.get(entity).base_attack, registry.players.top_entity());
 }
 
 bool AISystem::approach_player(const Entity& entity, uint speed)
 {
-	uvec2 player_map_pos = registry.map_positions.get(registry.players.top_entity()).position;
-	uvec2 entity_map_pos = registry.map_positions.get(entity).position;
+	const uvec2 player_map_pos = registry.map_positions.get(registry.players.top_entity()).position;
+	const uvec2 entity_map_pos = registry.map_positions.get(entity).position;
 
 	std::vector<uvec2> shortest_path = map_generator->shortest_path(entity_map_pos, player_map_pos);
 	if (shortest_path.size() > 2) {
@@ -323,12 +371,17 @@ bool AISystem::approach_player(const Entity& entity, uint speed)
 
 bool AISystem::approach_nest(const Entity& entity, uint speed)
 {
+	const uvec2 player_map_pos = registry.map_positions.get(registry.players.top_entity()).position;
 	const uvec2& entity_map_pos = registry.map_positions.get(entity).position;
 	const uvec2& nest_map_pos = registry.enemies.get(entity).nest_map_pos;
 
 	std::vector<uvec2> shortest_path = map_generator->shortest_path(entity_map_pos, nest_map_pos);
 	if (shortest_path.size() > 1) {
 		uvec2 next_map_pos = shortest_path[min((size_t)speed, (shortest_path.size() - 1))];
+		// A special case that the player occupies the nest, so the entity won't move in (overlap).
+		if (next_map_pos == nest_map_pos && nest_map_pos == player_map_pos) {
+			return false;
+		}
 		return move(entity, next_map_pos);
 	}
 	return false;
@@ -345,10 +398,17 @@ bool AISystem::move(const Entity& entity, const uvec2& map_pos)
 	return false;
 }
 
+void AISystem::recover_health(const Entity& entity, float ratio)
+{
+	Stats& stats = registry.stats.get(entity);
+	stats.health += static_cast<int>(static_cast<float>(stats.health_max) * ratio);
+	stats.health = min(stats.health, stats.health_max);
+}
+
 bool AISystem::is_health_below(const Entity& entity, float ratio)
 {
-	const Stats& states = registry.stats.get(entity);
-	return static_cast<float>(states.health) < static_cast<float>(states.health_max) * ratio;
+	const Stats& stats = registry.stats.get(entity);
+	return static_cast<float>(stats.health) < static_cast<float>(stats.health_max) * ratio;
 }
 
 void AISystem::become_immortal(const Entity& entity, bool flag)

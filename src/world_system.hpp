@@ -53,6 +53,7 @@ private:
 	void on_mouse_move(vec2 mouse_position);
 	void on_mouse_click(int button, int action, int /*mods*/);
 	void on_mouse_scroll(float offset);
+	void on_resize(int width, int height);
 
 	// restart level
 	void restart_game();

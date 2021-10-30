@@ -13,10 +13,10 @@ Entity create_player(uvec2 pos)
 
 	Inventory& inventory = registry.inventories.emplace(entity);
 
-	// Setup Bow
-	Attack bow_swipe = { "Swipe", 1, 15, 4, 10, DamageType::Physical, TargetingType::Adjacent };
-	Attack bow_shoot = { "Shoot", 1, 20, 10, 25, DamageType::Physical, TargetingType::Projectile };
-	inventory.inventory.emplace("Bow", create_weapon("Bow", std::vector<Attack>({ bow_shoot, bow_swipe })));
+	// Setup Casting
+	Attack arcane_orb = { "Arcane Orb", 10, 10, 5, 10, DamageType::Magical, TargetingType::Projectile };
+	Attack fireball = { "Fireball", -3, 10, 10, 20, DamageType::Fire, TargetingType::Projectile };
+	inventory.inventory.emplace("Spellbook", create_weapon("Spellbook", std::vector<Attack>({ arcane_orb, fireball })));
 
 	// Setup Sword
 	Attack sword_light = { "Light", 4, 18, 12, 22, DamageType::Physical, TargetingType::Adjacent };
@@ -150,6 +150,23 @@ Entity create_line(vec2 position)
 	return entity;
 }
 
+Entity create_path_point(vec2 position)
+{
+	Entity entity = Entity();
+
+	registry.debug_components.emplace(entity);
+
+	registry.world_positions.emplace(entity, position);
+
+	// TODO: Replace CANNONBALL with other suitable texture.
+	registry.render_requests.insert(
+		entity, { TEXTURE_ASSET_ID::CANNONBALL, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE });
+
+	registry.colors.insert(entity, { 0, 1, 0 });
+
+	return entity;
+}
+
 // Creates a room entity, with room type referencing to the predefined room
 Entity create_room(vec2 position, MapUtility::RoomType roomType)
 {
@@ -167,15 +184,15 @@ Entity create_room(vec2 position, MapUtility::RoomType roomType)
 	return entity;
 }
 
-Entity create_camera(vec2 /*pos*/, vec2 size, ivec2 central)
+Entity create_camera(uvec2 pos)
 {
 	auto entity = Entity();
 
 	// Setting initial position for camera
-	// MapPosition& map_position = registry.map_positions.emplace(entity, pos);
 	Camera& camera = registry.cameras.emplace(entity);
-	camera.size = size;
-	camera.central = central;
+	
+	registry.map_positions.emplace(entity, pos);
+
 	return entity;
 }
 

@@ -8,14 +8,13 @@
 
 #include "tiny_ecs_registry.hpp"
 
-void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
+Transform RenderSystem::get_transform(Entity entity)
 {
 	Transform transform;
 	if (registry.map_positions.has(entity)) {
 		MapPosition& map_position = registry.map_positions.get(entity);
 		transform.translate(MapUtility::map_position_to_world_position(map_position.position));
-	}
-	else {
+	} else {
 		// Most objects in the game are expected to use MapPosition, exceptions are:
 		// Arrow, Room.
 		transform.translate(registry.world_positions.get(entity).position);
@@ -24,6 +23,12 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 			transform.rotate(registry.velocities.get(entity).angle);
 		}
 	}
+	return transform;
+}
+
+void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
+{
+	Transform transform = get_transform(entity);
 
 	assert(registry.render_requests.has(entity));
 	const RenderRequest& render_request = registry.render_requests.get(entity);
@@ -201,6 +206,61 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 	gl_has_errors();
 }
 
+void RenderSystem::draw_healthbar(Entity entity, const Stats& stats, const mat3& projection)
+{
+	Transform transform = get_transform(entity);
+	transform.translate(vec2(2-MapUtility::tile_size / 2, -MapUtility::tile_size / 2));
+	transform.scale(vec2(MapUtility::tile_size - 4, 3));
+
+	const auto program = (GLuint)effects.at((uint8) EFFECT_ASSET_ID::HEALTH);
+
+	// Setting shaders
+	glUseProgram(program);
+	gl_has_errors();
+
+	const GLuint vbo = vertex_buffers.at((int)GEOMETRY_BUFFER_ID::HEALTH);
+	const GLuint ibo = index_buffers.at((int)GEOMETRY_BUFFER_ID::HEALTH);
+
+	// Setting vertex and index buffers
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+	gl_has_errors();
+
+	GLint in_position_loc = glGetAttribLocation(program, "in_position");
+	gl_has_errors();
+
+	GLint in_color_loc = glGetAttribLocation(program, "in_color");
+	gl_has_errors();
+
+	glEnableVertexAttribArray(in_position_loc);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), (void*)0);
+	gl_has_errors();
+
+	glEnableVertexAttribArray(in_color_loc);
+	glVertexAttribPointer(in_color_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), (void*)sizeof(vec3));
+	gl_has_errors();
+
+	// Get number of indices from index buffer, which has elements uint16_t
+	GLint size = 0;
+	glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
+	gl_has_errors();
+
+	GLsizei num_indices = size / sizeof(uint16_t);
+	// GLsizei num_triangles = num_indices / 3;
+
+	// Setting uniform values to the currently bound program
+	GLint transform_loc = glGetUniformLocation(program, "transform");
+	glUniformMatrix3fv(transform_loc, 1, GL_FALSE, glm::value_ptr(transform.mat));
+	GLint projection_loc = glGetUniformLocation(program, "projection");
+	glUniformMatrix3fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
+	GLint health_loc = glGetUniformLocation(program, "health");
+	glUniform1f(health_loc, max(static_cast<float>(stats.health), 0.f) / static_cast<float>(stats.health_max));
+	gl_has_errors();
+	// Drawing of num_indices/3 triangles specified in the index buffer
+	glDrawElements(GL_TRIANGLES, num_indices, GL_UNSIGNED_SHORT, nullptr);
+	gl_has_errors();
+}
+
 // draw the intermediate texture to the screen, with some distortion to simulate
 // water
 void RenderSystem::draw_to_screen()
@@ -211,7 +271,7 @@ void RenderSystem::draw_to_screen()
 	gl_has_errors();
 	// Clearing backbuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, window_width_px, window_height_px);
+	glViewport(0, 0, screen_size.x, screen_size.y);
 	glDepthRange(0, 10);
 	glClearColor(1.f, 0, 0, 1.0);
 	glClearDepth(1.f);
@@ -266,7 +326,7 @@ void RenderSystem::draw()
 	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
 	gl_has_errors();
 	// Clearing backbuffer
-	glViewport(0, 0, window_width_px, window_height_px);
+	glViewport(0, 0, screen_size.x, screen_size.y);
 	glDepthRange(0.00001, 10);
 	glClearColor(0.5, 0.5, 0.5, 1.0);
 	glClearDepth(1.f);
@@ -287,6 +347,10 @@ void RenderSystem::draw()
 		}
 	}
 
+	for (int i = 0; i < registry.stats.size(); i++) {
+		draw_healthbar(registry.stats.entities[i], registry.stats.components[i], projection_2d);
+	}
+
 	// Truely render to the screen
 	draw_to_screen();
 
@@ -295,8 +359,7 @@ void RenderSystem::draw()
 	gl_has_errors();
 }
 
-// TODO: Update projection matrix to be based on camera
-// currently it's based on player
+// projection matrix based on position of camera entity
 mat3 RenderSystem::create_projection_matrix()
 {
 	// Fake projection matrix, scales with respect to window coordinates
@@ -316,15 +379,26 @@ mat3 RenderSystem::create_projection_matrix()
 
 vec2 RenderSystem::get_top_left()
 {
-	// Fake projection matrix, scales with respect to window coordinates
 	int w, h;
 	glfwGetFramebufferSize(window, &w, &h);
 	gl_has_errors();
 
-	// set up 4 sides of window based on player
 	Entity player = registry.players.top_entity();
-	vec2 position = MapUtility::map_position_to_world_position(registry.map_positions.get(player).position);
-	return { position.x - w * screen_scale / 2.f, position.y - h * screen_scale / 2.f };
+	vec2 player_pos = MapUtility::map_position_to_world_position(registry.map_positions.get(player).position);
+	
+	Entity camera = registry.cameras.top_entity();
+	MapPosition& camera_map_pos = registry.map_positions.get(camera);
+
+	vec2 buffer_top_left, buffer_down_right;
+	
+	std::tie(buffer_top_left, buffer_down_right)
+		= CameraUtility::get_buffer_positions(MapUtility::map_position_to_world_position(camera_map_pos.position), w * screen_scale, h * screen_scale);
+
+	update_camera_position(camera_map_pos, player_pos, buffer_top_left, buffer_down_right);
+
+	vec2 final_camera_pos = MapUtility::map_position_to_world_position(camera_map_pos.position);
+
+	return { final_camera_pos.x, final_camera_pos.y};
 }
 
  void RenderSystem::scale_on_scroll(float offset)
@@ -337,4 +411,43 @@ vec2 RenderSystem::get_top_left()
 	if (this->screen_scale - zoom > 0.1 && this->screen_scale - zoom <= 1.0) {
 		this->screen_scale -= zoom;
 	}
+}
+
+void RenderSystem::on_resize(int width, int height) {
+	screen_size = { width, height };
+
+	glBindTexture(GL_TEXTURE_2D, off_screen_render_buffer_color);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screen_size.x, screen_size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+	gl_has_errors();
+}
+
+ // update camera's map position when player move out of buffer
+ void RenderSystem::update_camera_position(MapPosition& camera_map_pos,
+								 const vec2& player_pos,
+								 const vec2& buffer_top_left,
+								 const vec2& buffer_down_right)
+{
+	vec2 offset_top_left = player_pos - buffer_top_left;
+	vec2 offset_down_right = player_pos - buffer_down_right;
+
+	if (offset_top_left.x >= 0 && offset_top_left.y >= 0 && offset_down_right.x <= 0 && offset_down_right.y <= 0) {
+		return;
+	}
+
+	if (offset_top_left.x < 0 && camera_map_pos.position.x > CameraUtility::map_top_left) {
+		camera_map_pos.position.x -= 1;
+	}
+
+	if (offset_top_left.y < 0 && camera_map_pos.position.y > CameraUtility::map_top_left) {
+		camera_map_pos.position.y -= 1;
+	}
+
+	if (offset_down_right.x > 0 && camera_map_pos.position.x < CameraUtility::map_down_right) {
+		camera_map_pos.position.x += 1;
+	}
+
+	if (offset_down_right.y > 0 && camera_map_pos.position.y < CameraUtility::map_down_right) {
+		camera_map_pos.position.y += 1;
+	}
+
 }

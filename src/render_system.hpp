@@ -51,6 +51,7 @@ class RenderSystem {
 	const std::array<std::string, effect_count> effect_paths = { shader_path("line"),
 																 shader_path("enemy"), 
 																 shader_path("player"),
+																 shader_path("health_bar"),
 																 shader_path("textured"),
 																 shader_path("water"),
 																 shader_path("tilemap") };
@@ -112,13 +113,23 @@ public:
 	vec2 get_top_left();
 	void scale_on_scroll(float offset);
 
+	void on_resize(int width, int height);
+
 	float screen_scale; // Screen to pixel coordinates scale factor (for apple
 					// retina display?)
 
 private:
+	// Helper to get position transform
+	Transform get_transform(Entity entity);
+
 	// Internal drawing functions for each entity type
 	void draw_textured_mesh(Entity entity, const mat3& projection);
+	void draw_healthbar(Entity entity, const Stats& stats, const mat3& projection);
 	void draw_to_screen();
+	void update_camera_position(MapPosition& camera_map_pos,
+								const vec2& player_pos,
+								const vec2& buffer_top_left,
+								const vec2& buffer_down_right);
 
 	// Window handle
 	GLFWwindow* window;
@@ -131,6 +142,7 @@ private:
 	TTF_Font* font;
 
 	Entity screen_state_entity;
+	ivec2 screen_size = { window_width_px, window_height_px };
 };
 
 bool load_effect_from_file(const std::string& vs_path, const std::string& fs_path, GLuint& out_program);
