@@ -346,6 +346,7 @@ enum class DamageType {
 	Count = Magical + 1,
 };
 
+
 enum class TargetingType {
 	Adjacent = 0,
 	Projectile = 1,
@@ -450,6 +451,14 @@ struct Text {
 	uint16 font_size;
 	Alignment alignment_x;
 	Alignment alignment_y;
+
+	Text(std::string text, uint16 font_size, Alignment alignment_x, Alignment alignment_y)
+		: text(std::move(text))
+		, font_size(font_size)
+		, alignment_x(alignment_x)
+		, alignment_y(alignment_y)
+	{
+	}
 };
 
 extern bool operator==(const Text& t1, const Text& t2);

@@ -1,5 +1,7 @@
 #include "combat_system.hpp"
 
+#include <sstream>
+
 void CombatSystem::init(std::shared_ptr<std::default_random_engine> rng) { this->rng = std::move(rng); }
 
 bool CombatSystem::do_attack(Entity attacker_entity, Attack& attack, Entity target_entity)
@@ -37,4 +39,35 @@ void CombatSystem::attach_do_attack_callback(
 	const std::function<void(const Entity& attacker, const Entity& target)>& do_attack_callback)
 {
 	do_attack_callbacks.push_back(do_attack_callback);
+}
+
+std::string get_name(DamageType d)
+{
+	switch (d) {
+	case DamageType::Magical:
+		return "magic";
+	case DamageType::Fire:
+		return "fire";
+	default:
+	case DamageType::Physical:
+		return "physical";
+	}
+}
+
+std::string CombatSystem::make_attack_list(const Entity entity, size_t current_attack) const {
+	const Weapon& weapon = registry.weapons.get(entity);
+	std::ostringstream attacks;
+	for (size_t i = 0; i < weapon.given_attacks.size(); i++) {
+		const Attack& attack = weapon.given_attacks[i];
+		if (i == current_attack) {
+			attacks << "\n[" << i + 1 << "] ";
+		} else {
+			attacks << "\n " << i + 1 << "  ";
+		}
+		attacks << attack.name << ": " << attack.to_hit_min << "-" << attack.to_hit_max
+				<< " to hit, " << attack.damage_min << "-" << attack.damage_max << " "
+				<< get_name(attack.damage_type) << " dmg ("
+				<< ((attack.targeting_type == TargetingType::Projectile) ? "Projectile)" : "Melee)");
+	}
+	return attacks.str();
 }

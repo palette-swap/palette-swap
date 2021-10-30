@@ -234,6 +234,8 @@ void WorldSystem::restart_game()
 	Inventory& inventory = registry.inventories.get(player);
 	current_weapon = inventory.equipped[static_cast<uint8>(Slot::PrimaryHand)];
 	current_attack = 0;
+	registry.screen_positions.emplace(attack_display, vec2(0, 1));
+	registry.text.emplace(attack_display, combat->make_attack_list(current_weapon, current_attack), (uint16) 48, Alignment::Start, Alignment::End);
 
 	// create camera instance
 	camera = create_camera(
@@ -253,10 +255,6 @@ void WorldSystem::restart_game()
 	//create_enemy(ColorState::Red, EnemyType::LivingArmor, uvec2(8, 3));
 	//create_enemy(ColorState::Red, EnemyType::TreeAnt, uvec2(8, 4));
 	create_enemy(ColorState::Blue, EnemyType::Slime, uvec2(8, 8));
-
-	Entity test;
-	registry.screen_positions.insert(test, { {0, 1} });
-	registry.text.insert(test, { "Hello, World!", 64, Alignment::Start, Alignment::End });
 }
 
 // Compute collisions between entities
@@ -360,6 +358,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 					   attack.damage_max,
 					   attack.targeting_type == TargetingType::Projectile ? "projectile" : "adjacent");
 				registry.render_requests.get(player_arrow).visible = attack.targeting_type == TargetingType::Projectile;
+				registry.text.get(attack_display).text = combat->make_attack_list(current_weapon, current_attack);
 			}
 		}
 	}
@@ -490,6 +489,7 @@ void WorldSystem::equip_next_weapon()
 		registry.render_requests.get(player_arrow).visible
 			= registry.weapons.get(current_weapon).given_attacks.at(current_attack).targeting_type
 			== TargetingType::Projectile;
+		registry.text.get(attack_display).text = combat->make_attack_list(current_weapon, current_attack);
 		printf("Switched weapon to %s\n", registry.items.get(curr).name.c_str());
 		turns->complete_team_action(player);
 	}
