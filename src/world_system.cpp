@@ -255,8 +255,7 @@ void WorldSystem::restart_game()
 	create_enemy(ColorState::Blue, EnemyType::Slime, uvec2(8, 8));
 
 	Entity test;
-	MapPosition& text_pos = registry.map_positions.insert(test, registry.map_positions.get(player));
-	text_pos.position += uvec2(2, 1);
+	registry.screen_positions.insert(test, { {.5, .75} });
 	registry.text.insert(test, { "Hello, World!", 64 });
 }
 

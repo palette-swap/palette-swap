@@ -253,6 +253,14 @@ struct MapPosition {
 	};
 };
 
+// Represents the screen position,
+// top left is (0,0), bottom right is (1, 1)
+struct ScreenPosition {
+	vec2 position;
+	ScreenPosition(vec2 position)
+		: position(position) {};
+};
+
 // Represents the world position,
 // top left is (0,0), bottom right is (window_width_px, window_height_px)
 struct WorldPosition {

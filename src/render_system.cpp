@@ -14,7 +14,7 @@ Transform RenderSystem::get_transform(Entity entity)
 	if (registry.map_positions.has(entity)) {
 		MapPosition& map_position = registry.map_positions.get(entity);
 		transform.translate(MapUtility::map_position_to_world_position(map_position.position));
-	} else {
+	} else if (registry.world_positions.has(entity)) {
 		// Most objects in the game are expected to use MapPosition, exceptions are:
 		// Arrow, Room.
 		transform.translate(registry.world_positions.get(entity).position);
@@ -22,6 +22,9 @@ Transform RenderSystem::get_transform(Entity entity)
 			// Probably can provide a get if exist function here to boost performance
 			transform.rotate(registry.velocities.get(entity).angle);
 		}
+	} else {
+		transform.translate(registry.screen_positions.get(entity).position * vec2(screen_size) * screen_scale
+							+ get_top_left());
 	}
 	return transform;
 }

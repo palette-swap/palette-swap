@@ -24,6 +24,7 @@ public:
 	// Map Generator
 	ComponentContainer<Room> rooms;
 	ComponentContainer<MapPosition> map_positions;
+	ComponentContainer<ScreenPosition> screen_positions;
 	ComponentContainer<WorldPosition> world_positions;
 	ComponentContainer<Velocity> velocities;
 
@@ -66,6 +67,7 @@ private:
 		// Map Generator
 		&rooms,
 		&map_positions,
+		&screen_positions,
 		&world_positions,
 		&velocities,
 
