@@ -117,6 +117,9 @@ public:
 					// retina display?)
 
 private:
+	// Helper to get position transform
+	Transform get_transform(Entity entity);
+
 	// Internal drawing functions for each entity type
 	void draw_textured_mesh(Entity entity, const mat3& projection);
 	void draw_healthbar(Entity entity, const Stats& stats, const mat3& projection);

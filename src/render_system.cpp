@@ -8,14 +8,13 @@
 
 #include "tiny_ecs_registry.hpp"
 
-void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
+Transform RenderSystem::get_transform(Entity entity)
 {
 	Transform transform;
 	if (registry.map_positions.has(entity)) {
 		MapPosition& map_position = registry.map_positions.get(entity);
 		transform.translate(MapUtility::map_position_to_world_position(map_position.position));
-	}
-	else {
+	} else {
 		// Most objects in the game are expected to use MapPosition, exceptions are:
 		// Arrow, Room.
 		transform.translate(registry.world_positions.get(entity).position);
@@ -24,6 +23,12 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 			transform.rotate(registry.velocities.get(entity).angle);
 		}
 	}
+	return transform;
+}
+
+void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
+{
+	Transform transform = get_transform(entity);
 
 	assert(registry.render_requests.has(entity));
 	const RenderRequest& render_request = registry.render_requests.get(entity);
@@ -200,11 +205,7 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 
 void RenderSystem::draw_healthbar(Entity entity, const Stats& stats, const mat3& projection)
 {
-	Transform transform;
-	if (registry.map_positions.has(entity)) {
-		MapPosition& map_position = registry.map_positions.get(entity);
-		transform.translate(MapUtility::map_position_to_world_position(map_position.position));
-	}
+	Transform transform = get_transform(entity);
 	transform.translate(vec2(2-MapUtility::tile_size / 2, -MapUtility::tile_size / 2));
 	transform.scale(vec2(MapUtility::tile_size - 4, 3));
 
