@@ -31,6 +31,9 @@ public:
 
 	// Returns currently active color
 	ColorState get_active_color();
+
+	// Returns inactive color
+	ColorState get_inactive_color();
 	
 	// Sets active color
 	bool set_active_color(ColorState color);
