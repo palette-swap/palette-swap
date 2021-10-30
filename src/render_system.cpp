@@ -306,6 +306,9 @@ void RenderSystem::draw_text(Entity entity, const Text& text, const mat3& projec
 	// Scale to expected pixel size, apply screen scale so not affected by zoom
 	transform.scale(vec2(text_data->second.texture_width, text_data->second.texture_height) * screen_scale);
 
+	// Shift according to desired alignment using fancy enum wizardry
+	transform.translate({ (float)text.alignment_x * .5, (float)text.alignment_y * .5 });
+
 	const GLuint vbo = vertex_buffers.at((int)GEOMETRY_BUFFER_ID::SPRITE);
 	const GLuint ibo = index_buffers.at((int)GEOMETRY_BUFFER_ID::SPRITE);
 

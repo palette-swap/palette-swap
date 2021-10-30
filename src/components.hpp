@@ -439,9 +439,17 @@ struct Weapon {
 //-------------------------           UI            -------------------------
 //---------------------------------------------------------------------------
 
+enum class Alignment {
+	Start = 1,
+	Center = 0,
+	End = -1,
+};
+
 struct Text {
 	std::string text;
 	uint16 font_size;
+	Alignment alignment_x;
+	Alignment alignment_y;
 };
 
 extern bool operator==(const Text& t1, const Text& t2);
