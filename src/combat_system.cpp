@@ -26,10 +26,8 @@ bool CombatSystem::do_attack(Entity attacker_entity, Attack& attack, Entity targ
 
 	// TODO: replace Entity a and t with args of do_attack() after Dylan's restructure of combat system.
 	// This currently has no effects.
-	Entity a;
-	Entity t;
 	for (const auto& callback : do_attack_callbacks) {
-		callback(a, t);
+		callback(attacker_entity, target_entity);
 	}
 
 	return success;
