@@ -1,12 +1,15 @@
 // internal
 #include "ai_system.hpp"
 #include "components.hpp"
+#include "world_init.hpp"
 
 // AI logic
-AISystem::AISystem(std::shared_ptr<CombatSystem> combat,
+AISystem::AISystem(const Debug& debugging,
+				   std::shared_ptr<CombatSystem> combat,
 				   std::shared_ptr<MapGeneratorSystem> map_generator,
 				   std::shared_ptr<TurnSystem> turns)
-	: combat(std::move(combat))
+	: debugging(debugging)
+	, combat(std::move(combat))
 	, map_generator(std::move(map_generator))
 	, turns(std::move(turns))
 {
@@ -22,46 +25,73 @@ AISystem::AISystem(std::shared_ptr<CombatSystem> combat,
 
 void AISystem::step(float /*elapsed_ms*/)
 {
-	if (!turns->execute_team_action(enemy_team)) {
-		return;
-	}
+	if (turns->execute_team_action(enemy_team)) {
+		for (long long i = registry.enemies.entities.size() - 1; i >= 0; --i) {
+			const Entity& enemy_entity = registry.enemies.entities[i];
 
-	for (long long i = registry.enemies.entities.size() - 1; i >= 0; --i) {
-		const Entity& enemy_entity = registry.enemies.entities[i];
+			if (remove_dead_entity(enemy_entity)) {
+				continue;
+			}
 
-		if (remove_dead_entity(enemy_entity)) {
-			continue;
+			const Enemy& enemy = registry.enemies.components[i];
+
+			ColorState active_world_color = turns->get_active_color();
+			if (((uint8_t)active_world_color & (uint8_t)enemy.team) > 0) {
+
+				switch (enemy.type) {
+				case EnemyType::Slime:
+					execute_Slime(enemy_entity);
+					break;
+
+				case EnemyType::Raven:
+					execute_Raven(enemy_entity);
+					break;
+
+				case EnemyType::LivingArmor:
+					execute_LivingArmor(enemy_entity);
+					break;
+
+				case EnemyType::TreeAnt:
+					execute_TreeAnt(enemy_entity);
+					break;
+
+				default:
+					throw std::runtime_error("Invalid enemy type.");
+				}
+			}
 		}
 
-		const Enemy enemy = registry.enemies.components[i];
+		turns->complete_team_action(enemy_team);
+	}
 
-		ColorState active_world_color = turns->get_active_color();
-		if (((uint8_t)active_world_color & (uint8_t)enemy.team) > 0) {
+	// Debugging for the shortest paths of enemies.
+	if (debugging.in_debug_mode) {
+		for (long long i = registry.enemies.entities.size() - 1; i >= 0; --i) {
+			const Entity& enemy_entity = registry.enemies.entities[i];
+			const Enemy& enemy = registry.enemies.components[i];
 
-			switch (enemy.type) {
-			case EnemyType::Slime:
-				execute_Slime(enemy_entity);
-				break;
+			ColorState active_world_color = turns->get_active_color();
+			if (((uint8_t)active_world_color & (uint8_t)enemy.team) > 0) {
+				const uvec2& entity_map_pos = registry.map_positions.get(enemy_entity).position;
 
-			case EnemyType::Raven:
-				execute_Raven(enemy_entity);
-				break;
+				if (enemy.state == EnemyState::Flinched) {
+					const uvec2& nest_map_pos = registry.enemies.get(enemy_entity).nest_map_pos;
+					std::vector<uvec2> shortest_path = map_generator->shortest_path(entity_map_pos, nest_map_pos);
 
-			case EnemyType::LivingArmor:
-				execute_LivingArmor(enemy_entity);
-				break;
+					for (const uvec2& path_point : shortest_path) {
+						create_path_point(MapUtility::map_position_to_world_position(path_point));
+					}
+				} else if (enemy.state != EnemyState::Idle && is_player_spotted(enemy_entity, enemy.radius * 2)) {
+					const uvec2& player_map_pos = registry.map_positions.get(registry.players.top_entity()).position;
+					std::vector<uvec2> shortest_path = map_generator->shortest_path(entity_map_pos, player_map_pos);
 
-			case EnemyType::TreeAnt:
-				execute_TreeAnt(enemy_entity);
-				break;
-
-			default:
-				throw std::runtime_error("Invalid enemy type.");
+					for (const uvec2& path_point : shortest_path) {
+						create_path_point(MapUtility::map_position_to_world_position(path_point));
+					}
+				}
 			}
 		}
 	}
-
-	turns->complete_team_action(enemy_team);
 }
 
 void AISystem::do_attack_callback(const Entity& attacker, const Entity& target)
@@ -174,11 +204,7 @@ void AISystem::execute_LivingArmor(const Entity& living_armor)
 				switch_enemy_state(living_armor, EnemyState::Immortal);
 			}
 		} else {
-			if (is_at_nest(living_armor)) {
-				switch_enemy_state(living_armor, EnemyState::Idle);
-			} else {
-				approach_nest(living_armor, enemy.speed);
-			}
+			switch_enemy_state(living_armor, EnemyState::Idle);
 		}
 		break;
 
@@ -217,11 +243,7 @@ void AISystem::execute_TreeAnt(const Entity& tree_ant)
 				switch_enemy_state(tree_ant, EnemyState::Powerup);
 			}
 		} else {
-			if (is_at_nest(tree_ant)) {
-				switch_enemy_state(tree_ant, EnemyState::Idle);
-			} else {
-				approach_nest(tree_ant, enemy.speed);
-			}
+			switch_enemy_state(tree_ant, EnemyState::Idle);
 		}
 		break;
 

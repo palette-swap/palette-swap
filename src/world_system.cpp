@@ -250,8 +250,8 @@ void WorldSystem::restart_game()
 	// Also requires naming scheme for randomly generated enemies, for later reference
 	create_enemy(ColorState::Red, EnemyType::Slime, uvec2(8, 1));
 	create_enemy(ColorState::Red, EnemyType::Raven, uvec2(8, 2));
-	create_enemy(ColorState::Red, EnemyType::LivingArmor, uvec2(8, 3));
-	create_enemy(ColorState::Red, EnemyType::TreeAnt, uvec2(8, 4));
+	//create_enemy(ColorState::Red, EnemyType::LivingArmor, uvec2(8, 3));
+	//create_enemy(ColorState::Red, EnemyType::TreeAnt, uvec2(8, 4));
 	create_enemy(ColorState::Blue, EnemyType::Slime, uvec2(8, 8));
 }
 
@@ -373,7 +373,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 	}
 
 	// Debugging
-	if (key == GLFW_KEY_D && (mod & GLFW_MOD_ALT) != 0) {
+	if (key == GLFW_KEY_B) {
 		debugging.in_debug_mode = action != GLFW_RELEASE;
 	}
 
