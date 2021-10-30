@@ -378,8 +378,6 @@ RenderSystem::~RenderSystem()
 
 	// Delete text-related resources
 	for (auto& text_data : text_buffers) {
-		glDeleteBuffers(1, &text_data.second.vbo);
-		glDeleteBuffers(1, &text_data.second.ibo);
 		glDeleteTextures(1, &text_data.second.texture);
 	}
 	for (auto& font : fonts) {

@@ -74,9 +74,9 @@ class RenderSystem {
 
 	// Dynamic text buffers
 	struct TextData {
-		GLuint vbo;
-		GLuint ibo;
 		GLuint texture;
+		int texture_width;
+		int texture_height;
 	};
 	std::unordered_map<Text, TextData> text_buffers;
 	std::unordered_map<unsigned int, TTF_Font*> fonts;

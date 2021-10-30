@@ -84,7 +84,6 @@ struct Mesh {
 	std::vector<uint16_t> vertex_indices;
 };
 
-
 // struct denoting a currently active projectile
 struct ActiveProjectile {
 	vec2 head_offset = { 0, 0 };
@@ -95,7 +94,7 @@ struct ResolvedProjectile {
 	float counter = 400;
 };
 
-// Struct for denoting the frame that the rendering system should be rendering 
+// Struct for denoting the frame that the rendering system should be rendering
 // to the screen for a spritesheet
 struct Animation {
 	int direction = 1;
@@ -110,7 +109,7 @@ struct Animation {
 
 // Struct denoting irregular animation events (ie attacking, containing information to restore an entity's
 // animations after the irregular event animation completes
-// TODO: Replace 
+// TODO: Replace
 struct Event_Animation {
 	bool turn_trigger = false;
 	float speed_adjustment = 1;
@@ -119,7 +118,6 @@ struct Event_Animation {
 	int restore_state = 0;
 	float restore_speed = 1;
 	int frame = 0;
-
 };
 
 // Test Texture Buffer element for enemies
@@ -163,7 +161,7 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 	PALADIN = 0,
 	SLIME = PALADIN + 1,
 	ARMOR = SLIME + 1,
-	TREEANT= ARMOR + 1,
+	TREEANT = ARMOR + 1,
 	RAVEN = TREEANT + 1,
 	WRAITH = RAVEN + 1,
 	DRAKE = WRAITH + 1,
@@ -176,7 +174,7 @@ const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 
 // Define the scaling factors needed for each textures
 // Note: This needs to stay the same order as TEXTURE_ASSET_ID and texture_paths
-static constexpr std::array<vec2, texture_count+1> scaling_factors = {
+static constexpr std::array<vec2, texture_count + 1> scaling_factors = {
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
@@ -203,15 +201,14 @@ enum class EFFECT_ASSET_ID {
 constexpr int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 
 enum class GEOMETRY_BUFFER_ID : uint8_t {
-	SALMON = 0, 
-	SPRITE = SALMON + 1, 
+	SALMON = 0,
+	SPRITE = SALMON + 1,
 	PLAYER = SPRITE + 1,
 	ENEMY = PLAYER + 1,
 	HEALTH = ENEMY + 1,
 	LINE = HEALTH + 1,
 	DEBUG_LINE = LINE + 1,
-	TEXT = DEBUG_LINE + 1,
-	SCREEN_TRIANGLE = TEXT + 1,
+	SCREEN_TRIANGLE = DEBUG_LINE + 1,
 
 	// Note: Keep ROOM at the bottom because of hacky implementation,
 	// this is somewhat hacky, this is actually a single geometry related to a room, but
@@ -233,7 +230,7 @@ struct RenderRequest {
 };
 
 // Represents allowed directions for an animated sprite (e.g whether the sprite is facing left or right)
-enum class Sprite_Direction : uint8_t { SPRITE_LEFT, SPRITE_RIGHT};
+enum class Sprite_Direction : uint8_t { SPRITE_LEFT, SPRITE_RIGHT };
 // Represent four directions, that could have many uses, e.g. moving player
 enum class Direction : uint8_t {
 	Left,
@@ -455,6 +452,6 @@ template <> struct std::hash<Text> {
 		size_t text_hash = std::hash<std::string> {}(t.text);
 		size_t size_hash = std::hash<uint16> {}(t.font_size);
 		// Combination as per boost https://www.boost.org/doc/libs/1_35_0/doc/html/boost/hash_combine_id241013.html
-		return text_hash ^ (size_hash + 0x9e3779b9 + (text_hash<<6) + (text_hash>>2));
+		return text_hash ^ (size_hash + 0x9e3779b9 + (text_hash << 6) + (text_hash >> 2));
 	}
 };

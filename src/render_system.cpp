@@ -62,10 +62,6 @@ void RenderSystem::prepare_for_textured(GLuint texture_id)
 RenderSystem::TextData RenderSystem::generate_text(const Text& text)
 {
 	TextData text_data = {};
-	// Vertex Buffer creation.
-	glGenBuffers(1, &(text_data.vbo));
-	// Index Buffer creation.
-	glGenBuffers(1, &(text_data.ibo));
 	// Texture creation
 	glGenTextures(1, &(text_data.texture));
 
@@ -81,8 +77,8 @@ RenderSystem::TextData RenderSystem::generate_text(const Text& text)
 	// Render the text using SDL
 	SDL_Surface* surface = TTF_RenderUTF8_Blended(font, text.text.c_str(), SDL_Color({ 0, 0, 0, 0 }));
 	SDL_LockSurface(surface);
-	int width = surface->w;
-	int height = surface->h;
+	text_data.texture_width = surface->w;
+	text_data.texture_height = surface->h;
 	if (surface == nullptr) {
 		fprintf(stderr, "Error TTF_RenderText %s\n", text.text.c_str());
 		return text_data;
@@ -96,8 +92,8 @@ RenderSystem::TextData RenderSystem::generate_text(const Text& text)
 	glTexImage2D(GL_TEXTURE_2D,
 				 0,
 				 (colors == 4) ? GL_RGBA : GL_RGB,
-				 width,
-				 height,
+				 text_data.texture_width,
+				 text_data.texture_height,
 				 0,
 				 (colors == 4) ? GL_RGBA : GL_RGB,
 				 GL_UNSIGNED_BYTE,
@@ -110,27 +106,6 @@ RenderSystem::TextData RenderSystem::generate_text(const Text& text)
 
 	// Free the SDL Image
 	SDL_FreeSurface(surface);
-
-	// Set the vbo & ibo accordingly
-	std::vector<TexturedVertex> vertices(4);
-	vertices[0].position = { (float)-width / 2.f, (float)+height / 2.f, 0.f };
-	vertices[1].position = { (float)+width / 2.f, (float)+height / 2.f, 0.f };
-	vertices[2].position = { (float)+width / 2.f, (float)-height / 2.f, 0.f };
-	vertices[3].position = { (float)-width / 2.f, (float)-height / 2.f, 0.f };
-	vertices[0].texcoord = { 0, 1 };
-	vertices[1].texcoord = { 1, 1 };
-	vertices[2].texcoord = { 1, 0 };
-	vertices[3].texcoord = { 0, 0 };
-
-	// Counterclockwise as it's the default opengl front winding direction.
-	const std::vector<uint16_t> indices = { 0, 3, 1, 1, 3, 2 };
-	glBindBuffer(GL_ARRAY_BUFFER, text_data.vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices[0]) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
-	gl_has_errors();
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, text_data.ibo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices[0]) * indices.size(), indices.data(), GL_STATIC_DRAW);
-	gl_has_errors();
 	return text_data;
 }
 
@@ -328,9 +303,15 @@ void RenderSystem::draw_text(Entity entity, const Text& text, const mat3& projec
 		text_data = text_buffers.emplace(text, new_text_data).first;
 	}
 
+	// Scale to expected pixel size, apply screen scale so not affected by zoom
+	transform.scale(vec2(text_data->second.texture_width, text_data->second.texture_height) * screen_scale);
+
+	const GLuint vbo = vertex_buffers.at((int)GEOMETRY_BUFFER_ID::SPRITE);
+	const GLuint ibo = index_buffers.at((int)GEOMETRY_BUFFER_ID::SPRITE);
+
 	// Setting vertex and index buffers
-	glBindBuffer(GL_ARRAY_BUFFER, text_data->second.vbo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, text_data->second.ibo);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 	gl_has_errors();
 
 	prepare_for_textured(text_data->second.texture);
