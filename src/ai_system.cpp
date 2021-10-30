@@ -17,6 +17,7 @@ AISystem::AISystem(const Debug& debugging,
 
 	this->turns->add_team_to_queue(enemy_team);
 
+	enemy_attack1_wav.load(audio_path("enemy_attack1.wav").c_str());
 	std::vector<std::function<void(const Entity& attacker, const Entity& target)>> callbacks;
 
 	this->combat->attach_do_attack_callback(
@@ -354,6 +355,7 @@ void AISystem::attack_player(const Entity& entity)
 	printf("%s_%u attacks player!\n", enemy_type, (uint)entity);
 
 	combat->do_attack(entity, registry.stats.get(entity).base_attack, registry.players.top_entity());
+	so_loud.play(enemy_attack1_wav);
 }
 
 bool AISystem::approach_player(const Entity& entity, uint speed)

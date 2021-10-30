@@ -11,8 +11,8 @@
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
 #define WITH_SDL2 1
-#include "soloud.h"
 #include "soloud_wavstream.h"
+#include "soloud_wav.h"
 
 #include "combat_system.hpp"
 #include "map_generator_system.hpp"
@@ -99,6 +99,10 @@ private:
 	SoLoud::WavStream bgm_blue_wav;
 	SoLoud::handle bgm_red;
 	SoLoud::handle bgm_blue;
+
+	// Sound effects
+	SoLoud::Wav light_sword_wav;
+	SoLoud::Wav cannon_wav;
 
 	// C++ random number generator
 	std::shared_ptr <std::default_random_engine> rng;
