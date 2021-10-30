@@ -146,10 +146,12 @@ std::vector<uvec2> MapGeneratorSystem::bfs(uvec2 start_pos, uvec2 target) const
 
 		// Otherwise, add all unvisited neighbours to the queue
 		// Currently, diagonal movement is not supported
-		for (uvec2 neighbour :
-			 { curr + uvec2(1, 0), uvec2(curr.x - 1, curr.y), curr + uvec2(0, 1), uvec2(curr.x, curr.y - 1) }) {
+		for (uvec2 neighbour : { curr + uvec2(1, 0),
+								 uvec2(curr.x - 1, curr.y),
+								 curr + uvec2(0, 1),
+								 uvec2(curr.x, curr.y - 1) }) {
 			// Check if neighbour is not already visited, and is walkable
-			if (walkable_and_free(neighbour) && parent.find(neighbour) == parent.end()) {
+			if (neighbour == target || (walkable_and_free(neighbour) && parent.find(neighbour) == parent.end())) {
 				// Enqueue neighbour
 				frontier.push(neighbour);
 				// Set curr as the parent of neighbour
