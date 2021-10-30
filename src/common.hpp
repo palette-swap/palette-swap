@@ -22,6 +22,8 @@ using namespace glm;
 
 #include "tiny_ecs.hpp"
 
+#include "soloud.h"
+
 // Simple utility functions to avoid mistyping directory name
 // audio_path("audio.ogg") -> data/audio/audio.ogg
 // Get defintion of PROJECT_SOURCE_DIR from:
@@ -35,7 +37,6 @@ inline std::string textures_path(const std::string& name) { return data_path() +
 inline std::string audio_path(const std::string& name) { return data_path() + "/audio/" + std::string(name); };
 inline std::string fonts_path(const std::string& name) { return data_path() + "/fonts/" + std::string(name); };
 inline std::string mesh_path(const std::string& name) { return data_path() + "/meshes/" + std::string(name); };
-inline std::string rooms_layout_path(const std::string& name) { return data_path() + "/rooms/" + std::string(name); };
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846f
@@ -70,11 +71,6 @@ namespace MapUtility {
     using RoomType = uint8_t;
     using TileId = uint8_t;
     using MapId = uint8_t;
-
-    static const std::set<uint8_t> walkable_tiles = { 0, 14 };
-    static const std::set<uint8_t> wall_tiles = {
-        1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 15,
-        17, 18, 19, 23, 25, 26, 27, 33, 35, 41, 42, 43 };
 
     // Calculates virtual position of top left corner of map given screen and mapsystem constants
     // Currently used for actual_position to render_position convertion
@@ -124,6 +120,29 @@ namespace MapUtility {
     }
 }
 
+// Represent four directions, that could have many uses, e.g. moving player
+enum class Direction : uint8_t {
+	Left,
+	Up,
+	Right,
+	Down,
+};
+
+static float direction_to_angle(Direction direction) {
+	switch (direction) {
+	case Direction::Left:
+		return 3 * M_PI / 2;
+	case Direction::Up:
+		return 0;
+	case Direction::Right:
+		return M_PI / 2;
+	case Direction::Down:
+		return M_PI;
+	default:
+		assert(false && "direction to angle: unexpected direction");
+	}
+	return 0.f;
+}
 namespace CameraUtility {
 	// the size of camera, divide the whole window into 5 smaller grids
 	static constexpr uint camera_grid_size = 7;
@@ -181,3 +200,5 @@ namespace CameraUtility {
 	  (if camera located at (0, 0) and player is at the left of buffer, camera won't update since it's already at the edge of map)
 										
 */
+
+extern SoLoud::Soloud so_loud; // SoLoud engine
