@@ -257,8 +257,7 @@ void WorldSystem::restart_game()
 	Entity test;
 	MapPosition& text_pos = registry.map_positions.insert(test, registry.map_positions.get(player));
 	text_pos.position += uvec2(2, 1);
-	registry.render_requests.insert(test,
-									{ TEXTURE_ASSET_ID::HELLO_WORLD, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::TEXT });
+	registry.text.insert(test, { "Hello, World!", 64 });
 }
 
 // Compute collisions between entities

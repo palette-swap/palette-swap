@@ -429,3 +429,24 @@ struct Weapon {
 	// TODO: Potentially replace with intelligent direct/indirect container
 	std::vector<Attack> given_attacks;
 };
+
+//---------------------------------------------------------------------------
+//-------------------------           UI            -------------------------
+//---------------------------------------------------------------------------
+
+struct Text {
+	std::string text;
+	uint16 font_size;
+};
+
+extern bool operator==(const Text& t1, const Text& t2);
+
+template <> struct std::hash<Text> {
+	std::size_t operator()(Text const& t) const
+	{
+		size_t text_hash = std::hash<std::string> {}(t.text);
+		size_t size_hash = std::hash<uint16> {}(t.font_size);
+		// Combination as per boost https://www.boost.org/doc/libs/1_35_0/doc/html/boost/hash_combine_id241013.html
+		return text_hash ^ (size_hash + 0x9e3779b9 + (text_hash<<6) + (text_hash>>2));
+	}
+};

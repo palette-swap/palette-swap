@@ -87,46 +87,6 @@ void RenderSystem::initialize_gl_textures()
 	}
 
 	TTF_Init();
-	font = TTF_OpenFont(fonts_path("VT323-Regular.ttf").c_str(), 64);
-	SDL_Color color = { 0, 0, 0 };
-	SDL_Surface* surface = TTF_RenderUTF8_Blended(font, "Hello World!", color);
-	SDL_LockSurface(surface);
-	if (surface == nullptr) {
-		fprintf(stderr, "Error TTF_RenderText\n");
-		return;
-	}
-
-	GLenum texture_format = 0;
-	GLint colors = surface->format->BytesPerPixel;
-
-	if (colors == 4) { // alpha
-		if (surface->format->Rmask == 0x000000ff)
-			texture_format = GL_RGBA;
-		else
-			texture_format = GL_BGRA;
-	} else { // no alpha
-		if (surface->format->Rmask == 0x000000ff)
-			texture_format = GL_RGB;
-		else
-			texture_format = GL_BGR;
-	}
-	glBindTexture(GL_TEXTURE_2D, texture_gl_handles[(uint) TEXTURE_ASSET_ID::HELLO_WORLD]);
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	glTexImage2D(GL_TEXTURE_2D,
-				 0,
-				 (colors == 4) ? GL_RGBA : GL_RGB,
-				 surface->w,
-				 surface->h,
-				 0,
-				 (colors == 4) ? GL_RGBA : GL_RGB,
-				 GL_UNSIGNED_BYTE,
-				 surface->pixels);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-	glBindTexture(GL_TEXTURE_2D, 0);
-	SDL_FreeSurface(surface);
-
 	gl_has_errors();
 }
 
@@ -387,22 +347,6 @@ void RenderSystem::initialize_gl_geometry_buffers()
 	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::DEBUG_LINE, line_vertices, line_indices);
 
 	///////////////////////////////////////////////////////
-	// Initialize text / fonts
-	std::vector<TexturedVertex> text_vertices(4);
-	text_vertices[0].position = { -1.f / 2, +1.f / 2, 0.f };
-	text_vertices[1].position = { +1.f / 2, +1.f / 2, 0.f };
-	text_vertices[2].position = { +1.f / 2, -1.f / 2, 0.f };
-	text_vertices[3].position = { -1.f / 2, -1.f / 2, 0.f };
-	text_vertices[0].texcoord = { 0, 1 };
-	text_vertices[1].texcoord = { 1, 1 };
-	text_vertices[2].texcoord = { 1, 0 };
-	text_vertices[3].texcoord = { 0, 0 };
-
-	// Counterclockwise as it's the default opengl front winding direction.
-	const std::vector<uint16_t> text_indices = { 0, 3, 1, 1, 3, 2 };
-	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::TEXT, text_vertices, text_indices);
-
-	///////////////////////////////////////////////////////
 	// Initialize screen triangle (yes, triangle, not quad; its more efficient).
 	std::vector<vec3> screen_vertices(3);
 	screen_vertices[0] = { -1, -6, 0.f };
@@ -432,7 +376,15 @@ RenderSystem::~RenderSystem()
 	glDeleteFramebuffers(1, &frame_buffer);
 	gl_has_errors();
 
-	TTF_CloseFont(font);
+	// Delete text-related resources
+	for (auto& text_data : text_buffers) {
+		glDeleteBuffers(1, &text_data.second.vbo);
+		glDeleteBuffers(1, &text_data.second.ibo);
+		glDeleteTextures(1, &text_data.second.texture);
+	}
+	for (auto& font : fonts) {
+		TTF_CloseFont(font.second);
+	}
 
 	// remove all entities created by the render system
 	while (!registry.render_requests.entities.empty()) {

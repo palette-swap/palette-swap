@@ -111,3 +111,8 @@ bool Mesh::load_from_obj_file(const std::string& obj_path,
 
 	return true;
 }
+
+
+bool operator==(const Text& t1, const Text& t2) {
+	return t1.text == t2.text && t1.font_size == t2.font_size;
+}

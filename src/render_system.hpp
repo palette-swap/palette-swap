@@ -67,9 +67,19 @@ class RenderSystem {
 	static constexpr float player_spritesheet_width = 8.f;
 	static constexpr float player_spritesheet_height = 4.f;
 
+	// Static buffers
 	std::array<GLuint, geometry_count> vertex_buffers;
 	std::array<GLuint, geometry_count> index_buffers;
 	std::array<Mesh, geometry_count> meshes;
+
+	// Dynamic text buffers
+	struct TextData {
+		GLuint vbo;
+		GLuint ibo;
+		GLuint texture;
+	};
+	std::unordered_map<Text, TextData> text_buffers;
+	std::unordered_map<unsigned int, TTF_Font*> fonts;
 
 	// initialize all predefined rooms, based on roomtype
 	void initialize_room_vertices(MapUtility::RoomType roomType);
@@ -122,9 +132,18 @@ private:
 	// Helper to get position transform
 	Transform get_transform(Entity entity);
 
+	// Helper to ready to draw the Textured effect
+	void prepare_for_textured(GLuint texture_id);
+
+	// Generates raster texture of provided text
+	// Returns vbo, ibo
+	TextData generate_text(const Text& text);
+
 	// Internal drawing functions for each entity type
 	void draw_textured_mesh(Entity entity, const mat3& projection);
 	void draw_healthbar(Entity entity, const Stats& stats, const mat3& projection);
+	void draw_text(Entity entity, const Text& text, const mat3& projection);
+	void draw_triangles(const Transform& transform, const mat3& projection);
 	void draw_to_screen();
 	void update_camera_position(MapPosition& camera_map_pos,
 								const vec2& player_pos,
@@ -138,8 +157,6 @@ private:
 	GLuint frame_buffer;
 	GLuint off_screen_render_buffer_color;
 	GLuint off_screen_render_buffer_depth;
-
-	TTF_Font* font;
 
 	Entity screen_state_entity;
 	ivec2 screen_size = { window_width_px, window_height_px };
