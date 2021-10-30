@@ -400,7 +400,7 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 {
 	if (!player_arrow_fired) {
 
-		vec2 mouse_world_position = mouse_position * renderer->screen_scale + renderer->get_top_left();
+		vec2 mouse_world_position = renderer->screen_position_to_world_position(mouse_position);
 
 		Velocity& arrow_velocity = registry.velocities.get(player_arrow);
 		WorldPosition& arrow_position = registry.world_positions.get(player_arrow);
@@ -554,7 +554,7 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 			glfwGetCursorPos(window, &mouse_screen_pos.x, &mouse_screen_pos.y);
 
 			// Convert to world pos
-			vec2 mouse_world_pos = vec2(mouse_screen_pos) * renderer->screen_scale + renderer->get_top_left();
+			vec2 mouse_world_pos = renderer->screen_position_to_world_position(mouse_screen_pos);
 
 			// Get map_positions to compare
 			uvec2 mouse_map_pos = MapUtility::world_position_to_map_position(mouse_world_pos);

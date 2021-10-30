@@ -23,8 +23,7 @@ Transform RenderSystem::get_transform(Entity entity)
 			transform.rotate(registry.velocities.get(entity).angle);
 		}
 	} else {
-		transform.translate(registry.screen_positions.get(entity).position * vec2(screen_size) * screen_scale
-							+ get_top_left());
+		transform.translate(screen_position_to_world_position(registry.screen_positions.get(entity).position * vec2(screen_size)));
 	}
 	return transform;
 }
@@ -503,6 +502,11 @@ vec2 RenderSystem::get_top_left()
 	vec2 final_camera_pos = MapUtility::map_position_to_world_position(camera_map_pos.position);
 
 	return { final_camera_pos.x, final_camera_pos.y};
+}
+
+vec2 RenderSystem::screen_position_to_world_position(vec2 screen_pos)
+{
+	return screen_pos * screen_scale + get_top_left();
 }
 
  void RenderSystem::scale_on_scroll(float offset)

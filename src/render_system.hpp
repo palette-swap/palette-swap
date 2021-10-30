@@ -89,23 +89,6 @@ public:
 	// Initialize the window
 	bool init(int width, int height, GLFWwindow* window, std::shared_ptr<MapGeneratorSystem> map);
 
-	// Modified first argument to gid, which doesn't change behavior and is reasonable,
-	// it also helps the room geometry hack to work...
-	template <class T> void bind_vbo_and_ibo(uint gid, std::vector<T> vertices, std::vector<uint16_t> indices);
-
-	void initialize_gl_textures();
-
-	void initialize_gl_effects();
-
-	void initialize_gl_meshes();
-	Mesh& get_mesh(GEOMETRY_BUFFER_ID id) { return meshes[(int)id]; };
-
-	void initialize_gl_geometry_buffers();
-	// Initialize the screen texture used as intermediate render target
-	// The draw loop first renders to this texture, then it is used for the water
-	// shader
-	bool init_screen_texture();
-
 	// Destroy resources associated to one or all entities created by the system
 	~RenderSystem();
 
@@ -120,15 +103,29 @@ public:
 	void draw();
 
 	mat3 create_projection_matrix();
-	vec2 get_top_left();
-	void scale_on_scroll(float offset);
+	vec2 screen_position_to_world_position(vec2 screen_pos);
 
+	// WorldSystem callbacks for window changes
+	void scale_on_scroll(float offset);
 	void on_resize(int width, int height);
 
-	float screen_scale; // Screen to pixel coordinates scale factor (for apple
-					// retina display?)
-
 private:
+	////////////////////////////////////////////////////////
+	// Init helper functions
+	template <class T> void bind_vbo_and_ibo(uint gid, std::vector<T> vertices, std::vector<uint16_t> indices);
+	void initialize_gl_textures();
+	void initialize_gl_effects();
+	void initialize_gl_meshes();
+	void initialize_gl_geometry_buffers();
+	// Initialize the screen texture used as intermediate render target
+	// The draw loop first renders to this texture, then it is used for the water
+	// shader
+	bool init_screen_texture();
+
+	////////////////////////////////////////////////////////
+	// General helper functions
+	// Get world position of top left of screen (screen pos (0,0))
+	vec2 get_top_left();
 	// Helper to get position transform
 	Transform get_transform(Entity entity);
 
@@ -139,6 +136,7 @@ private:
 	// Returns vbo, ibo
 	TextData generate_text(const Text& text);
 
+	////////////////////////////////////////////////////////
 	// Internal drawing functions for each entity type
 	void draw_textured_mesh(Entity entity, const mat3& projection);
 	void draw_healthbar(Entity entity, const Stats& stats, const mat3& projection);
@@ -160,6 +158,8 @@ private:
 
 	Entity screen_state_entity;
 	ivec2 screen_size = { window_width_px, window_height_px };
+	float screen_scale; // Screen to pixel coordinates scale factor (for apple
+						// retina display?)
 };
 
 bool load_effect_from_file(const std::string& vs_path, const std::string& fs_path, GLuint& out_program);
