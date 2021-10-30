@@ -11,6 +11,8 @@
 #include "turn_system.hpp"
 #include "animation_system.hpp"
 
+#include "soloud_wav.h"
+
 class AISystem {
 public:
 	AISystem(const Debug& debugging,
@@ -20,6 +22,10 @@ public:
 			 std::shared_ptr<AnimationSystem> animations);
 
 	void step(float elapsed_ms);
+
+	// Observer Pattern: a callback of CombatSystem::do_attack().
+	// Maximize the target's radius if the player attacks but cannot be spotted.
+	void do_attack_callback(const Entity& attacker, const Entity& target);
 
 private:
 	// Execute state machine of Slime.
@@ -93,4 +99,6 @@ private:
 	// C++ random number generator
 	std::default_random_engine rng;
 	std::uniform_real_distribution<float> uniform_dist; // number between 0..1
+
+	SoLoud::Wav enemy_attack1_wav;
 };

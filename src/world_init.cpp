@@ -43,6 +43,7 @@ Entity create_player(uvec2 pos)
 
 // Repurposed into general create_enemy
 // TODO: add additional inputs to specify enemy type, current default is slug
+// Note: Deprecated, use load_enemy from map_generator_system instead
 Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 {
 	auto entity = Entity();
@@ -165,23 +166,6 @@ Entity create_path_point(vec2 position)
 		entity, { TEXTURE_ASSET_ID::CANNONBALL, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE });
 
 	registry.colors.insert(entity, { 0, 1, 0 });
-
-	return entity;
-}
-
-// Creates a room entity, with room type referencing to the predefined room
-Entity create_room(vec2 position, MapUtility::RoomType roomType)
-{
-	auto entity = Entity();
-
-	registry.world_positions.emplace(entity, position);
-
-	Room& room = registry.rooms.emplace(entity);
-	room.type = roomType;
-
-	// TODO: Remove temporary workaround once #36 is resolved.
-	registry.render_requests.insert(
-		entity, { TEXTURE_ASSET_ID::TILE_SET, EFFECT_ASSET_ID::TILE_MAP, GEOMETRY_BUFFER_ID::ROOM });
 
 	return entity;
 }
