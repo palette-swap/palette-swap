@@ -75,7 +75,7 @@ RenderSystem::TextData RenderSystem::generate_text(const Text& text)
 	}
 
 	// Render the text using SDL
-	SDL_Surface* surface = TTF_RenderText_Blended_Wrapped(font, text.text.c_str(), SDL_Color({ 0, 0, 0, 0 }), screen_size.x);
+	SDL_Surface* surface = TTF_RenderText_Blended_Wrapped(font, text.text.c_str(), SDL_Color({ 255, 255, 255, 0 }), screen_size.x);
 	SDL_LockSurface(surface);
 	text_data.texture_width = surface->w;
 	text_data.texture_height = surface->h;
@@ -318,6 +318,14 @@ void RenderSystem::draw_text(Entity entity, const Text& text, const mat3& projec
 	gl_has_errors();
 
 	prepare_for_textured(text_data->second.texture);
+
+	// Setup coloring
+	if (registry.colors.has(entity)) {
+		GLint color_uloc = glGetUniformLocation(program, "fcolor");
+		const vec3 color = registry.colors.get(entity);
+		glUniform3fv(color_uloc, 1, glm::value_ptr(color));
+		gl_has_errors();
+	}
 
 	draw_triangles(transform, projection);
 }

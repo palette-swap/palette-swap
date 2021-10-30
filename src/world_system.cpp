@@ -215,8 +215,12 @@ void WorldSystem::restart_game()
 	current_weapon = inventory.equipped[static_cast<uint8>(Slot::PrimaryHand)];
 	current_attack = 0;
 	registry.screen_positions.emplace(attack_display, vec2(0, 1));
-	registry.text.emplace(attack_display, combat->make_attack_list(current_weapon, current_attack), (uint16) 48, Alignment::Start, Alignment::End);
-
+	registry.text.emplace(attack_display,
+						  combat->make_attack_list(current_weapon, current_attack),
+						  (uint16)48,
+						  Alignment::Start,
+						  Alignment::End);
+	registry.colors.emplace(attack_display, 1, 1, 1);
 	// create camera instance
 	camera = create_camera(
 		player_starting_point);
