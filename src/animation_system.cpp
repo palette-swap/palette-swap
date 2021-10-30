@@ -20,7 +20,7 @@ void AnimationSystem::update_animations(float elapsed_ms)
 }
 
 
-void AnimationSystem::set_sprite_direction(Entity sprite, Sprite_Direction direction)
+void AnimationSystem::set_sprite_direction(const Entity& sprite, Sprite_Direction direction)
 {
 	Animation& sprite_animation = registry.animations.get(sprite);
 
@@ -34,8 +34,21 @@ void AnimationSystem::set_sprite_direction(Entity sprite, Sprite_Direction direc
 	}
 }
 
+// TODO: Swap out damage animation with something more interesting
+void AnimationSystem::damage_animation(const Entity& entity)
+{
+	if (!registry.event_animations.has(entity)) {
+		Animation& entity_animation = registry.animations.get(entity);
+		vec3& entity_color = registry.colors.get(entity);
+		Event_Animation& damage_animation = registry.event_animations.emplace(entity);
+		this->animation_event_setup(entity_animation, damage_animation, entity_color);
+		entity_color = damage_color;
+		entity_animation.speed_adjustment = damage_animation_speed;
+	}
+}
+
 // TODO: Change texture asset id to enemy enum that Franky has implemented
-void AnimationSystem::set_enemy_animation(Entity enemy, TEXTURE_ASSET_ID enemy_type, ColorState color) 
+void AnimationSystem::set_enemy_animation(const Entity& enemy, TEXTURE_ASSET_ID enemy_type, ColorState color) 
 {
 	Animation& enemy_animation = registry.animations.get(enemy);
 	RenderRequest& enemy_render = registry.render_requests.get(enemy);
@@ -63,7 +76,8 @@ void AnimationSystem::set_enemy_animation(Entity enemy, TEXTURE_ASSET_ID enemy_t
 	}
 }
 
-void AnimationSystem::set_enemy_state(Entity enemy, int state) {
+void AnimationSystem::set_enemy_state(const Entity& enemy, int state)
+{
 	Animation& enemy_animation = registry.animations.get(enemy);
 
 	if (registry.event_animations.has(enemy)) {
@@ -76,7 +90,8 @@ void AnimationSystem::set_enemy_state(Entity enemy, int state) {
 	
 }
 
-void AnimationSystem::enemy_attack_animation(Entity enemy) {
+void AnimationSystem::enemy_attack_animation(const Entity& enemy)
+{
 	// TODO: Add enemy attack animations to spritesheets, and add to event animations
 	Animation& enemy_animation = registry.animations.get(enemy);
 	vec3& enemy_color = registry.colors.get(enemy);
@@ -94,8 +109,8 @@ void AnimationSystem::enemy_attack_animation(Entity enemy) {
 	}
 }
 
-
-void AnimationSystem:: set_player_animation(Entity player) {
+void AnimationSystem::set_player_animation(const Entity& player)
+{
 	Animation& player_animation = registry.animations.get(player);
 	vec3& player_color = registry.colors.get(player);
 	RenderRequest& player_render = registry.render_requests.get(player);
@@ -114,27 +129,29 @@ void AnimationSystem:: set_player_animation(Entity player) {
 }
 
 // TODO: Will eventually combine this into a general toggle between player states
-void AnimationSystem::player_idle_animation(Entity player)
+void AnimationSystem::player_idle_animation(const Entity& player)
 {
 	Animation& player_animation = registry.animations.get(player);
 	player_animation.state = (int)player_animation_states::Idle;
 	player_animation.frame = 0;
 }
 
-void AnimationSystem::player_spellcast_animation(Entity player)
+void AnimationSystem::player_spellcast_animation(const Entity& player)
 {
 	Animation& player_animation = registry.animations.get(player);
 	player_animation.state = (int)player_animation_states::Spellcast;
 	player_animation.frame = 0;
 }
 
-void AnimationSystem::player_toggle_weapon(Entity player) {
+void AnimationSystem::player_toggle_weapon(const Entity& player)
+{
 	Animation& player_animation = registry.animations.get(player);
 	player_animation.state = (player_animation.state + 1) % player_weapon_states;
 }
 
 
-void AnimationSystem::player_attack_animation(Entity player) {
+void AnimationSystem::player_attack_animation(const Entity& player)
+{
 	Animation& player_animation = registry.animations.get(player);
 	vec3& player_color = registry.colors.get(player);
 
@@ -150,7 +167,7 @@ void AnimationSystem::player_attack_animation(Entity player) {
 	}
 }
 
-void AnimationSystem::player_running_animation(Entity player)
+void AnimationSystem::player_running_animation(const Entity& player)
 {
 	Animation& player_animation = registry.animations.get(player);
 	vec3& player_color = registry.colors.get(player);
@@ -168,7 +185,7 @@ void AnimationSystem::player_running_animation(Entity player)
 }
 
 // TODO: Change based on red/blue animation currently displays a blue shift only
-void AnimationSystem::player_red_blue_animation(Entity player, ColorState color) 
+void AnimationSystem::player_red_blue_animation(const Entity& player, ColorState color)
 {
 	Animation& player_animation = registry.animations.get(player);
 	vec3& player_color = registry.colors.get(player);
@@ -202,20 +219,12 @@ void AnimationSystem::player_red_blue_animation(Entity player, ColorState color)
 	}
 }
 
-void AnimationSystem::damage_animation(Entity entity)
-{
-	Animation& entity_animation = registry.animations.get(entity);
-	vec3& entity_color = registry.colors.get(entity);
-	if (!registry.event_animations.has(entity)) {
-		Event_Animation damaged_entity = registry.event_animations.emplace(entity);
-	}
-}
 
 bool AnimationSystem::animation_events_completed() { return (registry.event_animations.size() == 0); }
 
 void AnimationSystem::resolve_event_animations()
 {
-	for (Entity animation_entity : registry.event_animations.entities) {
+	for (Entity& animation_entity : registry.event_animations.entities) {
 		Event_Animation& event_animation = registry.event_animations.get(animation_entity);
 		Animation& actual_animation = registry.animations.get(animation_entity);
 		vec3& entity_color = registry.colors.get(animation_entity);

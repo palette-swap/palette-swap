@@ -244,10 +244,10 @@ void WorldSystem::restart_game()
 	player_arrow = create_arrow(player_location);
 	// Creates a single enemy instance, (TODO: needs to be updated with position based on grid)
 	// Also requires naming scheme for randomly generated enemies, for later reference
-	create_enemy(ColorState::Red, EnemyType::Slime, uvec2(8, 1));
+	create_enemy(ColorState::Red, EnemyType::LivingArmor, uvec2(8, 1));
 	/*create_enemy(ColorState::Red, EnemyType::Treeant, uvec2(8, 2));*/
 	//create_enemy(ColorState::Red, EnemyType::LivingArmor, uvec2(8, 3));
-	create_enemy(ColorState::Red, EnemyType::Slime, uvec2(8, 4));
+	create_enemy(ColorState::Red, EnemyType::LivingArmor, uvec2(8, 4));
 	create_enemy(ColorState::Blue, EnemyType::LivingArmor, uvec2(8, 8));
 }
 
@@ -561,6 +561,7 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 					Stats& enemy_stats = registry.stats.get(target);
 					combat->do_attack(player_stats, attack, enemy_stats);
 					animations->player_attack_animation(player);
+					animations->damage_animation(target);
 				}
 			}
 			turns->complete_team_action(player);
