@@ -14,9 +14,9 @@ Entity create_player(uvec2 pos)
 	Inventory& inventory = registry.inventories.emplace(entity);
 
 	// Setup Casting
-	Attack arcane_orb = { "Arcane Orb", 1, 15, 4, 10, DamageType::Magical, TargetingType::Projectile };
-	Attack fireball = { "Fireball", 1, 20, 10, 25, DamageType::Fire, TargetingType::Projectile };
-	inventory.inventory.emplace("Spellbook", create_weapon("Spellbook", std::vector<Attack>({ fireball, arcane_orb })));
+	Attack arcane_orb = { "Arcane Orb", 10, 10, 5, 10, DamageType::Magical, TargetingType::Projectile };
+	Attack fireball = { "Fireball", -3, 10, 10, 20, DamageType::Fire, TargetingType::Projectile };
+	inventory.inventory.emplace("Spellbook", create_weapon("Spellbook", std::vector<Attack>({ arcane_orb, fireball })));
 
 	// Setup Sword
 	Attack sword_light = { "Light", 4, 18, 12, 22, DamageType::Physical, TargetingType::Adjacent };
