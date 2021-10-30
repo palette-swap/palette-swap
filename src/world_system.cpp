@@ -371,7 +371,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 	}
 
 	// Debugging
-	if (key == GLFW_KEY_D && (mod & GLFW_MOD_ALT) != 0) {
+	if (key == GLFW_KEY_B) {
 		debugging.in_debug_mode = action != GLFW_RELEASE;
 	}
 

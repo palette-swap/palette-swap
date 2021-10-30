@@ -125,8 +125,9 @@ namespace MapUtility {
 
 namespace CameraUtility {
 	// the size of camera, divide the whole window into 5 smaller grids
-	static constexpr uint camera_grid_size = 5;
+	static constexpr uint camera_grid_size = 7;
 	// area buffer: the offset between the buffer area and the edge of camera
+	// buffer_offset * 2 < camera_grid_size
 	static constexpr uint camera_buffer_offset = 2;
 
 	static constexpr uint map_top_left = 0;
@@ -134,11 +135,12 @@ namespace CameraUtility {
 
 	// calculate buffer position based on the size and offset
 	inline std::tuple<vec2, vec2> get_buffer_positions(vec2 camera_screen_pos, float width, float height) { 
+		assert(camera_buffer_offset * 2 < camera_grid_size);
 		float horizontal_offset_per_grid = width / camera_grid_size;
 		float vertical_offset_per_grid = height / camera_grid_size;
 
-		vec2 buffer_top_left_pos = vec2(camera_screen_pos.x + horizontal_offset_per_grid, 
-			camera_screen_pos.y + vertical_offset_per_grid);
+		vec2 buffer_top_left_pos = vec2(camera_screen_pos.x + camera_buffer_offset * horizontal_offset_per_grid, 
+			camera_screen_pos.y + camera_buffer_offset * vertical_offset_per_grid);
 		vec2 buffer_down_right_pos
 			= vec2(camera_screen_pos.x + (camera_grid_size - camera_buffer_offset) * horizontal_offset_per_grid,
 				   camera_screen_pos.y + (camera_grid_size - camera_buffer_offset) * vertical_offset_per_grid);
