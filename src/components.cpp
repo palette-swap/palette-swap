@@ -12,7 +12,7 @@
 
 std::unordered_map<EnemyType, char*> enemy_type_to_string({ { EnemyType::Slime, "Slime" },
 															{ EnemyType::Raven, "Raven" },
-															{ EnemyType::LivingArmor, "LivingArmor" },
+															{ EnemyType::Armor, "Armor" },
 															{ EnemyType::TreeAnt, "TreeAnt" } });
 
 // Very, VERY simple OBJ loader from https://github.com/opengl-tutorials/ogl tutorial 7

@@ -88,7 +88,7 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 		enemy.attack_range = 1 ;
 		break;
 
-	case EnemyType::LivingArmor:
+	case EnemyType::Armor:
 		enemy.radius = 2;
 		enemy.speed = 1;
 		enemy.attack_range = 1;
@@ -98,6 +98,12 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 		enemy.radius = 3;
 		enemy.speed = 1;
 		enemy.attack_range = 2;
+		break;
+
+	case EnemyType::Wraith:
+		enemy.radius = 1;
+		enemy.speed = 1;
+		enemy.attack_range = 1;
 		break;
 
 	default:

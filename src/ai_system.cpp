@@ -9,8 +9,8 @@ AISystem::AISystem(const Debug& debugging,
 				   std::shared_ptr<MapGeneratorSystem> map_generator,
 				   std::shared_ptr<TurnSystem> turns,
 				   std::shared_ptr<AnimationSystem> animations)
-	: combat(std::move(combat))
-	, debugging(debugging)
+	: debugging(debugging)
+	, combat(std::move(combat))
 	, map_generator(std::move(map_generator))
 	, turns(std::move(turns))
 	, animations(std::move(animations))
@@ -47,11 +47,12 @@ void AISystem::step(float /*elapsed_ms*/)
 					break;
 
 				case EnemyType::Raven:
+				case EnemyType::Wraith:
 					execute_Raven(enemy_entity);
 					break;
 
-				case EnemyType::LivingArmor:
-					execute_LivingArmor(enemy_entity);
+				case EnemyType::Armor:
+					execute_Armor(enemy_entity);
 					break;
 
 				case EnemyType::TreeAnt:
@@ -186,7 +187,7 @@ void AISystem::execute_Raven(const Entity& raven)
 	}
 }
 
-void AISystem::execute_LivingArmor(const Entity& living_armor)
+void AISystem::execute_Armor(const Entity& living_armor)
 {
 	const Enemy& enemy = registry.enemies.get(living_armor);
 
@@ -195,7 +196,7 @@ void AISystem::execute_LivingArmor(const Entity& living_armor)
 	case EnemyState::Idle:
 		if (is_player_spotted(living_armor, enemy.radius)) {
 			switch_enemy_state(living_armor, EnemyState::Active);
-			execute_LivingArmor(living_armor);
+			execute_Armor(living_armor);
 			return;
 		}
 		break;
@@ -223,7 +224,7 @@ void AISystem::execute_LivingArmor(const Entity& living_armor)
 		break;
 
 	default:
-		throw std::runtime_error("Invalid enemy state of LivingArmor.");
+		throw std::runtime_error("Invalid enemy state of Armor.");
 	}
 }
 
@@ -271,7 +272,7 @@ void AISystem::execute_TreeAnt(const Entity& tree_ant)
 		break;
 
 	default:
-		throw std::runtime_error("Invalid enemy state of LivingArmor.");
+		throw std::runtime_error("Invalid enemy state of Armor.");
 	}
 }
 
@@ -287,45 +288,15 @@ bool AISystem::remove_dead_entity(const Entity& entity)
 
 void AISystem::switch_enemy_state(const Entity& enemy_entity, EnemyState new_state)
 {
-
 	Enemy& enemy = registry.enemies.get(enemy_entity);
 	enemy.state = new_state;
-	Animation& enemy_animation = registry.animations.get(enemy_entity);
 
-	// TODO: Animate enemy state switch by a spreadsheet for enemy_type * enemy_state mapping.
-	// Slime:		Idle, Active, Flinched.
-	// Raven:		Idle, Active.
-	// LivingArmor:	Idle, Active, Powerup.
-	// TreeAnt:		Idle, Active, Immortal.
-
-	// Animation& animation = registry.animations.get(enemy_entity);
-	// animation.switchTexture(enemy.team, enemy.type, enemy.state);
-
-	if (enemy_state_to_animation_state.count(enemy.state)) {
+	if (enemy_state_to_animation_state.count(enemy.state) == 1) {
 		int new_state = enemy_state_to_animation_state[enemy.state];
 		animations->set_enemy_state(enemy_entity, new_state);
-	}
-	switch (enemy.state) {
-
-	case EnemyState::Idle:
-		break;
-
-	case EnemyState::Active:
-		break;
-
-	case EnemyState::Flinched:
-		break;
-
-	case EnemyState::Powerup:
-		break;
-
-	case EnemyState::Immortal:
-		break;
-
-	default:
+	} else {
 		throw std::runtime_error("Invalid enemy state.");
 	}
-
 }
 
 bool AISystem::is_player_spotted(const Entity& entity, const uint radius)
@@ -352,12 +323,13 @@ bool AISystem::is_at_nest(const Entity& entity)
 
 void AISystem::attack_player(const Entity& entity)
 {
-	// TODO: Animate attack.
+	Entity& player = registry.players.top_entity();
+	combat->do_attack(entity, registry.stats.get(entity).base_attack, player);
+
+	// TODO: temporarily for debugging in console, remove it later.
 	char* enemy_type = enemy_type_to_string[registry.enemies.get(entity).type];
 	printf("%s_%u attacks player!\n", enemy_type, (uint)entity);
-	Entity& player = registry.players.top_entity();
 
-	combat->do_attack(entity, registry.stats.get(entity).base_attack, registry.players.top_entity());
 	// TODO: move attack animation to combat system potentially
 	// Triggers attack for a enemy entity
 	animations->enemy_attack_animation(entity);
@@ -398,7 +370,6 @@ bool AISystem::approach_nest(const Entity& entity, uint speed)
 
 bool AISystem::move(const Entity& entity, const uvec2& map_pos)
 {
-	// TODO: Animate move.
 	MapPosition& entity_map_pos = registry.map_positions.get(entity);
 	if (entity_map_pos.position != map_pos && map_generator->walkable(map_pos)) {
 		entity_map_pos.position = map_pos;

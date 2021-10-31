@@ -35,7 +35,7 @@ private:
 	void execute_Raven(const Entity& raven);
 
 	// Execute state machine of Living Armor.
-	void execute_LivingArmor(const Entity& living_armor);
+	void execute_Armor(const Entity& living_armor);
 
 	// Execute state machine of Tree Ant.
 	void execute_TreeAnt(const Entity& tree_ant);

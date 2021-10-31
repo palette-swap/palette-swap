@@ -24,8 +24,6 @@ bool CombatSystem::do_attack(Entity attacker_entity, Attack& attack, Entity targ
 		printf("Miss!\n");
 	}
 
-	// TODO: replace Entity a and t with args of do_attack() after Dylan's restructure of combat system.
-	// This currently has no effects.
 	for (const auto& callback : do_attack_callbacks) {
 		callback(attacker_entity, target_entity);
 	}
