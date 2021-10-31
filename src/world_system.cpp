@@ -512,6 +512,9 @@ void WorldSystem::change_color()
 // TODO: Integrate into turn state to only enable if player's turn is on
 void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 {
+	if (turns->get_active_team() != player) {
+		return;
+	}
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
 		Attack& attack = registry.weapons.get(current_weapon).given_attacks[current_attack];
 		if (!player_arrow_fired && attack.targeting_type == TargetingType::Projectile
@@ -534,12 +537,13 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 			//	= { sin(arrow_motion.angle) * projectile_speed, -cos(arrow_motion.angle) * projectile_speed };
 			so_loud.play(cannon_wav);
 		} else if (attack.targeting_type == TargetingType::Adjacent && turns->get_active_team() == player) {
+			
 			// Get screen position of mouse
 			dvec2 mouse_screen_pos;
 			glfwGetCursorPos(window, &mouse_screen_pos.x, &mouse_screen_pos.y);
 
-			// Denotes that whether a player was able to complete their turn or not (false be default)
-			bool combat_success =false;
+			// Denotes whether a player was able to complete their turn or not (false be default)
+			bool combat_success = false;
 
 			// Convert to world pos
 			vec2 mouse_world_pos = vec2(mouse_screen_pos) * renderer->screen_scale + renderer->get_top_left();
@@ -548,26 +552,27 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 			uvec2 mouse_map_pos = MapUtility::world_position_to_map_position(mouse_world_pos);
 			uvec2 player_pos = registry.map_positions.get(player).position;
 			ivec2 distance = mouse_map_pos - player_pos;
-			if (abs(distance.x) > 1 || abs(distance.y) > 1
-				|| !turns->execute_team_action(player)) {
+			if (abs(distance.x) > 1 || abs(distance.y) > 1 || distance == ivec2(0,0)
+				|| turns->get_active_team() != player) {
 				return;
 			}
 			for (const auto& target : registry.stats.entities) {
 				if (registry.map_positions.get(target).position == mouse_map_pos) {
-					if (target == player) {
-						break;
-					}
 					Enemy& enemy = registry.enemies.get(target);
 					ColorState inactive_color = turns->get_inactive_color();
-					if (enemy.team != inactive_color) {
-						combat_success = combat->do_attack(player, attack, target);
-						if (combat_success) {
-							so_loud.play(light_sword_wav);
-						}
-					}	
+					if (enemy.team == inactive_color || !turns->execute_team_action(player)) {
+						continue;
+					}
+				
+					combat->do_attack(player, attack, target);
+					combat_success = true;
+					break;
 				}
 			}
-			turns->complete_team_action(player);
+			if (combat_success) { 
+				so_loud.play(light_sword_wav);
+				turns->complete_team_action(player);
+			}
 		}
 	}
 }

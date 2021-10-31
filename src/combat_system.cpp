@@ -14,6 +14,8 @@ bool CombatSystem::do_attack(Entity attacker_entity, Attack& attack, Entity targ
 	}
 	MapPosition& attacker_position = registry.map_positions.get(attacker_entity);
 	MapPosition& target_position = registry.map_positions.get(target_entity);
+	// Changes attacker's direction based on the location of the target relative to 
+	// the target entity
 	if (target_position.position.x < attacker_position.position.x) {
 		animations->set_sprite_direction(attacker_entity, Sprite_Direction::SPRITE_LEFT);
 	} else {
