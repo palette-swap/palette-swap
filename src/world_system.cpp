@@ -306,8 +306,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		// Change weapon
 		if (key == GLFW_KEY_E) {
 			equip_next_weapon();
-			// TODO: Need to confirm that this does actually change to the correct state
-			animations->player_toggle_weapon(player);
+			
 		}
 
 
@@ -471,6 +470,7 @@ void WorldSystem::equip_next_weapon()
 		printf("Switched weapon to %s\n", registry.items.get(curr).name.c_str());
 		turns->complete_team_action(player);
 	}
+	animations->player_toggle_weapon(player);
 }
 
 void WorldSystem::change_color() 
