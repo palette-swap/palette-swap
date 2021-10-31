@@ -287,15 +287,15 @@ enum class ColorState { None = 0, Red = 1, Blue = 2, All = Blue + 1 };
 
 // Slime (cute coward): weak stats; run away when HP is low.
 // Raven (annoying bug): weak stats; large radius and fast speed.
-// LivingArmor (Immortal Hulk): normal stats; nearsighted; a certain chance to become immortal for one turn.
+// Armor (Immortal Hulk): normal stats; nearsighted; a certain chance to become immortal for one turn.
 // TreeAnt (Super Saiyan): normal stats; long attack range; power up attack range and damage when HP is low.
-// TODO: Evan might wanna add description and trait for Wraith.
+// Wraith (invisible ghost): weak stats; shortest radius; a variance of Raven but invisible until active.
 enum class EnemyType {
 	Slime = 0,
-	LivingArmor = Slime + 1,
-	TreeAnt = LivingArmor + 1,
-	Raven = TreeAnt + 1,
-	Wraith = Raven + 1,
+	Raven = Slime + 1,
+	Armor = Raven + 1,
+	TreeAnt = Armor + 1,
+	Wraith = TreeAnt + 1,
 	EnemyCount = Wraith + 1
 };
 extern std::unordered_map<EnemyType, char*> enemy_type_to_string;
@@ -305,16 +305,17 @@ extern std::unordered_map<EnemyType, char*> enemy_type_to_string;
 // This will help load the animation by enemy type when you load enemies
 const TEXTURE_ASSET_ID enemy_type_textures[static_cast<int>(EnemyType::EnemyCount)] { 
 	TEXTURE_ASSET_ID::SLIME,
+	TEXTURE_ASSET_ID::RAVEN,
 	TEXTURE_ASSET_ID::ARMOR,
 	TEXTURE_ASSET_ID::TREEANT,
-	TEXTURE_ASSET_ID::RAVEN,
 	TEXTURE_ASSET_ID::WRAITH 
 };
 
 // Slime:		Idle, Active, Flinched.
 // Raven:		Idle, Actives.
-// LivingArmor:	Idle, Active, Immortal.
+// Armor:		Idle, Active, Immortal.
 // TreeAnt:		Idle, Active, Powerup.
+// Wraith:		A variance of Raven.
 enum class EnemyState {
 	Idle = 0,
 	Active = Idle + 1,
@@ -332,8 +333,6 @@ static std::map<EnemyState, int> enemy_state_to_animation_state =
 		{ EnemyState::Flinched, 2 },
 		{ EnemyState::Powerup, 2 },
 		{ EnemyState::Immortal, 2 } };
-
-
 
 // Structure to store enemy information.
 struct Enemy {
