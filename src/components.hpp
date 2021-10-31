@@ -292,12 +292,24 @@ enum class ColorState { None = 0, Red = 1, Blue = 2, All = Blue + 1 };
 // TODO: Evan might wanna add description and trait for Wraith.
 enum class EnemyType {
 	Slime = 0,
-	Raven = Slime + 1,
-	LivingArmor = Raven + 1,
+	LivingArmor = Slime + 1,
 	TreeAnt = LivingArmor + 1,
-	// Wraith = TreeAnt + 1
+	Raven = TreeAnt + 1,
+	Wraith = Raven + 1,
+	EnemyCount = Wraith + 1
 };
 extern std::unordered_map<EnemyType, char*> enemy_type_to_string;
+
+// Maps enemy types to corresponding texture asset
+// Remember to add a mapping to a new texture (or use a default such as a slime)
+// This will help load the animation by enemy type when you load enemies
+const TEXTURE_ASSET_ID enemy_type_textures[static_cast<int>(EnemyType::EnemyCount)] { 
+	TEXTURE_ASSET_ID::SLIME,
+	TEXTURE_ASSET_ID::ARMOR,
+	TEXTURE_ASSET_ID::TREEANT,
+	TEXTURE_ASSET_ID::RAVEN,
+	TEXTURE_ASSET_ID::WRAITH 
+};
 
 // Slime:		Idle, Active, Flinched.
 // Raven:		Idle, Actives.
@@ -308,8 +320,20 @@ enum class EnemyState {
 	Active = Idle + 1,
 	Flinched = Active + 1,
 	Powerup = Flinched + 1,
-	Immortal = Powerup + 1
+	Immortal = Powerup + 1,
+	EnemyStateCount = Immortal + 1
 };
+
+// Maps enemy states to corresponding rows used in the spritesheet
+// Based on how enemy states work for M2 currently
+static std::map<EnemyState, int> enemy_state_to_animation_state = 
+		{ { EnemyState::Idle, 0 },
+		{ EnemyState::Active, 1 },
+		{ EnemyState::Flinched, 2 },
+		{ EnemyState::Powerup, 2 },
+		{ EnemyState::Immortal, 2 } };
+
+
 
 // Structure to store enemy information.
 struct Enemy {

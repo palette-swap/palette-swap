@@ -31,14 +31,14 @@ int main()
 	std::shared_ptr<TurnSystem> turns = std::make_shared<TurnSystem>();
 
 	//// Animation System
-	std::shared_ptr < AnimationSystem > animations = std::make_shared<AnimationSystem>();
+	std::shared_ptr <AnimationSystem > animations = std::make_shared<AnimationSystem>();
 
 	// Global systems
 	Debug debugging;
 	WorldSystem world(debugging, combat, map, turns);
 	RenderSystem renderer;
 	PhysicsSystem physics(debugging, map);
-	AISystem ai(debugging, combat, map, turns);
+	AISystem ai(debugging, combat, map, turns, animations);
 
 	// Initializing window
 	GLFWwindow* window = world.create_window(window_width_px, window_height_px);

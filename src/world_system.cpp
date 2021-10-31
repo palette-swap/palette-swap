@@ -270,7 +270,6 @@ void WorldSystem::handle_collisions()
 			}
 		}
 	}
-
 	// Remove all collisions from this simulation step
 	registry.collisions.clear();
 }
@@ -307,8 +306,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		// Change weapon
 		if (key == GLFW_KEY_E) {
 			equip_next_weapon();
-			// TODO: Need to confirm that this does actually change to the correct state
-			animations->player_toggle_weapon(player);
+			
 		}
 
 
@@ -402,7 +400,7 @@ void WorldSystem::move_player(Direction direction)
 	if (direction == Direction::Left && map_pos.position.x > 0) {
 		new_pos = uvec2(map_pos.position.x - 1, map_pos.position.y);
 		// TODO: Change this to animation request instead of calling it here;
-		player_animation.direction = -1;
+		animations->set_sprite_direction(player, Sprite_Direction::SPRITE_LEFT);
 		animations->player_running_animation(player);
 	} else if (direction == Direction::Up && map_pos.position.y > 0) {
 		new_pos = uvec2(map_pos.position.x, map_pos.position.y - 1);
@@ -411,7 +409,7 @@ void WorldSystem::move_player(Direction direction)
 			   && map_pos.position.x < MapUtility::room_size * MapUtility::tile_size - 1) {
 		new_pos = uvec2(map_pos.position.x + 1, map_pos.position.y);
 		// TODO: Change this to animation request instead of calling it here;
-		player_animation.direction = 1;
+		animations->set_sprite_direction(player, Sprite_Direction::SPRITE_RIGHT);
 		animations->player_running_animation(player);
 	} else if (direction == Direction::Down && map_pos.position.y < MapUtility::room_size * MapUtility::tile_size - 1) {
 		new_pos = uvec2(map_pos.position.x, map_pos.position.y + 1);
@@ -470,22 +468,27 @@ void WorldSystem::equip_next_weapon()
 			= registry.weapons.get(current_weapon).given_attacks.at(current_attack).targeting_type
 			== TargetingType::Projectile;
 		printf("Switched weapon to %s\n", registry.items.get(curr).name.c_str());
+		animations->player_toggle_weapon(player);
 		turns->complete_team_action(player);
 	}
+	
 }
 
 void WorldSystem::change_color() 
 { 
-	switch (turns->get_active_color()) {
+	ColorState active_color = turns->get_active_color();
+	switch (active_color) {
 	case ColorState::Red:
 		turns->set_active_color(ColorState::Blue);
 		so_loud.fadeVolume(bgm_blue, -1, .25);
 		so_loud.fadeVolume(bgm_red, 0, .25);
+		animations->player_red_blue_animation(player, ColorState::Blue);
 		break;
 	case ColorState::Blue:
 		turns->set_active_color(ColorState::Red);
 		so_loud.fadeVolume(bgm_red, -1, .25);
 		so_loud.fadeVolume(bgm_blue, 0, .25);
+		animations->player_red_blue_animation(player, ColorState::Red);
 		break;
 	default:
 		turns->set_active_color(ColorState::Red);
@@ -549,6 +552,7 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 					combat->do_attack(player, attack, target);
 					animations->player_attack_animation(player);
 					so_loud.play(light_sword_wav);
+					animations->damage_animation(target);
 				}
 			}
 			turns->complete_team_action(player);

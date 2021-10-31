@@ -16,12 +16,11 @@ void AnimationSystem::update_animations(float elapsed_ms)
 			animation.frame = ((animation.frame) + 1) % animation.max_frames;
 		}
 	}
-
 	resolve_event_animations();
 }
 
 
-void AnimationSystem::set_sprite_direction(Entity sprite, Sprite_Direction direction)
+void AnimationSystem::set_sprite_direction(const Entity& sprite, Sprite_Direction direction)
 {
 	Animation& sprite_animation = registry.animations.get(sprite);
 
@@ -35,31 +34,20 @@ void AnimationSystem::set_sprite_direction(Entity sprite, Sprite_Direction direc
 	}
 }
 
-void AnimationSystem::resolve_event_animations()
+// TODO: Swap out damage animation with something more interesting
+void AnimationSystem::damage_animation(const Entity& entity)
 {
-	for (Entity animation_entity : registry.event_animations.entities) {
-		Event_Animation& event_animation = registry.event_animations.get(animation_entity);
-		Animation& actual_animation = registry.animations.get(animation_entity);
-		vec3& entity_color = registry.colors.get(animation_entity);
-
-		// Checks if the animation frame had been reset to 0. If true, this means event animation has completed
-		// TODO: Change to be a different check, this current one is a bit iffy, and is reliant on there being at least two
-		// frames in all event animations (which is technically correct since it's an "animation", but a bit iffy)
-		if (actual_animation.frame < event_animation.frame) {
-			// Restores animation back to default before event animation was called
-			actual_animation.speed_adjustment = event_animation.restore_speed;
-			actual_animation.state = event_animation.restore_state;
-			entity_color = event_animation.restore_color;
-			// Removes event animation from registry
-			registry.event_animations.remove(animation_entity);
-		} else {
-			event_animation.frame = actual_animation.frame;
-		}
+	if (!registry.event_animations.has(entity)) {
+		Animation& entity_animation = registry.animations.get(entity);
+		vec3& entity_color = registry.colors.get(entity);
+		Event_Animation& damage_animation = registry.event_animations.emplace(entity);
+		this->animation_event_setup(entity_animation, damage_animation, entity_color);
+		entity_color = damage_color;
+		entity_animation.speed_adjustment = damage_animation_speed;
 	}
 }
 
-// TODO: Change texture asset id to enemy enum that Franky has implemented
-void AnimationSystem::set_enemy_animation(Entity enemy, TEXTURE_ASSET_ID enemy_type, ColorState color) 
+void AnimationSystem::set_enemy_animation(const Entity& enemy, TEXTURE_ASSET_ID enemy_type, ColorState color) 
 {
 	Animation& enemy_animation = registry.animations.get(enemy);
 	RenderRequest& enemy_render = registry.render_requests.get(enemy);
@@ -87,19 +75,48 @@ void AnimationSystem::set_enemy_animation(Entity enemy, TEXTURE_ASSET_ID enemy_t
 	}
 }
 
-void AnimationSystem::enemy_attack_animation(Entity enemy) {
-	// TODO: Add enemy attack animations to spritesheets, and add to event animations
+void AnimationSystem::set_enemy_state(const Entity& enemy, int state)
+{
+	Animation& enemy_animation = registry.animations.get(enemy);
+
+	if (registry.event_animations.has(enemy)) {
+		Event_Animation& enemy_event = registry.event_animations.get(enemy);
+		enemy_event.restore_state = state;
+	} else {
+		enemy_animation.state = state;
+		enemy_animation.frame = 0;
+	}
+	
 }
 
+void AnimationSystem::enemy_attack_animation(const Entity& enemy)
+{
+	Animation& enemy_animation = registry.animations.get(enemy);
+	vec3& enemy_color = registry.colors.get(enemy);
 
-void AnimationSystem:: set_player_animation(Entity player) {
+	if (!registry.event_animations.has(enemy)) {
+		Event_Animation& enemy_attack = registry.event_animations.emplace(enemy);
+
+		// Stores restoration states for the player's animations, to be called after animation event is resolves
+		this->animation_event_setup(enemy_animation, enemy_attack, enemy_color);
+
+		// Sets animation state to be the beginning of the melee animation
+		enemy_animation.state = static_cast<int>(enemy_animation_events::Attack);
+		enemy_animation.frame = 0;
+		enemy_animation.speed_adjustment = enemy_attack_speed;
+	}
+}
+
+void AnimationSystem::set_player_animation(const Entity& player)
+{
+	assert(registry.players.has(player));
 	Animation& player_animation = registry.animations.get(player);
 	vec3& player_color = registry.colors.get(player);
 	RenderRequest& player_render = registry.render_requests.get(player);
 
 	// Sets player rendering/animations to deafult values
 	player_color = { 1, 1, 1 };
-	player_animation.state = (int)player_animation_states::Idle;
+	player_animation.state = static_cast<int>(player_animation_states::Idle);
 	player_animation.frame = 0;
 	player_animation.max_frames = player_num_frames;
 	player_animation.direction = 1;
@@ -110,74 +127,130 @@ void AnimationSystem:: set_player_animation(Entity player) {
 	player_render = { TEXTURE_ASSET_ID::PALADIN, EFFECT_ASSET_ID::PLAYER, GEOMETRY_BUFFER_ID::PLAYER };
 }
 
-// Will eventually combine this into a general toggle between player states
-void AnimationSystem::player_idle_animation(Entity player)
+void AnimationSystem::player_idle_animation(const Entity& player)
 {
+	assert(registry.players.has(player));
 	Animation& player_animation = registry.animations.get(player);
-	player_animation.state = (int)player_animation_states::Idle;
+	player_animation.state = static_cast<int>(player_animation_states::Idle);
 	player_animation.frame = 0;
 }
 
-void AnimationSystem::player_spellcast_animation(Entity player)
+void AnimationSystem::player_spellcast_animation(const Entity& player)
 {
+	assert(registry.players.has(player));
 	Animation& player_animation = registry.animations.get(player);
-	player_animation.state = (int)player_animation_states::Spellcast;
+	player_animation.state = static_cast<int>(player_animation_states::Spellcast);
 	player_animation.frame = 0;
 }
 
-void AnimationSystem::player_toggle_weapon(Entity player) {
+void AnimationSystem::player_toggle_weapon(const Entity& player)
+{
+	assert(registry.players.has(player));
 	Animation& player_animation = registry.animations.get(player);
 	player_animation.state = (player_animation.state + 1) % player_weapon_states;
 }
 
 
-void AnimationSystem::player_attack_animation(Entity player) {
+void AnimationSystem::player_attack_animation(const Entity& player)
+{
+	assert(registry.players.has(player));
 	Animation& player_animation = registry.animations.get(player);
-	vec3& entity_color = registry.colors.get(player);
+	vec3& player_color = registry.colors.get(player);
 
 	if (!registry.event_animations.has(player)) {
-		Event_Animation player_melee = registry.event_animations.emplace(player);
+		Event_Animation& player_melee = registry.event_animations.emplace(player);
 
-		// Stores restoration states for the player's animations, to be called after animation event is resolved
-		player_melee.restore_speed = player_animation.speed_adjustment;
-		player_melee.restore_state = player_animation.state;
-		player_melee.restore_color = entity_color;
+		this->animation_event_setup(player_animation, player_melee, player_color);
 
 		// Sets animation state to be the beginning of the melee animation
-		player_animation.state = (int)player_animation_states::Melee;
+		player_animation.state = static_cast<int>(player_animation_states::Melee);
 		player_animation.frame = 0;
 		player_animation.speed_adjustment = player_melee_speed;
 	}
 }
 
-void AnimationSystem::player_running_animation(Entity player)
+void AnimationSystem::player_running_animation(const Entity& player)
 {
+	assert(registry.players.has(player));
 	Animation& player_animation = registry.animations.get(player);
-	vec3& entity_color = registry.colors.get(player);
+	vec3& player_color = registry.colors.get(player);
 
 	if (!registry.event_animations.has(player)) {
-		Event_Animation player_melee = registry.event_animations.emplace(player);
+		Event_Animation& player_running = registry.event_animations.emplace(player);
 
-		// Stores restoration states for the player's animations, to be called after animation event is resolved
-		player_melee.restore_speed = player_animation.speed_adjustment;
-		player_melee.restore_state = player_animation.state;
-		player_melee.restore_color = entity_color;
+		this->animation_event_setup(player_animation, player_running, player_color);
 
 		// Sets animation state to be the beginning of the melee animation
-		player_animation.state = (int)player_animation_states::Running;
+		player_animation.state = static_cast<int>(player_animation_states::Running);
 		player_animation.frame = 0;
 		player_animation.speed_adjustment = player_running_speed;
+	}
+}
+
+void AnimationSystem::player_red_blue_animation(const Entity& player, ColorState color)
+{
+	Animation& player_animation = registry.animations.get(player);
+	vec3& player_color = registry.colors.get(player);
+
+	if (!registry.event_animations.has(player)) {
+		Event_Animation& player_melee = registry.event_animations.emplace(player);
+
+		//// Stores restoration states for the player's animations, to be called after animation event is resolved
+		//player_melee.restore_speed = player_animation.speed_adjustment;
+		//player_melee.restore_state = player_animation.state;
+		//player_melee.restore_color = player_color;
+
+		this->animation_event_setup(player_animation, player_melee, player_color);
+
+		// Sets animation state to be the beginning of the melee animation
+		player_animation.frame = 0;
+		player_animation.speed_adjustment = player_blue_red_switch_speed;
+
+		switch (color) {
+		case ColorState::Red:
+			player_color = { 2, 0.8, 0.8 };
+			break;
+		case ColorState::Blue:
+			player_color = { 0.5, 0.5, 3 };
+			break;
+		default:
+			player_color = { 1, 1, 1 };
+			break;
+		}
+		
 	}
 }
 
 
 bool AnimationSystem::animation_events_completed() { return (registry.event_animations.size() == 0); }
 
-void AnimationSystem::damage_animation(Entity entity)
+void AnimationSystem::resolve_event_animations()
 {
-	Animation& entity_animation = registry.animations.get(entity);
-	vec3& entity_color = registry.colors.get(entity);
-	if (!registry.event_animations.has(entity)) {
-		Event_Animation damaged_entity = registry.event_animations.emplace(entity);
+	for (Entity& animation_entity : registry.event_animations.entities) {
+		Event_Animation& event_animation = registry.event_animations.get(animation_entity);
+		Animation& actual_animation = registry.animations.get(animation_entity);
+		vec3& entity_color = registry.colors.get(animation_entity);
+
+		// Checks if the animation frame had been reset to 0. If true, this means event animation has completed
+		// TODO: Change to be a different check, this current one is a bit iffy, and is reliant on there being at least
+		// two frames in all event animations (which is technically correct since it's an "animation", but a bit iffy)
+		if (actual_animation.frame < event_animation.frame) {
+			// Restores animation back to default before event animation was called
+			actual_animation.speed_adjustment = event_animation.restore_speed;
+			actual_animation.state = event_animation.restore_state;
+			entity_color = event_animation.restore_color;
+			// Removes event animation from registry
+			registry.event_animations.remove(animation_entity);
+		} else {
+			event_animation.frame = actual_animation.frame;
+		}
 	}
+}
+
+void AnimationSystem::animation_event_setup(Animation& animation, Event_Animation& event_animation, vec3& color) 
+{
+	// Stores restoration states for the player's animations, to be called after animation event is resolved
+	event_animation.restore_speed = animation.speed_adjustment;
+	event_animation.restore_state = animation.state;
+	event_animation.restore_color = color;
 }

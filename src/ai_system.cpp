@@ -7,11 +7,13 @@
 AISystem::AISystem(const Debug& debugging,
 				   std::shared_ptr<CombatSystem> combat,
 				   std::shared_ptr<MapGeneratorSystem> map_generator,
-				   std::shared_ptr<TurnSystem> turns)
-	: debugging(debugging)
-	, combat(std::move(combat))
+				   std::shared_ptr<TurnSystem> turns,
+				   std::shared_ptr<AnimationSystem> animations)
+	: combat(std::move(combat))
+	, debugging(debugging)
 	, map_generator(std::move(map_generator))
 	, turns(std::move(turns))
+	, animations(std::move(animations))
 {
 	registry.debug_components.emplace(enemy_team);
 
@@ -299,31 +301,31 @@ void AISystem::switch_enemy_state(const Entity& enemy_entity, EnemyState new_sta
 	// Animation& animation = registry.animations.get(enemy_entity);
 	// animation.switchTexture(enemy.team, enemy.type, enemy.state);
 
+	if (enemy_state_to_animation_state.count(enemy.state)) {
+		int new_state = enemy_state_to_animation_state[enemy.state];
+		animations->set_enemy_state(enemy_entity, new_state);
+	}
 	switch (enemy.state) {
 
 	case EnemyState::Idle:
-		enemy_animation.state = 0;
 		break;
 
 	case EnemyState::Active:
-		enemy_animation.state = 1;
 		break;
 
 	case EnemyState::Flinched:
-		enemy_animation.state = 2;
 		break;
 
 	case EnemyState::Powerup:
-		enemy_animation.state = 2;
 		break;
 
 	case EnemyState::Immortal:
-		enemy_animation.state = 2;
 		break;
 
 	default:
 		throw std::runtime_error("Invalid enemy state.");
 	}
+
 }
 
 bool AISystem::is_player_spotted(const Entity& entity, const uint radius)
@@ -353,8 +355,13 @@ void AISystem::attack_player(const Entity& entity)
 	// TODO: Animate attack.
 	char* enemy_type = enemy_type_to_string[registry.enemies.get(entity).type];
 	printf("%s_%u attacks player!\n", enemy_type, (uint)entity);
+	Entity& player = registry.players.top_entity();
 
 	combat->do_attack(entity, registry.stats.get(entity).base_attack, registry.players.top_entity());
+	// TODO: move attack animation to combat system potentially
+	// Triggers attack for a enemy entity
+	animations->enemy_attack_animation(entity);
+	animations->damage_animation(player);
 	so_loud.play(enemy_attack1_wav);
 }
 

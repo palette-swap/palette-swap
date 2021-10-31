@@ -44,15 +44,20 @@ static void load_enemy(int enemy_index, const rapidjson::Document & json_doc)
 	// Indicates enemy is hittable by objects
 	registry.hittables.emplace(entity);
 
-	// TODO: Switch out basic enemy type based on input (Currently Defaulted to Slug)
-	registry.render_requests.insert(entity,
-									{ TEXTURE_ASSET_ID::SLIME, EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY });
-	registry.colors.insert(entity, { 1, 1, 1 });
+	
+	registry.render_requests.insert(
+		entity, { enemy_type_textures[static_cast<int>(enemy_component.type)], EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY });
+	if (enemy_component.team == ColorState::Red) {
+		registry.colors.insert(entity, AnimationUtility::default_enemy_red);
+	} else if (enemy_component.team == ColorState::Blue) {
+		registry.colors.insert(entity, { AnimationUtility::default_enemy_blue });
+	} else {
+		registry.colors.insert(entity, { 1, 1, 1 });
+	}
 
-	// TODO: Combine with render_requests above, so animation system handles render requests as a middleman
-	// Update animation number using animation system max frames, instead of this static number
 	Animation& enemy_animation = registry.animations.emplace(entity);
 	enemy_animation.max_frames = 4;
+
 }
 
 void MapGeneratorSystem::create_picture()

@@ -66,12 +66,6 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 
 	// Indicates enemy is hittable by objects
 	registry.hittables.emplace(entity);
-
-	// TODO: Switch out basic enemy type based on input (Currently Defaulted to Slug)
-	registry.render_requests.insert(entity,
-									{ TEXTURE_ASSET_ID::SLIME, EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY });
-	registry.colors.insert(entity, { 1, 1, 1 });
-
 	// Create enemy component for AI System.
 	// TODO: Replace with load from file or auto-generate.
 	Enemy& enemy = registry.enemies.emplace(entity);
@@ -110,9 +104,17 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 		throw std::runtime_error("Invalid enemy type.");
 	}
 
+	registry.render_requests.insert(
+		entity, { enemy_type_textures[static_cast<int>(type)], EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY });
+	if (team == ColorState::Red) {
+		registry.colors.insert(entity, AnimationUtility::default_enemy_red);
+	} else if (team == ColorState::Blue) {
+		registry.colors.insert(entity, { AnimationUtility::default_enemy_blue });
+	} else {
+		registry.colors.insert(entity, { 1, 1, 1 });
+	}
 
-	// TODO: Combine with render_requests above, so animation system handles render requests as a middleman
-	// Update animation number using animation system max frames, instead of this static number
+
 	Animation& enemy_animation = registry.animations.emplace(entity);
 	enemy_animation.max_frames = 4;
 

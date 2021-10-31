@@ -9,6 +9,7 @@
 #include "combat_system.hpp"
 #include "map_generator_system.hpp"
 #include "turn_system.hpp"
+#include "animation_system.hpp"
 
 #include "soloud_wav.h"
 
@@ -17,7 +18,8 @@ public:
 	AISystem(const Debug& debugging,
 			 std::shared_ptr<CombatSystem> combat,
 			 std::shared_ptr<MapGeneratorSystem> map_generator,
-			 std::shared_ptr<TurnSystem> turns);
+			 std::shared_ptr<TurnSystem> turns,
+			 std::shared_ptr<AnimationSystem> animations);
 
 	void step(float elapsed_ms);
 
@@ -87,6 +89,9 @@ private:
 
 	// Shared resource: Turn system.
 	std::shared_ptr<TurnSystem> turns;
+
+	// Shared resource: Animation System.
+	std::shared_ptr<AnimationSystem> animations;
 
 	// Entity representing the enemy team's turn.
 	Entity enemy_team;
