@@ -468,9 +468,10 @@ void WorldSystem::equip_next_weapon()
 			= registry.weapons.get(current_weapon).given_attacks.at(current_attack).targeting_type
 			== TargetingType::Projectile;
 		printf("Switched weapon to %s\n", registry.items.get(curr).name.c_str());
+		animations->player_toggle_weapon(player);
 		turns->complete_team_action(player);
 	}
-	animations->player_toggle_weapon(player);
+	
 }
 
 void WorldSystem::change_color() 
