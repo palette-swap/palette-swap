@@ -538,6 +538,9 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 			dvec2 mouse_screen_pos;
 			glfwGetCursorPos(window, &mouse_screen_pos.x, &mouse_screen_pos.y);
 
+			// Denotes that whether a player was able to complete their turn or not (false be default)
+			bool combat_success =false;
+
 			// Convert to world pos
 			vec2 mouse_world_pos = vec2(mouse_screen_pos) * renderer->screen_scale + renderer->get_top_left();
 
@@ -551,11 +554,13 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 			}
 			for (const auto& target : registry.stats.entities) {
 				if (registry.map_positions.get(target).position == mouse_map_pos) {
-					
+					if (target == player) {
+						break;
+					}
 					Enemy& enemy = registry.enemies.get(target);
 					ColorState inactive_color = turns->get_inactive_color();
 					if (enemy.team != inactive_color) {
-						bool combat_success = combat->do_attack(player, attack, target);
+						combat_success = combat->do_attack(player, attack, target);
 						if (combat_success) {
 							so_loud.play(light_sword_wav);
 						}
