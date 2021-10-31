@@ -1,5 +1,7 @@
 #include "combat_system.hpp"
 
+#include <sstream>
+
 void CombatSystem::init(std::shared_ptr<std::default_random_engine> rng, std::shared_ptr<AnimationSystem> animations)
 {
 	this->rng = std::move(rng);
