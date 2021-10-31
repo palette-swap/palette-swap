@@ -545,7 +545,7 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 			// Denotes whether a player was able to complete their turn or not (false be default)
 			bool combat_success = false;
 
-			// Convert to world pos
+			// Convert to world posd
 			vec2 mouse_world_pos = vec2(mouse_screen_pos) * renderer->screen_scale + renderer->get_top_left();
 
 			// Get map_positions to compare
