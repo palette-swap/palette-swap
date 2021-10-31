@@ -8,9 +8,12 @@ void CombatSystem::init(std::shared_ptr<std::default_random_engine> rng, std::sh
 
 bool CombatSystem::do_attack(Entity attacker_entity, Attack& attack, Entity target_entity)
 {
+	// Checks that the attacker and the enemy wasn't the same entity
+	if (attacker_entity == target_entity) {
+		return false;
+	}
 	MapPosition& attacker_position = registry.map_positions.get(attacker_entity);
 	MapPosition& target_position = registry.map_positions.get(target_entity);
-
 	if (target_position.position.x < attacker_position.position.x) {
 		animations->set_sprite_direction(attacker_entity, Sprite_Direction::SPRITE_LEFT);
 	} else {
