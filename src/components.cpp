@@ -223,3 +223,8 @@ void Stats::deserialize(const std::string& prefix, const rapidjson::Document& js
 	evasion = evasion_value->GetInt();
 	base_attack.deserialize(prefix + "/attack", json);
 }
+
+
+bool operator==(const Text& t1, const Text& t2) {
+	return t1.text == t2.text && t1.font_size == t2.font_size;
+}

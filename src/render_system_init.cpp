@@ -85,6 +85,8 @@ void RenderSystem::initialize_gl_textures()
 		gl_has_errors();
 		stbi_image_free(data);
 	}
+
+	TTF_Init();
 	gl_has_errors();
 }
 
@@ -373,6 +375,14 @@ RenderSystem::~RenderSystem()
 	// delete allocated resources
 	glDeleteFramebuffers(1, &frame_buffer);
 	gl_has_errors();
+
+	// Delete text-related resources
+	for (auto& text_data : text_buffers) {
+		glDeleteTextures(1, &text_data.second.texture);
+	}
+	for (auto& font : fonts) {
+		TTF_CloseFont(font.second);
+	}
 
 	// remove all entities created by the render system
 	while (!registry.render_requests.entities.empty()) {
