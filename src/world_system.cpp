@@ -416,7 +416,7 @@ void WorldSystem::move_player(Direction direction)
 		animations->player_running_animation(player);
 	}
 
-	if (map_pos.position == new_pos || !map_generator->walkable(new_pos) || !turns->execute_team_action(player)) {
+	if (map_pos.position == new_pos || !map_generator->walkable_and_free(new_pos) || !turns->execute_team_action(player)) {
 		return;
 	}
 
