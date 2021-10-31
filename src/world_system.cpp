@@ -333,7 +333,6 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 
 	if (action == GLFW_RELEASE && key == GLFW_KEY_SPACE) {
 		change_color();
-		animations->player_red_blue_animation(player, turns->get_active_color());
 	}
 
 	// Resetting game
@@ -476,16 +475,19 @@ void WorldSystem::equip_next_weapon()
 
 void WorldSystem::change_color() 
 { 
-	switch (turns->get_active_color()) {
+	ColorState active_color = turns->get_active_color();
+	switch (active_color) {
 	case ColorState::Red:
 		turns->set_active_color(ColorState::Blue);
 		so_loud.fadeVolume(bgm_blue, -1, .25);
 		so_loud.fadeVolume(bgm_red, 0, .25);
+		animations->player_red_blue_animation(player, ColorState::Blue);
 		break;
 	case ColorState::Blue:
 		turns->set_active_color(ColorState::Red);
 		so_loud.fadeVolume(bgm_red, -1, .25);
 		so_loud.fadeVolume(bgm_blue, 0, .25);
+		animations->player_red_blue_animation(player, ColorState::Red);
 		break;
 	default:
 		turns->set_active_color(ColorState::Red);
