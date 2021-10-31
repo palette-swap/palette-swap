@@ -48,7 +48,7 @@ public:
 	void init();
 
 	// Updates all animated entities based on elapsed time, changes their frame based on the time
-	void update_animations(float elapsed_ms);	
+	void update_animations(float elapsed_ms, ColorState inactive_color);	
 	// Sets direction for an animated sprite, such that it faces either left or right
 	void set_sprite_direction(const Entity& sprite, Sprite_Direction direction);
 	// Triggers an animation to display that an entity has taken damage
@@ -89,7 +89,6 @@ private:
 	void resolve_event_animations();
 	// helper function for setting animation events
 	void animation_event_setup(Animation& animation, Event_Animation& event_animation, vec3& color);
-
 };
 
 

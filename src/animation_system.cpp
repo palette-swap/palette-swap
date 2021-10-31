@@ -4,17 +4,19 @@ void AnimationSystem::init()
 {
 }
 
-void AnimationSystem::update_animations(float elapsed_ms)
+void AnimationSystem::update_animations(float elapsed_ms, ColorState inactive_color)
 {
 	auto& animations = registry.animations;
 	for (uint i = 0; i < animations.size(); i++) {
 		Animation& animation = animations.components[i];
-
-		animation.elapsed_time += elapsed_ms;
-		if (animation.elapsed_time >= base_animation_speed/animation.speed_adjustment) {
-			animation.elapsed_time = 0;
-			animation.frame = ((animation.frame) + 1) % animation.max_frames;
+		if (animation.color != inactive_color) {
+			animation.elapsed_time += elapsed_ms;
+			if (animation.elapsed_time >= base_animation_speed / animation.speed_adjustment) {
+				animation.elapsed_time = 0;
+				animation.frame = ((animation.frame) + 1) % animation.max_frames;
+			}
 		}
+
 	}
 	resolve_event_animations();
 }

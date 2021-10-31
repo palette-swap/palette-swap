@@ -95,32 +95,6 @@ struct ResolvedProjectile {
 	float counter = 400;
 };
 
-// Struct for denoting the frame that the rendering system should be rendering 
-// to the screen for a spritesheet
-struct Animation {
-	int direction = 1;
-	int frame = 0;
-	int max_frames = 1;
-	int state = 0;
-	// Adjusts animation rate to be faster or slower than default
-	// ie. faster things should change more frames. slower things should change less frames
-	float speed_adjustment = 1;
-	float elapsed_time = 0;
-};
-
-// Struct denoting irregular animation events (ie attacking, containing information to restore an entity's
-// animations after the irregular event animation completes
-// TODO: Replace 
-struct Event_Animation {
-	bool turn_trigger = false;
-	float speed_adjustment = 1;
-	vec3 restore_color = { 1, 1, 1 };
-
-	int restore_state = 0;
-	float restore_speed = 1;
-	int frame = 0;
-
-};
 
 // Test Texture Buffer element for enemies
 // TODO: change to animated vertices after bringing player into this 3D element group
@@ -222,13 +196,6 @@ enum class GEOMETRY_BUFFER_ID : uint8_t {
 };
 const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT + MapUtility::num_rooms - 1;
 
-struct RenderRequest {
-	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
-	EFFECT_ASSET_ID used_effect = EFFECT_ASSET_ID::EFFECT_COUNT;
-	GEOMETRY_BUFFER_ID used_geometry = GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
-
-	bool visible = true;
-};
 
 // Represents allowed directions for an animated sprite (e.g whether the sprite is facing left or right)
 enum class Sprite_Direction : uint8_t { SPRITE_LEFT, SPRITE_RIGHT};
@@ -300,17 +267,6 @@ enum class EnemyType {
 };
 extern std::unordered_map<EnemyType, char*> enemy_type_to_string;
 
-// Maps enemy types to corresponding texture asset
-// Remember to add a mapping to a new texture (or use a default such as a slime)
-// This will help load the animation by enemy type when you load enemies
-const TEXTURE_ASSET_ID enemy_type_textures[static_cast<int>(EnemyType::EnemyCount)] { 
-	TEXTURE_ASSET_ID::SLIME,
-	TEXTURE_ASSET_ID::RAVEN,
-	TEXTURE_ASSET_ID::ARMOR,
-	TEXTURE_ASSET_ID::TREEANT,
-	TEXTURE_ASSET_ID::WRAITH 
-};
-
 // Slime:		Idle, Active, Flinched.
 // Raven:		Idle, Actives.
 // Armor:		Idle, Active, Immortal.
@@ -349,7 +305,51 @@ struct Enemy {
 	void serialize(const std::string & prefix, rapidjson::Document &json) const;
 	void deserialize(const std::string& prefix, const rapidjson::Document& json);
 };
+//---------------------------------------------------------------------------
+//-------------------------		  ANIMATIONS        -------------------------
+//---------------------------------------------------------------------------
 
+// Maps enemy types to corresponding texture asset
+// Remember to add a mapping to a new texture (or use a default such as a slime)
+// This will help load the animation by enemy type when you load enemies
+const TEXTURE_ASSET_ID enemy_type_textures[static_cast<int>(EnemyType::EnemyCount)] { TEXTURE_ASSET_ID::SLIME,
+																					  TEXTURE_ASSET_ID::RAVEN,
+																					  TEXTURE_ASSET_ID::ARMOR,
+																					  TEXTURE_ASSET_ID::TREEANT,
+																					  TEXTURE_ASSET_ID::WRAITH };
+struct RenderRequest {
+	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
+	EFFECT_ASSET_ID used_effect = EFFECT_ASSET_ID::EFFECT_COUNT;
+	GEOMETRY_BUFFER_ID used_geometry = GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
+
+	bool visible = true;
+};
+
+// Struct for denoting the frame that the rendering system should be rendering
+// to the screen for a spritesheet
+struct Animation {
+	ColorState color = ColorState::None;
+	int direction = 1;
+	int frame = 0;
+	int max_frames = 1;
+	int state = 0;
+	// Adjusts animation rate to be faster or slower than default
+	// ie. faster things should change more frames. slower things should change less frames
+	float speed_adjustment = 1;
+	float elapsed_time = 0;
+};
+
+// Struct denoting irregular animation events (ie attacking, containing information to restore an entity's
+// animations after the irregular event animation completes
+struct Event_Animation {
+	bool turn_trigger = false;
+	float speed_adjustment = 1;
+	vec3 restore_color = { 1, 1, 1 };
+
+	int restore_state = 0;
+	float restore_speed = 1;
+	int frame = 0;
+};
 //---------------------------------------------------------------------------
 //-------------------------         COMBAT          -------------------------
 //---------------------------------------------------------------------------
