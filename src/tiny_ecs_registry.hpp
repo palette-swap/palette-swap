@@ -24,6 +24,7 @@ public:
 	// Map Generator
 	ComponentContainer<Room> rooms;
 	ComponentContainer<MapPosition> map_positions;
+	ComponentContainer<ScreenPosition> screen_positions;
 	ComponentContainer<WorldPosition> world_positions;
 	ComponentContainer<Velocity> velocities;
 
@@ -42,6 +43,9 @@ public:
 	ComponentContainer<Item> items;
 	ComponentContainer<Weapon> weapons;
 	ComponentContainer<Inventory> inventories;
+
+	// UI
+	ComponentContainer<Text> text;
 
 private:
 	// IMPORTANT: Don't forget to add any newly added containers!
@@ -63,6 +67,7 @@ private:
 		// Map Generator
 		&rooms,
 		&map_positions,
+		&screen_positions,
 		&world_positions,
 		&velocities,
 
@@ -84,6 +89,8 @@ private:
 
 		// Camera
 		&cameras,
+		// UI
+		&text,
 	};
 
 public:

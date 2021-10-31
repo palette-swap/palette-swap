@@ -14,7 +14,7 @@ Transform RenderSystem::get_transform(Entity entity)
 	if (registry.map_positions.has(entity)) {
 		MapPosition& map_position = registry.map_positions.get(entity);
 		transform.translate(MapUtility::map_position_to_world_position(map_position.position));
-	} else {
+	} else if (registry.world_positions.has(entity)) {
 		// Most objects in the game are expected to use MapPosition, exceptions are:
 		// Arrow, Room.
 		transform.translate(registry.world_positions.get(entity).position);
@@ -22,8 +22,91 @@ Transform RenderSystem::get_transform(Entity entity)
 			// Probably can provide a get if exist function here to boost performance
 			transform.rotate(registry.velocities.get(entity).angle);
 		}
+	} else {
+		transform.translate(screen_position_to_world_position(registry.screen_positions.get(entity).position * vec2(screen_size)));
 	}
 	return transform;
+}
+
+void RenderSystem::prepare_for_textured(GLuint texture_id)
+{
+	const auto program = (GLuint)effects.at((uint8)EFFECT_ASSET_ID::TEXTURED);
+
+	GLint in_position_loc = glGetAttribLocation(program, "in_position");
+	GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
+	gl_has_errors();
+	assert(in_texcoord_loc >= 0);
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	glEnableVertexAttribArray(in_position_loc);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), nullptr);
+	gl_has_errors();
+
+	glEnableVertexAttribArray(in_texcoord_loc);
+	glVertexAttribPointer(in_texcoord_loc,
+						  2,
+						  GL_FLOAT,
+						  GL_FALSE,
+						  sizeof(TexturedVertex),
+						  (void*)sizeof(vec3)); // note the stride to skip the preceeding vertex position
+	// Enabling and binding texture to slot 0
+	glActiveTexture(GL_TEXTURE0);
+	gl_has_errors();
+
+	glBindTexture(GL_TEXTURE_2D, texture_id);
+	gl_has_errors();
+}
+
+RenderSystem::TextData RenderSystem::generate_text(const Text& text)
+{
+	TextData text_data = {};
+	// Texture creation
+	glGenTextures(1, &(text_data.texture));
+
+	// Check if we have the font in the right size, otherwise load it
+	TTF_Font* font = nullptr;
+	auto font_itr = fonts.find(text.font_size);
+	if (font_itr != fonts.end()) {
+		font = font_itr->second;
+	} else {
+		font = fonts.emplace(text.font_size, TTF_OpenFont(fonts_path("VT323-Regular.ttf").c_str(), text.font_size)).first->second;
+	}
+
+	// Render the text using SDL
+	SDL_Surface* surface = TTF_RenderText_Blended_Wrapped(font, text.text.c_str(), SDL_Color({ 255, 255, 255, 0 }), screen_size.x);
+	SDL_LockSurface(surface);
+	text_data.texture_width = surface->w;
+	text_data.texture_height = surface->h;
+	if (surface == nullptr) {
+		fprintf(stderr, "Error TTF_RenderText %s\n", text.text.c_str());
+		return text_data;
+	}
+	GLint colors = surface->format->BytesPerPixel;
+	assert(colors == 3 || colors == 4);
+
+	// Extract the SDL image data into the texture
+	glBindTexture(GL_TEXTURE_2D, text_data.texture);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexImage2D(GL_TEXTURE_2D,
+				 0,
+				 (colors == 4) ? GL_RGBA : GL_RGB,
+				 text_data.texture_width,
+				 text_data.texture_height,
+				 0,
+				 (colors == 4) ? GL_RGBA : GL_RGB,
+				 GL_UNSIGNED_BYTE,
+				 surface->pixels);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	gl_has_errors();
+
+	// Free the SDL Image
+	SDL_FreeSurface(surface);
+	return text_data;
 }
 
 void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
@@ -59,33 +142,10 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 
 	// Input data location as in the vertex buffer
 	if (render_request.used_effect == EFFECT_ASSET_ID::TEXTURED) {
-		GLint in_position_loc = glGetAttribLocation(program, "in_position");
-		GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
-		gl_has_errors();
-		assert(in_texcoord_loc >= 0);
-
-		glEnableVertexAttribArray(in_position_loc);
-		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), nullptr);
-		gl_has_errors();
-
-		glEnableVertexAttribArray(in_texcoord_loc);
-		glVertexAttribPointer(in_texcoord_loc,
-							  2,
-							  GL_FLOAT,
-							  GL_FALSE,
-							  sizeof(TexturedVertex),
-							  (void*)sizeof(vec3)); // note the stride to skip the preceeding vertex position
-		// Enabling and binding texture to slot 0
-		glActiveTexture(GL_TEXTURE0);
-		gl_has_errors();
 
 		assert(registry.render_requests.has(entity));
-		GLuint texture_id = texture_gl_handles.at((GLuint)registry.render_requests.get(entity).used_texture);
-
-		glBindTexture(GL_TEXTURE_2D, texture_id);
-		gl_has_errors();
-	} else if (render_request.used_effect == EFFECT_ASSET_ID::ENEMY
-			   || render_request.used_effect == EFFECT_ASSET_ID::PLAYER) {
+		prepare_for_textured(texture_gl_handles.at((GLuint)registry.render_requests.get(entity).used_texture));
+	} else if (render_request.used_effect == EFFECT_ASSET_ID::ENEMY || render_request.used_effect == EFFECT_ASSET_ID::PLAYER) {
 
 		GLint in_position_loc = glGetAttribLocation(program, "in_position");
 		GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
@@ -181,25 +241,7 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 		gl_has_errors();
 	}
 
-	// Get number of indices from index buffer, which has elements uint16_t
-	GLint size = 0;
-	glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
-	gl_has_errors();
-
-	GLsizei num_indices = size / sizeof(uint16_t);
-	// GLsizei num_triangles = num_indices / 3;
-
-	GLint curr_program;
-	glGetIntegerv(GL_CURRENT_PROGRAM, &curr_program);
-	// Setting uniform values to the currently bound program
-	GLint transform_loc = glGetUniformLocation(curr_program, "transform");
-	glUniformMatrix3fv(transform_loc, 1, GL_FALSE, glm::value_ptr(transform.mat));
-	GLint projection_loc = glGetUniformLocation(curr_program, "projection");
-	glUniformMatrix3fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
-	gl_has_errors();
-	// Drawing of num_indices/3 triangles specified in the index buffer
-	glDrawElements(GL_TRIANGLES, num_indices, GL_UNSIGNED_SHORT, nullptr);
-	gl_has_errors();
+	draw_triangles(transform, projection);
 }
 
 void RenderSystem::draw_healthbar(Entity entity, const Stats& stats, const mat3& projection)
@@ -236,21 +278,72 @@ void RenderSystem::draw_healthbar(Entity entity, const Stats& stats, const mat3&
 	glVertexAttribPointer(in_color_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), (void*)sizeof(vec3));
 	gl_has_errors();
 
+	GLint health_loc = glGetUniformLocation(program, "health");
+	glUniform1f(health_loc, max(static_cast<float>(stats.health), 0.f) / static_cast<float>(stats.health_max));
+
+	draw_triangles(transform, projection);
+}
+
+void RenderSystem::draw_text(Entity entity, const Text& text, const mat3& projection)
+{
+	Transform transform = get_transform(entity);
+
+	const auto program = (GLuint)effects.at((uint8)EFFECT_ASSET_ID::TEXTURED);
+
+	// Setting shaders
+	glUseProgram(program);
+	gl_has_errors();
+
+	auto text_data = text_buffers.find(text);
+
+	if (text_data == text_buffers.end()) {
+		TextData new_text_data = generate_text(text);
+		text_data = text_buffers.emplace(text, new_text_data).first;
+	}
+
+	// Scale to expected pixel size, apply screen scale so not affected by zoom
+	transform.scale(vec2(text_data->second.texture_width, text_data->second.texture_height) * screen_scale);
+
+	// Shift according to desired alignment using fancy enum wizardry
+	transform.translate({ (float)text.alignment_x * .5, (float)text.alignment_y * .5 });
+
+	const GLuint vbo = vertex_buffers.at((int)GEOMETRY_BUFFER_ID::SPRITE);
+	const GLuint ibo = index_buffers.at((int)GEOMETRY_BUFFER_ID::SPRITE);
+
+	// Setting vertex and index buffers
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+	gl_has_errors();
+
+	prepare_for_textured(text_data->second.texture);
+
+	// Setup coloring
+	if (registry.colors.has(entity)) {
+		GLint color_uloc = glGetUniformLocation(program, "fcolor");
+		const vec3 color = registry.colors.get(entity);
+		glUniform3fv(color_uloc, 1, glm::value_ptr(color));
+		gl_has_errors();
+	}
+
+	draw_triangles(transform, projection);
+}
+
+void RenderSystem::draw_triangles(const Transform& transform, const mat3& projection)
+{
 	// Get number of indices from index buffer, which has elements uint16_t
 	GLint size = 0;
 	glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
 	gl_has_errors();
 
-	GLsizei num_indices = size / sizeof(uint16_t);
-	// GLsizei num_triangles = num_indices / 3;
+	GLsizei num_indices = (int)size / sizeof(uint16_t);
 
+	GLint curr_program = 0;
+	glGetIntegerv(GL_CURRENT_PROGRAM, &curr_program);
 	// Setting uniform values to the currently bound program
-	GLint transform_loc = glGetUniformLocation(program, "transform");
+	GLint transform_loc = glGetUniformLocation(curr_program, "transform");
 	glUniformMatrix3fv(transform_loc, 1, GL_FALSE, glm::value_ptr(transform.mat));
-	GLint projection_loc = glGetUniformLocation(program, "projection");
+	GLint projection_loc = glGetUniformLocation(curr_program, "projection");
 	glUniformMatrix3fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
-	GLint health_loc = glGetUniformLocation(program, "health");
-	glUniform1f(health_loc, max(static_cast<float>(stats.health), 0.f) / static_cast<float>(stats.health_max));
 	gl_has_errors();
 	// Drawing of num_indices/3 triangles specified in the index buffer
 	glDrawElements(GL_TRIANGLES, num_indices, GL_UNSIGNED_SHORT, nullptr);
@@ -347,6 +440,10 @@ void RenderSystem::draw()
 		draw_healthbar(registry.stats.entities[i], registry.stats.components[i], projection_2d);
 	}
 
+	for (int i = 0; i < registry.text.size(); i++) {
+		draw_text(registry.text.entities[i], registry.text.components[i], projection_2d);
+	}
+
 	// Truely render to the screen
 	draw_to_screen();
 
@@ -397,7 +494,12 @@ vec2 RenderSystem::get_top_left()
 	return { final_camera_pos.x, final_camera_pos.y };
 }
 
-void RenderSystem::scale_on_scroll(float offset)
+vec2 RenderSystem::screen_position_to_world_position(vec2 screen_pos)
+{
+	return screen_pos * screen_scale + get_top_left();
+}
+
+ void RenderSystem::scale_on_scroll(float offset)
 {
 	// scale the camera based on scrolling offset
 	// scrolling forward -> zoom in
