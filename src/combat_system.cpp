@@ -1,6 +1,10 @@
 #include "combat_system.hpp"
 
-void CombatSystem::init(std::shared_ptr<std::default_random_engine> rng) { this->rng = std::move(rng); }
+void CombatSystem::init(std::shared_ptr<std::default_random_engine> rng, std::shared_ptr<AnimationSystem> animations)
+{
+	this->rng = std::move(rng);
+	this->animations = std::move(animations);
+}
 
 bool CombatSystem::do_attack(Entity attacker_entity, Attack& attack, Entity target_entity)
 {

@@ -12,7 +12,8 @@
 WorldSystem::WorldSystem(Debug& debugging,
 						 std::shared_ptr<CombatSystem> combat,
 						 std::shared_ptr<MapGeneratorSystem> map,
-						 std::shared_ptr<TurnSystem> turns)
+						 std::shared_ptr<TurnSystem> turns,
+						 std::shared_ptr<AnimationSystem> animations)
 					
 	: points(0)
 	, debugging(debugging)
@@ -20,8 +21,9 @@ WorldSystem::WorldSystem(Debug& debugging,
 	, combat(std::move(combat))
 	, map_generator(std::move(map))
 	, turns(std::move(turns))
+	, animations(std::move(animations))
 {
-	this->combat->init(rng);
+	this->combat->init(rng, animations);
 }
 
 WorldSystem::~WorldSystem()
