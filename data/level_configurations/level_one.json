@@ -11,7 +11,7 @@
   },
   "enemies": [
     {
-      "team": 1,
+      "team": 2,
       "type": 1,
       "state": 0,
       "radius": 3,
@@ -45,7 +45,7 @@
       }
     },
     {
-      "team": 1,
+      "team": 2,
       "type": 0,
       "state": 0,
       "radius": 3,
@@ -79,7 +79,7 @@
       }
     },
     {
-      "team": 1,
+      "team": 2,
       "type": 0,
       "state": 0,
       "radius": 3,

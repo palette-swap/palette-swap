@@ -59,8 +59,8 @@ static constexpr int window_height_px = 1080;
 static constexpr float window_default_scale = 0.5;
 
 namespace AnimationUtility{
-	static constexpr vec3 default_enemy_red = { 2, 1, 1 };
-	static constexpr vec3 default_enemy_blue = { 1, 1, 2 };
+	static constexpr vec3 default_enemy_red = { 4, 1, 1 };
+	static constexpr vec3 default_enemy_blue = { 1, 1, 4 };
 }
 
 namespace MapUtility {
