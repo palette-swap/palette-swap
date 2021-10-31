@@ -552,9 +552,9 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 			for (const auto& target : registry.stats.entities) {
 				if (registry.map_positions.get(target).position == mouse_map_pos) {
 					combat->do_attack(player, attack, target);
-					animations->player_attack_animation(player);
+					//animations->player_attack_animation(player);
 					so_loud.play(light_sword_wav);
-					animations->damage_animation(target);
+					//animations->damage_animation(target);
 				}
 			}
 			turns->complete_team_action(player);

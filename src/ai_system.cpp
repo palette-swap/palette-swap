@@ -332,8 +332,8 @@ void AISystem::attack_player(const Entity& entity)
 
 	// TODO: move attack animation to combat system potentially
 	// Triggers attack for a enemy entity
-	animations->enemy_attack_animation(entity);
-	animations->damage_animation(player);
+	//animations->enemy_attack_animation(entity);
+	//animations->damage_animation(player);
 	so_loud.play(enemy_attack1_wav);
 }
 

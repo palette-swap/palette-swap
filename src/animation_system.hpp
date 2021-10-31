@@ -54,7 +54,8 @@ public:
 	// Triggers an animation to display that an entity has taken damage
 	// For now, this is just a colour change. Will change in next version however
 	void damage_animation(const Entity& entity);
-
+	// Triggers an attack animation, chooses the correct one depending on which entity (player/enemy)
+	void attack_animation(const Entity& entity);
 	// Sets an enemy entity to have the correct render texture, and color state
 	void set_enemy_animation(const Entity& enemy, TEXTURE_ASSET_ID enemy_type, ColorState color);
 	// Changes an enemy's animation state

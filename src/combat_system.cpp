@@ -8,6 +8,20 @@ void CombatSystem::init(std::shared_ptr<std::default_random_engine> rng, std::sh
 
 bool CombatSystem::do_attack(Entity attacker_entity, Attack& attack, Entity target_entity)
 {
+	MapPosition& attacker_position = registry.map_positions.get(attacker_entity);
+	MapPosition& target_position = registry.map_positions.get(target_entity);
+
+	if (target_position.position.x < attacker_position.position.x) {
+		animations->set_sprite_direction(attacker_entity, Sprite_Direction::SPRITE_LEFT);
+	} else {
+		animations->set_sprite_direction(attacker_entity, Sprite_Direction::SPRITE_RIGHT);
+	}
+
+	// Triggers attack based on player/enemy attack prescence
+	animations->attack_animation(attacker_entity);
+	animations->damage_animation(target_entity);
+	
+
 	Stats& attacker = registry.stats.get(attacker_entity);
 	Stats& target = registry.stats.get(target_entity);
 	// Roll a random to hit between min and max (inclusive), add attacker's to_hit_bonus

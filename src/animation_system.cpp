@@ -49,6 +49,15 @@ void AnimationSystem::damage_animation(const Entity& entity)
 	}
 }
 
+void AnimationSystem::attack_animation(const Entity& entity) 
+{ 
+	if (registry.players.has(entity)) {
+		this->player_attack_animation(entity);
+	} else {
+		this->enemy_attack_animation(entity);
+	}
+}
+
 void AnimationSystem::set_enemy_animation(const Entity& enemy, TEXTURE_ASSET_ID enemy_type, ColorState color) 
 {
 	Animation& enemy_animation = registry.animations.get(enemy);
