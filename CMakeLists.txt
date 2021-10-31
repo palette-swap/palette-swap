@@ -72,7 +72,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES ENABLE_EXPORTS 0)
 # External header-only libraries in the ext/
 target_include_directories(${PROJECT_NAME} PUBLIC ext/stb_image/)
 target_include_directories(${PROJECT_NAME} PUBLIC ext/gl3w)
-
+target_include_directories(${PROJECT_NAME} PUBLIC ext)
 
 
 # Disable VS Error checking on ext folder

@@ -43,7 +43,6 @@ public:
 	ComponentContainer<Weapon> weapons;
 	ComponentContainer<Inventory> inventories;
 
-
 private:
 	// IMPORTANT: Don't forget to add any newly added containers!
 

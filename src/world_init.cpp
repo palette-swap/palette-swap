@@ -13,10 +13,10 @@ Entity create_player(uvec2 pos)
 
 	Inventory& inventory = registry.inventories.emplace(entity);
 
-	// Setup Bow
-	Attack bow_swipe = { "Swipe", 1, 15, 4, 10, DamageType::Physical, TargetingType::Adjacent };
-	Attack bow_shoot = { "Shoot", 1, 20, 10, 25, DamageType::Physical, TargetingType::Projectile };
-	inventory.inventory.emplace("Bow", create_weapon("Bow", std::vector<Attack>({ bow_shoot, bow_swipe })));
+	// Setup Casting
+	Attack arcane_orb = { "Arcane Orb", 10, 10, 5, 10, DamageType::Magical, TargetingType::Projectile };
+	Attack fireball = { "Fireball", -3, 10, 10, 20, DamageType::Fire, TargetingType::Projectile };
+	inventory.inventory.emplace("Spellbook", create_weapon("Spellbook", std::vector<Attack>({ arcane_orb, fireball })));
 
 	// Setup Sword
 	Attack sword_light = { "Light", 4, 18, 12, 22, DamageType::Physical, TargetingType::Adjacent };
@@ -43,6 +43,7 @@ Entity create_player(uvec2 pos)
 
 // Repurposed into general create_enemy
 // TODO: add additional inputs to specify enemy type, current default is slug
+// Note: Deprecated, use load_enemy from map_generator_system instead
 Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 {
 	auto entity = Entity();
@@ -65,12 +66,6 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 
 	// Indicates enemy is hittable by objects
 	registry.hittables.emplace(entity);
-
-	// TODO: Switch out basic enemy type based on input (Currently Defaulted to Slug)
-	registry.render_requests.insert(entity,
-									{ TEXTURE_ASSET_ID::SLIME, EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY });
-	registry.colors.insert(entity, { 1, 1, 1 });
-
 	// Create enemy component for AI System.
 	// TODO: Replace with load from file or auto-generate.
 	Enemy& enemy = registry.enemies.emplace(entity);
@@ -93,7 +88,7 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 		enemy.attack_range = 1 ;
 		break;
 
-	case EnemyType::LivingArmor:
+	case EnemyType::Armor:
 		enemy.radius = 2;
 		enemy.speed = 1;
 		enemy.attack_range = 1;
@@ -105,13 +100,27 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 		enemy.attack_range = 2;
 		break;
 
+	case EnemyType::Wraith:
+		enemy.radius = 1;
+		enemy.speed = 1;
+		enemy.attack_range = 1;
+		break;
+
 	default:
 		throw std::runtime_error("Invalid enemy type.");
 	}
 
+	registry.render_requests.insert(
+		entity, { enemy_type_textures[static_cast<int>(type)], EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY });
+	if (team == ColorState::Red) {
+		registry.colors.insert(entity, AnimationUtility::default_enemy_red);
+	} else if (team == ColorState::Blue) {
+		registry.colors.insert(entity, { AnimationUtility::default_enemy_blue });
+	} else {
+		registry.colors.insert(entity, { 1, 1, 1 });
+	}
 
-	// TODO: Combine with render_requests above, so animation system handles render requests as a middleman
-	// Update animation number using animation system max frames, instead of this static number
+
 	Animation& enemy_animation = registry.animations.emplace(entity);
 	enemy_animation.max_frames = 4;
 
@@ -150,19 +159,19 @@ Entity create_line(vec2 position)
 	return entity;
 }
 
-// Creates a room entity, with room type referencing to the predefined room
-Entity create_room(vec2 position, MapUtility::RoomType roomType)
+Entity create_path_point(vec2 position)
 {
-	auto entity = Entity();
+	Entity entity = Entity();
+
+	registry.debug_components.emplace(entity);
 
 	registry.world_positions.emplace(entity, position);
 
-	Room& room = registry.rooms.emplace(entity);
-	room.type = roomType;
-
-	// TODO: Remove temporary workaround once #36 is resolved.
+	// TODO: Replace CANNONBALL with other suitable texture.
 	registry.render_requests.insert(
-		entity, { TEXTURE_ASSET_ID::TILE_SET, EFFECT_ASSET_ID::TILE_MAP, GEOMETRY_BUFFER_ID::ROOM });
+		entity, { TEXTURE_ASSET_ID::CANNONBALL, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE });
+
+	registry.colors.insert(entity, { 0, 1, 0 });
 
 	return entity;
 }

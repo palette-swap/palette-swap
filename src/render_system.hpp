@@ -42,13 +42,15 @@ class RenderSystem {
 			textures_path("./Wraith/Wraith Spritesheet.png"),
 			textures_path("./Drake/Drake Spritesheet.png"),
 			textures_path("cannon_ball.png"),
-			textures_path("tile_set.png"), };
+			textures_path("tile_set.png"),
+			textures_path("help.png"), };
 
 	std::array<GLuint, effect_count> effects;
 	// Make sure these paths remain in sync with the associated enumerators.
 	const std::array<std::string, effect_count> effect_paths = { shader_path("line"),
 																 shader_path("enemy"), 
 																 shader_path("player"),
+																 shader_path("health_bar"),
 																 shader_path("textured"),
 																 shader_path("water"),
 																 shader_path("tilemap") };
@@ -57,8 +59,8 @@ class RenderSystem {
 	// hierachy between animation and render system
 	// Filler for experimental spritesheet dimensions (3 rows and 4 columns)
 	// Will likely update to a standard square (regardless of rows or columns of actual sprites used)
-	static constexpr float spritesheet_width = 4.f;
-	static constexpr float spritesheet_height = 3.f;
+	static constexpr float spritesheet_width = 8.f;
+	static constexpr float spritesheet_height = 8.f;
 	// Should be kept in tune with tile size, but this remains to be seen
 	static constexpr float sprite_size = 1.f;
 	static constexpr float player_spritesheet_width = 8.f;
@@ -116,8 +118,12 @@ public:
 					// retina display?)
 
 private:
+	// Helper to get position transform
+	Transform get_transform(Entity entity);
+
 	// Internal drawing functions for each entity type
 	void draw_textured_mesh(Entity entity, const mat3& projection);
+	void draw_healthbar(Entity entity, const Stats& stats, const mat3& projection);
 	void draw_to_screen();
 	void update_camera_position(MapPosition& camera_map_pos,
 								const vec2& player_pos,

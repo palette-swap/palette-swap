@@ -9,9 +9,9 @@
 #include <unordered_map>
 
 #include "../ext/stb_image/stb_image.h"
+#include "rapidjson/document.h"
 
 #include "map_generator_system.hpp"
-#include <predefined_room.hpp>
 
 // Player component
 struct Player {
@@ -92,7 +92,7 @@ struct ActiveProjectile {
 
 // Struct for resolving projectiles, including the arrow fired by the player
 struct ResolvedProjectile {
-	float counter = 2000;
+	float counter = 400;
 };
 
 // Struct for denoting the frame that the rendering system should be rendering 
@@ -169,7 +169,8 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 	DRAKE = WRAITH + 1,
 	CANNONBALL = DRAKE + 1,
 	TILE_SET = CANNONBALL + 1,
-	TEXTURE_COUNT = TILE_SET + 1
+	HELP_PIC = TILE_SET + 1,
+	TEXTURE_COUNT = HELP_PIC + 1,
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 
@@ -185,13 +186,15 @@ static constexpr std::array<vec2, texture_count> scaling_factors = {
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size * 0.5, MapUtility::tile_size * 0.5),
 	vec2(MapUtility::tile_size* MapUtility::room_size, MapUtility::tile_size* MapUtility::room_size),
+	vec2(MapUtility::tile_size* MapUtility::room_size * 3, MapUtility::tile_size* MapUtility::room_size * 2),
 };
 
 enum class EFFECT_ASSET_ID {
 	LINE = 0,
 	ENEMY = LINE + 1,
 	PLAYER = ENEMY + 1,
-	TEXTURED = PLAYER + 1,
+	HEALTH = PLAYER + 1,
+	TEXTURED = HEALTH + 1,
 	WATER = TEXTURED + 1,
 	TILE_MAP = WATER + 1,
 	EFFECT_COUNT = TILE_MAP + 1
@@ -203,20 +206,21 @@ enum class GEOMETRY_BUFFER_ID : uint8_t {
 	SPRITE = SALMON + 1, 
 	PLAYER = SPRITE + 1,
 	ENEMY = PLAYER + 1,
-	LINE = ENEMY + 1,
+	HEALTH = ENEMY + 1,
+	LINE = HEALTH + 1,
 	DEBUG_LINE = LINE + 1,
 	SCREEN_TRIANGLE = DEBUG_LINE + 1,
 
 	// Note: Keep ROOM at the bottom because of hacky implementation,
 	// this is somewhat hacky, this is actually a single geometry related to a room, but
-	// we don't want to update the Enum every time we add a new room. It's MapUtility::num_room - 1
+	// we don't want to update the Enum every time we add a new room. It's MapUtility::num_rooms - 1
 	// because we want to bind vertex buffer for each room but not for the ROOM enum, it's
 	// just a placeholder to tell us it's a room geometry, which geometry will be defined
 	// by the room struct
 	ROOM = SCREEN_TRIANGLE + 1,
 	GEOMETRY_COUNT = ROOM + 1
 };
-const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT + MapUtility::num_room - 1;
+const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT + MapUtility::num_rooms - 1;
 
 struct RenderRequest {
 	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
@@ -228,13 +232,6 @@ struct RenderRequest {
 
 // Represents allowed directions for an animated sprite (e.g whether the sprite is facing left or right)
 enum class Sprite_Direction : uint8_t { SPRITE_LEFT, SPRITE_RIGHT};
-// Represent four directions, that could have many uses, e.g. moving player
-enum class Direction : uint8_t {
-	Left,
-	Up,
-	Right,
-	Down,
-};
 
 // Represents the position on the map,
 // top left is (0,0) bottom right is (99,99)
@@ -245,6 +242,9 @@ struct MapPosition {
 	{
 		assert(position.x < 99 && position.y < 99);
 	};
+
+	void serialize(const std::string& prefix, rapidjson::Document& json) const;
+	void deserialize(const std::string& prefix, const rapidjson::Document& json);
 };
 
 // Represents the world position,
@@ -287,29 +287,52 @@ enum class ColorState { None = 0, Red = 1, Blue = 2, All = Blue + 1 };
 
 // Slime (cute coward): weak stats; run away when HP is low.
 // Raven (annoying bug): weak stats; large radius and fast speed.
-// LivingArmor (Immortal Hulk): normal stats; nearsighted; a certain chance to become immortal for one turn.
+// Armor (Immortal Hulk): normal stats; nearsighted; a certain chance to become immortal for one turn.
 // TreeAnt (Super Saiyan): normal stats; long attack range; power up attack range and damage when HP is low.
-// TODO: Evan might wanna add description and trait for Wraith.
+// Wraith (invisible ghost): weak stats; shortest radius; a variance of Raven but invisible until active.
 enum class EnemyType {
 	Slime = 0,
 	Raven = Slime + 1,
-	LivingArmor = Raven + 1,
-	TreeAnt = LivingArmor + 1,
-	// Wraith = TreeAnt + 1
+	Armor = Raven + 1,
+	TreeAnt = Armor + 1,
+	Wraith = TreeAnt + 1,
+	EnemyCount = Wraith + 1
 };
 extern std::unordered_map<EnemyType, char*> enemy_type_to_string;
 
+// Maps enemy types to corresponding texture asset
+// Remember to add a mapping to a new texture (or use a default such as a slime)
+// This will help load the animation by enemy type when you load enemies
+const TEXTURE_ASSET_ID enemy_type_textures[static_cast<int>(EnemyType::EnemyCount)] { 
+	TEXTURE_ASSET_ID::SLIME,
+	TEXTURE_ASSET_ID::RAVEN,
+	TEXTURE_ASSET_ID::ARMOR,
+	TEXTURE_ASSET_ID::TREEANT,
+	TEXTURE_ASSET_ID::WRAITH 
+};
+
 // Slime:		Idle, Active, Flinched.
 // Raven:		Idle, Actives.
-// LivingArmor:	Idle, Active, Immortal.
+// Armor:		Idle, Active, Immortal.
 // TreeAnt:		Idle, Active, Powerup.
+// Wraith:		A variance of Raven.
 enum class EnemyState {
 	Idle = 0,
 	Active = Idle + 1,
 	Flinched = Active + 1,
 	Powerup = Flinched + 1,
-	Immortal = Powerup + 1
+	Immortal = Powerup + 1,
+	EnemyStateCount = Immortal + 1
 };
+
+// Maps enemy states to corresponding rows used in the spritesheet
+// Based on how enemy states work for M2 currently
+static std::map<EnemyState, int> enemy_state_to_animation_state = 
+		{ { EnemyState::Idle, 0 },
+		{ EnemyState::Active, 1 },
+		{ EnemyState::Flinched, 2 },
+		{ EnemyState::Powerup, 2 },
+		{ EnemyState::Immortal, 2 } };
 
 // Structure to store enemy information.
 struct Enemy {
@@ -322,6 +345,9 @@ struct Enemy {
 	uint radius = 3;
 	uint speed = 1;
 	uint attack_range = 1;
+
+	void serialize(const std::string & prefix, rapidjson::Document &json) const;
+	void deserialize(const std::string& prefix, const rapidjson::Document& json);
 };
 
 //---------------------------------------------------------------------------
@@ -330,7 +356,8 @@ struct Enemy {
 
 enum class DamageType {
 	Physical = 0,
-	Magical = Physical + 1,
+	Fire = Physical + 1,
+	Magical = Fire + 1,
 	Count = Magical + 1,
 };
 
@@ -357,6 +384,9 @@ struct Attack {
 	// This is used when calculating damage to work out if any of the target's damage_modifiers should apply
 	DamageType damage_type = DamageType::Physical;
 	TargetingType targeting_type = TargetingType::Projectile;
+
+	void serialize(const std::string& prefix, rapidjson::Document& json) const;
+	void deserialize(const std::string& prefix, const rapidjson::Document& json);
 };
 
 struct Stats {
@@ -387,6 +417,9 @@ struct Stats {
 	// A positive modifier is a weakness, like a straw golem being weak to fire
 	// A negative modifeir is a resistance, like an iron golem being resistant to sword cuts
 	DamageTypeList<int> damage_modifiers = { 0 };
+
+	void serialize(const std::string& prefix, rapidjson::Document& json) const;
+	void deserialize(const std::string& prefix, const rapidjson::Document& json);
 };
 
 enum class Slot {

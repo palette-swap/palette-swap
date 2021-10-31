@@ -31,14 +31,14 @@ int main()
 	std::shared_ptr<TurnSystem> turns = std::make_shared<TurnSystem>();
 
 	//// Animation System
-	std::shared_ptr < AnimationSystem > animations = std::make_shared<AnimationSystem>();
+	std::shared_ptr <AnimationSystem > animations = std::make_shared<AnimationSystem>();
 
 	// Global systems
 	Debug debugging;
 	WorldSystem world(debugging, combat, map, turns);
 	RenderSystem renderer;
 	PhysicsSystem physics(debugging, map);
-	AISystem ai(combat, map, turns);
+	AISystem ai(debugging, combat, map, turns, animations);
 
 	// Initializing window
 	GLFWwindow* window = world.create_window(window_width_px, window_height_px);
@@ -50,6 +50,7 @@ int main()
 	}
 
 	// initialize the main systems
+	so_loud.init();
 	renderer.init(window_width_px, window_height_px, window, map);
 	world.init(&renderer);
 	animations->init();
@@ -74,6 +75,8 @@ int main()
 		renderer.draw();
 		turns->step();
 	}
+	// Destroy music components
+	so_loud.deinit();
 
 	return EXIT_SUCCESS;
 }

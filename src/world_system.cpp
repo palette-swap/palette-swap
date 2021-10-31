@@ -8,8 +8,6 @@
 
 #include "physics_system.hpp"
 
-SoLoud::Soloud so_loud; // SoLoud engine
-
 // Create the world
 WorldSystem::WorldSystem(Debug& debugging,
 						 std::shared_ptr<CombatSystem> combat,
@@ -28,9 +26,6 @@ WorldSystem::WorldSystem(Debug& debugging,
 
 WorldSystem::~WorldSystem()
 {
-	// Destroy music components
-	so_loud.deinit();
-
 	// Destroy all created components
 	registry.clear_all_components();
 
@@ -103,12 +98,13 @@ GLFWwindow* WorldSystem::create_window(int width, int height)
 
 	//////////////////////////////////////
 	// Loading music and sounds with SDL
-	so_loud.init();
-
 	bgm_red_wav.load(audio_path("henry_martin.wav").c_str());
 	bgm_red_wav.setLooping(true);
 	bgm_blue_wav.load(audio_path("famous_flower_of_serving_men.wav").c_str());
 	bgm_blue_wav.setLooping(true);
+
+	light_sword_wav.load(audio_path("sword1.wav").c_str());
+	cannon_wav.load(audio_path("cannon.wav").c_str());
 
 	return window;
 }
@@ -206,28 +202,12 @@ void WorldSystem::restart_game()
 	// Debugging for memory/component leaks
 	registry.list_all_components();
 
-	// Generate the levels
-	map_generator->generate_levels();
+	map_generator->load_initial_level();
 
 	vec2 middle = { window_width_px / 2, window_height_px / 2 };
 
-	const MapGeneratorSystem::Mapping& mapping = map_generator->current_map();
-	vec2 top_left_corner_pos = middle
-		- vec2(MapUtility::tile_size * MapUtility::room_size * MapUtility::map_size / 2,
-			   MapUtility::tile_size * MapUtility::room_size * MapUtility::map_size / 2);
-	for (size_t row = 0; row < mapping.size(); row++) {
-		for (size_t col = 0; col < mapping[0].size(); col++) {
-			vec2 position = top_left_corner_pos
-				+ vec2(MapUtility::tile_size * MapUtility::room_size / 2,
-					   MapUtility::tile_size * MapUtility::room_size / 2)
-				+ vec2(col * MapUtility::tile_size * MapUtility::room_size,
-					   row * MapUtility::tile_size * MapUtility::room_size);
-			create_room(position, mapping.at(row).at(col));
-		}
-	}
-
 	// a random starting position... probably need to update this
-	uvec2 player_starting_point = uvec2(1, 1);
+	uvec2 player_starting_point = map_generator->get_player_start_position();
 	// Create a new Player instance and shift player onto a tile
 	player = create_player(player_starting_point);
 	// TODO: Should move into create_player (under world init) afterwards
@@ -246,13 +226,9 @@ void WorldSystem::restart_game()
 	// Create a new player arrow instance
 	vec2 player_location = MapUtility::map_position_to_world_position(player_starting_point);
 	player_arrow = create_arrow(player_location);
-	// Creates a single enemy instance, (TODO: needs to be updated with position based on grid)
-	// Also requires naming scheme for randomly generated enemies, for later reference
-	create_enemy(ColorState::Red, EnemyType::Slime, uvec2(8, 1));
-	create_enemy(ColorState::Red, EnemyType::Raven, uvec2(8, 2));
-	create_enemy(ColorState::Red, EnemyType::LivingArmor, uvec2(8, 3));
-	create_enemy(ColorState::Red, EnemyType::TreeAnt, uvec2(8, 4));
-	create_enemy(ColorState::Blue, EnemyType::Slime, uvec2(8, 8));
+	registry.render_requests.get(player_arrow).visible
+		= registry.weapons.get(current_weapon).given_attacks.at(current_attack).targeting_type
+		== TargetingType::Projectile;
 }
 
 // Compute collisions between entities
@@ -277,10 +253,8 @@ void WorldSystem::handle_collisions()
 
 				// Attack the other entity if it can be attacked
 				if (registry.stats.has(entity_other)) {
-					Stats& player_stats = registry.stats.get(player);
-					Stats& enemy_stats = registry.stats.get(entity_other);
 					combat->do_attack(
-						player_stats, registry.weapons.get(current_weapon).given_attacks[current_attack], enemy_stats);
+						player, registry.weapons.get(current_weapon).given_attacks[current_attack], entity_other);
 				}
 
 				// Stops projectile motion, adds projectile to list of resolved projectiles
@@ -300,7 +274,6 @@ void WorldSystem::handle_collisions()
 			}
 		}
 	}
-
 	// Remove all collisions from this simulation step
 	registry.collisions.clear();
 }
@@ -337,8 +310,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		// Change weapon
 		if (key == GLFW_KEY_E) {
 			equip_next_weapon();
-			// TODO: Need to confirm that this does actually change to the correct state
-			animations->player_toggle_weapon(player);
+			
 		}
 
 
@@ -356,12 +328,13 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 					   attack.to_hit_max,
 					   attack.damage_min,
 					   attack.damage_max,
-					attack.targeting_type == TargetingType::Projectile ? "projectile" : "adjacent");
+					   attack.targeting_type == TargetingType::Projectile ? "projectile" : "adjacent");
+				registry.render_requests.get(player_arrow).visible = attack.targeting_type == TargetingType::Projectile;
 			}
 		}
 	}
 
-	if (action == GLFW_RELEASE && key == GLFW_KEY_EQUAL) {
+	if (action == GLFW_RELEASE && key == GLFW_KEY_SPACE) {
 		change_color();
 	}
 
@@ -374,7 +347,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 	}
 
 	// Debugging
-	if (key == GLFW_KEY_D && (mod & GLFW_MOD_ALT) != 0) {
+	if (key == GLFW_KEY_B) {
 		debugging.in_debug_mode = action != GLFW_RELEASE;
 	}
 
@@ -426,13 +399,12 @@ void WorldSystem::move_player(Direction direction)
 	MapPosition& map_pos = registry.map_positions.get(player);
 	WorldPosition& arrow_position = registry.world_positions.get(player_arrow);
 	Animation& player_animation = registry.animations.get(player);
-	// TODO: this should be removed once we only use map_position
 	uvec2 new_pos = map_pos.position;
 
 	if (direction == Direction::Left && map_pos.position.x > 0) {
 		new_pos = uvec2(map_pos.position.x - 1, map_pos.position.y);
 		// TODO: Change this to animation request instead of calling it here;
-		player_animation.direction = -1;
+		animations->set_sprite_direction(player, Sprite_Direction::SPRITE_LEFT);
 		animations->player_running_animation(player);
 	} else if (direction == Direction::Up && map_pos.position.y > 0) {
 		new_pos = uvec2(map_pos.position.x, map_pos.position.y - 1);
@@ -441,7 +413,7 @@ void WorldSystem::move_player(Direction direction)
 			   && map_pos.position.x < MapUtility::room_size * MapUtility::tile_size - 1) {
 		new_pos = uvec2(map_pos.position.x + 1, map_pos.position.y);
 		// TODO: Change this to animation request instead of calling it here;
-		player_animation.direction = 1;
+		animations->set_sprite_direction(player, Sprite_Direction::SPRITE_RIGHT);
 		animations->player_running_animation(player);
 	} else if (direction == Direction::Down && map_pos.position.y < MapUtility::room_size * MapUtility::tile_size - 1) {
 		new_pos = uvec2(map_pos.position.x, map_pos.position.y + 1);
@@ -451,11 +423,23 @@ void WorldSystem::move_player(Direction direction)
 	if (map_pos.position == new_pos || !map_generator->walkable(new_pos) || !turns->execute_team_action(player)) {
 		return;
 	}
+
 	// Temp update for arrow position
 	if (!player_arrow_fired) {
 		arrow_position.position += (vec2(new_pos) - vec2(map_pos.position)) * MapUtility::tile_size;
 	}
-	map_pos.position = new_pos;
+	if (map_generator->is_next_level_tile(new_pos)) {
+		map_generator->load_next_level();
+		registry.map_positions.get(player).position = map_generator->get_player_start_position();
+	} else if (map_generator->is_last_level_tile(new_pos)) {
+		map_generator->load_last_level();
+		registry.map_positions.get(player).position = map_generator->get_player_end_position();
+	} else {
+		// Because we modified map position lists, so we need to directly update the registry
+		// Otherwise we can update the reference
+		map_pos.position = new_pos;
+	}
+	
 	turns->complete_team_action(player);
 }
 
@@ -484,23 +468,31 @@ void WorldSystem::equip_next_weapon()
 		curr = next->second;
 		current_weapon = curr;
 		current_attack = 0;
+		registry.render_requests.get(player_arrow).visible
+			= registry.weapons.get(current_weapon).given_attacks.at(current_attack).targeting_type
+			== TargetingType::Projectile;
 		printf("Switched weapon to %s\n", registry.items.get(curr).name.c_str());
+		animations->player_toggle_weapon(player);
 		turns->complete_team_action(player);
 	}
+	
 }
 
 void WorldSystem::change_color() 
 { 
-	switch (turns->get_active_color()) {
+	ColorState active_color = turns->get_active_color();
+	switch (active_color) {
 	case ColorState::Red:
 		turns->set_active_color(ColorState::Blue);
 		so_loud.fadeVolume(bgm_blue, -1, .25);
 		so_loud.fadeVolume(bgm_red, 0, .25);
+		animations->player_red_blue_animation(player, ColorState::Blue);
 		break;
 	case ColorState::Blue:
 		turns->set_active_color(ColorState::Red);
 		so_loud.fadeVolume(bgm_red, -1, .25);
 		so_loud.fadeVolume(bgm_blue, 0, .25);
+		animations->player_red_blue_animation(player, ColorState::Red);
 		break;
 	default:
 		turns->set_active_color(ColorState::Red);
@@ -542,6 +534,7 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 			// TODO: Add better arrow physics potentially?
 			// arrow_velocity.velocity
 			//	= { sin(arrow_motion.angle) * projectile_speed, -cos(arrow_motion.angle) * projectile_speed };
+			so_loud.play(cannon_wav);
 		} else if (attack.targeting_type == TargetingType::Adjacent && turns->get_active_team() == player) {
 			// Get screen position of mouse
 			dvec2 mouse_screen_pos;
@@ -560,10 +553,10 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 			}
 			for (const auto& target : registry.stats.entities) {
 				if (registry.map_positions.get(target).position == mouse_map_pos) {
-					Stats& player_stats = registry.stats.get(player);
-					Stats& enemy_stats = registry.stats.get(target);
-					combat->do_attack(player_stats, attack, enemy_stats);
+					combat->do_attack(player, attack, target);
 					animations->player_attack_animation(player);
+					so_loud.play(light_sword_wav);
+					animations->damage_animation(target);
 				}
 			}
 			turns->complete_team_action(player);

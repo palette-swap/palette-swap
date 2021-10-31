@@ -9,14 +9,23 @@
 #include "combat_system.hpp"
 #include "map_generator_system.hpp"
 #include "turn_system.hpp"
+#include "animation_system.hpp"
+
+#include "soloud_wav.h"
 
 class AISystem {
 public:
-	AISystem(std::shared_ptr<CombatSystem> combat,
+	AISystem(const Debug& debugging,
+			 std::shared_ptr<CombatSystem> combat,
 			 std::shared_ptr<MapGeneratorSystem> map_generator,
-			 std::shared_ptr<TurnSystem> turns);
+			 std::shared_ptr<TurnSystem> turns,
+			 std::shared_ptr<AnimationSystem> animations);
 
 	void step(float elapsed_ms);
+
+	// Observer Pattern: a callback of CombatSystem::do_attack().
+	// Maximize the target's radius if the player attacks but cannot be spotted.
+	void do_attack_callback(const Entity& attacker, const Entity& target);
 
 private:
 	// Execute state machine of Slime.
@@ -26,7 +35,7 @@ private:
 	void execute_Raven(const Entity& raven);
 
 	// Execute state machine of Living Armor.
-	void execute_LivingArmor(const Entity& living_armor);
+	void execute_Armor(const Entity& living_armor);
 
 	// Execute state machine of Tree Ant.
 	void execute_TreeAnt(const Entity& tree_ant);
@@ -69,6 +78,9 @@ private:
 	// An entity become powerup if flag is true. Otherwise cancel powerup.
 	void become_powerup(const Entity& entity, bool flag);
 
+	// Debugging
+	const Debug& debugging;
+
 	// Shared resource: Combat system.
 	std::shared_ptr<CombatSystem> combat;
 
@@ -78,10 +90,15 @@ private:
 	// Shared resource: Turn system.
 	std::shared_ptr<TurnSystem> turns;
 
+	// Shared resource: Animation System.
+	std::shared_ptr<AnimationSystem> animations;
+
 	// Entity representing the enemy team's turn.
 	Entity enemy_team;
 
 	// C++ random number generator
 	std::default_random_engine rng;
 	std::uniform_real_distribution<float> uniform_dist; // number between 0..1
+
+	SoLoud::Wav enemy_attack1_wav;
 };
