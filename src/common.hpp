@@ -154,8 +154,9 @@ namespace CameraUtility {
 	// buffer_offset * 2 < camera_grid_size
 	static constexpr uint camera_buffer_offset = 2;
 
-	static constexpr uint map_top_left = 0;
-	static constexpr uint map_down_right = 99;
+	static constexpr uvec2 map_top_left = { 0, 0 };
+	static constexpr uvec2 map_down_right
+		= { MapUtility::room_size * MapUtility::map_size - 1, MapUtility::room_size* MapUtility::map_size - 1 };
 
 	// calculate buffer position based on the size and offset
 	inline std::tuple<vec2, vec2> get_buffer_positions(vec2 camera_screen_pos, float width, float height) { 
