@@ -169,7 +169,6 @@ namespace CameraUtility {
 
 		return std::make_pair(buffer_top_left_pos, buffer_down_right_pos);
 	}
-	}
 }
 
 

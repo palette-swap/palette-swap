@@ -462,8 +462,8 @@ mat3 RenderSystem::create_projection_matrix()
 	glfwGetFramebufferSize(window, &w, &h);
 	gl_has_errors();
 
-	vec2 top_left = get_top_left();
-	vec2 bottom_right = top_left + (vec2(w,h) * screen_scale);
+	vec2 top_left, bottom_right;
+	std::tie(top_left, bottom_right) = get_window_bounds();
 
 	float sx = 2.f / (w * screen_scale);
 	float sy = -2.f / (h * screen_scale);
@@ -472,11 +472,12 @@ mat3 RenderSystem::create_projection_matrix()
 	return { { sx, 0.f, 0.f }, { 0.f, sy, 0.f }, { tx, ty, 1.f } };
 }
 
-vec2 RenderSystem::get_top_left()
+std::pair<vec2, vec2> RenderSystem::get_window_bounds()
 {
 	int w, h;
 	glfwGetFramebufferSize(window, &w, &h);
 	gl_has_errors();
+	vec2 window_size = vec2(w, h) * screen_scale;
 
 	Entity player = registry.players.top_entity();
 	vec2 player_pos = MapUtility::map_position_to_world_position(registry.map_positions.get(player).position);
@@ -487,16 +488,17 @@ vec2 RenderSystem::get_top_left()
 	vec2 buffer_top_left, buffer_down_right;
 	
 	std::tie(buffer_top_left, buffer_down_right)
-		= CameraUtility::get_buffer_positions(camera_world_pos.position, w * screen_scale, h * screen_scale);
+		= CameraUtility::get_buffer_positions(camera_world_pos.position, window_size.x, window_size.y);
 
 	update_camera_position(camera_world_pos, player_pos, buffer_top_left, buffer_down_right);
 
-	return camera_world_pos.position;
+
+	return { camera_world_pos.position - window_size / 2.f, camera_world_pos.position + window_size / 2.f };
 }
 
 vec2 RenderSystem::screen_position_to_world_position(vec2 screen_pos)
 {
-	return screen_pos * screen_scale + get_top_left();
+	return screen_pos * screen_scale + get_window_bounds().first;
 }
 
  void RenderSystem::scale_on_scroll(float offset)
