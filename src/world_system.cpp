@@ -551,10 +551,15 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 			}
 			for (const auto& target : registry.stats.entities) {
 				if (registry.map_positions.get(target).position == mouse_map_pos) {
-					combat->do_attack(player, attack, target);
-					//animations->player_attack_animation(player);
-					so_loud.play(light_sword_wav);
-					//animations->damage_animation(target);
+					
+					Enemy& enemy = registry.enemies.get(target);
+					ColorState inactive_color = turns->get_inactive_color();
+					if (enemy.team != inactive_color) {
+						bool combat_success = combat->do_attack(player, attack, target);
+						if (combat_success) {
+							so_loud.play(light_sword_wav);
+						}
+					}	
 				}
 			}
 			turns->complete_team_action(player);
