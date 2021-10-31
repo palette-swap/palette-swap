@@ -59,3 +59,37 @@ void CombatSystem::attach_do_attack_callback(
 {
 	do_attack_callbacks.push_back(do_attack_callback);
 }
+
+std::string get_name(DamageType d)
+{
+	switch (d) {
+	case DamageType::Magical:
+		return "magic";
+	case DamageType::Fire:
+		return "fire";
+	default:
+	case DamageType::Physical:
+		return "physical";
+	}
+}
+
+std::string CombatSystem::make_attack_list(const Entity entity, size_t current_attack) const {
+	const Weapon& weapon = registry.weapons.get(entity);
+	std::ostringstream attacks;
+	for (size_t i = 0; i < weapon.given_attacks.size(); i++) {
+		const Attack& attack = weapon.given_attacks[i];
+		if (i == current_attack) {
+			attacks << "\n[" << i + 1 << "] ";
+		} else {
+			attacks << "\n " << i + 1 << "  ";
+		}
+		attacks << attack.name;
+		// Note we could log more details, but it's a bit much visually
+		// Maybe on some sort of menu?
+		/*attacks << ": " << attack.to_hit_min << "-" << attack.to_hit_max
+				<< " to hit, " << attack.damage_min << "-" << attack.damage_max << " "
+				<< get_name(attack.damage_type) << " dmg ("
+				<< ((attack.targeting_type == TargetingType::Projectile) ? "Projectile)" : "Melee)");*/
+	}
+	return attacks.str();
+}

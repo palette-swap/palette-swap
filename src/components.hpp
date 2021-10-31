@@ -84,7 +84,6 @@ struct Mesh {
 	std::vector<uint16_t> vertex_indices;
 };
 
-
 // struct denoting a currently active projectile
 struct ActiveProjectile {
 	vec2 head_offset = { 0, 0 };
@@ -137,7 +136,7 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 	PALADIN = 0,
 	SLIME = PALADIN + 1,
 	ARMOR = SLIME + 1,
-	TREEANT= ARMOR + 1,
+	TREEANT = ARMOR + 1,
 	RAVEN = TREEANT + 1,
 	WRAITH = RAVEN + 1,
 	DRAKE = WRAITH + 1,
@@ -176,8 +175,8 @@ enum class EFFECT_ASSET_ID {
 constexpr int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 
 enum class GEOMETRY_BUFFER_ID : uint8_t {
-	SALMON = 0, 
-	SPRITE = SALMON + 1, 
+	SALMON = 0,
+	SPRITE = SALMON + 1,
 	PLAYER = SPRITE + 1,
 	ENEMY = PLAYER + 1,
 	HEALTH = ENEMY + 1,
@@ -212,6 +211,14 @@ struct MapPosition {
 
 	void serialize(const std::string& prefix, rapidjson::Document& json) const;
 	void deserialize(const std::string& prefix, const rapidjson::Document& json);
+};
+
+// Represents the screen position,
+// top left is (0,0), bottom right is (1, 1)
+struct ScreenPosition {
+	vec2 position;
+	ScreenPosition(vec2 position)
+		: position(position) {};
 };
 
 // Represents the world position,
@@ -361,6 +368,7 @@ enum class DamageType {
 	Count = Magical + 1,
 };
 
+
 enum class TargetingType {
 	Adjacent = 0,
 	Projectile = 1,
@@ -454,4 +462,41 @@ struct Weapon {
 	}
 	// TODO: Potentially replace with intelligent direct/indirect container
 	std::vector<Attack> given_attacks;
+};
+
+//---------------------------------------------------------------------------
+//-------------------------           UI            -------------------------
+//---------------------------------------------------------------------------
+
+enum class Alignment {
+	Start = 1,
+	Center = 0,
+	End = -1,
+};
+
+struct Text {
+	std::string text;
+	uint16 font_size;
+	Alignment alignment_x;
+	Alignment alignment_y;
+
+	Text(std::string text, uint16 font_size, Alignment alignment_x, Alignment alignment_y)
+		: text(std::move(text))
+		, font_size(font_size)
+		, alignment_x(alignment_x)
+		, alignment_y(alignment_y)
+	{
+	}
+};
+
+extern bool operator==(const Text& t1, const Text& t2);
+
+template <> struct std::hash<Text> {
+	std::size_t operator()(Text const& t) const
+	{
+		size_t text_hash = std::hash<std::string> {}(t.text);
+		size_t size_hash = std::hash<uint16> {}(t.font_size);
+		// Combination as per boost https://www.boost.org/doc/libs/1_35_0/doc/html/boost/hash_combine_id241013.html
+		return text_hash ^ (size_hash + 0x9e3779b9 + (text_hash << 6) + (text_hash >> 2));
+	}
 };

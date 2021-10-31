@@ -93,6 +93,7 @@ private:
 	Entity player;
 	Entity camera;
 	Entity player_arrow;
+	Entity attack_display;
 	Debug& debugging;
 
 	// music references

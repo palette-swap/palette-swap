@@ -216,7 +216,13 @@ void WorldSystem::restart_game()
 	Inventory& inventory = registry.inventories.get(player);
 	current_weapon = inventory.equipped[static_cast<uint8>(Slot::PrimaryHand)];
 	current_attack = 0;
-
+	registry.screen_positions.emplace(attack_display, vec2(0, 1));
+	registry.text.emplace(attack_display,
+						  combat->make_attack_list(current_weapon, current_attack),
+						  (uint16)48,
+						  Alignment::Start,
+						  Alignment::End);
+	registry.colors.emplace(attack_display, 1, 1, 1);
 	// create camera instance
 	camera = create_camera(
 		player_starting_point);
@@ -328,6 +334,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 					   attack.damage_max,
 					   attack.targeting_type == TargetingType::Projectile ? "projectile" : "adjacent");
 				registry.render_requests.get(player_arrow).visible = attack.targeting_type == TargetingType::Projectile;
+				registry.text.get(attack_display).text = combat->make_attack_list(current_weapon, current_attack);
 			}
 		}
 	}
@@ -368,7 +375,7 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 {
 	if (!player_arrow_fired) {
 
-		vec2 mouse_world_position = mouse_position * renderer->screen_scale + renderer->get_top_left();
+		vec2 mouse_world_position = renderer->screen_position_to_world_position(mouse_position);
 
 		Velocity& arrow_velocity = registry.velocities.get(player_arrow);
 		WorldPosition& arrow_position = registry.world_positions.get(player_arrow);
@@ -469,6 +476,7 @@ void WorldSystem::equip_next_weapon()
 		registry.render_requests.get(player_arrow).visible
 			= registry.weapons.get(current_weapon).given_attacks.at(current_attack).targeting_type
 			== TargetingType::Projectile;
+		registry.text.get(attack_display).text = combat->make_attack_list(current_weapon, current_attack);
 		printf("Switched weapon to %s\n", registry.items.get(curr).name.c_str());
 		animations->player_toggle_weapon(player);
 		turns->complete_team_action(player);
@@ -544,9 +552,8 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 
 			// Denotes whether a player was able to complete their turn or not (false be default)
 			bool combat_success = false;
-
-			// Convert to world posd
-			vec2 mouse_world_pos = vec2(mouse_screen_pos) * renderer->screen_scale + renderer->get_top_left();
+			// Convert to world pos
+			vec2 mouse_world_pos = renderer->screen_position_to_world_position(mouse_screen_pos);
 
 			// Get map_positions to compare
 			uvec2 mouse_map_pos = MapUtility::world_position_to_map_position(mouse_world_pos);

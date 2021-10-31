@@ -112,6 +112,9 @@ if (IS_OS_LINUX OR IS_OS_MAC)
     pkg_search_module(GLFW REQUIRED glfw3)
 
     pkg_search_module(SDL2 REQUIRED sdl2)
+    pkg_search_module(SDL2_TTF REQUIRED sdl2_ttf)
+    pkg_search_module(FREETYPE freetype2)
+    pkg_search_module(ZLIB zlib)
 
     # Link Frameworks on OSX
     if (IS_OS_MAC)
@@ -132,16 +135,24 @@ elseif (IS_OS_WINDOWS)
 
     if (${CMAKE_SIZEOF_VOID_P} MATCHES "8")
         set(GLFW_LIBRARIES "${CMAKE_CURRENT_SOURCE_DIR}/ext/glfw/lib/glfw3dll-x64.lib")
-        set(SDL2_LIBRARIES "${CMAKE_CURRENT_SOURCE_DIR}/ext/sdl/lib/SDL2-x64.lib")
+        set(SDL2_LIBRARIES "${CMAKE_CURRENT_SOURCE_DIR}/ext/sdl/lib/x64/SDL2.lib")
+        set(SDL2_TTF_LIBRARIES "${CMAKE_CURRENT_SOURCE_DIR}/ext/sdl/lib/x64/SDL2_ttf.lib")
 
-	set(GLFW_DLL "${CMAKE_CURRENT_SOURCE_DIR}/ext/glfw/lib/glfw3-x64.dll")
-	set(SDL_DLL "${CMAKE_CURRENT_SOURCE_DIR}/ext/sdl/lib/SDL2-x64.dll")
+	    set(GLFW_DLL "${CMAKE_CURRENT_SOURCE_DIR}/ext/glfw/lib/glfw3-x64.dll")
+        set(SDL_DLL "${CMAKE_CURRENT_SOURCE_DIR}/ext/sdl/lib/x64/SDL2.dll")
+        set(SDL2_TTF_DLL "${CMAKE_CURRENT_SOURCE_DIR}/ext/sdl/lib/x64/SDL2_ttf.dll")
+        set(FREETYPE_DLL "${CMAKE_CURRENT_SOURCE_DIR}/ext/sdl/lib/x64/libfreetype-6.dll")
+        set(ZLIB1_DLL "${CMAKE_CURRENT_SOURCE_DIR}/ext/sdl/lib/x64/zlib1.dll")
     else()
         set(GLFW_LIBRARIES "${CMAKE_CURRENT_SOURCE_DIR}/ext/glfw/lib/glfw3dll-x86.lib")
-        set(SDL2_LIBRARIES "${CMAKE_CURRENT_SOURCE_DIR}/ext/sdl/lib/SDL2-x86.lib")
+        set(SDL2_LIBRARIES "${CMAKE_CURRENT_SOURCE_DIR}/ext/sdl/lib/x86/SDL2.lib")
+        set(SDL2_TTF_LIBRARIES "${CMAKE_CURRENT_SOURCE_DIR}/ext/sdl/lib/x86/SDL2_ttf.lib")
 
-	set(GLFW_DLL "${CMAKE_CURRENT_SOURCE_DIR}/ext/glfw/lib/glfw3-x86.dll")
-	set(SDL_DLL "${CMAKE_CURRENT_SOURCE_DIR}/ext/sdl/lib/SDL2-x86.dll")
+	    set(GLFW_DLL "${CMAKE_CURRENT_SOURCE_DIR}/ext/glfw/lib/glfw3-x86.dll")
+        set(SDL_DLL "${CMAKE_CURRENT_SOURCE_DIR}/ext/sdl/lib/x86/SDL2.dll")
+        set(SDL2_TTF_DLL "${CMAKE_CURRENT_SOURCE_DIR}/ext/sdl/lib/x86/SDL2_ttf.dll")
+        set(FREETYPE_DLL "${CMAKE_CURRENT_SOURCE_DIR}/ext/sdl/lib/x86/libfreetype-6.dll")
+        set(ZLIB1_DLL "${CMAKE_CURRENT_SOURCE_DIR}/ext/sdl/lib/x86/zlib1.dll")
     endif()
 
     # Copy and rename dlls
@@ -153,6 +164,18 @@ elseif (IS_OS_WINDOWS)
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${SDL_DLL}"
         "$<TARGET_FILE_DIR:${PROJECT_NAME}>/SDL2.dll")
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${SDL2_TTF_DLL}"
+        "$<TARGET_FILE_DIR:${PROJECT_NAME}>/SDL2_ttf.dll")
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${FREETYPE_DLL}"
+        "$<TARGET_FILE_DIR:${PROJECT_NAME}>/libfreetype-6.dll")
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${ZLIB1_DLL}"
+        "$<TARGET_FILE_DIR:${PROJECT_NAME}>/zlib1.dll")
 
     target_compile_options(${PROJECT_NAME} PUBLIC
         # increase warning level
@@ -190,7 +213,7 @@ set(SDL2_INCLUDE_DIR ${SDL2_INCLUDE_DIRS})
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/ext/soloud/contrib")
 set_property(TARGET soloud PROPERTY IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/ext/soloud/bin/soloud.lib")
 
-target_link_libraries(${PROJECT_NAME} PUBLIC ${GLFW_LIBRARIES} ${SDL2_LIBRARIES} soloud glm::glm)
+target_link_libraries(${PROJECT_NAME} PUBLIC ${GLFW_LIBRARIES} ${SDL2_LIBRARIES} ${SDL2_TTF_LIBRARIES} soloud glm::glm)
 
 # Needed to add this
 if(IS_OS_LINUX)
