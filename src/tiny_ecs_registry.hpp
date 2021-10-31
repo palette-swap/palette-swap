@@ -82,6 +82,9 @@ private:
 		&items,
 		&weapons,
 		&inventories,
+
+		// Camera
+		&cameras,
 	};
 
 public:

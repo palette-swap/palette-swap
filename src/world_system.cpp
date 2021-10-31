@@ -199,6 +199,10 @@ void WorldSystem::restart_game()
 		registry.remove_all_components_of(registry.world_positions.entities.back());
 	}
 
+	while (!registry.cameras.entities.empty()) {
+		registry.remove_all_components_of(registry.cameras.entities.back());
+	}
+
 	// Debugging for memory/component leaks
 	registry.list_all_components();
 
