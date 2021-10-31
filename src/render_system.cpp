@@ -527,8 +527,8 @@ void RenderSystem::on_resize(int width, int height) {
 {
 	vec2 offset_top_left = player_pos - buffer_top_left;
 	vec2 offset_down_right = player_pos - buffer_down_right;
-	vec2 map_top_left = MapUtility::map_position_to_world_position(CameraUtility::map_top_left);
-	vec2 map_bottom_right = MapUtility::map_position_to_world_position(CameraUtility::map_down_right);
+	vec2 map_top_left = MapUtility::map_position_to_world_position(MapUtility::map_top_left);
+	vec2 map_bottom_right = MapUtility::map_position_to_world_position(MapUtility::map_down_right);
 
 	camera_map_pos.position
 		= max(min(camera_map_pos.position, camera_map_pos.position + offset_top_left), map_top_left);
