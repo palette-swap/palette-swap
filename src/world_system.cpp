@@ -376,6 +376,14 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		restart_game();
 	}
 
+	// God mode
+	if (action == GLFW_RELEASE && (mod & GLFW_MOD_ALT) != 0 && key == GLFW_KEY_G) {
+		Stats& stats = registry.stats.get(player);
+		stats.evasion = 100000;
+		stats.to_hit_bonus = 100000;
+		stats.damage_bonus = 100000;
+	}
+
 	// Debugging
 	if (key == GLFW_KEY_B) {
 		debugging.in_debug_mode = action != GLFW_RELEASE;
