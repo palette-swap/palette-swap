@@ -451,7 +451,7 @@ void MapGeneratorSystem::clear_level()
 	}
 
 	if (current_level == 0) {
-		if (registry.render_requests.has(help_picture)) {
+		if (registry.render_requests.has(help_picture) && help_picture != Entity::undefined()) {
 			registry.render_requests.get(help_picture).visible = false;
 		}
 	}
