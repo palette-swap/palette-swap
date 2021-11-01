@@ -20,7 +20,7 @@ WorldSystem::WorldSystem(Debug& debugging,
 						 std::shared_ptr<CombatSystem> combat,
 						 std::shared_ptr<MapGeneratorSystem> map,
 						 std::shared_ptr<TurnSystem> turns)
-					
+
 	: points(0)
 	, debugging(debugging)
 	, rng(std::make_shared<std::default_random_engine>(std::default_random_engine(std::random_device()())))
@@ -202,13 +202,20 @@ void WorldSystem::restart_game()
 		registry.remove_all_components_of(registry.world_positions.entities.back());
 	}
 
+	while (!registry.cameras.entities.empty()) {
+		registry.remove_all_components_of(registry.cameras.entities.back());
+	}
+
+	while (!registry.text.entities.empty()) {
+		registry.remove_all_components_of(registry.text.entities.back());
+	}
+
 	// Debugging for memory/component leaks
 	registry.list_all_components();
 
 	map_generator->load_initial_level();
 
 	vec2 middle = { window_width_px / 2, window_height_px / 2 };
-
 	// a random starting position... probably need to update this
 	uvec2 player_starting_point = map_generator->get_player_start_position();
 	// Create a new Player instance and shift player onto a tile
@@ -229,8 +236,7 @@ void WorldSystem::restart_game()
 						  Alignment::End);
 	registry.colors.emplace(attack_display, 1, 1, 1);
 	// create camera instance
-	camera = create_camera(
-		player_starting_point);
+	camera = create_camera(player_starting_point);
 
 	// Create a new player arrow instance
 	vec2 player_location = MapUtility::map_position_to_world_position(player_starting_point);
@@ -319,9 +325,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		// Change weapon
 		if (key == GLFW_KEY_E) {
 			equip_next_weapon();
-			
 		}
-
 
 		// Change attack
 		// TODO: Generalize for many attacks, check out of bounds
@@ -430,7 +434,8 @@ void WorldSystem::move_player(Direction direction)
 		animations->player_running_animation(player);
 	}
 
-	if (map_pos.position == new_pos || !map_generator->walkable_and_free(new_pos) || !turns->execute_team_action(player)) {
+	if (map_pos.position == new_pos || !map_generator->walkable_and_free(new_pos)
+		|| !turns->execute_team_action(player)) {
 		return;
 	}
 
@@ -452,7 +457,7 @@ void WorldSystem::move_player(Direction direction)
 		// Otherwise we can update the reference
 		map_pos.position = new_pos;
 	}
-	
+
 	turns->complete_team_action(player);
 }
 
@@ -489,11 +494,10 @@ void WorldSystem::equip_next_weapon()
 		animations->player_toggle_weapon(player);
 		turns->complete_team_action(player);
 	}
-	
 }
 
-void WorldSystem::change_color() 
-{ 
+void WorldSystem::change_color()
+{
 	ColorState active_color = turns->get_active_color();
 	switch (active_color) {
 	case ColorState::Red:
@@ -513,8 +517,8 @@ void WorldSystem::change_color()
 		break;
 	}
 
-	//ColorState active_color = turns->get_active_color();
-	//for (long long i = registry.enemies.entities.size() - 1; i >= 0; i--) { 
+	// ColorState active_color = turns->get_active_color();
+	// for (long long i = registry.enemies.entities.size() - 1; i >= 0; i--) {
 	//	const Entity& enemy_entity = registry.enemies.entities[i];
 	//	if (((uint8_t)registry.enemies.get(enemy_entity).team & (uint8_t)active_color) == 0) {
 	//		registry.render_requests.get(enemy_entity).visible = false;
@@ -538,9 +542,8 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 			Velocity& arrow_velocity = registry.velocities.get(player_arrow);
 
 			// Denotes arrowhead location the player's arrow, based on firing angle and current scaling
-			arrow_projectile.head_offset
-				= { sin(arrow_velocity.angle) * scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::CANNONBALL)).y
-						/ 2,
+			arrow_projectile.head_offset = {
+				sin(arrow_velocity.angle) * scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::CANNONBALL)).y / 2,
 				-cos(arrow_velocity.angle) * scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::CANNONBALL)).x / 2
 			};
 
@@ -561,8 +564,7 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 			uvec2 mouse_map_pos = MapUtility::world_position_to_map_position(mouse_world_pos);
 			uvec2 player_pos = registry.map_positions.get(player).position;
 			ivec2 distance = mouse_map_pos - player_pos;
-			if (abs(distance.x) > 1 || abs(distance.y) > 1
-				|| !turns->execute_team_action(player)) {
+			if (abs(distance.x) > 1 || abs(distance.y) > 1 || !turns->execute_team_action(player)) {
 				return;
 			}
 			for (const auto& target : registry.stats.entities) {

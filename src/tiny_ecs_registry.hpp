@@ -87,6 +87,8 @@ private:
 		&weapons,
 		&inventories,
 
+		// Camera
+		&cameras,
 		// UI
 		&text,
 	};
