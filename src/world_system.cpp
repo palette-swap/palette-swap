@@ -93,7 +93,7 @@ GLFWwindow* WorldSystem::create_window(int width, int height)
 	glfwSetCursorPosCallback(window, cursor_pos_redirect);
 	glfwSetMouseButtonCallback(window, mouse_click_redirect);
 	glfwSetScrollCallback(window, scroll_redirect);
-	glfwSetWindowSizeLimits(window, GLFW_DONT_CARE, GLFW_DONT_CARE, 1920, 1080);
+	glfwSetWindowSizeLimits(window, GLFW_DONT_CARE, GLFW_DONT_CARE, GLFW_DONT_CARE, GLFW_DONT_CARE);
 	glfwSetFramebufferSizeCallback(window, resize_redirect);
 
 	//////////////////////////////////////
@@ -423,7 +423,7 @@ void WorldSystem::move_player(Direction direction)
 		animations->player_running_animation(player);
 	}
 
-	if (map_pos.position == new_pos || !map_generator->walkable(new_pos) || !turns->execute_team_action(player)) {
+	if (map_pos.position == new_pos || !map_generator->walkable_and_free(new_pos) || !turns->execute_team_action(player)) {
 		return;
 	}
 
