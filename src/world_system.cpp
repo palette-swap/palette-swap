@@ -467,6 +467,10 @@ void WorldSystem::move_player(Direction direction)
 	if (!player_arrow_fired) {
 		arrow_position.position += (vec2(new_pos) - vec2(map_pos.position)) * MapUtility::tile_size;
 	}
+
+	map_pos.position = new_pos;
+	turns->complete_team_action(player);
+
 	if (map_generator->is_next_level_tile(new_pos)) {
 		if (map_generator->is_last_level()) {
 			end_of_game = true;
@@ -478,13 +482,7 @@ void WorldSystem::move_player(Direction direction)
 	} else if (map_generator->is_last_level_tile(new_pos)) {
 		map_generator->load_last_level();
 		registry.map_positions.get(player).position = map_generator->get_player_end_position();
-	} else {
-		// Because we modified map position lists, so we need to directly update the registry
-		// Otherwise we can update the reference
-		map_pos.position = new_pos;
 	}
-
-	turns->complete_team_action(player);
 }
 
 void WorldSystem::equip_next_weapon()
