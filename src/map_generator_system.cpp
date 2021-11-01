@@ -44,19 +44,22 @@ static void load_enemy(int enemy_index, const rapidjson::Document & json_doc)
 	// Indicates enemy is hittable by objects
 	registry.hittables.emplace(entity);
 
-	
+	Animation& enemy_animation = registry.animations.emplace(entity);
+	enemy_animation.max_frames = 4;
+
 	registry.render_requests.insert(
 		entity, { enemy_type_textures[static_cast<int>(enemy_component.type)], EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY });
 	if (enemy_component.team == ColorState::Red) {
+		enemy_animation.color = ColorState::Red;
 		registry.colors.insert(entity, AnimationUtility::default_enemy_red);
 	} else if (enemy_component.team == ColorState::Blue) {
 		registry.colors.insert(entity, { AnimationUtility::default_enemy_blue });
+		enemy_animation.color = ColorState::Blue;
 	} else {
 		registry.colors.insert(entity, { 1, 1, 1 });
 	}
 
-	Animation& enemy_animation = registry.animations.emplace(entity);
-	enemy_animation.max_frames = 4;
+	
 
 }
 

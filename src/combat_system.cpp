@@ -2,10 +2,33 @@
 
 #include <sstream>
 
-void CombatSystem::init(std::shared_ptr<std::default_random_engine> rng) { this->rng = std::move(rng); }
+void CombatSystem::init(std::shared_ptr<std::default_random_engine> rng, std::shared_ptr<AnimationSystem> animations)
+{
+	this->rng = std::move(rng);
+	this->animations = std::move(animations);
+}
 
 bool CombatSystem::do_attack(Entity attacker_entity, Attack& attack, Entity target_entity)
 {
+	// Checks that the attacker and the enemy wasn't the same entity
+	if (attacker_entity == target_entity) {
+		return false;
+	}
+	MapPosition& attacker_position = registry.map_positions.get(attacker_entity);
+	MapPosition& target_position = registry.map_positions.get(target_entity);
+	// Changes attacker's direction based on the location of the target relative to 
+	// the target entity
+	if (target_position.position.x < attacker_position.position.x) {
+		animations->set_sprite_direction(attacker_entity, Sprite_Direction::SPRITE_LEFT);
+	} else {
+		animations->set_sprite_direction(attacker_entity, Sprite_Direction::SPRITE_RIGHT);
+	}
+
+	// Triggers attack based on player/enemy attack prescence
+	animations->attack_animation(attacker_entity);
+	animations->damage_animation(target_entity);
+	
+
 	Stats& attacker = registry.stats.get(attacker_entity);
 	Stats& target = registry.stats.get(target_entity);
 	// Roll a random to hit between min and max (inclusive), add attacker's to_hit_bonus

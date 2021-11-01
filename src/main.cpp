@@ -35,7 +35,7 @@ int main()
 
 	// Global systems
 	Debug debugging;
-	WorldSystem world(debugging, combat, map, turns);
+	WorldSystem world(debugging, combat, map, turns, animations);
 	RenderSystem renderer;
 	PhysicsSystem physics(debugging, map);
 	AISystem ai(debugging, combat, map, turns, animations);
@@ -71,7 +71,7 @@ int main()
 		ai.step(elapsed_ms);
 		physics.step(elapsed_ms, window_width_px, window_height_px);
 		world.handle_collisions();
-		animations->update_animations(elapsed_ms);
+		animations->update_animations(elapsed_ms, turns->get_inactive_color());
 		renderer.draw();
 		turns->step();
 	}
