@@ -448,9 +448,10 @@ void MapGeneratorSystem::clear_level() {
 		registry.remove_all_components_of(e);
 	}
 
-	if (current_level == 0) {
+	// when clear_level is called in restarting, the help picture's render request is already removed
+	/*if (current_level == 0) {
 		registry.render_requests.get(help_picture).visible = false;
-	}
+	}*/
 }
 
 void MapGeneratorSystem::load_next_level()
