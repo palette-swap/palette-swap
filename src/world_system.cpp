@@ -19,16 +19,18 @@
 WorldSystem::WorldSystem(Debug& debugging,
 						 std::shared_ptr<CombatSystem> combat,
 						 std::shared_ptr<MapGeneratorSystem> map,
-						 std::shared_ptr<TurnSystem> turns)
-
+						 std::shared_ptr<TurnSystem> turns,
+						 std::shared_ptr<AnimationSystem> animations)
+					
 	: points(0)
 	, debugging(debugging)
 	, rng(std::make_shared<std::default_random_engine>(std::default_random_engine(std::random_device()())))
 	, combat(std::move(combat))
 	, map_generator(std::move(map))
 	, turns(std::move(turns))
+	, animations(std::move(animations))
 {
-	this->combat->init(rng);
+	this->combat->init(rng, animations);
 }
 
 WorldSystem::~WorldSystem()
@@ -270,8 +272,16 @@ void WorldSystem::handle_collisions()
 
 				// Attack the other entity if it can be attacked
 				if (registry.stats.has(entity_other)) {
-					combat->do_attack(
-						player, registry.weapons.get(current_weapon).given_attacks[current_attack], entity_other);
+					// Checks if the other enemy is a red/blue enemy
+					if (registry.enemies.has(entity_other)) {
+						Enemy& enemy = registry.enemies.get(entity_other);
+						ColorState enemy_color = enemy.team;
+						if (enemy_color != turns->get_inactive_color()) {
+							combat->do_attack(player,
+											  registry.weapons.get(current_weapon).given_attacks[current_attack],
+											  entity_other);
+						}
+					}	
 				}
 
 				// Stops projectile motion, adds projectile to list of resolved projectiles
@@ -536,6 +546,9 @@ void WorldSystem::change_color()
 // TODO: Integrate into turn state to only enable if player's turn is on
 void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 {
+	if (turns->get_active_team() != player) {
+		return;
+	}
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
 		Attack& attack = registry.weapons.get(current_weapon).given_attacks[current_attack];
 		if (!player_arrow_fired && attack.targeting_type == TargetingType::Projectile
@@ -557,10 +570,13 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 			//	= { sin(arrow_motion.angle) * projectile_speed, -cos(arrow_motion.angle) * projectile_speed };
 			so_loud.play(cannon_wav);
 		} else if (attack.targeting_type == TargetingType::Adjacent && turns->get_active_team() == player) {
+			
 			// Get screen position of mouse
 			dvec2 mouse_screen_pos;
 			glfwGetCursorPos(window, &mouse_screen_pos.x, &mouse_screen_pos.y);
 
+			// Denotes whether a player was able to complete their turn or not (false be default)
+			bool combat_success = false;
 			// Convert to world pos
 			vec2 mouse_world_pos = renderer->screen_position_to_world_position(mouse_screen_pos);
 
@@ -568,18 +584,27 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 			uvec2 mouse_map_pos = MapUtility::world_position_to_map_position(mouse_world_pos);
 			uvec2 player_pos = registry.map_positions.get(player).position;
 			ivec2 distance = mouse_map_pos - player_pos;
-			if (abs(distance.x) > 1 || abs(distance.y) > 1 || !turns->execute_team_action(player)) {
+			if (abs(distance.x) > 1 || abs(distance.y) > 1 || distance == ivec2(0,0)
+				|| turns->get_active_team() != player) {
 				return;
 			}
 			for (const auto& target : registry.stats.entities) {
 				if (registry.map_positions.get(target).position == mouse_map_pos) {
+					Enemy& enemy = registry.enemies.get(target);
+					ColorState inactive_color = turns->get_inactive_color();
+					if (enemy.team == inactive_color || !turns->execute_team_action(player)) {
+						continue;
+					}
+				
 					combat->do_attack(player, attack, target);
-					animations->player_attack_animation(player);
-					so_loud.play(light_sword_wav);
-					animations->damage_animation(target);
+					combat_success = true;
+					break;
 				}
 			}
-			turns->complete_team_action(player);
+			if (combat_success) { 
+				so_loud.play(light_sword_wav);
+				turns->complete_team_action(player);
+			}
 		}
 	}
 }

@@ -4,17 +4,19 @@ void AnimationSystem::init()
 {
 }
 
-void AnimationSystem::update_animations(float elapsed_ms)
+void AnimationSystem::update_animations(float elapsed_ms, ColorState inactive_color)
 {
 	auto& animations = registry.animations;
 	for (uint i = 0; i < animations.size(); i++) {
 		Animation& animation = animations.components[i];
-
-		animation.elapsed_time += elapsed_ms;
-		if (animation.elapsed_time >= base_animation_speed/animation.speed_adjustment) {
-			animation.elapsed_time = 0;
-			animation.frame = ((animation.frame) + 1) % animation.max_frames;
+		if (animation.color != inactive_color) {
+			animation.elapsed_time += elapsed_ms;
+			if (animation.elapsed_time >= base_animation_speed / animation.speed_adjustment) {
+				animation.elapsed_time = 0;
+				animation.frame = ((animation.frame) + 1) % animation.max_frames;
+			}
 		}
+
 	}
 	resolve_event_animations();
 }
@@ -44,6 +46,15 @@ void AnimationSystem::damage_animation(const Entity& entity)
 		this->animation_event_setup(entity_animation, damage_animation, entity_color);
 		entity_color = damage_color;
 		entity_animation.speed_adjustment = damage_animation_speed;
+	}
+}
+
+void AnimationSystem::attack_animation(const Entity& entity) 
+{ 
+	if (registry.players.has(entity)) {
+		this->player_attack_animation(entity);
+	} else {
+		this->enemy_attack_animation(entity);
 	}
 }
 
@@ -156,7 +167,9 @@ void AnimationSystem::player_attack_animation(const Entity& player)
 	assert(registry.players.has(player));
 	Animation& player_animation = registry.animations.get(player);
 	vec3& player_color = registry.colors.get(player);
-
+	if (player_animation.state == static_cast<int>(player_animation_states::Spellcast)) {
+		return;
+	}
 	if (!registry.event_animations.has(player)) {
 		Event_Animation& player_melee = registry.event_animations.emplace(player);
 

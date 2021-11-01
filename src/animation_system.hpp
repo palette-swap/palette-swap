@@ -48,13 +48,14 @@ public:
 	void init();
 
 	// Updates all animated entities based on elapsed time, changes their frame based on the time
-	void update_animations(float elapsed_ms);	
+	void update_animations(float elapsed_ms, ColorState inactive_color);	
 	// Sets direction for an animated sprite, such that it faces either left or right
 	void set_sprite_direction(const Entity& sprite, Sprite_Direction direction);
 	// Triggers an animation to display that an entity has taken damage
 	// For now, this is just a colour change. Will change in next version however
 	void damage_animation(const Entity& entity);
-
+	// Triggers an attack animation, chooses the correct one depending on which entity (player/enemy)
+	void attack_animation(const Entity& entity);
 	// Sets an enemy entity to have the correct render texture, and color state
 	void set_enemy_animation(const Entity& enemy, TEXTURE_ASSET_ID enemy_type, ColorState color);
 	// Changes an enemy's animation state
@@ -89,7 +90,6 @@ private:
 	void resolve_event_animations();
 	// helper function for setting animation events
 	void animation_event_setup(Animation& animation, Event_Animation& event_animation, vec3& color);
-
 };
 
 
