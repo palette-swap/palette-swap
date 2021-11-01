@@ -401,8 +401,8 @@ struct Attack {
 struct Stats {
 
 	// Health and its max
-	int health = 100;
-	int health_max = 100;
+	int health = 140;
+	int health_max = 140;
 
 	// Mana and its max
 	int mana = 100;
@@ -416,7 +416,7 @@ struct Stats {
 
 	// This number is compared to an attack total to see if it hits.
 	// It hits if attack_total >= evasion
-	int evasion = 15;
+	int evasion = 16;
 
 	// The default attack associated with this entity
 	// TODO: Consider removing when multiple attacks are more readily supported
