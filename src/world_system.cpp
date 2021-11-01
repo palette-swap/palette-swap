@@ -257,8 +257,16 @@ void WorldSystem::handle_collisions()
 
 				// Attack the other entity if it can be attacked
 				if (registry.stats.has(entity_other)) {
-					combat->do_attack(
-						player, registry.weapons.get(current_weapon).given_attacks[current_attack], entity_other);
+					// Checks if the other enemy is a red/blue enemy
+					if (registry.enemies.has(entity_other)) {
+						Enemy& enemy = registry.enemies.get(entity_other);
+						ColorState enemy_color = enemy.team;
+						if (enemy_color != turns->get_inactive_color()) {
+							combat->do_attack(player,
+											  registry.weapons.get(current_weapon).given_attacks[current_attack],
+											  entity_other);
+						}
+					}	
 				}
 
 				// Stops projectile motion, adds projectile to list of resolved projectiles
