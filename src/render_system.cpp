@@ -462,8 +462,8 @@ mat3 RenderSystem::create_projection_matrix()
 	glfwGetFramebufferSize(window, &w, &h);
 	gl_has_errors();
 
-	vec2 top_left = get_top_left();
-	vec2 bottom_right = top_left + (vec2(w,h) * screen_scale);
+	vec2 top_left, bottom_right;
+	std::tie(top_left, bottom_right) = get_window_bounds();
 
 	float sx = 2.f / (w * screen_scale);
 	float sy = -2.f / (h * screen_scale);
@@ -472,33 +472,33 @@ mat3 RenderSystem::create_projection_matrix()
 	return { { sx, 0.f, 0.f }, { 0.f, sy, 0.f }, { tx, ty, 1.f } };
 }
 
-vec2 RenderSystem::get_top_left()
+std::pair<vec2, vec2> RenderSystem::get_window_bounds()
 {
 	int w, h;
 	glfwGetFramebufferSize(window, &w, &h);
 	gl_has_errors();
+	vec2 window_size = vec2(w, h) * screen_scale;
 
 	Entity player = registry.players.top_entity();
 	vec2 player_pos = MapUtility::map_position_to_world_position(registry.map_positions.get(player).position);
 	
 	Entity camera = registry.cameras.top_entity();
-	MapPosition& camera_map_pos = registry.map_positions.get(camera);
+	WorldPosition& camera_world_pos = registry.world_positions.get(camera);
 
 	vec2 buffer_top_left, buffer_down_right;
 	
 	std::tie(buffer_top_left, buffer_down_right)
-		= CameraUtility::get_buffer_positions(MapUtility::map_position_to_world_position(camera_map_pos.position), w * screen_scale, h * screen_scale);
+		= CameraUtility::get_buffer_positions(camera_world_pos.position, window_size.x, window_size.y);
 
-	update_camera_position(camera_map_pos, player_pos, buffer_top_left, buffer_down_right);
+	update_camera_position(camera_world_pos, player_pos, buffer_top_left, buffer_down_right);
 
-	vec2 final_camera_pos = MapUtility::map_position_to_world_position(camera_map_pos.position);
 
-	return { final_camera_pos.x, final_camera_pos.y};
+	return { camera_world_pos.position - window_size / 2.f, camera_world_pos.position + window_size / 2.f };
 }
 
 vec2 RenderSystem::screen_position_to_world_position(vec2 screen_pos)
 {
-	return screen_pos * screen_scale + get_top_left();
+	return screen_pos * screen_scale + get_window_bounds().first;
 }
 
  void RenderSystem::scale_on_scroll(float offset)
@@ -522,32 +522,19 @@ void RenderSystem::on_resize(int width, int height) {
 }
 
  // update camera's map position when player move out of buffer
- void RenderSystem::update_camera_position(MapPosition& camera_map_pos,
+ void RenderSystem::update_camera_position(WorldPosition& camera_map_pos,
 								 const vec2& player_pos,
 								 const vec2& buffer_top_left,
 								 const vec2& buffer_down_right)
 {
 	vec2 offset_top_left = player_pos - buffer_top_left;
 	vec2 offset_down_right = player_pos - buffer_down_right;
+	vec2 map_top_left = MapUtility::map_position_to_world_position(MapUtility::map_top_left);
+	vec2 map_bottom_right = MapUtility::map_position_to_world_position(MapUtility::map_down_right);
 
-	if (offset_top_left.x >= 0 && offset_top_left.y >= 0 && offset_down_right.x <= 0 && offset_down_right.y <= 0) {
-		return;
-	}
-
-	if (offset_top_left.x < 0 && camera_map_pos.position.x > CameraUtility::map_top_left) {
-		camera_map_pos.position.x -= 1;
-	}
-
-	if (offset_top_left.y < 0 && camera_map_pos.position.y > CameraUtility::map_top_left) {
-		camera_map_pos.position.y -= 1;
-	}
-
-	if (offset_down_right.x > 0 && camera_map_pos.position.x < CameraUtility::map_down_right) {
-		camera_map_pos.position.x += 1;
-	}
-
-	if (offset_down_right.y > 0 && camera_map_pos.position.y < CameraUtility::map_down_right) {
-		camera_map_pos.position.y += 1;
-	}
+	camera_map_pos.position
+		= max(min(camera_map_pos.position, camera_map_pos.position + offset_top_left), map_top_left);
+	camera_map_pos.position
+		= min(max(camera_map_pos.position, camera_map_pos.position + offset_down_right), map_bottom_right);
 
 }

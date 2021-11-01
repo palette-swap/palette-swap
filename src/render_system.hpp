@@ -125,8 +125,8 @@ private:
 
 	////////////////////////////////////////////////////////
 	// General helper functions
-	// Get world position of top left of screen (screen pos (0,0))
-	vec2 get_top_left();
+	// Get world position of top left and bottom right of screen
+	std::pair<vec2, vec2> get_window_bounds();
 	// Helper to get position transform
 	Transform get_transform(Entity entity);
 
@@ -144,7 +144,7 @@ private:
 	void draw_text(Entity entity, const Text& text, const mat3& projection);
 	void draw_triangles(const Transform& transform, const mat3& projection);
 	void draw_to_screen();
-	void update_camera_position(MapPosition& camera_map_pos,
+	void update_camera_position(WorldPosition& camera_map_pos,
 								const vec2& player_pos,
 								const vec2& buffer_top_left,
 								const vec2& buffer_down_right);
