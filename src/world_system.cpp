@@ -148,11 +148,11 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	// Processing the player state
 	assert(registry.screen_states.components.size() <= 1);
 	// ScreenState& screen = registry.screen_states.components[0];
-	if ((registry.stats.get(player).health <= 0) && turns->get_active_team() == player)  {
+	if ((registry.stats.get(player).health <= 0) && turns->ready_to_act(player)) {
 		restart_game();
 		return true;
 	}
-	if (end_of_game && turns->get_active_team() == player) {
+	if (end_of_game && turns->ready_to_act(player)) {
 		restart_game();
 		return true;
 	}

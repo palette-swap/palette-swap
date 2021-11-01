@@ -12,7 +12,8 @@ public:
 
 	// Returns the entity who can start their turn / is in their turn
 	Entity get_active_team();
-	// std::deque<Entity>::iterator getTeamPositionInQueue(Entity team);
+
+	bool ready_to_act(Entity team);
 	
 	// Returns true if the entity team has a turn
 	bool team_in_queue(Entity team);

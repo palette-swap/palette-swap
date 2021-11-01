@@ -15,6 +15,8 @@ Entity TurnSystem::get_active_team()
 	return {};
 }
 
+bool TurnSystem::ready_to_act(Entity team) { return get_active_team() == team && queue_state == QueueState::Idle; }
+
 bool TurnSystem::team_in_queue(Entity team)
 {
 	for (Entity e : team_queue) {
