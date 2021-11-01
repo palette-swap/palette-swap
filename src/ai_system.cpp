@@ -330,10 +330,6 @@ void AISystem::attack_player(const Entity& entity)
 	char* enemy_type = enemy_type_to_string[registry.enemies.get(entity).type];
 	printf("%s_%u attacks player!\n", enemy_type, (uint)entity);
 
-	// TODO: move attack animation to combat system potentially
-	// Triggers attack for a enemy entity
-	animations->enemy_attack_animation(entity);
-	animations->damage_animation(player);
 	so_loud.play(enemy_attack1_wav);
 }
 
@@ -372,6 +368,11 @@ bool AISystem::move(const Entity& entity, const uvec2& map_pos)
 {
 	MapPosition& entity_map_pos = registry.map_positions.get(entity);
 	if (entity_map_pos.position != map_pos && map_generator->walkable(map_pos)) {
+		if (map_pos.x < entity_map_pos.position.x) {
+			animations->set_sprite_direction(entity, Sprite_Direction::SPRITE_LEFT);
+		} else if (map_pos.x > entity_map_pos.position.x) {
+			animations->set_sprite_direction(entity, Sprite_Direction::SPRITE_RIGHT);
+		}
 		entity_map_pos.position = map_pos;
 		return true;
 	}
