@@ -165,6 +165,8 @@ public:
 	bool is_next_level_tile(uvec2 pos) const;
 	bool is_last_level_tile(uvec2 pos) const;
 
+	bool is_last_level() const;
+
 	// Save current level and load the next level
 	void load_next_level();
 

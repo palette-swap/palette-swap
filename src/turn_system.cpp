@@ -15,6 +15,8 @@ Entity TurnSystem::get_active_team()
 	return {};
 }
 
+bool TurnSystem::ready_to_act(Entity team) { return get_active_team() == team && queue_state == QueueState::Idle; }
+
 bool TurnSystem::team_in_queue(Entity team)
 {
 	for (Entity e : team_queue) {
@@ -36,15 +38,18 @@ bool TurnSystem::add_team_to_queue(Entity team)
 
 bool TurnSystem::remove_team_from_queue(Entity team)
 {
-	for (Entity e : team_queue) {
+	size_t size = team_queue.size();
+	for (size_t i = 0; i < size; i++) {
+		Entity e = team_queue.front();
 		if (e == team) {
 			team_queue.pop_front();
-		} else {
-			team_queue.push_back(team_queue.front());
-			team_queue.pop_front();
+			return true;
 		}
+
+		team_queue.push_back(e);
+		team_queue.pop_front();
 	}
-	return true;
+	return false;
 }
 
 bool TurnSystem::skip_team_action(Entity team)

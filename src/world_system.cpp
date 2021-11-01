@@ -2,6 +2,13 @@
 #include "world_system.hpp"
 #include "world_init.hpp"
 
+// For calling sleep
+#ifdef _WIN32
+#include <Windows.h>
+#else
+#include <unistd.h>
+#endif
+
 // stlib
 #include <cassert>
 #include <sstream>
@@ -141,7 +148,11 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	// Processing the player state
 	assert(registry.screen_states.components.size() <= 1);
 	// ScreenState& screen = registry.screen_states.components[0];
-	if (registry.stats.get(player).health <= 0 && turns->get_active_team() == player) {
+	if ((registry.stats.get(player).health <= 0) && turns->ready_to_act(player)) {
+		restart_game();
+		return true;
+	}
+	if (end_of_game && turns->ready_to_act(player)) {
 		restart_game();
 		return true;
 	}
@@ -185,6 +196,8 @@ void WorldSystem::restart_game()
 
 	// Reset the game speed
 	current_speed = 1.f;
+	// Reset the game end
+	end_of_game = false;
 
 	// Remove the old player team
 	turns->remove_team_from_queue(player);
@@ -363,6 +376,14 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		restart_game();
 	}
 
+	// God mode
+	if (action == GLFW_RELEASE && (mod & GLFW_MOD_ALT) != 0 && key == GLFW_KEY_G) {
+		Stats& stats = registry.stats.get(player);
+		stats.evasion = 100000;
+		stats.to_hit_bonus = 100000;
+		stats.damage_bonus = 100000;
+	}
+
 	// Debugging
 	if (key == GLFW_KEY_B) {
 		debugging.in_debug_mode = action != GLFW_RELEASE;
@@ -420,7 +441,7 @@ void WorldSystem::move_player(Direction direction)
 
 	if (direction == Direction::Left && map_pos.position.x > 0) {
 		new_pos = uvec2(map_pos.position.x - 1, map_pos.position.y);
-		// TODO: Change this to animation request instead of calling it here;
+		
 		animations->set_sprite_direction(player, Sprite_Direction::SPRITE_LEFT);
 		animations->player_running_animation(player);
 	} else if (direction == Direction::Up && map_pos.position.y > 0) {
@@ -429,7 +450,7 @@ void WorldSystem::move_player(Direction direction)
 	} else if (direction == Direction::Right
 			   && map_pos.position.x < MapUtility::room_size * MapUtility::tile_size - 1) {
 		new_pos = uvec2(map_pos.position.x + 1, map_pos.position.y);
-		// TODO: Change this to animation request instead of calling it here;
+		
 		animations->set_sprite_direction(player, Sprite_Direction::SPRITE_RIGHT);
 		animations->player_running_animation(player);
 	} else if (direction == Direction::Down && map_pos.position.y < MapUtility::room_size * MapUtility::tile_size - 1) {
@@ -446,19 +467,22 @@ void WorldSystem::move_player(Direction direction)
 	if (!player_arrow_fired) {
 		arrow_position.position += (vec2(new_pos) - vec2(map_pos.position)) * MapUtility::tile_size;
 	}
+
+	map_pos.position = new_pos;
+	turns->complete_team_action(player);
+
 	if (map_generator->is_next_level_tile(new_pos)) {
-		map_generator->load_next_level();
-		registry.map_positions.get(player).position = map_generator->get_player_start_position();
+		if (map_generator->is_last_level()) {
+			end_of_game = true;
+			return;
+		} else {
+			map_generator->load_next_level();
+			registry.map_positions.get(player).position = map_generator->get_player_start_position();
+		}
 	} else if (map_generator->is_last_level_tile(new_pos)) {
 		map_generator->load_last_level();
 		registry.map_positions.get(player).position = map_generator->get_player_end_position();
-	} else {
-		// Because we modified map position lists, so we need to directly update the registry
-		// Otherwise we can update the reference
-		map_pos.position = new_pos;
 	}
-
-	turns->complete_team_action(player);
 }
 
 void WorldSystem::equip_next_weapon()

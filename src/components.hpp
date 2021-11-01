@@ -143,7 +143,8 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 	CANNONBALL = DRAKE + 1,
 	TILE_SET = CANNONBALL + 1,
 	HELP_PIC = TILE_SET + 1,
-	TEXTURE_COUNT = HELP_PIC + 1,
+	END_PIC = HELP_PIC + 1,
+	TEXTURE_COUNT = END_PIC + 1,
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 
