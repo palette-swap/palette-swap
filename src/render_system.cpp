@@ -175,7 +175,7 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 
 		// Updates frame for entity
 		GLint frame_loc = glGetUniformLocation(program, "frame");
-		glUniform1i(frame_loc, animation.frame);	
+		glUniform1i(frame_loc, animation.frame);
 		gl_has_errors();
 
 		// Updates frame for entity
@@ -188,7 +188,6 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 
 		glBindTexture(GL_TEXTURE_2D, texture_id);
 		gl_has_errors();
-
 
 	} else if (render_request.used_effect == EFFECT_ASSET_ID::LINE) {
 		GLint in_position_loc = glGetAttribLocation(program, "in_position");
@@ -235,8 +234,7 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 	}
 
 	// Getting uniform locations for glUniform* calls
-	if (registry.colors.has(entity))
-	{
+	if (registry.colors.has(entity)) {
 		GLint color_uloc = glGetUniformLocation(program, "fcolor");
 		const vec3 color = registry.colors.get(entity);
 		glUniform3fv(color_uloc, 1, glm::value_ptr(color));
@@ -481,7 +479,7 @@ std::pair<vec2, vec2> RenderSystem::get_window_bounds()
 
 	Entity player = registry.players.top_entity();
 	vec2 player_pos = MapUtility::map_position_to_world_position(registry.map_positions.get(player).position);
-	
+
 	Entity camera = registry.cameras.top_entity();
 	WorldPosition& camera_world_pos = registry.world_positions.get(camera);
 
@@ -503,17 +501,19 @@ vec2 RenderSystem::screen_position_to_world_position(vec2 screen_pos)
 
  void RenderSystem::scale_on_scroll(float offset)
 {
-	 // scale the camera based on scrolling offset
-	 // scrolling forward -> zoom in
-	 // scrolling backward -> zoom out
-	 // max: 1.0, min: 0.2
+	// scale the camera based on scrolling offset
+	// scrolling forward -> zoom in
+	// scrolling backward -> zoom out
+	// max: 1.0, min: 0.2
 	float zoom = offset / 10;
 	if (this->screen_scale - zoom > 0.1 && this->screen_scale - zoom <= 1.0) {
 		this->screen_scale -= zoom;
 	}
+
 }
 
-void RenderSystem::on_resize(int width, int height) {
+void RenderSystem::on_resize(int width, int height)
+{
 	screen_size = { width, height };
 
 	glBindTexture(GL_TEXTURE_2D, off_screen_render_buffer_color);
@@ -522,19 +522,18 @@ void RenderSystem::on_resize(int width, int height) {
 }
 
  // update camera's map position when player move out of buffer
- void RenderSystem::update_camera_position(WorldPosition& camera_map_pos,
-								 const vec2& player_pos,
-								 const vec2& buffer_top_left,
-								 const vec2& buffer_down_right)
+void RenderSystem::update_camera_position(WorldPosition& camera_world_pos,
+										  const vec2& player_pos,
+										  const vec2& buffer_top_left,
+										  const vec2& buffer_down_right)
 {
 	vec2 offset_top_left = player_pos - buffer_top_left;
 	vec2 offset_down_right = player_pos - buffer_down_right;
 	vec2 map_top_left = MapUtility::map_position_to_world_position(MapUtility::map_top_left);
 	vec2 map_bottom_right = MapUtility::map_position_to_world_position(MapUtility::map_down_right);
 
-	camera_map_pos.position
-		= max(min(camera_map_pos.position, camera_map_pos.position + offset_top_left), map_top_left);
-	camera_map_pos.position
-		= min(max(camera_map_pos.position, camera_map_pos.position + offset_down_right), map_bottom_right);
-
+	camera_world_pos.position
+		= max(min(camera_world_pos.position, camera_world_pos.position + offset_top_left), map_top_left);
+	camera_world_pos.position
+		= min(max(camera_world_pos.position, camera_world_pos.position + offset_down_right), map_bottom_right);
 }
