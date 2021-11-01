@@ -517,7 +517,7 @@ void RenderSystem::on_resize(int width, int height)
 	screen_size = { width, height };
 
 	glBindTexture(GL_TEXTURE_2D, off_screen_render_buffer_color);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screen_size.x, screen_size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, min(screen_size.x, window_width_px), min(screen_size.y, window_height_px), 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 	gl_has_errors();
 }
 

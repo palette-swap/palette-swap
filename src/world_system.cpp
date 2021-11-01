@@ -223,7 +223,6 @@ void WorldSystem::restart_game()
 
 	map_generator->load_initial_level();
 
-	vec2 middle = { window_width_px / 2, window_height_px / 2 };
 	// a random starting position... probably need to update this
 	uvec2 player_starting_point = map_generator->get_player_start_position();
 	// Create a new Player instance and shift player onto a tile
