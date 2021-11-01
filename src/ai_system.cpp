@@ -330,10 +330,6 @@ void AISystem::attack_player(const Entity& entity)
 	char* enemy_type = enemy_type_to_string[registry.enemies.get(entity).type];
 	printf("%s_%u attacks player!\n", enemy_type, (uint)entity);
 
-	// TODO: move attack animation to combat system potentially
-	// Triggers attack for a enemy entity
-	//animations->enemy_attack_animation(entity);
-	//animations->damage_animation(player);
 	so_loud.play(enemy_attack1_wav);
 }
 
