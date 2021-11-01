@@ -9,9 +9,9 @@
 
 #include <glm/gtx/hash.hpp>
 
+#include "rapidjson/pointer.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
-#include "rapidjson/pointer.h"
 
 using namespace MapUtility;
 
@@ -20,7 +20,7 @@ MapGeneratorSystem::MapGeneratorSystem()
 	, level_room_rotations(num_levels)
 	, level_snap_shots(num_levels)
 {
-	load_rooms_from_csv(); 
+	load_rooms_from_csv();
 	load_levels_from_csv();
 	load_level_configurations();
 	current_level = -1;
@@ -28,7 +28,7 @@ MapGeneratorSystem::MapGeneratorSystem()
 
 ////////////////////////////////////
 // Functions to load different entities, e.g. enemy
-static void load_enemy(int enemy_index, const rapidjson::Document & json_doc)
+static void load_enemy(int enemy_index, const rapidjson::Document& json_doc)
 {
 	auto entity = Entity();
 	std::string enemy_prefix = "/enemies/" + std::to_string(enemy_index);
@@ -47,8 +47,10 @@ static void load_enemy(int enemy_index, const rapidjson::Document & json_doc)
 	Animation& enemy_animation = registry.animations.emplace(entity);
 	enemy_animation.max_frames = 4;
 
-	registry.render_requests.insert(
-		entity, { enemy_type_textures[static_cast<int>(enemy_component.type)], EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY });
+	registry.render_requests.insert(entity,
+									{ enemy_type_textures[static_cast<int>(enemy_component.type)],
+									  EFFECT_ASSET_ID::ENEMY,
+									  GEOMETRY_BUFFER_ID::ENEMY });
 	if (enemy_component.team == ColorState::Red) {
 		enemy_animation.color = ColorState::Red;
 		registry.colors.insert(entity, AnimationUtility::default_enemy_red);
@@ -58,9 +60,6 @@ static void load_enemy(int enemy_index, const rapidjson::Document & json_doc)
 	} else {
 		registry.colors.insert(entity, { 1, 1, 1 });
 	}
-
-	
-
 }
 
 void MapGeneratorSystem::create_picture()
@@ -75,12 +74,10 @@ void MapGeneratorSystem::create_picture()
 	// registry.colors.insert(entity, { 1, 1, 1 });
 }
 
-
 // TODO: we want this eventually be procedural generated
 void MapGeneratorSystem::generate_levels()
 {
 	// TODO: generate map procedurally
-	
 }
 
 const MapGeneratorSystem::Mapping& MapGeneratorSystem::current_map() const
@@ -109,8 +106,8 @@ bool MapGeneratorSystem::walkable_and_free(uvec2 pos) const
 		return false;
 	}
 	return !std::any_of(registry.map_positions.components.begin(),
-					   registry.map_positions.components.end(),
-					   [pos](const MapPosition& pos2) { return pos2.position == pos; });
+						registry.map_positions.components.end(),
+						[pos](const MapPosition& pos2) { return pos2.position == pos; });
 }
 
 bool MapGeneratorSystem::is_wall(uvec2 pos) const
@@ -207,10 +204,8 @@ std::vector<uvec2> MapGeneratorSystem::bfs(uvec2 start_pos, uvec2 target) const
 
 		// Otherwise, add all unvisited neighbours to the queue
 		// Currently, diagonal movement is not supported
-		for (uvec2 neighbour : { curr + uvec2(1, 0),
-								 uvec2(curr.x - 1, curr.y),
-								 curr + uvec2(0, 1),
-								 uvec2(curr.x, curr.y - 1) }) {
+		for (uvec2 neighbour :
+			 { curr + uvec2(1, 0), uvec2(curr.x - 1, curr.y), curr + uvec2(0, 1), uvec2(curr.x, curr.y - 1) }) {
 			// Check if neighbour is not already visited, and is walkable
 			if (neighbour == target || (walkable_and_free(neighbour) && parent.find(neighbour) == parent.end())) {
 				// Enqueue neighbour
@@ -284,7 +279,8 @@ TileId MapGeneratorSystem::get_tile_id_from_room(RoomType room_type, uint8_t row
 	return room_layouts.at(room_type).at(row).at(col);
 }
 
-void MapGeneratorSystem::load_levels_from_csv() {
+void MapGeneratorSystem::load_levels_from_csv()
+{
 	// Pre-allocate vector size
 	for (size_t i = 0; i < level_paths.size(); i++) {
 		Mapping& level_mapping = levels.at(i);
@@ -311,7 +307,7 @@ void MapGeneratorSystem::load_levels_from_csv() {
 	// load rooms rotations
 	level_room_rotations.resize(room_rotation_paths.size());
 	for (size_t i = 0; i < room_rotation_paths.size(); i++) {
-		auto & room_rotations = level_room_rotations.at(i);
+		auto& room_rotations = level_room_rotations.at(i);
 
 		std::ifstream rotations_file(room_rotation_paths.at(i));
 		std::string line;
@@ -333,17 +329,18 @@ void MapGeneratorSystem::load_levels_from_csv() {
 	}
 }
 
-void MapGeneratorSystem::load_level_configurations() {
+void MapGeneratorSystem::load_level_configurations()
+{
 	for (size_t i = 0; i < level_configuration_paths.size(); i++) {
 		std::ifstream config(level_configuration_paths.at(i));
 		std::stringstream buffer;
 		buffer << config.rdbuf();
 		level_snap_shots.at(i) = buffer.str();
 	}
-	
 }
 
-Direction MapGeneratorSystem::integer_to_direction(int direction) {
+Direction MapGeneratorSystem::integer_to_direction(int direction)
+{
 	switch (direction) {
 	case 0:
 		return Direction::Up;
@@ -359,7 +356,7 @@ Direction MapGeneratorSystem::integer_to_direction(int direction) {
 	return Direction::Up;
 }
 
-const std::array<std::array<Direction, MapUtility::map_size>, MapUtility::map_size> &
+const std::array<std::array<Direction, MapUtility::map_size>, MapUtility::map_size>&
 MapGeneratorSystem::current_rooms_rotation() const
 {
 	return level_room_rotations.at(current_level);
@@ -402,7 +399,8 @@ void MapGeneratorSystem::snapshot_level()
 	level_snap_shots.at(current_level) = buffer.GetString();
 }
 
-void MapGeneratorSystem::load_level(int level) {
+void MapGeneratorSystem::load_level(int level)
+{
 	if (level == num_levels) {
 		fprintf(stderr, "Level Cleared!!!!!!");
 		assert(0);
@@ -433,7 +431,8 @@ void MapGeneratorSystem::load_level(int level) {
 	}
 }
 
-void MapGeneratorSystem::clear_level() {
+void MapGeneratorSystem::clear_level()
+{
 
 	// Clear the created rooms
 	std::list<Entity> entities_to_clear;
@@ -451,10 +450,11 @@ void MapGeneratorSystem::clear_level() {
 		registry.remove_all_components_of(e);
 	}
 
-	// when clear_level is called in restarting, the help picture's render request is already removed
-	/*if (current_level == 0) {
-		registry.render_requests.get(help_picture).visible = false;
-	}*/
+	if (current_level == 0) {
+		if (registry.render_requests.has(help_picture)) {
+			registry.render_requests.get(help_picture).visible = false;
+		}
+	}
 }
 
 void MapGeneratorSystem::load_next_level()
@@ -506,7 +506,7 @@ Entity MapGeneratorSystem::create_room(vec2 position, MapUtility::RoomType roomT
 	room.type = roomType;
 
 	// Place the rooms at bottom
-	RenderRequest & request = registry.render_requests.push_front(entity);
+	RenderRequest& request = registry.render_requests.push_front(entity);
 	request.used_texture = TEXTURE_ASSET_ID::TILE_SET;
 	request.used_effect = EFFECT_ASSET_ID::TILE_MAP;
 	request.used_geometry = GEOMETRY_BUFFER_ID::ROOM;
@@ -514,14 +514,14 @@ Entity MapGeneratorSystem::create_room(vec2 position, MapUtility::RoomType roomT
 	return entity;
 }
 
-void MapGeneratorSystem::create_map(int level) const {
+void MapGeneratorSystem::create_map(int level) const
+{
 	vec2 middle = { window_width_px / 2, window_height_px / 2 };
 
 	const MapGeneratorSystem::Mapping& mapping = levels[level];
 	const auto& room_rotations = level_room_rotations[level];
-	vec2 top_left_corner_pos = middle
-		- vec2(tile_size * room_size * map_size / 2,
-			   tile_size * room_size * map_size / 2);
+	vec2 top_left_corner_pos
+		= middle - vec2(tile_size * room_size * map_size / 2, tile_size * room_size * map_size / 2);
 	for (size_t row = 0; row < mapping.size(); row++) {
 		for (size_t col = 0; col < mapping[0].size(); col++) {
 			vec2 position = top_left_corner_pos + vec2(tile_size * room_size / 2, tile_size * room_size / 2)
