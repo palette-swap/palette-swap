@@ -510,7 +510,6 @@ vec2 RenderSystem::screen_position_to_world_position(vec2 screen_pos)
 		this->screen_scale -= zoom;
 	}
 
-	// TODO: fix camera bouncing when scale on scroll
 }
 
 void RenderSystem::on_resize(int width, int height)
@@ -523,20 +522,18 @@ void RenderSystem::on_resize(int width, int height)
 }
 
  // update camera's map position when player move out of buffer
- void RenderSystem::update_camera_position(WorldPosition& camera_map_pos,
-								 const vec2& player_pos,
-								 const vec2& buffer_top_left,
-								 const vec2& buffer_down_right)
+void RenderSystem::update_camera_position(WorldPosition& camera_world_pos,
+										  const vec2& player_pos,
+										  const vec2& buffer_top_left,
+										  const vec2& buffer_down_right)
 {
 	vec2 offset_top_left = player_pos - buffer_top_left;
 	vec2 offset_down_right = player_pos - buffer_down_right;
 	vec2 map_top_left = MapUtility::map_position_to_world_position(MapUtility::map_top_left);
 	vec2 map_bottom_right = MapUtility::map_position_to_world_position(MapUtility::map_down_right);
 
-	if (offset_top_left.x >= 0 && offset_top_left.y >= 0 && offset_down_right.x <= 0 && offset_down_right.y <= 0) {
-		return;
-	}
-
-	if (offset_top_left.x < 0 && camera_map_pos.position.x > CameraUtility::map_top_left) {
-		camera_map_pos.position.x -= 1;
-	}
+	camera_world_pos.position
+		= max(min(camera_world_pos.position, camera_world_pos.position + offset_top_left), map_top_left);
+	camera_world_pos.position
+		= min(max(camera_world_pos.position, camera_world_pos.position + offset_down_right), map_bottom_right);
+}
