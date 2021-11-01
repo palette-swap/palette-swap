@@ -148,7 +148,11 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	// Processing the player state
 	assert(registry.screen_states.components.size() <= 1);
 	// ScreenState& screen = registry.screen_states.components[0];
-	if ((registry.stats.get(player).health <= 0 || end_of_game) && turns->get_active_team() == player)  {
+	if ((registry.stats.get(player).health <= 0) && turns->get_active_team() == player)  {
+		restart_game();
+		return true;
+	}
+	if (end_of_game && turns->get_active_team() == player) {
 		restart_game();
 		return true;
 	}
@@ -429,7 +433,7 @@ void WorldSystem::move_player(Direction direction)
 
 	if (direction == Direction::Left && map_pos.position.x > 0) {
 		new_pos = uvec2(map_pos.position.x - 1, map_pos.position.y);
-		// TODO: Change this to animation request instead of calling it here;
+		
 		animations->set_sprite_direction(player, Sprite_Direction::SPRITE_LEFT);
 		animations->player_running_animation(player);
 	} else if (direction == Direction::Up && map_pos.position.y > 0) {
@@ -438,7 +442,7 @@ void WorldSystem::move_player(Direction direction)
 	} else if (direction == Direction::Right
 			   && map_pos.position.x < MapUtility::room_size * MapUtility::tile_size - 1) {
 		new_pos = uvec2(map_pos.position.x + 1, map_pos.position.y);
-		// TODO: Change this to animation request instead of calling it here;
+		
 		animations->set_sprite_direction(player, Sprite_Direction::SPRITE_RIGHT);
 		animations->player_running_animation(player);
 	} else if (direction == Direction::Down && map_pos.position.y < MapUtility::room_size * MapUtility::tile_size - 1) {
@@ -457,7 +461,7 @@ void WorldSystem::move_player(Direction direction)
 	}
 	if (map_generator->is_next_level_tile(new_pos)) {
 		if (map_generator->is_last_level()) {
-			restart_game();
+			end_of_game = true;
 			return;
 		} else {
 			map_generator->load_next_level();

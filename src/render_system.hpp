@@ -45,7 +45,8 @@ class RenderSystem {
 			textures_path("./Drake/Drake Spritesheet.png"),
 			textures_path("cannon_ball.png"),
 			textures_path("tile_set.png"),
-			textures_path("help.png"), };
+			textures_path("help.png"),
+			textures_path("End Screen.png")};
 
 	std::array<GLuint, effect_count> effects;
 	// Make sure these paths remain in sync with the associated enumerators.
