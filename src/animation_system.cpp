@@ -158,7 +158,15 @@ void AnimationSystem::player_toggle_weapon(const Entity& player)
 {
 	assert(registry.players.has(player));
 	Animation& player_animation = registry.animations.get(player);
-	player_animation.state = (player_animation.state + 1) % player_weapon_states;
+	int next_state = (player_animation.state + 1) % player_weapon_states;
+	
+
+	if (registry.event_animations.has(player)) {
+		Event_Animation& player_event = registry.event_animations.get(player);
+		player_event.restore_state = next_state;
+	} else {
+		player_animation.state = next_state;
+	}
 }
 
 
