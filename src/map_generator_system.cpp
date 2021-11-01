@@ -374,7 +374,7 @@ bool MapGeneratorSystem::is_last_level_tile(uvec2 pos) const
 
 bool MapGeneratorSystem::is_last_level() const 
 { 
-	return (static_cast<size_t>(current_level) == levels.size());
+	return (static_cast<size_t>(current_level) == levels.size() - 1);
 
 }
 void MapGeneratorSystem::snapshot_level()

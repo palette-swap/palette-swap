@@ -448,9 +448,11 @@ void WorldSystem::move_player(Direction direction)
 	if (map_generator->is_next_level_tile(new_pos)) {
 		if (map_generator->is_last_level()) {
 			restart_game();
+			return;
+		} else {
+			map_generator->load_next_level();
+			registry.map_positions.get(player).position = map_generator->get_player_start_position();
 		}
-		map_generator->load_next_level();
-		registry.map_positions.get(player).position = map_generator->get_player_start_position();
 	} else if (map_generator->is_last_level_tile(new_pos)) {
 		map_generator->load_last_level();
 		registry.map_positions.get(player).position = map_generator->get_player_end_position();
