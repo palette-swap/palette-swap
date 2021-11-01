@@ -89,6 +89,7 @@ private:
 	// Game state
 	RenderSystem* renderer = nullptr;
 	float current_speed = 0;
+	bool end_of_game = false;
 	Entity player;
 	Entity camera;
 	Entity player_arrow;
