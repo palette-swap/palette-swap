@@ -181,9 +181,9 @@ Entity create_camera(uvec2 pos)
 	auto entity = Entity();
 
 	// Setting initial position for camera
-	Camera& camera = registry.cameras.emplace(entity);
+	registry.cameras.emplace(entity);
 	
-	registry.map_positions.emplace(entity, pos);
+	registry.world_positions.emplace(entity, MapUtility::map_position_to_world_position(pos));
 
 	return entity;
 }
