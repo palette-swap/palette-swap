@@ -22,24 +22,6 @@ struct Camera {
 	uvec2 size, central;
 };
 
-// Struct indicating an object is hittable (Currently limited to projectiles
-struct Hittable {
-};
-
-// Stucture to store collision information
-struct Collision {
-	// Maintenance Note: make sure initializer list is applied here.
-	// Otherwise, id_count in Entity quickly runs out (overflow) during collision checks.
-
-	// Note, the first object is stored in the ECS container.entities
-	Entity other; // the second object involved in the collision
-	Collision(const Entity& other)
-		: other(other)
-	{
-		this->other = other;
-	};
-};
-
 // Data structure for toggling debug mode
 struct Debug {
 	bool in_debug_mode = false;
@@ -82,16 +64,6 @@ struct Mesh {
 	vec2 original_size = { 1, 1 };
 	std::vector<ColoredVertex> vertices;
 	std::vector<uint16_t> vertex_indices;
-};
-
-// struct denoting a currently active projectile
-struct ActiveProjectile {
-	vec2 head_offset = { 0, 0 };
-};
-
-// Struct for resolving projectiles, including the arrow fired by the player
-struct ResolvedProjectile {
-	float counter = 400;
 };
 
 
@@ -228,17 +200,6 @@ struct WorldPosition {
 	vec2 position;
 	WorldPosition(vec2 position)
 		: position(position) {};
-};
-
-struct Velocity {
-	float speed;
-	float angle;
-	Velocity(float speed, float angle)
-		: speed(speed)
-		, angle(angle)
-	{
-	}
-	vec2 get_velocity() { return { sin(angle) * speed, -cos(angle) * speed }; }
 };
 
 struct Room {
@@ -466,6 +427,57 @@ struct Weapon {
 };
 
 //---------------------------------------------------------------------------
+//-------------------------		    Physics         -------------------------
+//---------------------------------------------------------------------------
+
+// Struct indicating an object is hittable (Currently limited to projectiles
+struct Hittable {
+};
+
+// Stucture to store collision information
+struct Collision {
+	// Maintenance Note: make sure initializer list is applied here.
+	// Otherwise, id_count in Entity quickly runs out (overflow) during collision checks.
+
+	// Note, the first object is stored in the ECS container.entities
+	Entity other; // the second object involved in the collision
+	Collision(const Entity& other)
+		: other(other)
+	{
+		this->other = other;
+	};
+};
+
+// struct denoting a currently active projectile
+struct ActiveProjectile {
+	vec2 head_offset = { 0, 0 };
+	float radius = 6;
+	Entity shooter;
+
+	ActiveProjectile(const Entity& shooter)
+		: shooter(shooter)
+	{
+	}
+};
+
+// Struct for resolving projectiles, including the arrow fired by the player
+struct ResolvedProjectile {
+	float counter = 150;
+};
+
+struct Velocity {
+	float speed;
+	float angle;
+	Velocity(float speed, float angle)
+		: speed(speed)
+		, angle(angle)
+	{
+	}
+	vec2 get_direction() { return { sin(angle), -cos(angle) }; }
+	vec2 get_velocity() { return get_direction() * speed; }
+};
+
+//---------------------------------------------------------------------------
 //-------------------------           UI            -------------------------
 //---------------------------------------------------------------------------
 
@@ -473,6 +485,17 @@ enum class Alignment {
 	Start = 1,
 	Center = 0,
 	End = -1,
+};
+
+struct Line {
+	vec2 scale;
+	float angle;
+
+	Line(vec2 scale, float angle)
+		: scale(scale)
+		, angle(angle)
+	{
+	}
 };
 
 struct Text {

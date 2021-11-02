@@ -145,13 +145,13 @@ Entity create_arrow(vec2 position)
 	return entity;
 }
 
-Entity create_line(vec2 position)
+Entity create_line(vec2 position, float length, float angle)
 {
 	Entity entity = Entity();
 
 	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
-	registry.render_requests.insert(
-		entity, { TEXTURE_ASSET_ID::TEXTURE_COUNT, EFFECT_ASSET_ID::LINE, GEOMETRY_BUFFER_ID::DEBUG_LINE });
+	registry.lines.emplace(entity, vec2(length, 2), angle);
+	registry.colors.insert(entity, { 1, .1, .1 });
 
 	registry.world_positions.emplace(entity, position);
 

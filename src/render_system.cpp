@@ -189,19 +189,6 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 		glBindTexture(GL_TEXTURE_2D, texture_id);
 		gl_has_errors();
 
-	} else if (render_request.used_effect == EFFECT_ASSET_ID::LINE) {
-		GLint in_position_loc = glGetAttribLocation(program, "in_position");
-		GLint in_color_loc = glGetAttribLocation(program, "in_color");
-		gl_has_errors();
-
-		glEnableVertexAttribArray(in_position_loc);
-		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), (void*)0);
-		gl_has_errors();
-
-		glEnableVertexAttribArray(in_color_loc);
-		glVertexAttribPointer(in_color_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), (void*)sizeof(vec3));
-		gl_has_errors();
-		// Consider handling drawing of player here
 	} else if (render_request.used_effect == EFFECT_ASSET_ID::TILE_MAP) {
 		GLint in_position_loc = glGetAttribLocation(program, "in_position");
 		GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
@@ -328,6 +315,49 @@ void RenderSystem::draw_text(Entity entity, const Text& text, const mat3& projec
 	draw_triangles(transform, projection);
 }
 
+void RenderSystem::draw_line(Entity entity, const Line& line, const mat3& projection)
+{
+	Transform transform = get_transform(entity);
+	transform.rotate(line.angle);
+	transform.scale(line.scale);
+
+	const auto program = (GLuint)effects.at((uint8)EFFECT_ASSET_ID::LINE);
+
+	// Setting shaders
+	glUseProgram(program);
+	gl_has_errors();
+
+	const GLuint vbo = vertex_buffers.at((int)GEOMETRY_BUFFER_ID::DEBUG_LINE);
+	const GLuint ibo = index_buffers.at((int)GEOMETRY_BUFFER_ID::DEBUG_LINE);
+
+	// Setting vertex and index buffers
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+	gl_has_errors();
+
+	GLint in_position_loc = glGetAttribLocation(program, "in_position");
+	GLint in_color_loc = glGetAttribLocation(program, "in_color");
+	gl_has_errors();
+
+	glEnableVertexAttribArray(in_position_loc);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), (void*)0);
+	gl_has_errors();
+
+	glEnableVertexAttribArray(in_color_loc);
+	glVertexAttribPointer(in_color_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), (void*)sizeof(vec3));
+	gl_has_errors();
+
+	// Setup coloring
+	if (registry.colors.has(entity)) {
+		GLint color_uloc = glGetUniformLocation(program, "fcolor");
+		const vec3 color = registry.colors.get(entity);
+		glUniform3fv(color_uloc, 1, glm::value_ptr(color));
+		gl_has_errors();
+	}
+
+	draw_triangles(transform, projection);
+}
+
 void RenderSystem::draw_triangles(const Transform& transform, const mat3& projection)
 {
 	// Get number of indices from index buffer, which has elements uint16_t
@@ -442,6 +472,10 @@ void RenderSystem::draw()
 
 	for (int i = 0; i < registry.text.size(); i++) {
 		draw_text(registry.text.entities[i], registry.text.components[i], projection_2d);
+	}
+
+	for (int i = 0; i < registry.lines.size(); i++) {
+		draw_line(registry.lines.entities[i], registry.lines.components[i], projection_2d);
 	}
 
 	// Truely render to the screen

@@ -143,6 +143,7 @@ private:
 	void draw_textured_mesh(Entity entity, const mat3& projection);
 	void draw_healthbar(Entity entity, const Stats& stats, const mat3& projection);
 	void draw_text(Entity entity, const Text& text, const mat3& projection);
+	void draw_line(Entity entity, const Line& line, const mat3& projection);
 	void draw_triangles(const Transform& transform, const mat3& projection);
 	void draw_to_screen();
 	void update_camera_position(WorldPosition& camera_map_pos,

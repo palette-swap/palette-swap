@@ -45,6 +45,7 @@ public:
 	ComponentContainer<Inventory> inventories;
 
 	// UI
+	ComponentContainer<Line> lines;
 	ComponentContainer<Text> text;
 
 private:
@@ -91,6 +92,7 @@ private:
 		&cameras,
 		// UI
 		&text,
+		&lines,
 	};
 
 public:
