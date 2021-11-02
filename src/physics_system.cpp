@@ -12,23 +12,6 @@ vec2 get_bounding_box()
 	return { abs(MapUtility::tile_size), abs(MapUtility::tile_size) };
 }
 
-// This is a SUPER APPROXIMATE check that puts a circle around the bounding boxes and sees
-// if the center point of either object is inside the other's bounding-box-circle. You can
-// surely implement a more accurate detection
-// TODO: Add exact bounding box struct for each enemy
-// And check if custom bounding boxes 
-bool collides(const WorldPosition& position1, const WorldPosition& position2)
-{
-	vec2 dp = position1.position - position2.position;
-	float dist_squared = dot(dp, dp);
-	const vec2 other_bonding_box = get_bounding_box() / 2.f;
-	const float other_r_squared = dot(other_bonding_box, other_bonding_box);
-	const vec2 my_bonding_box = get_bounding_box() / 2.f;
-	const float my_r_squared = dot(my_bonding_box, my_bonding_box);
-	const float r_squared = max(other_r_squared, my_r_squared);
-	return dist_squared < r_squared;
-}
-
 PhysicsSystem::PhysicsSystem(const Debug& debugging, std::shared_ptr<MapGeneratorSystem> map)
 	: debugging(debugging), map_generator(std::move(map))
 {
