@@ -290,17 +290,10 @@ void WorldSystem::handle_collisions()
 				// Stops projectile motion, adds projectile to list of resolved projectiles
 				registry.resolved_projectiles.emplace(entity);
 			} else {
-				// Checks if projectile's head has hit a wall
-				uvec2 projectile_location = (MapUtility::world_position_to_map_position(
-					registry.world_positions.get(entity).position + projectile.head_offset));
-
-				// Hacky way, using the same check for the player's "walkable"
-				if (!map_generator->walkable(projectile_location)) {
-					registry.velocities.get(entity).speed = 0;
-					registry.active_projectiles.remove(entity);
-					// Stops projectile motion, adds projectile to list of resolved projectiles
-					registry.resolved_projectiles.emplace(entity);
-				}
+				registry.velocities.get(entity).speed = 0;
+				registry.active_projectiles.remove(entity);
+				// Stops projectile motion, adds projectile to list of resolved projectiles
+				registry.resolved_projectiles.emplace(entity);
 			}
 		}
 	}
@@ -564,7 +557,7 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 			&& turns->execute_team_action(player)) {
 			player_arrow_fired = true;
 			// Arrow becomes a projectile the moment it leaves the player, not while it's direction is being selected
-			ActiveProjectile& arrow_projectile = registry.active_projectiles.emplace(player_arrow);
+			ActiveProjectile& arrow_projectile = registry.active_projectiles.emplace(player_arrow, player);
 			Velocity& arrow_velocity = registry.velocities.get(player_arrow);
 
 			// Denotes arrowhead location the player's arrow, based on firing angle and current scaling
