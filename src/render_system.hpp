@@ -160,6 +160,7 @@ private:
 
 	Entity screen_state_entity;
 	ivec2 screen_size = { window_width_px, window_height_px };
+	ivec2 screen_size_capped = { window_width_px, window_height_px };
 	float screen_scale; // Screen to pixel coordinates scale factor (for apple
 						// retina display?)
 };

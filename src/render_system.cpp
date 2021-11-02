@@ -415,7 +415,7 @@ void RenderSystem::draw()
 	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
 	gl_has_errors();
 	// Clearing backbuffer
-	glViewport(0, 0, screen_size.x, screen_size.y);
+	glViewport(0, 0, screen_size_capped.x, screen_size_capped.y);
 	glDepthRange(0.00001, 10);
 	glClearColor(0.5, 0.5, 0.5, 1.0);
 	glClearDepth(1.f);
@@ -515,9 +515,10 @@ vec2 RenderSystem::screen_position_to_world_position(vec2 screen_pos)
 void RenderSystem::on_resize(int width, int height)
 {
 	screen_size = { width, height };
+	screen_size_capped = { min(width, window_width_px), min(height, window_height_px) };
 
 	glBindTexture(GL_TEXTURE_2D, off_screen_render_buffer_color);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, min(screen_size.x, window_width_px), min(screen_size.y, window_height_px), 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screen_size_capped.x, screen_size_capped.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 	gl_has_errors();
 }
 
