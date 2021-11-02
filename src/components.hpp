@@ -451,7 +451,7 @@ struct Collision {
 // struct denoting a currently active projectile
 struct ActiveProjectile {
 	vec2 head_offset = { 0, 0 };
-	float radius = 13;
+	float radius = 6;
 	Entity shooter;
 
 	ActiveProjectile(const Entity& shooter)
