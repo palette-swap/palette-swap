@@ -415,7 +415,7 @@ void RenderSystem::draw()
 	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
 	gl_has_errors();
 	// Clearing backbuffer
-	glViewport(0, 0, screen_size.x, screen_size.y);
+	glViewport(0, 0, screen_size_capped.x, screen_size_capped.y);
 	glDepthRange(0.00001, 10);
 	glClearColor(0.5, 0.5, 0.5, 1.0);
 	glClearDepth(1.f);
@@ -456,26 +456,20 @@ void RenderSystem::draw()
 mat3 RenderSystem::create_projection_matrix()
 {
 	// Fake projection matrix, scales with respect to window coordinates
-	int w, h;
-	glfwGetFramebufferSize(window, &w, &h);
-	gl_has_errors();
 
 	vec2 top_left, bottom_right;
 	std::tie(top_left, bottom_right) = get_window_bounds();
 
-	float sx = 2.f / (w * screen_scale);
-	float sy = -2.f / (h * screen_scale);
-	float tx = -(bottom_right.x + top_left.x) / (w * screen_scale);
-	float ty = (bottom_right.y + top_left.y) / (h * screen_scale);
+	float sx = 2.f / (screen_size.x * screen_scale);
+	float sy = -2.f / (screen_size.y * screen_scale);
+	float tx = -(bottom_right.x + top_left.x) / (screen_size.x * screen_scale);
+	float ty = (bottom_right.y + top_left.y) / (screen_size.y * screen_scale);
 	return { { sx, 0.f, 0.f }, { 0.f, sy, 0.f }, { tx, ty, 1.f } };
 }
 
 std::pair<vec2, vec2> RenderSystem::get_window_bounds()
 {
-	int w, h;
-	glfwGetFramebufferSize(window, &w, &h);
-	gl_has_errors();
-	vec2 window_size = vec2(w, h) * screen_scale;
+	vec2 window_size = vec2(screen_size) * screen_scale;
 
 	Entity player = registry.players.top_entity();
 	vec2 player_pos = MapUtility::map_position_to_world_position(registry.map_positions.get(player).position);
@@ -515,9 +509,10 @@ vec2 RenderSystem::screen_position_to_world_position(vec2 screen_pos)
 void RenderSystem::on_resize(int width, int height)
 {
 	screen_size = { width, height };
+	screen_size_capped = { min(width, window_width_px), min(height, window_height_px) };
 
 	glBindTexture(GL_TEXTURE_2D, off_screen_render_buffer_color);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, min(screen_size.x, window_width_px), min(screen_size.y, window_height_px), 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screen_size_capped.x, screen_size_capped.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 	gl_has_errors();
 }
 
