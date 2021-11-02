@@ -514,6 +514,9 @@ void WorldSystem::equip_next_weapon()
 
 void WorldSystem::change_color()
 {
+	if (!turns->ready_to_act(player)) {
+		return;
+	}
 	ColorState active_color = turns->get_active_color();
 	switch (active_color) {
 	case ColorState::Red:
