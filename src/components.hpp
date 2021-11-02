@@ -487,6 +487,17 @@ enum class Alignment {
 	End = -1,
 };
 
+struct Line {
+	vec2 scale;
+	float angle;
+
+	Line(vec2 scale, float angle)
+		: scale(scale)
+		, angle(angle)
+	{
+	}
+};
+
 struct Text {
 	std::string text;
 	uint16 font_size;

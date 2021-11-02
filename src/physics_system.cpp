@@ -81,4 +81,14 @@ void PhysicsSystem::step(float elapsed_ms, float /*window_width*/, float /*windo
 			}
 		}
 	}
+
+	if (debugging.in_debug_mode) {
+		for (uint i = 0; i < registry.active_projectiles.components.size(); i++) {
+			ActiveProjectile& projectile = registry.active_projectiles.components[i];
+			WorldPosition& position = registry.world_positions.get(registry.active_projectiles.entities[i]);
+
+			create_line(position.position, projectile.radius * 2.f, 0);
+			create_line(position.position, projectile.radius * 2.f, M_PI / 2.f);
+		}
+	}
 }
