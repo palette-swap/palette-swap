@@ -1,7 +1,5 @@
 #include "map_generator_system.hpp"
 
-#include "tiny_ecs_registry.hpp"
-
 #include <queue>
 #include <sstream>
 #include <unordered_map>
@@ -30,48 +28,48 @@ MapGeneratorSystem::MapGeneratorSystem()
 // Functions to load different entities, e.g. enemy
 static void load_enemy(int enemy_index, const rapidjson::Document& json_doc)
 {
-	auto entity = Entity();
+	auto entity = registry.create();
 	std::string enemy_prefix = "/enemies/" + std::to_string(enemy_index);
-	Enemy& enemy_component = registry.enemies.emplace(entity);
+	Enemy& enemy_component = registry.emplace<Enemy>(entity);
 	enemy_component.deserialize(enemy_prefix, json_doc);
 
-	MapPosition& map_position_component = registry.map_positions.emplace(entity, uvec2(0, 0));
+	MapPosition& map_position_component = registry.emplace<MapPosition>(entity, uvec2(0, 0));
 	map_position_component.deserialize(enemy_prefix, json_doc);
 
-	Stats& stats = registry.stats.emplace(entity);
+	Stats& stats = registry.emplace<Stats>(entity);
 	stats.deserialize(enemy_prefix + "/stats", json_doc);
 
 	// Indicates enemy is hittable by objects
-	registry.hittables.emplace(entity);
+	registry.emplace<Hittable>(entity);
 
-	Animation& enemy_animation = registry.animations.emplace(entity);
+	Animation& enemy_animation = registry.emplace<Animation>(entity);
 	enemy_animation.max_frames = 4;
 
-	registry.render_requests.insert(entity,
-									{ enemy_type_textures[static_cast<int>(enemy_component.type)],
+	registry.emplace<RenderRequest>(entity,
+									enemy_type_textures[static_cast<int>(enemy_component.type)],
 									  EFFECT_ASSET_ID::ENEMY,
-									  GEOMETRY_BUFFER_ID::ENEMY });
+									GEOMETRY_BUFFER_ID::ENEMY,
+									true);
 	if (enemy_component.team == ColorState::Red) {
 		enemy_animation.color = ColorState::Red;
-		registry.colors.insert(entity, AnimationUtility::default_enemy_red);
+		registry.emplace<Color>(entity, AnimationUtility::default_enemy_red);
 	} else if (enemy_component.team == ColorState::Blue) {
-		registry.colors.insert(entity, { AnimationUtility::default_enemy_blue });
+		registry.emplace<Color>(entity, AnimationUtility::default_enemy_blue);
 		enemy_animation.color = ColorState::Blue;
 	} else {
-		registry.colors.insert(entity, { 1, 1, 1 });
+		registry.emplace<Color>(entity, vec3(1, 1, 1));
 	}
 }
 
 void MapGeneratorSystem::create_picture()
 {
-	help_picture = Entity();
+	help_picture = registry.create();
 
 	// Create and (empty) player component to be able to refer to other enttities
-	registry.world_positions.emplace(help_picture, vec2(window_width_px / 2, window_height_px / 2));
+	registry.emplace<WorldPosition>(help_picture, vec2(window_width_px / 2, window_height_px / 2));
 
-	registry.render_requests.insert(
-		help_picture, { TEXTURE_ASSET_ID::HELP_PIC, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE });
-	// registry.colors.insert(entity, { 1, 1, 1 });
+	registry.emplace<RenderRequest>(
+		help_picture, TEXTURE_ASSET_ID::HELP_PIC, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE, true);
 }
 
 // TODO: we want this eventually be procedural generated
@@ -105,9 +103,9 @@ bool MapGeneratorSystem::walkable_and_free(uvec2 pos) const
 	if (!walkable(pos)) {
 		return false;
 	}
-	return !std::any_of(registry.map_positions.components.begin(),
-						registry.map_positions.components.end(),
-						[pos](const MapPosition& pos2) { return pos2.position == pos; });
+	return !std::any_of(registry.view<MapPosition>().begin(),
+						registry.view<MapPosition>().end(),
+						[pos](const Entity e) { return registry.get<MapPosition>(e).position == pos; });
 }
 
 bool MapGeneratorSystem::is_wall(uvec2 pos) const
@@ -384,17 +382,11 @@ void MapGeneratorSystem::snapshot_level()
 	rapidjson::CreateValueByPointer(level_snapshot, rapidjson::Pointer("/enemies/0"));
 
 	// Serialize enemies
-	for (size_t i = 0; i < registry.enemies.size(); i++) {
-		Entity entity = registry.enemies.entities[i];
-		std::string enemy_prefix = "/enemies/" + std::to_string(i);
-
-		Enemy& enemy = registry.enemies.get(entity);
+	int i = 0;
+	for (auto [entity, enemy, map_position, stats]: registry.view<Enemy, MapPosition, Stats>().each()) {
+		std::string enemy_prefix = "/enemies/" + std::to_string(i++);
 		enemy.serialize(enemy_prefix, level_snapshot);
-
-		MapPosition& map_position = registry.map_positions.get(entity);
 		map_position.serialize(enemy_prefix, level_snapshot);
-
-		Stats& stats = registry.stats.get(entity);
 		stats.serialize(enemy_prefix + "/stats", level_snapshot);
 	}
 
@@ -429,35 +421,26 @@ void MapGeneratorSystem::load_level(int level)
 	}
 
 	if (level == 0) {
-		if (help_picture == Entity::undefined() || !registry.render_requests.has(help_picture)) {
+		if (help_picture == entt::null || !registry.any_of<RenderRequest>(help_picture)) {
 			create_picture();
 		}
-		registry.render_requests.get(help_picture).visible = true;
+		registry.get<RenderRequest>(help_picture).visible = true;
 	}
 }
 
-void MapGeneratorSystem::clear_level()
+void MapGeneratorSystem::clear_level() const
 {
-
 	// Clear the created rooms
-	std::list<Entity> entities_to_clear;
-	for (int i = 0; i < registry.rooms.size(); i++) {
-		Entity room_entity = registry.rooms.entities[i];
-		entities_to_clear.emplace_back(room_entity);
-	}
-	// Clear the enemies
-	for (int i = 0; i < registry.enemies.size(); i++) {
-		Entity enemy_entity = registry.enemies.entities[i];
-		entities_to_clear.emplace_back(enemy_entity);
-	}
+	auto room_view = registry.view<Room>();
+	registry.destroy(room_view.begin(), room_view.end());
 
-	for (Entity e : entities_to_clear) {
-		registry.remove_all_components_of(e);
-	}
+	// Clear the enemies
+	auto enemy_view = registry.view<Enemy>();
+	registry.destroy(enemy_view.begin(), enemy_view.end());
 
 	if (current_level == 0) {
-		if (registry.render_requests.has(help_picture) && help_picture != Entity::undefined()) {
-			registry.render_requests.get(help_picture).visible = false;
+		if (registry.any_of<RenderRequest>(help_picture) && help_picture != entt::null) {
+			registry.get<RenderRequest>(help_picture).visible = false;
 		}
 	}
 }
@@ -502,19 +485,18 @@ void MapGeneratorSystem::load_initial_level()
 // Creates a room entity, with room type referencing to the predefined room
 Entity MapGeneratorSystem::create_room(vec2 position, MapUtility::RoomType roomType, float angle) const
 {
-	auto entity = Entity();
+	auto entity = registry.create();
 
-	registry.world_positions.emplace(entity, position);
-	registry.velocities.emplace(entity, 0, angle);
+	registry.emplace<WorldPosition>(entity, position);
+	registry.emplace<Velocity>(entity, 0.f, angle);
 
-	Room& room = registry.rooms.emplace(entity);
+	Room& room = registry.emplace<Room>(entity);
 	room.type = roomType;
 
 	// Place the rooms at bottom
-	RenderRequest& request = registry.render_requests.push_front(entity);
-	request.used_texture = TEXTURE_ASSET_ID::TILE_SET;
-	request.used_effect = EFFECT_ASSET_ID::TILE_MAP;
-	request.used_geometry = GEOMETRY_BUFFER_ID::ROOM;
+	registry.emplace<Background>(entity);
+	registry.emplace<RenderRequest>(
+		entity, TEXTURE_ASSET_ID::TILE_SET, EFFECT_ASSET_ID::TILE_MAP, GEOMETRY_BUFFER_ID::ROOM, true);
 
 	return entity;
 }

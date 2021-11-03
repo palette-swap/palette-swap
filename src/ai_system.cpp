@@ -14,8 +14,9 @@ AISystem::AISystem(const Debug& debugging,
 	, map_generator(std::move(map_generator))
 	, turns(std::move(turns))
 	, animations(std::move(animations))
+	, enemy_team(registry.create())
 {
-	registry.debug_components.emplace(enemy_team);
+	registry.emplace<DebugComponent>(enemy_team);
 
 	this->turns->add_team_to_queue(enemy_team);
 
@@ -29,14 +30,11 @@ AISystem::AISystem(const Debug& debugging,
 void AISystem::step(float /*elapsed_ms*/)
 {
 	if (turns->execute_team_action(enemy_team)) {
-		for (long long i = registry.enemies.entities.size() - 1; i >= 0; --i) {
-			const Entity& enemy_entity = registry.enemies.entities[i];
+		for (auto [enemy_entity, enemy] : registry.view<Enemy>().each()) {
 
 			if (remove_dead_entity(enemy_entity)) {
 				continue;
 			}
-
-			const Enemy& enemy = registry.enemies.components[i];
 
 			ColorState active_world_color = turns->get_active_color();
 			if (((uint8_t)active_world_color & (uint8_t)enemy.team) > 0) {
@@ -70,24 +68,23 @@ void AISystem::step(float /*elapsed_ms*/)
 
 	// Debugging for the shortest paths of enemies.
 	if (debugging.in_debug_mode) {
-		for (long long i = registry.enemies.entities.size() - 1; i >= 0; --i) {
-			const Entity& enemy_entity = registry.enemies.entities[i];
-			const Enemy& enemy = registry.enemies.components[i];
+		for (auto [enemy_entity, enemy, entity_map_position] : registry.view<Enemy, MapPosition>().each()) {
 
 			ColorState active_world_color = turns->get_active_color();
 			if (((uint8_t)active_world_color & (uint8_t)enemy.team) > 0) {
-				const uvec2& entity_map_pos = registry.map_positions.get(enemy_entity).position;
+				const uvec2& entity_map_pos = entity_map_position.position;
 
 				if (enemy.state == EnemyState::Flinched) {
-					const uvec2& nest_map_pos = registry.enemies.get(enemy_entity).nest_map_pos;
+					const uvec2& nest_map_pos = enemy.nest_map_pos;
 					std::vector<uvec2> shortest_path = map_generator->shortest_path(entity_map_pos, nest_map_pos);
 
 					for (const uvec2& path_point : shortest_path) {
 						create_path_point(MapUtility::map_position_to_world_position(path_point));
 					}
 				} else if (enemy.state != EnemyState::Idle && is_player_spotted(enemy_entity, enemy.radius * 2)) {
-					const uvec2& player_map_pos = registry.map_positions.get(registry.players.top_entity()).position;
-					std::vector<uvec2> shortest_path = map_generator->shortest_path(entity_map_pos, player_map_pos);
+					Entity player = registry.view<Player>().front();
+					std::vector<uvec2> shortest_path
+						= map_generator->shortest_path(entity_map_pos, registry.get<MapPosition>(player).position);
 
 					for (const uvec2& path_point : shortest_path) {
 						create_path_point(MapUtility::map_position_to_world_position(path_point));
@@ -100,8 +97,8 @@ void AISystem::step(float /*elapsed_ms*/)
 
 void AISystem::do_attack_callback(const Entity& attacker, const Entity& target)
 {
-	if (registry.players.has(attacker)) {
-		Enemy& enemy = registry.enemies.get(target);
+	if (registry.any_of<Player>(attacker)) {
+		Enemy& enemy = registry.get<Enemy>(target);
 		if ((enemy.state == EnemyState::Idle && !is_player_spotted(target, enemy.radius))
 			|| (enemy.state != EnemyState::Idle && !is_player_spotted(target, enemy.radius * 2))) {
 			enemy.radius = MapUtility::room_size * MapUtility::map_size;
@@ -111,7 +108,7 @@ void AISystem::do_attack_callback(const Entity& attacker, const Entity& target)
 
 void AISystem::execute_Slime(const Entity& slime)
 {
-	Enemy& enemy = registry.enemies.get(slime);
+	Enemy& enemy = registry.get<Enemy>(slime);
 
 	switch (enemy.state) {
 
@@ -158,7 +155,7 @@ void AISystem::execute_Slime(const Entity& slime)
 
 void AISystem::execute_Raven(const Entity& raven)
 {
-	const Enemy& enemy = registry.enemies.get(raven);
+	const Enemy& enemy = registry.get<Enemy>(raven);
 
 	switch (enemy.state) {
 
@@ -189,7 +186,7 @@ void AISystem::execute_Raven(const Entity& raven)
 
 void AISystem::execute_Armor(const Entity& living_armor)
 {
-	const Enemy& enemy = registry.enemies.get(living_armor);
+	const Enemy& enemy = registry.get<Enemy>(living_armor);
 
 	switch (enemy.state) {
 
@@ -230,7 +227,7 @@ void AISystem::execute_Armor(const Entity& living_armor)
 
 void AISystem::execute_TreeAnt(const Entity& tree_ant)
 {
-	const Enemy& enemy = registry.enemies.get(tree_ant);
+	const Enemy& enemy = registry.get<Enemy>(tree_ant);
 
 	switch (enemy.state) {
 
@@ -279,8 +276,8 @@ void AISystem::execute_TreeAnt(const Entity& tree_ant)
 bool AISystem::remove_dead_entity(const Entity& entity)
 {
 	// TODO: Animate death.
-	if (registry.stats.has(entity) && registry.stats.get(entity).health <= 0) {
-		registry.remove_all_components_of(entity);
+	if (registry.any_of<Stats>(entity) && registry.get<Stats>(entity).health <= 0) {
+		registry.destroy(entity);
 		return true;
 	}
 	return false;
@@ -288,7 +285,7 @@ bool AISystem::remove_dead_entity(const Entity& entity)
 
 void AISystem::switch_enemy_state(const Entity& enemy_entity, EnemyState new_state)
 {
-	Enemy& enemy = registry.enemies.get(enemy_entity);
+	Enemy& enemy = registry.get<Enemy>(enemy_entity);
 	enemy.state = new_state;
 
 	if (enemy_state_to_animation_state.count(enemy.state) == 1) {
@@ -301,8 +298,8 @@ void AISystem::switch_enemy_state(const Entity& enemy_entity, EnemyState new_sta
 
 bool AISystem::is_player_spotted(const Entity& entity, const uint radius)
 {
-	uvec2 player_map_pos = registry.map_positions.get(registry.players.top_entity()).position;
-	uvec2 entity_map_pos = registry.map_positions.get(entity).position;
+	uvec2 player_map_pos = registry.get<MapPosition>(registry.view<Player>().front()).position;
+	uvec2 entity_map_pos = registry.get<MapPosition>(entity).position;
 
 	ivec2 distance = entity_map_pos - player_map_pos;
 	return uint(abs(distance.x)) <= radius && uint(abs(distance.y)) <= radius;
@@ -315,19 +312,19 @@ bool AISystem::is_player_in_attack_range(const Entity& entity, const uint attack
 
 bool AISystem::is_at_nest(const Entity& entity)
 {
-	const uvec2& entity_map_pos = registry.map_positions.get(entity).position;
-	const uvec2& nest_map_pos = registry.enemies.get(entity).nest_map_pos;
+	const uvec2& entity_map_pos = registry.get<MapPosition>(entity).position;
+	const uvec2& nest_map_pos = registry.get<Enemy>(entity).nest_map_pos;
 
 	return entity_map_pos == nest_map_pos;
 }
 
 void AISystem::attack_player(const Entity& entity)
 {
-	Entity& player = registry.players.top_entity();
-	combat->do_attack(entity, registry.stats.get(entity).base_attack, player);
+	Entity player = registry.view<Player>().front();
+	combat->do_attack(entity, registry.get<Stats>(entity).base_attack, player);
 
 	// TODO: temporarily for debugging in console, remove it later.
-	char* enemy_type = enemy_type_to_string[registry.enemies.get(entity).type];
+	char* enemy_type = enemy_type_to_string[registry.get<Enemy>(entity).type];
 	printf("%s_%u attacks player!\n", enemy_type, (uint)entity);
 
 	so_loud.play(enemy_attack1_wav);
@@ -335,8 +332,8 @@ void AISystem::attack_player(const Entity& entity)
 
 bool AISystem::approach_player(const Entity& entity, uint speed)
 {
-	const uvec2 player_map_pos = registry.map_positions.get(registry.players.top_entity()).position;
-	const uvec2 entity_map_pos = registry.map_positions.get(entity).position;
+	const uvec2 player_map_pos = registry.get<MapPosition>(registry.view<Player>().front()).position;
+	const uvec2 entity_map_pos = registry.get<MapPosition>(entity).position;
 
 	std::vector<uvec2> shortest_path = map_generator->shortest_path(entity_map_pos, player_map_pos);
 	if (shortest_path.size() > 2) {
@@ -348,9 +345,9 @@ bool AISystem::approach_player(const Entity& entity, uint speed)
 
 bool AISystem::approach_nest(const Entity& entity, uint speed)
 {
-	const uvec2 player_map_pos = registry.map_positions.get(registry.players.top_entity()).position;
-	const uvec2& entity_map_pos = registry.map_positions.get(entity).position;
-	const uvec2& nest_map_pos = registry.enemies.get(entity).nest_map_pos;
+	const uvec2 player_map_pos = registry.get<MapPosition>(registry.view<Player>().front()).position;
+	const uvec2& entity_map_pos = registry.get<MapPosition>(entity).position;
+	const uvec2& nest_map_pos = registry.get<Enemy>(entity).nest_map_pos;
 
 	std::vector<uvec2> shortest_path = map_generator->shortest_path(entity_map_pos, nest_map_pos);
 	if (shortest_path.size() > 1) {
@@ -366,7 +363,7 @@ bool AISystem::approach_nest(const Entity& entity, uint speed)
 
 bool AISystem::move(const Entity& entity, const uvec2& map_pos)
 {
-	MapPosition& entity_map_pos = registry.map_positions.get(entity);
+	MapPosition& entity_map_pos = registry.get<MapPosition>(entity);
 	if (entity_map_pos.position != map_pos && map_generator->walkable(map_pos)) {
 		if (map_pos.x < entity_map_pos.position.x) {
 			animations->set_sprite_direction(entity, Sprite_Direction::SPRITE_LEFT);
@@ -381,20 +378,20 @@ bool AISystem::move(const Entity& entity, const uvec2& map_pos)
 
 void AISystem::recover_health(const Entity& entity, float ratio)
 {
-	Stats& stats = registry.stats.get(entity);
+	Stats& stats = registry.get<Stats>(entity);
 	stats.health += static_cast<int>(static_cast<float>(stats.health_max) * ratio);
 	stats.health = min(stats.health, stats.health_max);
 }
 
 bool AISystem::is_health_below(const Entity& entity, float ratio)
 {
-	const Stats& stats = registry.stats.get(entity);
+	const Stats& stats = registry.get<Stats>(entity);
 	return static_cast<float>(stats.health) < static_cast<float>(stats.health_max) * ratio;
 }
 
 void AISystem::become_immortal(const Entity& entity, bool flag)
 {
-	Stats& stats = registry.stats.get(entity);
+	Stats& stats = registry.get<Stats>(entity);
 	for (int& damage_modifier : stats.damage_modifiers) {
 		damage_modifier = flag ? INT_MIN : 0;
 	}
@@ -402,7 +399,7 @@ void AISystem::become_immortal(const Entity& entity, bool flag)
 
 void AISystem::become_powerup(const Entity& entity, bool flag)
 {
-	Stats& stats = registry.stats.get(entity);
+	Stats& stats = registry.get<Stats>(entity);
 	if (flag) {
 		stats.to_hit_bonus *= 2;
 		stats.base_attack.to_hit_min *= 2;

@@ -14,8 +14,8 @@ bool CombatSystem::do_attack(Entity attacker_entity, Attack& attack, Entity targ
 	if (attacker_entity == target_entity) {
 		return false;
 	}
-	MapPosition& attacker_position = registry.map_positions.get(attacker_entity);
-	MapPosition& target_position = registry.map_positions.get(target_entity);
+	MapPosition& attacker_position = registry.get<MapPosition>(attacker_entity);
+	MapPosition& target_position = registry.get<MapPosition>(target_entity);
 	// Changes attacker's direction based on the location of the target relative to 
 	// the target entity
 	if (target_position.position.x < attacker_position.position.x) {
@@ -29,8 +29,8 @@ bool CombatSystem::do_attack(Entity attacker_entity, Attack& attack, Entity targ
 	animations->damage_animation(target_entity);
 	
 
-	Stats& attacker = registry.stats.get(attacker_entity);
-	Stats& target = registry.stats.get(target_entity);
+	Stats& attacker = registry.get<Stats>(attacker_entity);
+	Stats& target = registry.get<Stats>(target_entity);
 	// Roll a random to hit between min and max (inclusive), add attacker's to_hit_bonus
 	std::uniform_int_distribution<int> attack_roller(attack.to_hit_min, attack.to_hit_max);
 	int attack_roll = attack_roller(*rng) + attacker.to_hit_bonus;
@@ -76,7 +76,7 @@ std::string get_name(DamageType d)
 }
 
 std::string CombatSystem::make_attack_list(const Entity entity, size_t current_attack) const {
-	const Weapon& weapon = registry.weapons.get(entity);
+	const Weapon& weapon = registry.get<Weapon>(entity);
 	std::ostringstream attacks;
 	for (size_t i = 0; i < weapon.given_attacks.size(); i++) {
 		const Attack& attack = weapon.given_attacks[i];

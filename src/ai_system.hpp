@@ -4,8 +4,6 @@
 #include <vector>
 
 #include "common.hpp"
-#include "tiny_ecs_registry.hpp"
-
 #include "combat_system.hpp"
 #include "map_generator_system.hpp"
 #include "turn_system.hpp"

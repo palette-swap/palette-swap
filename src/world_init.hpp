@@ -1,8 +1,6 @@
 #pragma once
 
-#include "common.hpp"
-#include "render_system.hpp"
-#include "tiny_ecs.hpp"
+#include "components.hpp"
 
 // the player
 Entity create_player(uvec2 pos);

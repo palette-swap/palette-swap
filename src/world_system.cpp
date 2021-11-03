@@ -11,6 +11,7 @@
 
 // stlib
 #include <cassert>
+#include <iostream>
 #include <sstream>
 
 #include "physics_system.hpp"
@@ -36,7 +37,7 @@ WorldSystem::WorldSystem(Debug& debugging,
 WorldSystem::~WorldSystem()
 {
 	// Destroy all created components
-	registry.clear_all_components();
+	registry.clear();
 
 	// Close the window
 	glfwDestroyWindow(window);
@@ -141,14 +142,13 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	glfwSetWindowTitle(window, title_ss.str().c_str());
 
 	// Remove debug info from the last step
-	while (!registry.debug_components.entities.empty()) {
-		registry.remove_all_components_of(registry.debug_components.entities.back());
-	}
+	auto debug_view = registry.view<DebugComponent>();
+	registry.destroy(debug_view.begin(), debug_view.end());
 
 	// Processing the player state
-	assert(registry.screen_states.components.size() <= 1);
+	assert(registry.size<ScreenState>() <= 1);
 	// ScreenState& screen = registry.screen_states.components[0];
-	if ((registry.stats.get(player).health <= 0) && turns->ready_to_act(player)) {
+	if ((registry.get<Stats>(player).health <= 0) && turns->ready_to_act(player)) {
 		restart_game();
 		return true;
 	}
@@ -160,9 +160,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	// Resolves projectiles hitting objects, stops it for a period of time before returning it to the player
 	// Currently handles player arrow (as it is the only projectile that exists)
 	float projectile_max_counter = 1000.f;
-	for (Entity entity : registry.resolved_projectiles.entities) {
-		// Gets desired projectile
-		ResolvedProjectile& projectile = registry.resolved_projectiles.get(entity);
+	for (auto [entity, projectile] : registry.view<ResolvedProjectile>().each()) {
 		projectile.counter -= elapsed_ms_since_last_update;
 		if (projectile.counter < projectile_max_counter) {
 			projectile_max_counter = projectile.counter;
@@ -173,12 +171,12 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		// If other projectile, removes all components of it
 		if (projectile.counter < 0) {
 			if (entity == player_arrow) {
-				registry.resolved_projectiles.remove(entity);
+				registry.remove<ResolvedProjectile>(entity);
 				player_arrow_fired = false;
 				turns->complete_team_action(player);
 				return_arrow_to_player();
 			} else {
-				registry.remove_all_components_of(entity);
+				registry.destroy(entity);
 			}
 		}
 		projectile_max_counter = 2000;
@@ -191,7 +189,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 void WorldSystem::restart_game()
 {
 	// Debugging for memory/component leaks
-	registry.list_all_components();
+	std::cout << "Alive: " << registry.alive() << std::endl;
 	printf("Restarting\n");
 
 	// Reset the game speed
@@ -202,24 +200,18 @@ void WorldSystem::restart_game()
 	// Remove the old player team
 	turns->remove_team_from_queue(player);
 
-	while (!registry.map_positions.entities.empty()) {
-		registry.remove_all_components_of(registry.map_positions.entities.back());
-	}
-	// Remove all entities that were created with a position
-	while (!registry.world_positions.entities.empty()) {
-		registry.remove_all_components_of(registry.world_positions.entities.back());
-	}
+	// Remove anything in the world
+	auto map_pos_view = registry.view<MapPosition>();
+	registry.destroy(map_pos_view.begin(), map_pos_view.end());
 
-	while (!registry.cameras.entities.empty()) {
-		registry.remove_all_components_of(registry.cameras.entities.back());
-	}
+	auto screen_pos_view = registry.view<ScreenPosition>();
+	registry.destroy(screen_pos_view.begin(), screen_pos_view.end());
 
-	while (!registry.text.entities.empty()) {
-		registry.remove_all_components_of(registry.text.entities.back());
-	}
+	auto world_pos_view = registry.view<WorldPosition>();
+	registry.destroy(world_pos_view.begin(), world_pos_view.end());
 
 	// Debugging for memory/component leaks
-	registry.list_all_components();
+	std::cout << "Alive: " << registry.alive() << std::endl;
 
 	map_generator->load_initial_level();
 
@@ -232,24 +224,24 @@ void WorldSystem::restart_game()
 
 	turns->add_team_to_queue(player);
 	// Reset current weapon & attack
-	Inventory& inventory = registry.inventories.get(player);
+	Inventory& inventory = registry.get<Inventory>(player);
 	current_weapon = inventory.equipped[static_cast<uint8>(Slot::PrimaryHand)];
 	current_attack = 0;
-	registry.screen_positions.emplace(attack_display, vec2(0, 1));
-	registry.text.emplace(attack_display,
+	registry.emplace<ScreenPosition>(attack_display, vec2(0, 1));
+	registry.emplace<Text>(attack_display,
 						  combat->make_attack_list(current_weapon, current_attack),
 						  (uint16)48,
 						  Alignment::Start,
 						  Alignment::End);
-	registry.colors.emplace(attack_display, 1, 1, 1);
+	registry.emplace<Color>(attack_display, vec3(1, 1, 1));
 	// create camera instance
 	camera = create_camera(player_starting_point);
 
 	// Create a new player arrow instance
 	vec2 player_location = MapUtility::map_position_to_world_position(player_starting_point);
 	player_arrow = create_arrow(player_location);
-	registry.render_requests.get(player_arrow).visible
-		= registry.weapons.get(current_weapon).given_attacks.at(current_attack).targeting_type
+	registry.get<RenderRequest>(player_arrow).visible
+		= registry.get<Weapon>(current_weapon).given_attacks.at(current_attack).targeting_type
 		== TargetingType::Projectile;
 }
 
@@ -257,49 +249,36 @@ void WorldSystem::restart_game()
 void WorldSystem::handle_collisions()
 {
 	// Loop over all collisions detected by the physics system
-	auto& collisions_registry = registry.collisions;
-	for (uint i = 0; i < collisions_registry.components.size(); i++) {
-		// The entity and its collider
-		Entity entity = collisions_registry.entities[i];
-		Entity entity_other = collisions_registry.components[i].other;
-
-		// collisions involving projectiles
-		if (registry.active_projectiles.has(entity)) {
-			ActiveProjectile& projectile = registry.active_projectiles.get(entity);
+	for (auto [entity, collision, projectile]: registry.view<Collision, ActiveProjectile>().each()) {
+		Entity child_entity = collision.children;
+		while (child_entity != entt::null) {
+			const Child& child = registry.get<Child>(child_entity);
+			Entity entity_other = child.target;
 			// TODO: rename hittable container type
 			// TODO: Convert all checks to if tile is walkable, currently has issue that enemies can overlay player
 			// Currently, arrows can hit anything with a hittable component, which will include walls and enemies
-			if (registry.hittables.has(entity_other)) {
-				registry.velocities.get(entity).speed = 0;
-				registry.active_projectiles.remove(entity);
-
-				// Attack the other entity if it can be attacked
-				if (registry.stats.has(entity_other)) {
-					// Checks if the other enemy is a red/blue enemy
-					if (registry.enemies.has(entity_other)) {
-						Enemy& enemy = registry.enemies.get(entity_other);
-						ColorState enemy_color = enemy.team;
-						if (enemy_color != turns->get_inactive_color()) {
-							combat->do_attack(player,
-											  registry.weapons.get(current_weapon).given_attacks[current_attack],
-											  entity_other);
-						}
-					}	
+			// Attack the other entity if it can be attacked
+			// Checks if the other enemy is a red/blue enemy
+			if (registry.all_of<Hittable, Stats, Enemy>(entity_other)) {
+				Enemy& enemy = registry.get<Enemy>(entity_other);
+				ColorState enemy_color = enemy.team;
+				if (enemy_color != turns->get_inactive_color()) {
+					combat->do_attack(
+						player, registry.get<Weapon>(current_weapon).given_attacks[current_attack], entity_other);
 				}
-
-				// Stops projectile motion, adds projectile to list of resolved projectiles
-				registry.resolved_projectiles.emplace(entity);
-			} else {
-				registry.velocities.get(entity).speed = 0;
-				registry.active_projectiles.remove(entity);
-				// Stops projectile motion, adds projectile to list of resolved projectiles
-				registry.resolved_projectiles.emplace(entity);
 			}
+			Entity temp = child_entity;
+			child_entity = child.next;
+			registry.destroy(temp);
 		}
+		// Stops projectile motion, adds projectile to list of resolved projectiles
+		registry.get<Velocity>(entity).speed = 0;
+		registry.remove<ActiveProjectile>(entity);
+		registry.emplace<ResolvedProjectile>(entity);
 	}
 	// Remove all collisions from this simulation step
-	registry.collisions.clear();
-}
+	registry.clear<Collision>();
+	}
 
 // Should the game be over?
 bool WorldSystem::is_over() const { return bool(glfwWindowShouldClose(window)); }
@@ -339,7 +318,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		// TODO: Generalize for many attacks, check out of bounds
 		// Key Codes for 1-9
 		if (49 <= key && key <= 57) {
-			const std::vector<Attack>& attacks = registry.weapons.get(current_weapon).given_attacks;
+			const std::vector<Attack>& attacks = registry.get<Weapon>(current_weapon).given_attacks;
 			if (key - 49 < attacks.size()) {
 				current_attack = key - 49;
 				const Attack& attack = attacks[current_attack];
@@ -350,8 +329,8 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 					   attack.damage_min,
 					   attack.damage_max,
 					   attack.targeting_type == TargetingType::Projectile ? "projectile" : "adjacent");
-				registry.render_requests.get(player_arrow).visible = attack.targeting_type == TargetingType::Projectile;
-				registry.text.get(attack_display).text = combat->make_attack_list(current_weapon, current_attack);
+				registry.get<RenderRequest>(player_arrow).visible = attack.targeting_type == TargetingType::Projectile;
+				registry.get<Text>(attack_display).text = combat->make_attack_list(current_weapon, current_attack);
 			}
 		}
 	}
@@ -370,7 +349,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 
 	// God mode
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_ALT) != 0 && key == GLFW_KEY_G) {
-		Stats& stats = registry.stats.get(player);
+		Stats& stats = registry.get<Stats>(player);
 		stats.evasion = 100000;
 		stats.to_hit_bonus = 100000;
 		stats.damage_bonus = 100000;
@@ -402,9 +381,9 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 
 		vec2 mouse_world_position = renderer->screen_position_to_world_position(mouse_position);
 
-		Velocity& arrow_velocity = registry.velocities.get(player_arrow);
-		WorldPosition& arrow_position = registry.world_positions.get(player_arrow);
-		MapPosition& player_map_position = registry.map_positions.get(player);
+		Velocity& arrow_velocity = registry.get<Velocity>(player_arrow);
+		WorldPosition& arrow_position = registry.get<WorldPosition>(player_arrow);
+		MapPosition& player_map_position = registry.get<MapPosition>(player);
 
 		vec2 player_screen_position = MapUtility::map_position_to_world_position(player_map_position.position);
 
@@ -426,9 +405,9 @@ void WorldSystem::move_player(Direction direction)
 		return;
 	}
 
-	MapPosition& map_pos = registry.map_positions.get(player);
-	WorldPosition& arrow_position = registry.world_positions.get(player_arrow);
-	Animation& player_animation = registry.animations.get(player);
+	MapPosition& map_pos = registry.get<MapPosition>(player);
+	WorldPosition& arrow_position = registry.get<WorldPosition>(player_arrow);
+	Animation& player_animation = registry.get<Animation>(player);
 	uvec2 new_pos = map_pos.position;
 
 	if (direction == Direction::Left && map_pos.position.x > 0) {
@@ -469,11 +448,11 @@ void WorldSystem::move_player(Direction direction)
 			return;
 		} else {
 			map_generator->load_next_level();
-			registry.map_positions.get(player).position = map_generator->get_player_start_position();
+			registry.get<MapPosition>(player).position = map_generator->get_player_start_position();
 		}
 	} else if (map_generator->is_last_level_tile(new_pos)) {
 		map_generator->load_last_level();
-		registry.map_positions.get(player).position = map_generator->get_player_end_position();
+		registry.get<MapPosition>(player).position = map_generator->get_player_end_position();
 	}
 }
 
@@ -482,14 +461,14 @@ void WorldSystem::equip_next_weapon()
 	if (turns->get_active_team() != player) {
 		return;
 	}
-	Inventory& inventory = registry.inventories.get(player);
+	Inventory& inventory = registry.get<Inventory>(player);
 	Entity& curr = inventory.equipped[static_cast<uint8>(Slot::PrimaryHand)];
-	auto next = inventory.inventory.upper_bound(registry.items.get(curr).name);
+	auto next = inventory.inventory.upper_bound(registry.get<Item>(curr).name);
 	if (next == inventory.inventory.end()) {
 		next = inventory.inventory.begin();
 	}
 	while (next->second != curr) {
-		if (registry.items.get(next->second).allowed_slots[static_cast<uint8>(Slot::PrimaryHand)]) {
+		if (registry.get<Item>(next->second).allowed_slots[static_cast<uint8>(Slot::PrimaryHand)]) {
 			break;
 		}
 		if (next == inventory.inventory.end()) {
@@ -502,11 +481,11 @@ void WorldSystem::equip_next_weapon()
 		curr = next->second;
 		current_weapon = curr;
 		current_attack = 0;
-		registry.render_requests.get(player_arrow).visible
-			= registry.weapons.get(current_weapon).given_attacks.at(current_attack).targeting_type
+		registry.get<RenderRequest>(player_arrow).visible
+			= registry.get<Weapon>(current_weapon).given_attacks.at(current_attack).targeting_type
 			== TargetingType::Projectile;
-		registry.text.get(attack_display).text = combat->make_attack_list(current_weapon, current_attack);
-		printf("Switched weapon to %s\n", registry.items.get(curr).name.c_str());
+		registry.get<Text>(attack_display).text = combat->make_attack_list(current_weapon, current_attack);
+		printf("Switched weapon to %s\n", registry.get<Item>(curr).name.c_str());
 		animations->player_toggle_weapon(player);
 		turns->complete_team_action(player);
 	}
@@ -539,10 +518,10 @@ void WorldSystem::change_color()
 	// ColorState active_color = turns->get_active_color();
 	// for (long long i = registry.enemies.entities.size() - 1; i >= 0; i--) {
 	//	const Entity& enemy_entity = registry.enemies.entities[i];
-	//	if (((uint8_t)registry.enemies.get(enemy_entity).team & (uint8_t)active_color) == 0) {
-	//		registry.render_requests.get(enemy_entity).visible = false;
+	//	if (((uint8_t)registry.get<Enemy>(enemy_entity).team & (uint8_t)active_color) == 0) {
+	//		registry.get<RenderRequest>(enemy_entity).visible = false;
 	//	} else {
-	//		registry.render_requests.get(enemy_entity).visible = true;
+	//		registry.get<RenderRequest>(enemy_entity).visible = true;
 	//	}
 	//}
 }
@@ -555,13 +534,13 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 		return;
 	}
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-		Attack& attack = registry.weapons.get(current_weapon).given_attacks[current_attack];
+		Attack& attack = registry.get<Weapon>(current_weapon).given_attacks[current_attack];
 		if (!player_arrow_fired && attack.targeting_type == TargetingType::Projectile
 			&& turns->execute_team_action(player)) {
 			player_arrow_fired = true;
 			// Arrow becomes a projectile the moment it leaves the player, not while it's direction is being selected
-			ActiveProjectile& arrow_projectile = registry.active_projectiles.emplace(player_arrow, player);
-			Velocity& arrow_velocity = registry.velocities.get(player_arrow);
+			ActiveProjectile& arrow_projectile = registry.emplace<ActiveProjectile>(player_arrow, player);
+			Velocity& arrow_velocity = registry.get<Velocity>(player_arrow);
 
 			// Denotes arrowhead location the player's arrow, based on firing angle and current scaling
 			arrow_projectile.head_offset = {
@@ -587,15 +566,15 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 
 			// Get map_positions to compare
 			uvec2 mouse_map_pos = MapUtility::world_position_to_map_position(mouse_world_pos);
-			uvec2 player_pos = registry.map_positions.get(player).position;
+			uvec2 player_pos = registry.get<MapPosition>(player).position;
 			ivec2 distance = mouse_map_pos - player_pos;
 			if (abs(distance.x) > 1 || abs(distance.y) > 1 || distance == ivec2(0,0)
 				|| turns->get_active_team() != player) {
 				return;
 			}
-			for (const auto& target : registry.stats.entities) {
-				if (registry.map_positions.get(target).position == mouse_map_pos) {
-					Enemy& enemy = registry.enemies.get(target);
+			for (const auto& target : registry.view<Enemy, Stats>()) {
+				if (registry.get<MapPosition>(target).position == mouse_map_pos) {
+					Enemy& enemy = registry.get<Enemy>(target);
 					ColorState inactive_color = turns->get_inactive_color();
 					if (enemy.team == inactive_color || !turns->execute_team_action(player)) {
 						continue;

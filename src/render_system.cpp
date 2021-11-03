@@ -6,24 +6,22 @@
 #include <glm/gtc/type_ptr.hpp> // Allows nice passing of values to GL functions
 #pragma warning(pop)
 
-#include "tiny_ecs_registry.hpp"
-
 Transform RenderSystem::get_transform(Entity entity)
 {
 	Transform transform;
-	if (registry.map_positions.has(entity)) {
-		MapPosition& map_position = registry.map_positions.get(entity);
+	if (registry.any_of<MapPosition>(entity)) {
+		MapPosition& map_position = registry.get<MapPosition>(entity);
 		transform.translate(MapUtility::map_position_to_world_position(map_position.position));
-	} else if (registry.world_positions.has(entity)) {
+	} else if (registry.any_of<WorldPosition>(entity)) {
 		// Most objects in the game are expected to use MapPosition, exceptions are:
 		// Arrow, Room.
-		transform.translate(registry.world_positions.get(entity).position);
-		if (registry.velocities.has(entity)) {
+		transform.translate(registry.get<WorldPosition>(entity).position);
+		if (registry.any_of<Velocity>(entity)) {
 			// Probably can provide a get if exist function here to boost performance
-			transform.rotate(registry.velocities.get(entity).angle);
+			transform.rotate(registry.get<Velocity>(entity).angle);
 		}
 	} else {
-		transform.translate(screen_position_to_world_position(registry.screen_positions.get(entity).position * vec2(screen_size)));
+		transform.translate(screen_position_to_world_position(registry.get<ScreenPosition>(entity).position * vec2(screen_size)));
 	}
 	return transform;
 }
@@ -109,12 +107,9 @@ RenderSystem::TextData RenderSystem::generate_text(const Text& text)
 	return text_data;
 }
 
-void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
+void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest render_request, const mat3& projection)
 {
 	Transform transform = get_transform(entity);
-
-	assert(registry.render_requests.has(entity));
-	const RenderRequest& render_request = registry.render_requests.get(entity);
 
 	transform.scale(scaling_factors.at(static_cast<int>(render_request.used_texture)));
 
@@ -129,7 +124,7 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 	assert(render_request.used_geometry != GEOMETRY_BUFFER_ID::GEOMETRY_COUNT);
 	int vbo_ibo_offset = 0;
 	if (render_request.used_geometry == GEOMETRY_BUFFER_ID::ROOM) {
-		vbo_ibo_offset = registry.rooms.get(entity).type;
+		vbo_ibo_offset = registry.get<Room>(entity).type;
 	}
 
 	const GLuint vbo = vertex_buffers.at((int)render_request.used_geometry + vbo_ibo_offset);
@@ -143,8 +138,8 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 	// Input data location as in the vertex buffer
 	if (render_request.used_effect == EFFECT_ASSET_ID::TEXTURED) {
 
-		assert(registry.render_requests.has(entity));
-		prepare_for_textured(texture_gl_handles.at((GLuint)registry.render_requests.get(entity).used_texture));
+		assert(registry.any_of<RenderRequest>(entity));
+		prepare_for_textured(texture_gl_handles.at((GLuint)registry.get<RenderRequest>(entity).used_texture));
 	} else if (render_request.used_effect == EFFECT_ASSET_ID::ENEMY || render_request.used_effect == EFFECT_ASSET_ID::PLAYER) {
 
 		GLint in_position_loc = glGetAttribLocation(program, "in_position");
@@ -167,8 +162,8 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 		glActiveTexture(GL_TEXTURE0);
 		gl_has_errors();
 
-		Animation& animation = registry.animations.get(entity);
-		assert(registry.animations.has(entity));
+		Animation& animation = registry.get<Animation>(entity);
+		assert(registry.any_of<Animation>(entity));
 
 		// Switches direction based on requested animation direction
 		transform.scale({ animation.direction, 1 });
@@ -183,8 +178,7 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 		glUniform1i(state_loc, animation.state);
 		gl_has_errors();
 
-		assert(registry.render_requests.has(entity));
-		GLuint texture_id = texture_gl_handles.at((GLuint)registry.render_requests.get(entity).used_texture);
+		GLuint texture_id = texture_gl_handles.at((GLuint)render_request.used_texture);
 
 		glBindTexture(GL_TEXTURE_2D, texture_id);
 		gl_has_errors();
@@ -211,8 +205,7 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 		glActiveTexture(GL_TEXTURE0);
 		gl_has_errors();
 
-		assert(registry.render_requests.has(entity));
-		GLuint texture_id = texture_gl_handles.at((GLuint)registry.render_requests.get(entity).used_texture);
+		GLuint texture_id = texture_gl_handles.at((GLuint) render_request.used_texture);
 
 		glBindTexture(GL_TEXTURE_2D, texture_id);
 		gl_has_errors();
@@ -221,9 +214,9 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 	}
 
 	// Getting uniform locations for glUniform* calls
-	if (registry.colors.has(entity)) {
+	if (registry.any_of<Color>(entity)) {
 		GLint color_uloc = glGetUniformLocation(program, "fcolor");
-		const vec3 color = registry.colors.get(entity);
+		const vec3 color = registry.get<Color>(entity).color;
 		glUniform3fv(color_uloc, 1, glm::value_ptr(color));
 		gl_has_errors();
 	}
@@ -305,9 +298,9 @@ void RenderSystem::draw_text(Entity entity, const Text& text, const mat3& projec
 	prepare_for_textured(text_data->second.texture);
 
 	// Setup coloring
-	if (registry.colors.has(entity)) {
+	if (registry.any_of<Color>(entity)) {
 		GLint color_uloc = glGetUniformLocation(program, "fcolor");
-		const vec3 color = registry.colors.get(entity);
+		const vec3 color = registry.get<Color>(entity).color;
 		glUniform3fv(color_uloc, 1, glm::value_ptr(color));
 		gl_has_errors();
 	}
@@ -348,9 +341,9 @@ void RenderSystem::draw_line(Entity entity, const Line& line, const mat3& projec
 	gl_has_errors();
 
 	// Setup coloring
-	if (registry.colors.has(entity)) {
+	if (registry.any_of<Color>(entity)) {
 		GLint color_uloc = glGetUniformLocation(program, "fcolor");
-		const vec3 color = registry.colors.get(entity);
+		const vec3 color = registry.get<Color>(entity).color;
 		glUniform3fv(color_uloc, 1, glm::value_ptr(color));
 		gl_has_errors();
 	}
@@ -396,10 +389,6 @@ void RenderSystem::draw_to_screen()
 	glClearDepth(1.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	gl_has_errors();
-	// Enabling alpha channel for textures
-	glDisable(GL_BLEND);
-	// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_DEPTH_TEST);
 
 	// Draw the screen texture on the quad geometry
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers[(GLuint)GEOMETRY_BUFFER_ID::SCREEN_TRIANGLE]);
@@ -413,7 +402,7 @@ void RenderSystem::draw_to_screen()
 	GLint time_uloc = glGetUniformLocation(water_program, "time");
 	GLint dead_timer_uloc = glGetUniformLocation(water_program, "darken_screen_factor");
 	glUniform1f(time_uloc, (float)(glfwGetTime() * 10.0f));
-	ScreenState& screen = registry.screen_states.get(screen_state_entity);
+	ScreenState& screen = registry.get<ScreenState>(screen_state_entity);
 	glUniform1f(dead_timer_uloc, screen.darken_screen_factor);
 	gl_has_errors();
 	// Set the vertex position and vertex texture coordinates (both stored in the
@@ -458,24 +447,31 @@ void RenderSystem::draw()
 	gl_has_errors();
 	mat3 projection_2d = create_projection_matrix();
 	// Draw all textured meshes that have a position and size component
-	for (Entity entity : registry.render_requests.entities) {
+	for (auto [entity, render_request] : registry.view<RenderRequest, Background>().each()) {
 		// Note, its not very efficient to access elements indirectly via the entity
 		// albeit iterating through all Sprites in sequence. A good point to optimize
-		if (registry.render_requests.get(entity).visible) {
-			draw_textured_mesh(entity, projection_2d);
+		if (render_request.visible) {
+			draw_textured_mesh(entity, render_request, projection_2d);
+		}
+	}
+	for (auto [entity, render_request] : registry.view<RenderRequest>(entt::exclude<Background>).each()) {
+		// Note, its not very efficient to access elements indirectly via the entity
+		// albeit iterating through all Sprites in sequence. A good point to optimize
+		if (render_request.visible) {
+			draw_textured_mesh(entity, render_request, projection_2d);
 		}
 	}
 
-	for (int i = 0; i < registry.stats.size(); i++) {
-		draw_healthbar(registry.stats.entities[i], registry.stats.components[i], projection_2d);
+	for (auto [entity, stats] : registry.view<Stats>().each()) {
+		draw_healthbar(entity, stats, projection_2d);
 	}
 
-	for (int i = 0; i < registry.text.size(); i++) {
-		draw_text(registry.text.entities[i], registry.text.components[i], projection_2d);
+	for (auto [entity, text] : registry.view<Text>().each()) {
+		draw_text(entity, text, projection_2d);
 	}
 
-	for (int i = 0; i < registry.lines.size(); i++) {
-		draw_line(registry.lines.entities[i], registry.lines.components[i], projection_2d);
+	for (auto [entity, line] : registry.view<Line>().each()) {
+		draw_line(entity, line, projection_2d);
 	}
 
 	// Truely render to the screen
@@ -505,11 +501,11 @@ std::pair<vec2, vec2> RenderSystem::get_window_bounds()
 {
 	vec2 window_size = vec2(screen_size) * screen_scale;
 
-	Entity player = registry.players.top_entity();
-	vec2 player_pos = MapUtility::map_position_to_world_position(registry.map_positions.get(player).position);
+	Entity player = registry.view<Player>().front();
+	vec2 player_pos = MapUtility::map_position_to_world_position(registry.get<MapPosition>(player).position);
 
-	Entity camera = registry.cameras.top_entity();
-	WorldPosition& camera_world_pos = registry.world_positions.get(camera);
+	Entity camera = registry.view<Camera>().front();
+	WorldPosition& camera_world_pos = registry.get<WorldPosition>(camera);
 
 	vec2 buffer_top_left, buffer_down_right;
 	

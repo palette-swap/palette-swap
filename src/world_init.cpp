@@ -1,17 +1,16 @@
-#include "tiny_ecs_registry.hpp"
 #include "world_init.hpp"
 
 
 Entity create_player(uvec2 pos)
 {
-	auto entity = Entity();
+	auto entity = registry.create();
 
 	// Create and (empty) player component to be able to refer to other enttities
-	registry.players.emplace(entity);
-	registry.map_positions.emplace(entity, pos);
-	registry.stats.emplace(entity);
+	registry.emplace<Player>(entity);
+	registry.emplace<MapPosition>(entity, pos);
+	registry.emplace<Stats>(entity);
 
-	Inventory& inventory = registry.inventories.emplace(entity);
+	Inventory& inventory = registry.emplace<Inventory>(entity);
 
 	// Setup Casting
 	Attack arcane_orb = { "Arcane Orb", 10, 10, 5, 10, DamageType::Magical, TargetingType::Projectile };
@@ -26,17 +25,15 @@ Entity create_player(uvec2 pos)
 
 	inventory.equipped.at(static_cast<uint8>(Slot::PrimaryHand)) = sword;
 
-	registry.render_requests.insert(entity,
-								   { TEXTURE_ASSET_ID::PALADIN, 
-									 EFFECT_ASSET_ID::PLAYER,
-									 GEOMETRY_BUFFER_ID::PLAYER });
+	registry.emplace<RenderRequest>(
+		entity, TEXTURE_ASSET_ID::PALADIN, EFFECT_ASSET_ID::PLAYER, GEOMETRY_BUFFER_ID::PLAYER, true);
 
-	Animation & player_animation = registry.animations.emplace(entity);
+	Animation& player_animation = registry.emplace<Animation>(entity);
 	player_animation.max_frames = 6;
 	player_animation.state = 0;
 	player_animation.speed_adjustment = 1.5;
 
-	registry.colors.insert(entity, { 1, 1, 1 });
+	registry.emplace<Color>(entity, vec3(1, 1, 1));
 	
 	return entity;
 }
@@ -46,14 +43,14 @@ Entity create_player(uvec2 pos)
 // Note: Deprecated, use load_enemy from map_generator_system instead
 Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 {
-	auto entity = Entity();
+	auto entity = registry.create();
 
-	registry.map_positions.emplace(entity, map_pos);
+	registry.emplace<MapPosition>(entity, map_pos);
 
 	// Set up enemy stats to be weaker than the player
 	// TODO: Replace with load from file or auto-generate
 	// TODO: Set different stats for each enemy type.
-	Stats& stats = registry.stats.emplace(entity);
+	Stats& stats = registry.emplace<Stats>(entity);
 	stats.health = 50;
 	stats.health_max = 50;
 	stats.to_hit_bonus = 6;
@@ -65,10 +62,10 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 	vec2 actual_position = MapUtility::map_position_to_world_position(map_pos);
 
 	// Indicates enemy is hittable by objects
-	registry.hittables.emplace(entity);
+	registry.emplace<Hittable>(entity);
 	// Create enemy component for AI System.
 	// TODO: Replace with load from file or auto-generate.
-	Enemy& enemy = registry.enemies.emplace(entity);
+	Enemy& enemy = registry.emplace<Enemy>(entity);
 
 	enemy.team = team;
 	enemy.type = type;
@@ -110,18 +107,18 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 		throw std::runtime_error("Invalid enemy type.");
 	}
 
-	registry.render_requests.insert(
-		entity, { enemy_type_textures[static_cast<int>(type)], EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY });
+	registry.emplace<RenderRequest>(
+		entity, enemy_type_textures[static_cast<int>(type)], EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY, true);
 	if (team == ColorState::Red) {
-		registry.colors.insert(entity, AnimationUtility::default_enemy_red);
+		registry.emplace<Color>(entity, AnimationUtility::default_enemy_red);
 	} else if (team == ColorState::Blue) {
-		registry.colors.insert(entity, { AnimationUtility::default_enemy_blue });
+		registry.emplace<Color>(entity, AnimationUtility::default_enemy_blue);
 	} else {
-		registry.colors.insert(entity, { 1, 1, 1 });
+		registry.emplace<Color>(entity, vec3(1, 1, 1));
 	}
 
 
-	Animation& enemy_animation = registry.animations.emplace(entity);
+	Animation& enemy_animation = registry.emplace<Animation>(entity);
 	enemy_animation.max_frames = 4;
 
 	return entity;
@@ -129,75 +126,72 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 
 Entity create_arrow(vec2 position)
 {
-	auto entity = Entity();
+	auto entity = registry.create();
 
-	registry.world_positions.emplace(entity, position);
-	registry.velocities.emplace(entity, 0.f, 0.f);
+	registry.emplace<WorldPosition>(entity, position);
+	registry.emplace<Velocity>(entity, 0.f, 0.f);
 
 	// Create and (empty) player component to be able to refer to other enttities
-	registry.render_requests.insert(
-		entity,
-		{ TEXTURE_ASSET_ID::CANNONBALL, 
-			EFFECT_ASSET_ID::TEXTURED,
-			GEOMETRY_BUFFER_ID::SPRITE });
-	registry.colors.insert(entity, { 1, 1, 1 });
+	registry.emplace<RenderRequest>(
+		entity, TEXTURE_ASSET_ID::CANNONBALL, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE, true);
+	registry.emplace<Color>(entity, vec3(1, 1, 1));
 
 	return entity;
 }
 
 Entity create_line(vec2 position, float length, float angle)
 {
-	Entity entity = Entity();
+	Entity entity = registry.create();
 
 	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
-	registry.lines.emplace(entity, vec2(length, 2), angle);
-	registry.colors.insert(entity, { 1, .1, .1 });
+	registry.emplace<Line>(entity, vec2(length, 2), angle);
+	registry.emplace<Color>(entity, vec3(1, .1, .1));
 
-	registry.world_positions.emplace(entity, position);
+	registry.emplace<WorldPosition>(entity, position);
 
-	registry.debug_components.emplace(entity);
+	registry.emplace<DebugComponent>(entity);
 	return entity;
 }
 
 Entity create_path_point(vec2 position)
 {
-	Entity entity = Entity();
+	Entity entity = registry.create();
 
-	registry.debug_components.emplace(entity);
+	registry.emplace<DebugComponent>(entity);
 
-	registry.world_positions.emplace(entity, position);
+	registry.emplace<WorldPosition>(entity, position);
 
 	// TODO: Replace CANNONBALL with other suitable texture.
-	registry.render_requests.insert(
-		entity, { TEXTURE_ASSET_ID::CANNONBALL, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE });
+	registry.emplace<RenderRequest>(
+		entity, TEXTURE_ASSET_ID::CANNONBALL, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE, true);
 
-	registry.colors.insert(entity, { 0, 1, 0 });
+	registry.emplace<Color>(entity, vec3(0, 1, 0));
 
 	return entity;
 }
 
 Entity create_camera(uvec2 pos)
 {
-	auto entity = Entity();
+	auto entity = registry.create();
 
 	// Setting initial position for camera
-	registry.cameras.emplace(entity);
+	registry.emplace<Camera>(entity);
 	
-	registry.world_positions.emplace(entity, MapUtility::map_position_to_world_position(pos));
+	registry.emplace<WorldPosition>(entity, MapUtility::map_position_to_world_position(pos));
 
 	return entity;
 }
 
 Entity create_team()
 {
-	Entity entity = Entity();
+	Entity entity = registry.create();
 	return entity;
 }
 
 Entity create_item(const std::string& name, SlotList<bool> allowed_slots)
 {
-	Entity entity = Entity();
-	registry.items.insert(entity, { name, 0.f, 0, allowed_slots });
+	Entity entity = registry.create();
+	registry.emplace<Item>(entity, name, 0.f, 0, allowed_slots);
 	return entity;
 }
 
@@ -209,6 +203,6 @@ Entity create_weapon(const std::string& name, std::vector<Attack> attacks)
 		return slots;
 	}();
 	Entity entity = create_item(name, weapon_slots);
-	registry.weapons.emplace(entity, std::move(attacks));
+	registry.emplace<Weapon>(entity, std::move(attacks));
 	return entity;
 }

@@ -91,10 +91,10 @@ private:
 	RenderSystem* renderer = nullptr;
 	float current_speed = 0;
 	bool end_of_game = false;
-	Entity player;
-	Entity camera;
-	Entity player_arrow;
-	Entity attack_display;
+	Entity player = registry.create();
+	Entity camera = registry.create();
+	Entity player_arrow = registry.create();
+	Entity attack_display = registry.create();
 	Debug& debugging;
 
 	// music references
