@@ -128,9 +128,6 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 
 	assert(render_request.used_geometry != GEOMETRY_BUFFER_ID::GEOMETRY_COUNT);
 	int vbo_ibo_offset = 0;
-	if (render_request.used_geometry == GEOMETRY_BUFFER_ID::ROOM) {
-		vbo_ibo_offset = registry.rooms.get(entity).type;
-	}
 
 	const GLuint vbo = vertex_buffers.at((int)render_request.used_geometry + vbo_ibo_offset);
 	const GLuint ibo = index_buffers.at((int)render_request.used_geometry + vbo_ibo_offset);
@@ -189,33 +186,6 @@ void RenderSystem::draw_textured_mesh(Entity entity, const mat3& projection)
 		glBindTexture(GL_TEXTURE_2D, texture_id);
 		gl_has_errors();
 
-	} else if (render_request.used_effect == EFFECT_ASSET_ID::TILE_MAP) {
-		GLint in_position_loc = glGetAttribLocation(program, "in_position");
-		GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
-
-		gl_has_errors();
-		assert(in_texcoord_loc >= 0);
-
-		glEnableVertexAttribArray(in_position_loc);
-		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(TileMapVertex), (void*)0);
-		gl_has_errors();
-
-		glEnableVertexAttribArray(in_texcoord_loc);
-		glVertexAttribPointer(in_texcoord_loc,
-							  2,
-							  GL_FLOAT,
-							  GL_FALSE,
-							  sizeof(TileMapVertex),
-							  (void*)sizeof(vec3)); // note the stride to skip the preceeding vertex position
-		// Enabling and binding texture to slot 0
-		glActiveTexture(GL_TEXTURE0);
-		gl_has_errors();
-
-		assert(registry.render_requests.has(entity));
-		GLuint texture_id = texture_gl_handles.at((GLuint)registry.render_requests.get(entity).used_texture);
-
-		glBindTexture(GL_TEXTURE_2D, texture_id);
-		gl_has_errors();
 	} else {
 		assert(false && "Type of render request not supported");
 	}
@@ -380,6 +350,38 @@ void RenderSystem::draw_triangles(const Transform& transform, const mat3& projec
 	gl_has_errors();
 }
 
+void RenderSystem::draw_map(const mat3& projection)
+{
+	const auto program = (GLuint)effects.at((uint8)EFFECT_ASSET_ID::TILE_MAP);
+	gl_has_errors();
+
+	glUseProgram(program);
+	for (size_t i = 0; i < registry.rooms.size(); i++) {
+		Entity entity = registry.rooms.entities[i];
+		Transform transform = get_transform(entity);
+		transform.scale(scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::TILE_SET)));
+
+		auto room_id = registry.rooms.components[i].type;
+		glActiveTexture(GL_TEXTURE0);
+		gl_has_errors();
+		GLuint texture_id = texture_gl_handles.at((GLuint)TEXTURE_ASSET_ID::TILE_SET);
+		glBindTexture(GL_TEXTURE_2D, texture_id);
+		gl_has_errors();
+
+		const auto& room_layout = map_generator->get_room_layout(room_id);
+		GLint room_layout_loc = glGetUniformLocation(program, "room_layout");
+		glUniform1uiv(room_layout_loc, room_layout.size(), room_layout.data());
+
+		GLint transform_loc = glGetUniformLocation(program, "transform");
+		glUniformMatrix3fv(transform_loc, 1, GL_FALSE, glm::value_ptr(transform.mat));
+		GLint projection_loc = glGetUniformLocation(program, "projection");
+		glUniformMatrix3fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
+		gl_has_errors();
+
+		glDrawArrays(GL_TRIANGLES, 0, MapUtility::room_size * MapUtility::room_size * 2 * 3);
+	}
+}
+
 // draw the intermediate texture to the screen, with some distortion to simulate
 // water
 void RenderSystem::draw_to_screen()
@@ -457,6 +459,8 @@ void RenderSystem::draw()
 							  // sprites back to front
 	gl_has_errors();
 	mat3 projection_2d = create_projection_matrix();
+	draw_map(projection_2d);
+
 	// Draw all textured meshes that have a position and size component
 	for (Entity entity : registry.render_requests.entities) {
 		// Note, its not very efficient to access elements indirectly via the entity
