@@ -227,6 +227,7 @@ void WorldSystem::restart_game()
 	Inventory& inventory = registry.get<Inventory>(player);
 	current_weapon = inventory.equipped[static_cast<uint8>(Slot::PrimaryHand)];
 	current_attack = 0;
+	attack_display = registry.create();
 	registry.emplace<ScreenPosition>(attack_display, vec2(0, 1));
 	registry.emplace<Text>(attack_display,
 						  combat->make_attack_list(current_weapon, current_attack),

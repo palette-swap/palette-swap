@@ -421,7 +421,7 @@ void MapGeneratorSystem::load_level(int level)
 	}
 
 	if (level == 0) {
-		if (help_picture == entt::null || !registry.any_of<RenderRequest>(help_picture)) {
+		if (!registry.valid(help_picture) || !registry.any_of<RenderRequest>(help_picture)) {
 			create_picture();
 		}
 		registry.get<RenderRequest>(help_picture).visible = true;
@@ -439,7 +439,7 @@ void MapGeneratorSystem::clear_level() const
 	registry.destroy(enemy_view.begin(), enemy_view.end());
 
 	if (current_level == 0) {
-		if (registry.any_of<RenderRequest>(help_picture) && help_picture != entt::null) {
+		if (registry.valid(help_picture) && registry.any_of<RenderRequest>(help_picture)) {
 			registry.get<RenderRequest>(help_picture).visible = false;
 		}
 	}
