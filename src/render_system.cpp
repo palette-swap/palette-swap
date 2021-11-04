@@ -322,6 +322,37 @@ void RenderSystem::draw_line(Entity entity, const Line& line, const mat3& projec
 	draw_triangles(transform, projection);
 }
 
+void RenderSystem::draw_map(const mat3& projection)
+{
+	const auto program = (GLuint)effects.at((uint8)EFFECT_ASSET_ID::TILE_MAP);
+	gl_has_errors();
+
+	glUseProgram(program);
+	for (auto [entity, room] : registry.view<Room>().each()) {
+		Transform transform = get_transform(entity);
+		transform.scale(scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::TILE_SET)));
+
+		auto room_id = room.type;
+		glActiveTexture(GL_TEXTURE0);
+		gl_has_errors();
+		GLuint texture_id = texture_gl_handles.at((GLuint)TEXTURE_ASSET_ID::TILE_SET);
+		glBindTexture(GL_TEXTURE_2D, texture_id);
+		gl_has_errors();
+
+		const auto& room_layout = map_generator->get_room_layout(room_id);
+		GLint room_layout_loc = glGetUniformLocation(program, "room_layout");
+		glUniform1uiv(room_layout_loc, room_layout.size(), room_layout.data());
+
+		GLint transform_loc = glGetUniformLocation(program, "transform");
+		glUniformMatrix3fv(transform_loc, 1, GL_FALSE, glm::value_ptr(transform.mat));
+		GLint projection_loc = glGetUniformLocation(program, "projection");
+		glUniformMatrix3fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
+		gl_has_errors();
+
+		glDrawArrays(GL_TRIANGLES, 0, MapUtility::room_size * MapUtility::room_size * 2 * 3);
+	}
+}
+
 void RenderSystem::draw_triangles(const Transform& transform, const mat3& projection)
 {
 	// Get number of indices from index buffer, which has elements uint16_t
@@ -342,38 +373,6 @@ void RenderSystem::draw_triangles(const Transform& transform, const mat3& projec
 	// Drawing of num_indices/3 triangles specified in the index buffer
 	glDrawElements(GL_TRIANGLES, num_indices, GL_UNSIGNED_SHORT, nullptr);
 	gl_has_errors();
-}
-
-void RenderSystem::draw_map(const mat3& projection)
-{
-	const auto program = (GLuint)effects.at((uint8)EFFECT_ASSET_ID::TILE_MAP);
-	gl_has_errors();
-
-	glUseProgram(program);
-	for (size_t i = 0; i < registry.rooms.size(); i++) {
-		Entity entity = registry.rooms.entities[i];
-		Transform transform = get_transform(entity);
-		transform.scale(scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::TILE_SET)));
-
-		auto room_id = registry.rooms.components[i].type;
-		glActiveTexture(GL_TEXTURE0);
-		gl_has_errors();
-		GLuint texture_id = texture_gl_handles.at((GLuint)TEXTURE_ASSET_ID::TILE_SET);
-		glBindTexture(GL_TEXTURE_2D, texture_id);
-		gl_has_errors();
-
-		const auto& room_layout = map_generator->get_room_layout(room_id);
-		GLint room_layout_loc = glGetUniformLocation(program, "room_layout");
-		glUniform1uiv(room_layout_loc, room_layout.size(), room_layout.data());
-
-		GLint transform_loc = glGetUniformLocation(program, "transform");
-		glUniformMatrix3fv(transform_loc, 1, GL_FALSE, glm::value_ptr(transform.mat));
-		GLint projection_loc = glGetUniformLocation(program, "projection");
-		glUniformMatrix3fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
-		gl_has_errors();
-
-		glDrawArrays(GL_TRIANGLES, 0, MapUtility::room_size * MapUtility::room_size * 2 * 3);
-	}
 }
 
 // draw the intermediate texture to the screen, with some distortion to simulate
@@ -449,17 +448,10 @@ void RenderSystem::draw()
 							  // sprites back to front
 	gl_has_errors();
 	mat3 projection_2d = create_projection_matrix();
+
 	draw_map(projection_2d);
 
-	// Draw all textured meshes that have a position and size component
-	for (auto [entity, render_request] : registry.view<RenderRequest, Background>().each()) {
-		// Note, its not very efficient to access elements indirectly via the entity
-		// albeit iterating through all Sprites in sequence. A good point to optimize
-		if (render_request.visible) {
-			draw_textured_mesh(entity, render_request, projection_2d);
-		}
-	}
-	for (auto [entity, render_request] : registry.view<RenderRequest>(entt::exclude<Background>).each()) {
+	for (auto [entity, render_request] : registry.view<RenderRequest>().each()) {
 		// Note, its not very efficient to access elements indirectly via the entity
 		// albeit iterating through all Sprites in sequence. A good point to optimize
 		if (render_request.visible) {

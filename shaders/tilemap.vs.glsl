@@ -8,7 +8,7 @@ uniform mat3 transform;
 uniform mat3 projection;
 uniform uint room_layout[100];
 
-const uint room_size = 10;
+const uint room_size = 10u;
 
 void main()
 {
