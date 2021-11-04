@@ -230,23 +230,17 @@ TileId MapGeneratorSystem::get_tile_id_from_map_pos(uvec2 pos) const
 void MapGeneratorSystem::load_rooms_from_csv()
 {
 	for (size_t i = 0; i < room_paths.size(); i++) {
-		Mapping& room_mapping = room_layouts.at(i);
+		auto & room_mapping = room_layouts.at(i);
 
 		std::ifstream room_file(room_paths.at(i));
 		std::string line;
-		int col = 0;
-		int row = 0;
+		int index = 0;
 
 		while (std::getline(room_file, line)) {
 			std::string tile_id;
 			std::stringstream ss(line);
 			while (std::getline(ss, tile_id, ',')) {
-				room_mapping.at(row).at(col) = std::stoi(tile_id);
-				col++;
-				if (col == room_size) {
-					row++;
-					col = 0;
-				}
+				room_mapping.at(index++) = std::stoi(tile_id);
 			}
 		}
 	}
@@ -274,12 +268,11 @@ TileId MapGeneratorSystem::get_tile_id_from_room(RoomType room_type, uint8_t row
 	default:
 		break;
 	}
-	return room_layouts.at(room_type).at(row).at(col);
+	return room_layouts.at(room_type).at(row * room_size + col);
 }
 
 void MapGeneratorSystem::load_levels_from_csv()
 {
-	// Pre-allocate vector size
 	for (size_t i = 0; i < level_paths.size(); i++) {
 		Mapping& level_mapping = levels.at(i);
 
@@ -493,11 +486,6 @@ Entity MapGeneratorSystem::create_room(vec2 position, MapUtility::RoomType roomT
 	Room& room = registry.emplace<Room>(entity);
 	room.type = roomType;
 
-	// Place the rooms at bottom
-	registry.emplace<Background>(entity);
-	registry.emplace<RenderRequest>(
-		entity, TEXTURE_ASSET_ID::TILE_SET, EFFECT_ASSET_ID::TILE_MAP, GEOMETRY_BUFFER_ID::ROOM, true);
-
 	return entity;
 }
 
@@ -542,4 +530,10 @@ uvec2 MapGeneratorSystem::get_player_end_position() const
 	const auto* y = rapidjson::GetValueByPointer(json_doc, rapidjson::Pointer("/player/end_position/y"));
 	pos.y = y->GetInt();
 	return pos;
+}
+
+const std::array<uint32_t, MapUtility::map_size * MapUtility::map_size>&
+MapGeneratorSystem::get_room_layout(MapUtility::RoomType type) const
+{
+	return room_layouts.at(type);
 }

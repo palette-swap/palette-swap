@@ -82,9 +82,6 @@ class RenderSystem {
 	std::unordered_map<Text, TextData> text_buffers;
 	std::unordered_map<unsigned int, TTF_Font*> fonts;
 
-	// initialize all predefined rooms, based on roomtype
-	void initialize_room_vertices(MapUtility::RoomType roomType);
-
 	std::shared_ptr<MapGeneratorSystem> map_generator;
 public:
 	// Initialize the window
@@ -144,6 +141,7 @@ private:
 	void draw_text(Entity entity, const Text& text, const mat3& projection);
 	void draw_line(Entity entity, const Line& line, const mat3& projection);
 	void draw_triangles(const Transform& transform, const mat3& projection);
+	void draw_map(const mat3& projection);
 	void draw_to_screen();
 	void update_camera_position(WorldPosition& camera_map_pos,
 								const vec2& player_pos,
