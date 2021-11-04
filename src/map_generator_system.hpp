@@ -82,13 +82,14 @@ private:
 
 	///////////////////////////////////////////////////////////
 	// Data structures thats saving the information loaded
-
-	// Defines the structure used for these rooms, which is a 2-d array
-	// The index will be the room ID that uniquely identifies a room
-	// The order follows the ones defined in room_paths
-	// Room layout should be populated in the constructor before doing
-	// any operations on map system
-	std::array<Mapping, MapUtility::num_rooms> room_layouts;
+	//
+	// room_layouts define the predefined rooms, index is the room id, that follows the order
+	// in room_paths, each element is a 10*10 array that defines each tile textures in the 10*10 room
+	// Note: we are saving uint32_t for tile ids, but tile_id is actually 8 bit, this is because opengl
+	// shaders only have 32 bit ints. However, number of tile textures are restricted in 8 bit integer(
+	// since the walkable/wall tiles set are uint8_t and our tile atlas only support 64 tiles),
+	// so it should always be safe to convert from uint32_t to uin8_t
+	std::array<std::array<uint32_t, MapUtility::map_size * MapUtility::map_size>, MapUtility::num_rooms> room_layouts;
 	// the (procedural) generated levels, each level contains a full map(max 10*10 rooms),
 	// index of the vector will be the map id
 	std::vector<Mapping> levels;
@@ -179,5 +180,10 @@ public:
 	// Get player initial position on current level
 	uvec2 get_player_start_position() const;
 
+	// Get player last position on current level
 	uvec2 get_player_end_position() const;
+
+	// Get the 10*10 layout array for a room, mainly used by rendering
+	const std::array<uint32_t, MapUtility::map_size * MapUtility::map_size> &
+	get_room_layout(MapUtility::RoomType type) const;
 };
