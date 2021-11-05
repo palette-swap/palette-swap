@@ -4,6 +4,7 @@
 #include <sstream>
 #include <unordered_map>
 #include <unordered_set>
+#include <iostream>
 
 #include <glm/gtx/hash.hpp>
 
@@ -17,11 +18,16 @@ MapGeneratorSystem::MapGeneratorSystem()
 	: levels(num_levels)
 	, level_room_rotations(num_levels)
 	, level_snap_shots(num_levels)
+	//, random_number_distribution(0, 9)
 {
 	load_rooms_from_csv();
-	load_levels_from_csv();
+	//load_levels_from_csv();
 	load_level_configurations();
 	current_level = -1;
+	
+	random_eng.seed(generation_seed);
+
+	generate_levels();
 }
 
 ////////////////////////////////////
@@ -72,10 +78,106 @@ void MapGeneratorSystem::create_picture()
 		help_picture, TEXTURE_ASSET_ID::HELP_PIC, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE, true);
 }
 
-// TODO: we want this eventually be procedural generated
+std::vector<int> MapGeneratorSystem::generate_random_path(int start_row, int start_col, int path_length)
+{
+	std::uniform_int_distribution<int> direction_rand(0, 3);
+	std::array<std::array<int, 2>, 4> directions = { {
+		{ -1, 0 }, // left
+		{ 0, -1 }, // up
+		{ 1, 0 }, // right
+		{ 0, 1 }, // down
+	} };
+
+	// each element in path represents a room position, calculated by row*10+col
+	std::vector<int> path = {start_row * 10 + start_col};
+	// Keeps a direction_tried set for each room, so we could backtrack
+	std::vector<std::set<int>> directions_tried(1);
+	int current_row = start_row;
+	int current_col = start_col;
+	int current_length = 1;
+
+	while (current_length < path_length)
+	{
+		// we should always be exploring directions of the current last room
+		auto & current_directions_tried = directions_tried.back();
+		while(current_directions_tried.size() < 4) {
+			int direction = direction_rand(random_eng);
+			// try a direction we haven't tried before
+			if (current_directions_tried.find(direction) != current_directions_tried.end()) {
+				continue;
+			}
+			current_directions_tried.emplace(direction);
+
+			int next_row = current_row + directions.at(direction).at(1);
+			int next_col = current_col + directions.at(direction).at(0);
+			// make sure we are not out of bounds
+			if (next_row >= room_size || next_row < 0 || next_col >= room_size || next_col < 0) {
+				continue;
+			}
+
+			// make sure the room has not been added to path
+			if (std::find(path.begin(), path.end(), (next_row * 10 + next_col )) != path.end()) {
+				continue;
+			}
+
+			// found a valid direction
+			path.emplace_back(next_row * 10 + next_col);
+			directions_tried.emplace_back(std::set<int>());
+			current_row = next_row;
+			current_col = next_col;
+			current_length ++;
+			break;
+		}
+
+		// backtrack if we have checked all four directions but cannot find a valid path
+		if (directions_tried.back().size() >= 4) {
+			path.pop_back();
+			directions_tried.pop_back();
+			current_row = path.back() / map_size;
+			current_col = path.back() % map_size;
+			current_length --;
+		}
+
+		if (current_length < 0) {
+			// we tried all possibility, but still cannot find a valid path
+			fprintf(stderr, "Couldn't generate a path with length %d", path_length);
+			assert(0);
+		}
+	}
+
+	return path;
+}
+
 void MapGeneratorSystem::generate_levels()
 {
-	// TODO: generate map procedurally
+	// Choose a room as the starting position
+	std::uniform_int_distribution<int> random_number_distribution(0, 9);
+	int row = random_number_distribution(random_eng);
+	int col = random_number_distribution(random_eng);
+
+	// // Choose a path with length from 6 to 10
+	// std::uniform_int_distribution<int> path_length_rand(6, 10);
+	// int path_length = path_length_rand(random_eng);
+	
+	std::vector<int> paths = generate_random_path(row, col, level_path_length);
+
+	// from the path, generate level
+	Mapping& level_mapping = levels.at(0);
+	for (int row = 0; row < map_size; row++) {
+		for (int col = 0; col < map_size; col++) {
+			level_mapping.at(row).at(col) = 9;
+		}
+	}
+	for (const int room_position : paths) {
+		level_mapping.at(room_position / map_size).at(room_position % map_size) = 0;
+	}
+	
+	auto& room_rotations = level_room_rotations.at(0);
+	for (int row = 0; row < map_size; row++) {
+		for (int col = 0; col < map_size; col++) {
+			room_rotations.at(row).at(col) = Direction::Up;
+		}
+	}
 }
 
 const MapGeneratorSystem::Mapping& MapGeneratorSystem::current_map() const
@@ -536,4 +638,49 @@ const std::array<uint32_t, MapUtility::map_size * MapUtility::map_size>&
 MapGeneratorSystem::get_room_layout(MapUtility::RoomType type) const
 {
 	return room_layouts.at(type);
+}
+
+/////////////////////
+// Map editor
+void MapGeneratorSystem::regenerate_map()
+{
+	random_eng.seed(generation_seed);
+	clear_level();
+	generate_levels();
+	load_level(0);
+}
+void MapGeneratorSystem::increment_seed()
+{
+	if (generation_seed == UINT_MAX) {
+		return;
+	}
+	generation_seed ++;
+	std::cout << "current seed: " << generation_seed << std::endl;
+	regenerate_map();
+}
+void MapGeneratorSystem::decrement_seed()
+{
+	if (generation_seed == 0) {
+		return;
+	}
+	generation_seed--;
+	std::cout << "current seed: " << generation_seed << std::endl;
+	regenerate_map();
+}
+void MapGeneratorSystem::increment_path_length() {
+	if (level_path_length == UINT_MAX) {
+		return;
+	}
+	level_path_length++;
+	std::cout << "Current path length: " << level_path_length << std::endl;
+	regenerate_map();
+}
+void MapGeneratorSystem::decrement_path_length()
+{
+	if (level_path_length == 1) {
+		return;
+	}
+	level_path_length--;
+	std::cout << "Current path length: " << level_path_length << std::endl;
+	regenerate_map();
 }

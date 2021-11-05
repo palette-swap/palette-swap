@@ -90,8 +90,7 @@ public:
 	// Destroy resources associated to one or all entities created by the system
 	~RenderSystem();
 
-	// rule of five
-	RenderSystem() = default;
+	RenderSystem(Debug & debugging);
 	RenderSystem(const RenderSystem&) = delete; // copy constructor
 	RenderSystem& operator=(const RenderSystem&) = delete; // copy assignment
 	RenderSystem(RenderSystem&&) = delete; // move constructor
@@ -162,6 +161,8 @@ private:
 	ivec2 screen_size_capped = { window_width_px, window_height_px };
 	float screen_scale; // Screen to pixel coordinates scale factor (for apple
 						// retina display?)
+
+	Debug& debugging;
 };
 
 bool load_effect_from_file(const std::string& vs_path, const std::string& fs_path, GLuint& out_program);

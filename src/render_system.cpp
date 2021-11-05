@@ -527,7 +527,7 @@ vec2 RenderSystem::screen_position_to_world_position(vec2 screen_pos)
 	// scrolling backward -> zoom out
 	// max: 1.0, min: 0.2
 	float zoom = offset / 10;
-	if (this->screen_scale - zoom > 0.1 && this->screen_scale - zoom <= 1.0) {
+	if (debugging.in_debug_mode || (this->screen_scale - zoom > 0.1 && this->screen_scale - zoom <= 1.0)) {
 		this->screen_scale -= zoom;
 	}
 

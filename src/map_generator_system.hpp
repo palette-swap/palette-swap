@@ -6,6 +6,7 @@
 
 #include <array>
 #include <set>
+#include <random>
 
 namespace MapUtility {
 	//////////////////////////////////////////
@@ -135,6 +136,24 @@ private:
 	// Create a room
 	Entity create_room(vec2 position, MapUtility::RoomType roomType, float angle) const;
 
+	/////////////////////////////////////////
+	// Procedural Generation 
+
+	/* The following values are meant to be editable with the map editor*/
+	// The seed for generating pseudo random numbers, this is a constant so we generate the
+	// same map every time.
+	unsigned int generation_seed = 10;
+	// The number of rooms from start to end on a certain level
+	unsigned int level_path_length = 6;
+
+	/* End of editable values*/
+
+	std::default_random_engine random_eng;
+
+	// generate a random path of length
+	std::vector<int> generate_random_path(int start_row, int start_col, int length);
+	void regenerate_map();
+
 public:
 	MapGeneratorSystem();
 
@@ -188,4 +207,12 @@ public:
 	// Get the 10*10 layout array for a room, mainly used by rendering
 	const std::array<uint32_t, MapUtility::map_size * MapUtility::map_size> &
 	get_room_layout(MapUtility::RoomType type) const;
+
+
+	/////////////////////////////////////////////////
+	// Map Editor Utils
+	void increment_seed();
+	void decrement_seed();
+	void increment_path_length();
+	void decrement_path_length();
 };

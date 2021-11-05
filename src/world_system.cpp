@@ -13,6 +13,7 @@
 #include <cassert>
 #include <iostream>
 #include <sstream>
+#include <iostream>
 
 #include "physics_system.hpp"
 
@@ -371,6 +372,34 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		printf("Current speed = %f\n", current_speed);
 	}
 	current_speed = fmax(0.f, current_speed);
+
+	if (is_editing_map) {
+		if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_M) {
+			is_editing_map = false;
+			debugging.in_debug_mode = false;
+			std::cout << "Stopping editing map" << std::endl;
+		}
+
+		if (key == GLFW_KEY_Q && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->increment_seed();
+		}
+		if (key == GLFW_KEY_W && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->decrement_seed();
+		}
+		if (key == GLFW_KEY_A && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->increment_path_length();
+		}
+		if (key == GLFW_KEY_S && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->decrement_path_length();
+		}
+	}
+	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_M) {
+		is_editing_map = true;
+		debugging.in_debug_mode = true;
+		// move player to center to center camera
+		registry.get<MapPosition>(player).position = uvec2(55, 55);
+		std::cout << "editing map" << std::endl;
+	}
 }
 
 // Tracks position of cursor, points arrow at potential fire location
@@ -402,7 +431,7 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 
 void WorldSystem::move_player(Direction direction)
 {
-	if (turns->get_active_team() != player) {
+	if (turns->get_active_team() != player || is_editing_map) {
 		return;
 	}
 

@@ -115,4 +115,6 @@ private:
 	std::shared_ptr<MapGeneratorSystem> map_generator;
 	std::shared_ptr<TurnSystem> turns;
 	std::shared_ptr<AnimationSystem> animations;
+
+	bool is_editing_map = false;
 };
