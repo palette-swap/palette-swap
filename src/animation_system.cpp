@@ -14,7 +14,6 @@ void AnimationSystem::update_animations(float elapsed_ms, ColorState inactive_co
 				animation.frame = ((animation.frame) + 1) % animation.max_frames;
 			}
 		}
-
 	}
 	resolve_event_animations();
 }
@@ -34,7 +33,7 @@ void AnimationSystem::set_sprite_direction(const Entity& sprite, Sprite_Directio
 	}
 }
 
-// TODO: Swap out damage animation with something more interesting
+
 void AnimationSystem::damage_animation(const Entity& entity)
 {
 	if (!registry.any_of<Event_Animation>(entity)) {
