@@ -278,12 +278,17 @@ const TEXTURE_ASSET_ID enemy_type_textures[static_cast<int>(EnemyType::EnemyCoun
 																					  TEXTURE_ASSET_ID::ARMOR,
 																					  TEXTURE_ASSET_ID::TREEANT,
 																					  TEXTURE_ASSET_ID::WRAITH };
+
 struct RenderRequest {
 	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
 	EFFECT_ASSET_ID used_effect = EFFECT_ASSET_ID::EFFECT_COUNT;
 	GEOMETRY_BUFFER_ID used_geometry = GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 
 	bool visible = true;
+};
+
+struct Color {
+	vec3 color;
 };
 
 // Struct for denoting the frame that the rendering system should be rendering
@@ -399,7 +404,7 @@ template <typename T> using SlotList = std::array<T, static_cast<size_t>(Slot::C
 struct Inventory {
 	std::map<std::string, Entity> inventory;
 	SlotList<Entity> equipped;
-	Inventory() { equipped.fill(Entity::undefined()); }
+	Inventory() { equipped.fill(entt::null); }
 };
 
 struct Item {
@@ -428,16 +433,13 @@ struct Hittable {
 
 // Stucture to store collision information
 struct Collision {
-	// Maintenance Note: make sure initializer list is applied here.
-	// Otherwise, id_count in Entity quickly runs out (overflow) during collision checks.
+	Entity children;
+};
 
-	// Note, the first object is stored in the ECS container.entities
-	Entity other; // the second object involved in the collision
-	Collision(const Entity& other)
-		: other(other)
-	{
-		this->other = other;
-	};
+struct Child {
+	Entity parent;
+	Entity next;
+	Entity target;
 };
 
 // struct denoting a currently active projectile
@@ -460,11 +462,6 @@ struct ResolvedProjectile {
 struct Velocity {
 	float speed;
 	float angle;
-	Velocity(float speed, float angle)
-		: speed(speed)
-		, angle(angle)
-	{
-	}
 	vec2 get_direction() { return { sin(angle), -cos(angle) }; }
 	vec2 get_velocity() { return get_direction() * speed; }
 };

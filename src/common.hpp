@@ -21,7 +21,7 @@
 #include <glm/vec3.hpp> // vec3
 using namespace glm;
 
-#include "tiny_ecs.hpp"
+#include <entt/entity/registry.hpp>
 
 #include "soloud.h"
 
@@ -220,3 +220,6 @@ edge of map)
 */
 
 extern SoLoud::Soloud so_loud; // SoLoud engine
+
+extern entt::registry registry; // registry
+typedef entt::entity Entity;

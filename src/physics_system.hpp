@@ -2,8 +2,6 @@
 
 #include "common.hpp"
 #include "components.hpp"
-#include "tiny_ecs.hpp"
-#include "tiny_ecs_registry.hpp"
 #include "map_generator_system.hpp"
 
 // A simple physics system that moves rigid bodies and checks for collision

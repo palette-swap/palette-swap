@@ -1,9 +1,11 @@
 #pragma once
 
 #include "common.hpp"
+#include "components.hpp"
 #include "map_utility.hpp"
 
 #include <array>
+#include <set>
 
 namespace MapUtility {
 	//////////////////////////////////////////
@@ -103,7 +105,7 @@ private:
 	int current_level = -1;
 	
 	// Entity for the help picture
-	Entity help_picture = Entity::undefined();
+	Entity help_picture = entt::null;
 	void create_picture();
 
 	// get the tile texture id, of the position on a map
@@ -122,7 +124,7 @@ private:
 	void snapshot_level();
 
 	// Clear current level
-	void clear_level();
+	void clear_level() const;
 
 	// Load level specified, if snap shot exists, load from it,
 	// Otherwise load from statically defined files(TODO: use procedural generation instead)

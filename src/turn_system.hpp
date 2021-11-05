@@ -3,7 +3,6 @@
 #include <utility>
 
 #include "common.hpp"
-#include "tiny_ecs_registry.hpp"
 #include "animation_system.hpp"
 
 class TurnSystem {

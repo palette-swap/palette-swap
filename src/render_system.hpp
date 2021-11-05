@@ -7,7 +7,6 @@
 
 #include "common.hpp"
 #include "components.hpp"
-#include "tiny_ecs.hpp"
 
 #include "map_generator_system.hpp"
 
@@ -137,12 +136,13 @@ private:
 
 	////////////////////////////////////////////////////////
 	// Internal drawing functions for each entity type
-	void draw_textured_mesh(Entity entity, const mat3& projection);
+	void draw_textured_mesh(Entity entity, const RenderRequest render_request, const mat3& projection);
 	void draw_healthbar(Entity entity, const Stats& stats, const mat3& projection);
 	void draw_text(Entity entity, const Text& text, const mat3& projection);
 	void draw_line(Entity entity, const Line& line, const mat3& projection);
-	void draw_triangles(const Transform& transform, const mat3& projection);
 	void draw_map(const mat3& projection);
+
+	void draw_triangles(const Transform& transform, const mat3& projection);
 	void draw_to_screen();
 	void update_camera_position(WorldPosition& camera_map_pos,
 								const vec2& player_pos,
@@ -157,7 +157,7 @@ private:
 	GLuint off_screen_render_buffer_color;
 	GLuint off_screen_render_buffer_depth;
 
-	Entity screen_state_entity;
+	Entity screen_state_entity = registry.create();
 	ivec2 screen_size = { window_width_px, window_height_px };
 	ivec2 screen_size_capped = { window_width_px, window_height_px };
 	float screen_scale; // Screen to pixel coordinates scale factor (for apple

@@ -6,9 +6,6 @@
 
 #include "../ext/stb_image/stb_image.h"
 
-// This creates circular header inclusion, that is quite bad.
-#include "tiny_ecs_registry.hpp"
-
 // stlib
 #include <iostream>
 #include <sstream>
@@ -306,15 +303,14 @@ RenderSystem::~RenderSystem()
 	}
 
 	// remove all entities created by the render system
-	while (!registry.render_requests.entities.empty()) {
-		registry.remove_all_components_of(registry.render_requests.entities.back());
-	}
+	auto view = registry.view<RenderRequest>();
+	registry.destroy(view.begin(), view.end());
 }
 
 // Initialize the screen texture from a standard sprite
 bool RenderSystem::init_screen_texture()
 {
-	registry.screen_states.emplace(screen_state_entity);
+	registry.emplace<ScreenState>(screen_state_entity);
 
 	glGenTextures(1, &off_screen_render_buffer_color);
 	glBindTexture(GL_TEXTURE_2D, off_screen_render_buffer_color);
