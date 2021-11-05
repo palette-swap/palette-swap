@@ -1,5 +1,8 @@
 #version 330
 
+// inputs
+in int cur_vertex_id;
+
 // Passed to fragment shader
 out vec2 texcoord;
 
@@ -46,12 +49,12 @@ void main()
 		vec2(31.0/256.0, 31.0/256.0)
 	);
 
-	int vertex_id = gl_VertexID % 6;
-	uint texture_id = room_layout[gl_VertexID / 6];
+	int vertex_id = cur_vertex_id % 6;
+	uint texture_id = room_layout[cur_vertex_id / 6];
 	texcoord = texture_coord[vertex_id] + vec2((int(texture_id) % 8) * 32.0 / 256.0, (int(texture_id) / 8) * 32.0 / 256.0);
 
-	int row = (gl_VertexID % 600 ) / (6 * int(room_size));
-	int col = (gl_VertexID % (6 * int(room_size))) / 6;
+	int row = cur_vertex_id / (6 * int(room_size));
+	int col = (cur_vertex_id % (6 * int(room_size))) / 6;
 	vec3 vertex_position = vec3(vertex_positions[vertex_id].x + fraction * col, vertex_positions[vertex_id].y + fraction * row, 0.0);
 
 	vec3 pos = projection * transform * vec3(vertex_position.xy, 1.0);
