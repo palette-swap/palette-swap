@@ -152,6 +152,17 @@ void RenderSystem::initialize_gl_geometry_buffers()
 	const std::vector<uint16_t> textured_indices = { 0, 3, 1, 1, 3, 2 };
 	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::SPRITE, textured_vertices, textured_indices);
 
+	////////////////////////////
+	// Initialize TileMap
+	const int total_vertices = MapUtility::room_size * MapUtility::room_size * 2 * 3;
+	std::vector<int> tilemap_vertices(total_vertices);
+	std::vector<uint16_t> tilemap_indices(total_vertices);
+	for (int i = 0; i < total_vertices; i++) {
+		tilemap_vertices[i] = i;
+		tilemap_indices[i] = static_cast<uint16_t>(i);
+		bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::ROOM, tilemap_vertices, tilemap_indices);
+	}
+
 	//////////////////////////
 	// TODO: Consolidate all animated sprites (quads) into a single type
 	// Initialize ENEMY sprites
