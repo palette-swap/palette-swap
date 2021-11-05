@@ -112,7 +112,11 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 	RAVEN = TREEANT + 1,
 	WRAITH = RAVEN + 1,
 	DRAKE = WRAITH + 1,
-	CANNONBALL = DRAKE + 1,
+	DUMMY = DRAKE + 1,
+	MUSHROOM = DUMMY + 1,
+	SPIDER = MUSHROOM + 1,
+	CLONE = SPIDER + 1,
+	CANNONBALL = CLONE + 1,
 	TILE_SET = CANNONBALL + 1,
 	HELP_PIC = TILE_SET + 1,
 	END_PIC = HELP_PIC + 1,
@@ -123,6 +127,10 @@ const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 // Define the scaling factors needed for each textures
 // Note: This needs to stay the same order as TEXTURE_ASSET_ID and texture_paths
 static constexpr std::array<vec2, texture_count> scaling_factors = {
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
@@ -291,11 +299,23 @@ struct Color {
 	vec3 color;
 };
 
+struct RedEnemy {
+};
+
+struct BlueEnemy {
+
+};
+
 // Struct for denoting the frame that the rendering system should be rendering
 // to the screen for a spritesheet
 struct Animation {
 	ColorState color = ColorState::None;
+
+	// display color and direction for a specific animated entity
 	int direction = 1;
+	vec4 display_color = { 1, 1, 1, 1 };
+
+	// Changes 
 	int frame = 0;
 	int max_frames = 1;
 	int state = 0;
@@ -307,11 +327,10 @@ struct Animation {
 
 // Struct denoting irregular animation events (ie attacking, containing information to restore an entity's
 // animations after the irregular event animation completes
-struct Event_Animation {
+struct EventAnimation {
 	bool turn_trigger = false;
 	float speed_adjustment = 1;
 	vec3 restore_color = { 1, 1, 1 };
-
 	int restore_state = 0;
 	float restore_speed = 1;
 	int frame = 0;

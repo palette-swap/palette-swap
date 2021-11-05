@@ -47,7 +47,7 @@ static void load_enemy(int enemy_index, const rapidjson::Document& json_doc)
 
 	registry.emplace<RenderRequest>(entity,
 									enemy_type_textures[static_cast<int>(enemy_component.type)],
-									  EFFECT_ASSET_ID::ENEMY,
+									EFFECT_ASSET_ID::ENEMY,
 									GEOMETRY_BUFFER_ID::ENEMY,
 									true);
 	if (enemy_component.team == ColorState::Red) {
