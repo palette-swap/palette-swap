@@ -338,6 +338,14 @@ void RenderSystem::draw_map(const mat3& projection)
 	const auto program = (GLuint)effects.at((uint8)EFFECT_ASSET_ID::TILE_MAP);
 	gl_has_errors();
 
+	const GLuint vbo = vertex_buffers.at((int)GEOMETRY_BUFFER_ID::ROOM);
+	const GLuint ibo = index_buffers.at((int)GEOMETRY_BUFFER_ID::ROOM);
+
+	// Setting vertex and index buffers
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+	gl_has_errors();
+
 	glUseProgram(program);
 	for (auto [entity, room] : registry.view<Room>().each()) {
 		Transform transform = get_transform(entity);
@@ -354,13 +362,12 @@ void RenderSystem::draw_map(const mat3& projection)
 		GLint room_layout_loc = glGetUniformLocation(program, "room_layout");
 		glUniform1uiv(room_layout_loc, (GLsizei) room_layout.size(), room_layout.data());
 
-		GLint transform_loc = glGetUniformLocation(program, "transform");
-		glUniformMatrix3fv(transform_loc, 1, GL_FALSE, glm::value_ptr(transform.mat));
-		GLint projection_loc = glGetUniformLocation(program, "projection");
-		glUniformMatrix3fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
+		GLint vertex_id_loc = glGetAttribLocation(program, "cur_vertex_id");
+		glEnableVertexAttribArray(vertex_id_loc);
+		glVertexAttribIPointer(vertex_id_loc, 1, GL_INT, sizeof(int), nullptr);
 		gl_has_errors();
 
-		glDrawArrays(GL_TRIANGLES, 0, MapUtility::room_size * MapUtility::room_size * 2 * 3);
+		draw_triangles(transform, projection);
 	}
 }
 
