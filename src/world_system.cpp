@@ -21,15 +21,18 @@ WorldSystem::WorldSystem(Debug& debugging,
 						 std::shared_ptr<CombatSystem> combat,
 						 std::shared_ptr<MapGeneratorSystem> map,
 						 std::shared_ptr<TurnSystem> turns,
-						 std::shared_ptr<AnimationSystem> animations)
-					
-	: points(0)
+						 std::shared_ptr<AnimationSystem> animations,
+						 std::shared_ptr<SoLoud::Soloud> so_loud)
+
+	: current_weapon(entt::null) 
+	, points(0)
 	, debugging(debugging)
 	, rng(std::make_shared<std::default_random_engine>(std::default_random_engine(std::random_device()())))
 	, combat(std::move(combat))
 	, map_generator(std::move(map))
 	, turns(std::move(turns))
 	, animations(std::move(animations))
+	, so_loud(std::move(so_loud))
 {
 	this->combat->init(rng, animations);
 }
@@ -123,8 +126,8 @@ void WorldSystem::init(RenderSystem* renderer_arg)
 {
 	this->renderer = renderer_arg;
 	// Playing background music indefinitely
-	bgm_red = so_loud.play(bgm_red_wav);
-	bgm_blue = so_loud.play(bgm_blue_wav, 0.f);
+	bgm_red = so_loud->play(bgm_red_wav);
+	bgm_blue = so_loud->play(bgm_blue_wav, 0.f);
 	fprintf(stderr, "Loaded music\n");
 
 	// Set all states to default
@@ -501,14 +504,14 @@ void WorldSystem::change_color()
 	switch (active_color) {
 	case ColorState::Red:
 		turns->set_active_color(ColorState::Blue);
-		so_loud.fadeVolume(bgm_blue, -1, .25);
-		so_loud.fadeVolume(bgm_red, 0, .25);
+		so_loud->fadeVolume(bgm_blue, -1, .25);
+		so_loud->fadeVolume(bgm_red, 0, .25);
 		animations->player_red_blue_animation(player, ColorState::Blue);
 		break;
 	case ColorState::Blue:
 		turns->set_active_color(ColorState::Red);
-		so_loud.fadeVolume(bgm_red, -1, .25);
-		so_loud.fadeVolume(bgm_blue, 0, .25);
+		so_loud->fadeVolume(bgm_red, -1, .25);
+		so_loud->fadeVolume(bgm_blue, 0, .25);
 		animations->player_red_blue_animation(player, ColorState::Red);
 		break;
 	default:

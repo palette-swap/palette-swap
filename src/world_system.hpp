@@ -29,6 +29,7 @@ public:
 				std::shared_ptr<MapGeneratorSystem> map,
 				std::shared_ptr<TurnSystem> turns,
 				std::shared_ptr<AnimationSystem> animations);
+				std::shared_ptr<SoLoud::Soloud> so_loud);
 
 	// Creates a window
 	GLFWwindow* create_window(int width, int height);
@@ -98,6 +99,7 @@ private:
 	Debug& debugging;
 
 	// music references
+	std::shared_ptr<SoLoud::Soloud> so_loud;
 	SoLoud::WavStream bgm_red_wav;
 	SoLoud::WavStream bgm_blue_wav;
 	SoLoud::handle bgm_red;

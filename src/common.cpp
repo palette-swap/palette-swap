@@ -72,6 +72,5 @@ bool gl_has_errors()
 	return true;
 }
 
-SoLoud::Soloud so_loud;
 entt::registry registry;
 

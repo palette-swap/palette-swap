@@ -219,7 +219,6 @@ edge of map)
 
 */
 
-extern SoLoud::Soloud so_loud; // SoLoud engine
 
 extern entt::registry registry; // registry
 typedef entt::entity Entity;

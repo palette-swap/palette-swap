@@ -17,7 +17,8 @@ public:
 			 std::shared_ptr<CombatSystem> combat,
 			 std::shared_ptr<MapGeneratorSystem> map_generator,
 			 std::shared_ptr<TurnSystem> turns,
-			 std::shared_ptr<AnimationSystem> animations);
+			 std::shared_ptr<AnimationSystem> animations,
+			 std::shared_ptr<SoLoud::Soloud> so_loud);
 
 	void step(float elapsed_ms);
 
@@ -70,20 +71,24 @@ private:
 	// An entity become powerup if flag is true. Otherwise cancel powerup.
 	void become_powerup(const Entity& entity, bool flag);
 
+	//////////////////////////
+	//
 	// Debugging
 	const Debug& debugging;
 
-	// Shared resource: Combat system.
+	void draw_pathing_debug();
+
+	//////////////////////////
+
+	// Related Systems
+	std::shared_ptr<AnimationSystem> animations;
 	std::shared_ptr<CombatSystem> combat;
-
-	// Shared resource: Map system.
 	std::shared_ptr<MapGeneratorSystem> map_generator;
-
-	// Shared resource: Turn system.
 	std::shared_ptr<TurnSystem> turns;
 
-	// Shared resource: Animation System.
-	std::shared_ptr<AnimationSystem> animations;
+	// Sound stuff
+	std::shared_ptr<SoLoud::Soloud> so_loud;
+	SoLoud::Wav enemy_attack1_wav;
 
 	// Entity representing the enemy team's turn.
 	Entity enemy_team;
@@ -91,6 +96,4 @@ private:
 	// C++ random number generator
 	std::default_random_engine rng;
 	std::uniform_real_distribution<float> uniform_dist; // number between 0..1
-
-	SoLoud::Wav enemy_attack1_wav;
 };

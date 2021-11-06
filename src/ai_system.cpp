@@ -8,12 +8,14 @@ AISystem::AISystem(const Debug& debugging,
 				   std::shared_ptr<CombatSystem> combat,
 				   std::shared_ptr<MapGeneratorSystem> map_generator,
 				   std::shared_ptr<TurnSystem> turns,
-				   std::shared_ptr<AnimationSystem> animations)
+				   std::shared_ptr<AnimationSystem> animations,
+				   std::shared_ptr<SoLoud::Soloud> so_loud)
 	: debugging(debugging)
+	, animations(std::move(animations))
 	, combat(std::move(combat))
 	, map_generator(std::move(map_generator))
 	, turns(std::move(turns))
-	, animations(std::move(animations))
+	, so_loud(std::move(so_loud))
 	, enemy_team(registry.create())
 {
 	registry.emplace<DebugComponent>(enemy_team);
@@ -327,7 +329,7 @@ void AISystem::attack_player(const Entity& entity)
 	char* enemy_type = enemy_type_to_string[registry.get<Enemy>(entity).type];
 	printf("%s_%u attacks player!\n", enemy_type, (uint)entity);
 
-	so_loud.play(enemy_attack1_wav);
+	so_loud->play(enemy_attack1_wav);
 }
 
 bool AISystem::approach_player(const Entity& entity, uint speed)
