@@ -338,7 +338,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 
 	if (action == GLFW_RELEASE && key == GLFW_KEY_SPACE) {
 		change_color();
-		animations->set_all_inactive_colours(turns->get_inactive_color(), inactive_colour_selection);
+		
 	}
 	if (action == GLFW_RELEASE && key == GLFW_KEY_K) {
 		inactive_colour_selection = (inactive_colour_selection + 1) % 3;
@@ -509,12 +509,14 @@ void WorldSystem::change_color()
 		so_loud.fadeVolume(bgm_blue, -1, .25);
 		so_loud.fadeVolume(bgm_red, 0, .25);
 		animations->player_red_blue_animation(player, ColorState::Blue);
+		//animations->set_all_inactive_colours(turns->get_inactive_color(), inactive_colour_selection);
 		break;
 	case ColorState::Blue:
 		turns->set_active_color(ColorState::Red);
 		so_loud.fadeVolume(bgm_red, -1, .25);
 		so_loud.fadeVolume(bgm_blue, 0, .25);
 		animations->player_red_blue_animation(player, ColorState::Red);
+		//animations->set_all_inactive_colours(turns->get_inactive_color(), inactive_colour_selection);
 		break;
 	default:
 		turns->set_active_color(ColorState::Red);
