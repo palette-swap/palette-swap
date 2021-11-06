@@ -52,7 +52,7 @@ private:
 	// Rotates the queue to the next unit and places current unit at the back of the queue.
 	bool try_cycle_queue();
 
-	ColorState activeColor = ColorState::Red; 
+	ColorState active_color = ColorState::Red; 
 };
 /*
 struct turn_flag {

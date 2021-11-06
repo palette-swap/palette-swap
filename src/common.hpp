@@ -74,7 +74,7 @@ static constexpr int room_size = 10;
 static constexpr int map_size = 10;
 // RoomType is just a uint8_t
 using RoomType = uint8_t;
-using TileId = uint8_t;
+using TileID = uint8_t;
 using MapId = uint8_t;
 
 static constexpr uvec2 map_top_left = { 0, 0 };

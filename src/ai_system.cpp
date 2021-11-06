@@ -41,20 +41,20 @@ void AISystem::step(float /*elapsed_ms*/)
 
 				switch (enemy.type) {
 				case EnemyType::Slime:
-					execute_Slime(enemy_entity);
+					execute_slime(enemy_entity);
 					break;
 
 				case EnemyType::Raven:
 				case EnemyType::Wraith:
-					execute_Raven(enemy_entity);
+					execute_raven(enemy_entity);
 					break;
 
 				case EnemyType::Armor:
-					execute_Armor(enemy_entity);
+					execute_armor(enemy_entity);
 					break;
 
 				case EnemyType::TreeAnt:
-					execute_TreeAnt(enemy_entity);
+					execute_treeant(enemy_entity);
 					break;
 
 				default:
@@ -106,7 +106,7 @@ void AISystem::do_attack_callback(const Entity& attacker, const Entity& target)
 	}
 }
 
-void AISystem::execute_Slime(const Entity& slime)
+void AISystem::execute_slime(const Entity& slime)
 {
 	Enemy& enemy = registry.get<Enemy>(slime);
 
@@ -115,7 +115,7 @@ void AISystem::execute_Slime(const Entity& slime)
 	case EnemyState::Idle:
 		if (is_player_spotted(slime, enemy.radius)) {
 			switch_enemy_state(slime, EnemyState::Active);
-			execute_Slime(slime);
+			execute_slime(slime);
 			return;
 		}
 		break;
@@ -153,7 +153,7 @@ void AISystem::execute_Slime(const Entity& slime)
 	}
 }
 
-void AISystem::execute_Raven(const Entity& raven)
+void AISystem::execute_raven(const Entity& raven)
 {
 	const Enemy& enemy = registry.get<Enemy>(raven);
 
@@ -162,7 +162,7 @@ void AISystem::execute_Raven(const Entity& raven)
 	case EnemyState::Idle:
 		if (is_player_spotted(raven, enemy.radius)) {
 			switch_enemy_state(raven, EnemyState::Active);
-			execute_Raven(raven);
+			execute_raven(raven);
 			return;
 		}
 		break;
@@ -184,7 +184,7 @@ void AISystem::execute_Raven(const Entity& raven)
 	}
 }
 
-void AISystem::execute_Armor(const Entity& living_armor)
+void AISystem::execute_armor(const Entity& living_armor)
 {
 	const Enemy& enemy = registry.get<Enemy>(living_armor);
 
@@ -193,7 +193,7 @@ void AISystem::execute_Armor(const Entity& living_armor)
 	case EnemyState::Idle:
 		if (is_player_spotted(living_armor, enemy.radius)) {
 			switch_enemy_state(living_armor, EnemyState::Active);
-			execute_Armor(living_armor);
+			execute_armor(living_armor);
 			return;
 		}
 		break;
@@ -225,7 +225,7 @@ void AISystem::execute_Armor(const Entity& living_armor)
 	}
 }
 
-void AISystem::execute_TreeAnt(const Entity& tree_ant)
+void AISystem::execute_treeant(const Entity& tree_ant)
 {
 	const Enemy& enemy = registry.get<Enemy>(tree_ant);
 
@@ -234,7 +234,7 @@ void AISystem::execute_TreeAnt(const Entity& tree_ant)
 	case EnemyState::Idle:
 		if (is_player_spotted(tree_ant, enemy.radius)) {
 			switch_enemy_state(tree_ant, EnemyState::Active);
-			execute_TreeAnt(tree_ant);
+			execute_treeant(tree_ant);
 			return;
 		}
 		break;

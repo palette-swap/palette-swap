@@ -30,8 +30,15 @@ static constexpr float player_running_speed = 4;
 static constexpr float player_blue_red_switch_speed = 1;
 // Value denoting the animation states for the player
 // KEEP ALIGNED WITH STATES REPRESENTED IN PLAYER SPRITESHEET
-enum class player_animation_states { Idle = 0, Spellcast = 1, Melee = 2, Running = 3 };
-enum class enemy_animation_events { Attack = 3};
+enum class PlayerAnimationStates {
+	Idle = 0,
+	Spellcast = 1,
+	Melee = 2,
+	Running = 3,
+};
+enum class EnemyAnimationEvents {
+	Attack = 3,
+};
 
 static constexpr vec3 default_enemy_red = { 2, 1, 1 };
 static constexpr vec3 default_enemy_blue = { 1, 1, 2 };
@@ -86,7 +93,7 @@ private:
 	// be restored
 	void resolve_event_animations();
 	// helper function for setting animation events
-	void animation_event_setup(Animation& animation, Event_Animation& event_animation, vec3& color);
+	void animation_event_setup(Animation& animation, EventAnimation& EventAnimation, vec3& color);
 };
 
 

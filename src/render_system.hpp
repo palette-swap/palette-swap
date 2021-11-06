@@ -144,7 +144,7 @@ private:
 
 	void draw_triangles(const Transform& transform, const mat3& projection);
 	void draw_to_screen();
-	void update_camera_position(WorldPosition& camera_map_pos,
+	void update_camera_position(WorldPosition& camera_world_pos,
 								const vec2& player_pos,
 								const vec2& buffer_top_left,
 								const vec2& buffer_down_right);

@@ -9,7 +9,7 @@
 
 class CombatSystem {
 public:
-	void init(std::shared_ptr<std::default_random_engine> rng, std::shared_ptr<AnimationSystem> animations);
+	void init(std::shared_ptr<std::default_random_engine> global_rng, std::shared_ptr<AnimationSystem> animation_system);
 
 	bool do_attack(Entity attacker, Attack& attack, Entity target);
 
