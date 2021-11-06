@@ -15,11 +15,11 @@ struct Rectangle {
 	{
 	}
 
-	vec2 top_left() const { return center - size / 2.f; }
-	vec2 bottom_right() const { return center + size / 2.f; }
+	[[nodiscard]] vec2 top_left() const { return center - size / 2.f; }
+	[[nodiscard]] vec2 bottom_right() const { return center + size / 2.f; }
 
-	bool intersects(const Rectangle& r) const;
-	bool intersects(const Circle& c) const;
+	[[nodiscard]] bool intersects(const Rectangle& r) const;
+	[[nodiscard]] bool intersects(const Circle& c) const;
 };
 
 struct Circle {
@@ -32,7 +32,7 @@ struct Circle {
 	{
 	}
 
-	bool intersects(Circle c) const { return glm::distance2(center, c.center) <= radius * radius; }
-	bool intersects(const Rectangle& r) const;
+	[[nodiscard]] bool intersects(Circle c) const { return glm::distance2(center, c.center) <= radius * radius; }
+	[[nodiscard]] bool intersects(const Rectangle& r) const;
 };
-}
+} // namespace Geometry

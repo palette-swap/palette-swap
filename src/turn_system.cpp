@@ -19,12 +19,7 @@ bool TurnSystem::ready_to_act(Entity team) { return get_active_team() == team &&
 
 bool TurnSystem::team_in_queue(Entity team)
 {
-	for (Entity e : team_queue) {
-		if (e == team) {
-			return true;
-		}
-	}
-	return false;
+	return std::any_of(team_queue.begin(), team_queue.end(), [team](Entity e) { return e == team; });
 }
 
 bool TurnSystem::add_team_to_queue(Entity team)

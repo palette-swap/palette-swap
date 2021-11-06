@@ -3,6 +3,7 @@
 #include <utility>
 
 #include "common.hpp"
+
 #include "animation_system.hpp"
 
 class TurnSystem {

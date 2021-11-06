@@ -266,13 +266,8 @@ void AISystem::switch_enemy_state(const Entity& enemy_entity, EnemyState new_sta
 {
 	Enemy& enemy = registry.get<Enemy>(enemy_entity);
 	enemy.state = new_state;
-
-	if (enemy_state_to_animation_state.count(enemy.state) == 1) {
-		int new_state = enemy_state_to_animation_state[enemy.state];
-		animations->set_enemy_state(enemy_entity, new_state);
-	} else {
-		throw std::runtime_error("Invalid enemy state.");
-	}
+	int new_state_id = enemy_state_to_animation_state.at((uint) enemy.state);
+	animations->set_enemy_state(enemy_entity, new_state_id);
 }
 
 bool AISystem::is_player_spotted(const Entity& entity, const uint radius)
@@ -303,7 +298,7 @@ void AISystem::attack_player(const Entity& entity)
 	combat->do_attack(entity, registry.get<Stats>(entity).base_attack, player);
 
 	// TODO: temporarily for debugging in console, remove it later.
-	char* enemy_type = enemy_type_to_string[registry.get<Enemy>(entity).type];
+	const char* enemy_type = enemy_type_to_string.at((uint) registry.get<Enemy>(entity).type);
 	printf("%s_%u attacks player!\n", enemy_type, (uint)entity);
 
 	so_loud->play(enemy_attack1_wav);

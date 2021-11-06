@@ -8,14 +8,12 @@
 #include <set>
 
 namespace MapUtility {
-	//////////////////////////////////////////
-	// Defines different types of tiles
-	static const std::set<uint8_t> walkable_tiles = { 0, 14, 20 };
-	static const std::set<uint8_t> wall_tiles
-		= { 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 15, 17, 18, 19, 23, 25, 26, 27, 33, 35, 41, 42, 43 };
-	static const uint8_t tile_next_level = 14;
-	static const uint8_t tile_last_level = 20;
-}
+//////////////////////////////////////////
+// Defines different types of tiles
+extern const std::set<uint8_t> wall_tiles;
+const uint8_t tile_next_level = 14;
+const uint8_t tile_last_level = 20;
+} // namespace MapUtility
 
 // Manages and store the generated maps
 class MapGeneratorSystem {
@@ -109,9 +107,9 @@ private:
 	void create_picture();
 
 	// get the tile texture id, of the position on a map
-	MapUtility::TileId get_tile_id_from_map_pos(uvec2 pos) const;
+	[[nodiscard]] MapUtility::TileID get_tile_id_from_map_pos(uvec2 pos) const;
 
-	std::vector<uvec2> MapGeneratorSystem::bfs(uvec2 start_pos, uvec2 target) const;
+	[[nodiscard]] std::vector<uvec2> bfs(uvec2 start_pos, uvec2 target) const;
 
 	// helper to convert an integer to Direction, as we save integers in csv files
 	// 0 - UP(no rotation)
@@ -133,7 +131,7 @@ private:
 	// Create the current map
 	void create_map(int level) const;
 	// Create a room
-	Entity create_room(vec2 position, MapUtility::RoomType roomType, float angle) const;
+	void create_room(vec2 position, MapUtility::RoomType roomType, float angle) const;
 
 public:
 	MapGeneratorSystem();
@@ -143,32 +141,34 @@ public:
 	void generate_levels();
 
 	// Get the current level mapping
-	const Mapping& current_map() const;
+	[[nodiscard]] const Mapping& current_map() const;
 
-	const std::array<std::array<Direction, MapUtility::map_size>, MapUtility::map_size> & current_rooms_rotation() const;
+	[[nodiscard]] const std::array<std::array<Direction, MapUtility::map_size>, MapUtility::map_size>&
+	current_rooms_rotation() const;
 
 	// Check if a position is within the bounds of the current level
-	bool is_on_map(uvec2 pos) const;
+	[[nodiscard]] bool is_on_map(uvec2 pos) const;
 
 	// Check if a position on the map is walkable for the player
-	bool walkable(uvec2 pos) const;
+	[[nodiscard]] bool walkable(uvec2 pos) const;
 
 	// Check if a position on the map is walkable for the player and there's currently no entity in it
-	bool walkable_and_free(uvec2 pos) const;
+	[[nodiscard]] bool walkable_and_free(uvec2 pos) const;
 
 	// Check if a position on the map is a wall
-	bool is_wall(uvec2 pos) const;
+	[[nodiscard]] bool is_wall(uvec2 pos) const;
 
 	// Computes the shortest path from start to the first element of end that it encounters via BFS
 	// Returns the path, or an empty vector if no path was found
-	std::vector<uvec2> shortest_path(uvec2 start, uvec2 target, bool use_a_star = true) const;
+	[[nodiscard]] std::vector<uvec2> shortest_path(uvec2 start, uvec2 target, bool use_a_star = true) const;
 
-	MapUtility::TileId get_tile_id_from_room(MapUtility::RoomType room_type, uint8_t row, uint8_t col, Direction rotation) const;
+	[[nodiscard]] MapUtility::TileID
+	get_tile_id_from_room(MapUtility::RoomType room_type, uint8_t row, uint8_t col, Direction rotation) const;
 
-	bool is_next_level_tile(uvec2 pos) const;
-	bool is_last_level_tile(uvec2 pos) const;
+	[[nodiscard]] bool is_next_level_tile(uvec2 pos) const;
+	[[nodiscard]] bool is_last_level_tile(uvec2 pos) const;
 
-	bool is_last_level() const;
+	[[nodiscard]] bool is_last_level() const;
 
 	// Save current level and load the next level
 	void load_next_level();
@@ -180,12 +180,12 @@ public:
 	void load_initial_level();
 
 	// Get player initial position on current level
-	uvec2 get_player_start_position() const;
+	[[nodiscard]] uvec2 get_player_start_position() const;
 
 	// Get player last position on current level
-	uvec2 get_player_end_position() const;
+	[[nodiscard]] uvec2 get_player_end_position() const;
 
 	// Get the 10*10 layout array for a room, mainly used by rendering
-	const std::array<uint32_t, MapUtility::map_size * MapUtility::map_size> &
+	[[nodiscard]] const std::array<uint32_t, MapUtility::map_size * MapUtility::map_size>&
 	get_room_layout(MapUtility::RoomType type) const;
 };

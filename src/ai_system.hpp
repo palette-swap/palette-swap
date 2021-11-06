@@ -4,10 +4,11 @@
 #include <vector>
 
 #include "common.hpp"
+
+#include "animation_system.hpp"
 #include "combat_system.hpp"
 #include "map_generator_system.hpp"
 #include "turn_system.hpp"
-#include "animation_system.hpp"
 
 #include "soloud_wav.h"
 

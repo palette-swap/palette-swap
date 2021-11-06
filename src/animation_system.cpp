@@ -26,10 +26,8 @@ void AnimationSystem::set_sprite_direction(const Entity& sprite, Sprite_Directio
 
 	if (direction == Sprite_Direction::SPRITE_LEFT) {
 		sprite_animation.direction = -1;
-	} else if (direction == Sprite_Direction::SPRITE_RIGHT) {
-		sprite_animation.direction = 1;
-		// Sets direction to be facing right by default
 	} else {
+		// Sets direction to be facing right by default
 		sprite_animation.direction = 1;
 	}
 }

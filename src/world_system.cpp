@@ -27,14 +27,16 @@ WorldSystem::WorldSystem(Debug& debugging,
 	: current_weapon(entt::null) 
 	, points(0)
 	, debugging(debugging)
+	, so_loud(std::move(so_loud))
+	, bgm_red()
+	, bgm_blue()
 	, rng(std::make_shared<std::default_random_engine>(std::default_random_engine(std::random_device()())))
+	, animations(std::move(animations))
 	, combat(std::move(combat))
 	, map_generator(std::move(map))
 	, turns(std::move(turns))
-	, animations(std::move(animations))
-	, so_loud(std::move(so_loud))
 {
-	this->combat->init(rng, animations);
+	this->combat->init(rng, this->animations);
 }
 
 WorldSystem::~WorldSystem()
@@ -162,12 +164,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 
 	// Resolves projectiles hitting objects, stops it for a period of time before returning it to the player
 	// Currently handles player arrow (as it is the only projectile that exists)
-	float projectile_max_counter = 1000.f;
 	for (auto [entity, projectile] : registry.view<ResolvedProjectile>().each()) {
 		projectile.counter -= elapsed_ms_since_last_update;
-		if (projectile.counter < projectile_max_counter) {
-			projectile_max_counter = projectile.counter;
-		}
 
 		// Removes the projectile from the list of projectiles that are still waiting
 		// If it is the player arrow, returns the arrow to the player's control
@@ -182,7 +180,6 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 				registry.destroy(entity);
 			}
 		}
-		projectile_max_counter = 2000;
 	}
 
 	return true;
@@ -233,10 +230,10 @@ void WorldSystem::restart_game()
 	attack_display = registry.create();
 	registry.emplace<ScreenPosition>(attack_display, vec2(0, 1));
 	registry.emplace<Text>(attack_display,
-						  combat->make_attack_list(current_weapon, current_attack),
-						  (uint16)48,
-						  Alignment::Start,
-						  Alignment::End);
+						   combat->make_attack_list(current_weapon, current_attack),
+						   (uint16)48,
+						   Alignment::Start,
+						   Alignment::End);
 	registry.emplace<Color>(attack_display, vec3(1, 1, 1));
 	// create camera instance
 	camera = create_camera(player_starting_point);
@@ -253,7 +250,7 @@ void WorldSystem::restart_game()
 void WorldSystem::handle_collisions()
 {
 	// Loop over all collisions detected by the physics system
-	for (auto [entity, collision, projectile]: registry.view<Collision, ActiveProjectile>().each()) {
+	for (auto [entity, collision, projectile] : registry.view<Collision, ActiveProjectile>().each()) {
 		Entity child_entity = collision.children;
 		while (child_entity != entt::null) {
 			const Child& child = registry.get<Child>(child_entity);
@@ -282,7 +279,7 @@ void WorldSystem::handle_collisions()
 	}
 	// Remove all collisions from this simulation step
 	registry.clear<Collision>();
-	}
+}
 
 // Should the game be over?
 bool WorldSystem::is_over() const { return bool(glfwWindowShouldClose(window)); }
@@ -290,7 +287,7 @@ bool WorldSystem::is_over() const { return bool(glfwWindowShouldClose(window)); 
 // Returns arrow to player after firing
 void WorldSystem::return_arrow_to_player()
 {
-	dvec2 mouse_pos;
+	dvec2 mouse_pos = {};
 	glfwGetCursorPos(window, &mouse_pos.x, &mouse_pos.y);
 	on_mouse_move(vec2(mouse_pos));
 }
@@ -323,8 +320,8 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		// Key Codes for 1-9
 		if (49 <= key && key <= 57) {
 			const std::vector<Attack>& attacks = registry.get<Weapon>(current_weapon).given_attacks;
-			if (key - 49 < attacks.size()) {
-				current_attack = key - 49;
+			if (key - 49 < (int) attacks.size()) {
+				current_attack = ((size_t) key) - 49;
 				const Attack& attack = attacks[current_attack];
 				printf("%s Attack: %i-%i attack, %i-%i dmg, %s \n",
 					   attack.name.c_str(),
@@ -417,24 +414,24 @@ void WorldSystem::move_player(Direction direction)
 
 	MapPosition& map_pos = registry.get<MapPosition>(player);
 	WorldPosition& arrow_position = registry.get<WorldPosition>(player_arrow);
-	Animation& player_animation = registry.get<Animation>(player);
 	uvec2 new_pos = map_pos.position;
 
 	if (direction == Direction::Left && map_pos.position.x > 0) {
 		new_pos = uvec2(map_pos.position.x - 1, map_pos.position.y);
-		
+
 		animations->set_sprite_direction(player, Sprite_Direction::SPRITE_LEFT);
 		animations->player_running_animation(player);
 	} else if (direction == Direction::Up && map_pos.position.y > 0) {
 		new_pos = uvec2(map_pos.position.x, map_pos.position.y - 1);
 		animations->player_running_animation(player);
 	} else if (direction == Direction::Right
-			   && map_pos.position.x < MapUtility::room_size * MapUtility::tile_size - 1) {
+			   && (float)map_pos.position.x < MapUtility::room_size * MapUtility::tile_size - 1) {
 		new_pos = uvec2(map_pos.position.x + 1, map_pos.position.y);
-		
+
 		animations->set_sprite_direction(player, Sprite_Direction::SPRITE_RIGHT);
 		animations->player_running_animation(player);
-	} else if (direction == Direction::Down && map_pos.position.y < MapUtility::room_size * MapUtility::tile_size - 1) {
+	} else if (direction == Direction::Down
+			   && (float)map_pos.position.y < MapUtility::room_size * MapUtility::tile_size - 1) {
 		new_pos = uvec2(map_pos.position.x, map_pos.position.y + 1);
 		animations->player_running_animation(player);
 	}
@@ -456,10 +453,10 @@ void WorldSystem::move_player(Direction direction)
 		if (map_generator->is_last_level()) {
 			end_of_game = true;
 			return;
-		} else {
-			map_generator->load_next_level();
-			registry.get<MapPosition>(player).position = map_generator->get_player_start_position();
 		}
+
+		map_generator->load_next_level();
+		registry.get<MapPosition>(player).position = map_generator->get_player_start_position();
 	} else if (map_generator->is_last_level_tile(new_pos)) {
 		map_generator->load_last_level();
 		registry.get<MapPosition>(player).position = map_generator->get_player_end_position();

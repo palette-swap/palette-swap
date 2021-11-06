@@ -16,16 +16,16 @@ static constexpr float damage_animation_speed = 1;
 // Currently this number is used for all enemies animation frames (a total of 4)
 // Moving forward the animation frames by enemy type may change
 static constexpr int enemy_num_frames = 4;
-static constexpr float enemy_attack_speed = 1.2;
+static constexpr float enemy_attack_speed = 1.2f;
 
 // These values are used for the default setting for the player
 static constexpr int player_num_frames = 6;
 static constexpr int player_weapon_states = 2;
-static constexpr float player_animation_speed = 1.2;
+static constexpr float player_animation_speed = 1.2f;
 
 // Used for animation event speeds for the player
-static constexpr float player_melee_speed = 2.5;
-static constexpr float player_heavy_melee_speed = 1;
+static constexpr float player_melee_speed = 2.5f;
+static constexpr float player_heavy_melee_speed = 1.f;
 static constexpr float player_running_speed = 4;
 static constexpr float player_blue_red_switch_speed = 1;
 // Value denoting the animation states for the player

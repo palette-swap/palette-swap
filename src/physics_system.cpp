@@ -37,13 +37,13 @@ void PhysicsSystem::step(float elapsed_ms, float /*window_width*/, float /*windo
 
 		if (debugging.in_debug_mode) {
 			create_line(world_pos.position, projectile.radius * 2.f, 0);
-			create_line(world_pos.position, projectile.radius * 2.f, M_PI / 2.f);
+			create_line(world_pos.position, projectile.radius * 2.f, glm::pi<float>() / 2.f);
 		}
 
 		Geometry::Circle collider = { world_pos.position, projectile.radius };
 		std::vector<uvec2> tiles
 			= MapUtility::get_surrounding_tiles(MapUtility::world_position_to_map_position(collider.center),
-												floor(1 + projectile.radius * 2.f / MapUtility::tile_size));
+												(int) floor(1 + projectile.radius * 2.f / MapUtility::tile_size));
 
 		tiles.erase(std::remove_if(tiles.begin(),
 								   tiles.end(),

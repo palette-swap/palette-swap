@@ -11,14 +11,14 @@
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
 #define WITH_SDL2 1
-#include "soloud_wavstream.h"
 #include "soloud_wav.h"
+#include "soloud_wavstream.h"
 
+#include "animation_system.hpp"
 #include "combat_system.hpp"
 #include "map_generator_system.hpp"
 #include "render_system.hpp"
 #include "turn_system.hpp"
-#include "animation_system.hpp"
 
 // Container for all our entities and game logic. Individual rendering / update is
 // deferred to the relative update() methods
@@ -28,7 +28,7 @@ public:
 				std::shared_ptr<CombatSystem> combat,
 				std::shared_ptr<MapGeneratorSystem> map,
 				std::shared_ptr<TurnSystem> turns,
-				std::shared_ptr<AnimationSystem> animations);
+				std::shared_ptr<AnimationSystem> animations,
 				std::shared_ptr<SoLoud::Soloud> so_loud);
 
 	// Creates a window
@@ -39,6 +39,10 @@ public:
 
 	// Releases all associated resources
 	~WorldSystem();
+	WorldSystem(const WorldSystem&) = delete;
+	WorldSystem& operator=(const WorldSystem&) = delete;
+	WorldSystem(WorldSystem&&) = delete;
+	WorldSystem& operator=(WorldSystem&&) = delete;
 
 	// Steps the game ahead by ms milliseconds
 	bool step(float elapsed_ms);
@@ -47,7 +51,7 @@ public:
 	void handle_collisions();
 
 	// Should the game be over ?
-	bool is_over() const;
+	[[nodiscard]] bool is_over() const;
 
 private:
 	// Input callback functions
@@ -93,7 +97,7 @@ private:
 	// Game configuration
 	bool player_arrow_fired = false;
 	// TODO: Track why my projectile speed had slowed throughout
-	const size_t projectile_speed = 200;
+	const float projectile_speed = 200.f;
 
 	// Game state
 	RenderSystem* renderer = nullptr;
@@ -117,11 +121,11 @@ private:
 	SoLoud::Wav cannon_wav;
 
 	// C++ random number generator
-	std::shared_ptr <std::default_random_engine> rng;
+	std::shared_ptr<std::default_random_engine> rng;
 	std::uniform_real_distribution<float> uniform_dist; // number between 0..1
 
+	std::shared_ptr<AnimationSystem> animations;
 	std::shared_ptr<CombatSystem> combat;
 	std::shared_ptr<MapGeneratorSystem> map_generator;
 	std::shared_ptr<TurnSystem> turns;
-	std::shared_ptr<AnimationSystem> animations;
 };
