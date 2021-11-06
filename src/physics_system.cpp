@@ -54,22 +54,13 @@ void PhysicsSystem::step(float elapsed_ms, float /*window_width*/, float /*windo
 								   }),
 					tiles.end());
 
-		// Check if the map position is occupy
+		// Check if the map position is occupied
 		for (auto [entity_j, map_position_j] : registry.view<MapPosition>().each()) {
 			if (entity_j == projectile.shooter) {
 				continue;
 			}
 			if (std::find(tiles.begin(), tiles.end(), map_position_j.position) != tiles.end()) {
-				Collision* collision = registry.try_get<Collision>(entity_i);
-				if (collision == nullptr) {
-					collision = &(registry.emplace<Collision>(entity_i, registry.create()));
-					registry.emplace<Child>(collision->children, entity_i, entt::null, entity_j);
-				} else {
-					Entity new_collision = registry.create();
-					registry.emplace<Child>(new_collision, entity_i, collision->children, entity_j);
-					collision->children = new_collision;
-				}
-				return;
+				Collision::add(entity_i, entity_j);
 			}
 		}
 		for (uvec2 tile : tiles) {
@@ -78,7 +69,6 @@ void PhysicsSystem::step(float elapsed_ms, float /*window_width*/, float /*windo
 				if (registry.try_get<Collision>(entity_i) == nullptr) {
 					registry.emplace<Collision>(entity_i, entt::null);
 				}
-				return;
 			}
 		}
 	}

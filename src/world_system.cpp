@@ -343,6 +343,12 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		change_color();
 	}
 
+	check_debug_keys(key, action, mod);
+}
+
+void WorldSystem::check_debug_keys(int key, int action, int mod)
+{
+
 	// Resetting game
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_ALT) != 0 && key == GLFW_KEY_R) {
 		// int w, h;
@@ -539,60 +545,10 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 	}
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
 		Attack& attack = registry.get<Weapon>(current_weapon).given_attacks[current_attack];
-		if (!player_arrow_fired && attack.targeting_type == TargetingType::Projectile
-			&& turns->execute_team_action(player)) {
-			player_arrow_fired = true;
-			// Arrow becomes a projectile the moment it leaves the player, not while it's direction is being selected
-			ActiveProjectile& arrow_projectile = registry.emplace<ActiveProjectile>(player_arrow, player);
-			Velocity& arrow_velocity = registry.get<Velocity>(player_arrow);
-
-			// Denotes arrowhead location the player's arrow, based on firing angle and current scaling
-			arrow_projectile.head_offset = {
-				sin(arrow_velocity.angle) * scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::CANNONBALL)).y / 2,
-				-cos(arrow_velocity.angle) * scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::CANNONBALL)).x / 2
-			};
-
-			arrow_velocity.speed = projectile_speed;
-			// TODO: Add better arrow physics potentially?
-			// arrow_velocity.velocity
-			//	= { sin(arrow_motion.angle) * projectile_speed, -cos(arrow_motion.angle) * projectile_speed };
-			so_loud.play(cannon_wav);
-		} else if (attack.targeting_type == TargetingType::Adjacent && turns->get_active_team() == player) {
-			
-			// Get screen position of mouse
-			dvec2 mouse_screen_pos;
-			glfwGetCursorPos(window, &mouse_screen_pos.x, &mouse_screen_pos.y);
-
-			// Denotes whether a player was able to complete their turn or not (false be default)
-			bool combat_success = false;
-			// Convert to world pos
-			vec2 mouse_world_pos = renderer->screen_position_to_world_position(mouse_screen_pos);
-
-			// Get map_positions to compare
-			uvec2 mouse_map_pos = MapUtility::world_position_to_map_position(mouse_world_pos);
-			uvec2 player_pos = registry.get<MapPosition>(player).position;
-			ivec2 distance = mouse_map_pos - player_pos;
-			if (abs(distance.x) > 1 || abs(distance.y) > 1 || distance == ivec2(0,0)
-				|| turns->get_active_team() != player) {
-				return;
-			}
-			for (const auto& target : registry.view<Enemy, Stats>()) {
-				if (registry.get<MapPosition>(target).position == mouse_map_pos) {
-					Enemy& enemy = registry.get<Enemy>(target);
-					ColorState inactive_color = turns->get_inactive_color();
-					if (enemy.team == inactive_color || !turns->execute_team_action(player)) {
-						continue;
-					}
-				
-					combat->do_attack(player, attack, target);
-					combat_success = true;
-					break;
-				}
-			}
-			if (combat_success) { 
-				so_loud.play(light_sword_wav);
-				turns->complete_team_action(player);
-			}
+		if (attack.targeting_type == TargetingType::Projectile) {
+			try_fire_projectile();
+		} else if (attack.targeting_type == TargetingType::Adjacent) {
+			try_adjacent_attack(attack);
 		}
 	}
 }
@@ -602,3 +558,65 @@ void WorldSystem::on_mouse_scroll(float offset) { this->renderer->scale_on_scrol
 // resize callback
 // TODO: update to scale the scene as not changed when window is resized
 void WorldSystem::on_resize(int width, int height) { renderer->on_resize(width, height); }
+
+void WorldSystem::try_fire_projectile()
+{
+	if (player_arrow_fired || !turns->execute_team_action(player)) {
+		return;
+	}
+	player_arrow_fired = true;
+	// Arrow becomes a projectile the moment it leaves the player, not while it's direction is being selected
+	ActiveProjectile& arrow_projectile = registry.emplace<ActiveProjectile>(player_arrow, player);
+	Velocity& arrow_velocity = registry.get<Velocity>(player_arrow);
+
+	// Denotes arrowhead location the player's arrow, based on firing angle and current scaling
+	arrow_projectile.head_offset
+		= { sin(arrow_velocity.angle) * scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::CANNONBALL)).y / 2,
+			-cos(arrow_velocity.angle) * scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::CANNONBALL)).x / 2 };
+
+	arrow_velocity.speed = projectile_speed;
+	// TODO: Add better arrow physics potentially?
+	// arrow_velocity.velocity
+	//	= { sin(arrow_motion.angle) * projectile_speed, -cos(arrow_motion.angle) * projectile_speed };
+	so_loud->play(cannon_wav);
+}
+
+void WorldSystem::try_adjacent_attack(Attack& attack)
+{
+	if (!turns->ready_to_act(player)) {
+		return;
+	}
+	// Get screen position of mouse
+	dvec2 mouse_screen_pos = {};
+	glfwGetCursorPos(window, &mouse_screen_pos.x, &mouse_screen_pos.y);
+
+	// Denotes whether a player was able to complete their turn or not (false be default)
+	bool combat_success = false;
+	// Convert to world pos
+	vec2 mouse_world_pos = renderer->screen_position_to_world_position(mouse_screen_pos);
+
+	// Get map_positions to compare
+	uvec2 mouse_map_pos = MapUtility::world_position_to_map_position(mouse_world_pos);
+	uvec2 player_pos = registry.get<MapPosition>(player).position;
+	ivec2 distance = mouse_map_pos - player_pos;
+	if (abs(distance.x) > 1 || abs(distance.y) > 1 || distance == ivec2(0, 0) || turns->get_active_team() != player) {
+		return;
+	}
+	for (const auto& target : registry.view<Enemy, Stats>()) {
+		if (registry.get<MapPosition>(target).position == mouse_map_pos) {
+			Enemy& enemy = registry.get<Enemy>(target);
+			ColorState inactive_color = turns->get_inactive_color();
+			if (enemy.team == inactive_color || !turns->execute_team_action(player)) {
+				continue;
+			}
+
+			combat->do_attack(player, attack, target);
+			combat_success = true;
+			break;
+		}
+	}
+	if (combat_success) {
+		so_loud->play(light_sword_wav);
+		turns->complete_team_action(player);
+	}
+}

@@ -57,6 +57,13 @@ private:
 	void on_mouse_scroll(float offset);
 	void on_resize(int width, int height);
 
+	// Key helpers
+	void check_debug_keys(int key, int action, int mod);
+
+	// Mouse Click helpers
+	void try_fire_projectile();
+	void try_adjacent_attack(Attack& attack);
+
 	// restart level
 	void restart_game();
 

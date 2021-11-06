@@ -70,30 +70,7 @@ void AISystem::step(float /*elapsed_ms*/)
 
 	// Debugging for the shortest paths of enemies.
 	if (debugging.in_debug_mode) {
-		for (auto [enemy_entity, enemy, entity_map_position] : registry.view<Enemy, MapPosition>().each()) {
-
-			ColorState active_world_color = turns->get_active_color();
-			if (((uint8_t)active_world_color & (uint8_t)enemy.team) > 0) {
-				const uvec2& entity_map_pos = entity_map_position.position;
-
-				if (enemy.state == EnemyState::Flinched) {
-					const uvec2& nest_map_pos = enemy.nest_map_pos;
-					std::vector<uvec2> shortest_path = map_generator->shortest_path(entity_map_pos, nest_map_pos);
-
-					for (const uvec2& path_point : shortest_path) {
-						create_path_point(MapUtility::map_position_to_world_position(path_point));
-					}
-				} else if (enemy.state != EnemyState::Idle && is_player_spotted(enemy_entity, enemy.radius * 2)) {
-					Entity player = registry.view<Player>().front();
-					std::vector<uvec2> shortest_path
-						= map_generator->shortest_path(entity_map_pos, registry.get<MapPosition>(player).position);
-
-					for (const uvec2& path_point : shortest_path) {
-						create_path_point(MapUtility::map_position_to_world_position(path_point));
-					}
-				}
-			}
-		}
+		draw_pathing_debug();
 	}
 }
 
@@ -416,5 +393,33 @@ void AISystem::become_powerup(const Entity& entity, bool flag)
 		stats.damage_bonus /= 2;
 		stats.base_attack.damage_min /= 2;
 		stats.base_attack.damage_max /= 2;
+	}
+}
+
+void AISystem::draw_pathing_debug()
+{
+	for (auto [enemy_entity, enemy, entity_map_position] : registry.view<Enemy, MapPosition>().each()) {
+
+		ColorState active_world_color = turns->get_active_color();
+		if (((uint8_t)active_world_color & (uint8_t)enemy.team) > 0) {
+			const uvec2& entity_map_pos = entity_map_position.position;
+
+			if (enemy.state == EnemyState::Flinched) {
+				const uvec2& nest_map_pos = enemy.nest_map_pos;
+				std::vector<uvec2> shortest_path = map_generator->shortest_path(entity_map_pos, nest_map_pos);
+
+				for (const uvec2& path_point : shortest_path) {
+					create_path_point(MapUtility::map_position_to_world_position(path_point));
+				}
+			} else if (enemy.state != EnemyState::Idle && is_player_spotted(enemy_entity, enemy.radius * 2)) {
+				Entity player = registry.view<Player>().front();
+				std::vector<uvec2> shortest_path
+					= map_generator->shortest_path(entity_map_pos, registry.get<MapPosition>(player).position);
+
+				for (const uvec2& path_point : shortest_path) {
+					create_path_point(MapUtility::map_position_to_world_position(path_point));
+				}
+			}
+		}
 	}
 }
