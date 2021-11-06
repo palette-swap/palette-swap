@@ -91,6 +91,9 @@ private:
 	RenderSystem* renderer = nullptr;
 	float current_speed = 0;
 	bool end_of_game = false;
+	
+	// TODO: remove this from build before actual PR, inactive colour should be constant
+	int inactive_colour_selection = 0;
 	Entity player = registry.create();
 	Entity camera = registry.create();
 	Entity player_arrow = registry.create();

@@ -185,7 +185,14 @@ void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest render_
 	}
 
 	// Getting uniform locations for glUniform* calls
-	if (registry.any_of<Color>(entity)) {
+	if (registry.any_of<Animation>(entity)) {
+		GLint color_uloc = glGetUniformLocation(program, "fcolor");
+		GLint opacity_uloc = glGetUniformLocation(program, "opacity");
+		const vec4 color = registry.get<Animation>(entity).display_color;
+		glUniform3fv(color_uloc, 1, glm::value_ptr(color));
+		glUniform1f(opacity_uloc, color.w);
+		gl_has_errors();
+	} else if (registry.any_of<Color>(entity)) {
 		GLint color_uloc = glGetUniformLocation(program, "fcolor");
 		const vec3 color = registry.get<Color>(entity).color;
 		glUniform3fv(color_uloc, 1, glm::value_ptr(color));

@@ -52,10 +52,14 @@ static void load_enemy(int enemy_index, const rapidjson::Document& json_doc)
 									true);
 	if (enemy_component.team == ColorState::Red) {
 		enemy_animation.color = ColorState::Red;
+		enemy_animation.display_color = {AnimationUtility::default_enemy_red,1};
 		registry.emplace<Color>(entity, AnimationUtility::default_enemy_red);
+		registry.emplace<RedEnemy>(entity);
 	} else if (enemy_component.team == ColorState::Blue) {
 		registry.emplace<Color>(entity, AnimationUtility::default_enemy_blue);
 		enemy_animation.color = ColorState::Blue;
+		enemy_animation.display_color = { AnimationUtility::default_enemy_blue, 1 };
+		registry.emplace<BlueEnemy>(entity);
 	} else {
 		registry.emplace<Color>(entity, vec3(1, 1, 1));
 	}

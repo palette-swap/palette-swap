@@ -115,6 +115,26 @@ void AnimationSystem::enemy_attack_animation(const Entity& enemy)
 	}
 }
 
+
+void AnimationSystem::set_all_inactive_colours(ColorState inactive_color, int colour_choice)
+{
+	if (inactive_color == ColorState::Red) {
+		for (auto [entity, animation] : registry.view<Animation>(entt::exclude<RedEnemy, Player>).each()) {
+			animation.display_color = { AnimationUtility::default_enemy_blue, 1 };
+		}
+		for (auto [entity, animation] : registry.view<Animation>(entt::exclude<BlueEnemy, Player>).each()) {
+			animation.display_color = AnimationUtility::inactive_colors[colour_choice];
+		}
+		
+	} else if (inactive_color == ColorState::Blue) {
+		for (auto [entity, animation] : registry.view<Animation>(entt::exclude<BlueEnemy, Player>).each()) {
+			animation.display_color = { AnimationUtility::default_enemy_red, 1 };
+		}
+		for (auto [entity, animation] : registry.view<Animation>(entt::exclude<RedEnemy, Player>).each()) {
+			animation.display_color = AnimationUtility::inactive_colors[colour_choice];
+		}
+	}
+}
 void AnimationSystem::set_player_animation(const Entity& player)
 {
 	assert(registry.any_of<Player>(player));

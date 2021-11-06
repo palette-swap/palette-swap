@@ -37,6 +37,7 @@ static constexpr vec3 default_enemy_red = { 2, 1, 1 };
 static constexpr vec3 default_enemy_blue = { 1, 1, 2 };
 static constexpr vec3 damage_color = { 5, 5, 5 };
 
+static constexpr int max_inactive_colors = 3;
 
 class AnimationSystem {
 
@@ -59,6 +60,8 @@ public:
 	void set_enemy_state(const Entity& enemy, int state);
 	// triggers an enemy attack animation
 	void enemy_attack_animation(const Entity& enemy);
+	// Sets all inactive enemy colours to be a specific defaulted inactive colour
+	void set_all_inactive_colours(ColorState inactive_color, int colour_choice);
 
 	// initializes animation values for a player entity
 	// NOTE: weird things will happen if the entity initialized as player is not a player

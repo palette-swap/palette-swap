@@ -61,8 +61,17 @@ static constexpr int window_height_px = 1080;
 static constexpr float window_default_scale = 0.5;
 
 namespace AnimationUtility {
+// Defines default colors for enemies of red/blue while active
 static constexpr vec3 default_enemy_red = { 4, 1, 1 };
 static constexpr vec3 default_enemy_blue = { 1, 1, 4 };
+
+static vec4 inactive_color = { 1, 1, 1, 1 };
+// Used to test out various inactive enemy displays
+static constexpr vec4 inactive_dark = { 0.5, 0.5, 0.5, 1 };
+static constexpr vec4 inactive_opaque = { 1, 1, 1, 0.5 };
+static constexpr vec4 inactive_invisible = { 1, 1, 1, 0 };
+
+static constexpr vec4 inactive_colors[3] = { inactive_dark, inactive_opaque, inactive_invisible };
 }
 
 namespace MapUtility {
@@ -138,7 +147,6 @@ inline std::vector<uvec2> get_surrounding_tiles(uvec2 center, uint radius = 1u)
 			tiles.emplace_back(center.x + i - radius, center.y + j - radius);
 		}
 	}
-
 	return std::move(tiles);
 }
 }
