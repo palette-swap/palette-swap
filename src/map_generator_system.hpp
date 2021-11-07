@@ -107,9 +107,9 @@ private:
 	void create_picture();
 
 	// get the tile texture id, of the position on a map
-	[[nodiscard]] MapUtility::TileID get_tile_id_from_map_pos(uvec2 pos) const;
+	MapUtility::TileID get_tile_id_from_map_pos(uvec2 pos) const;
 
-	[[nodiscard]] std::vector<uvec2> bfs(uvec2 start_pos, uvec2 target) const;
+	std::vector<uvec2> bfs(uvec2 start_pos, uvec2 target) const;
 
 	// helper to convert an integer to Direction, as we save integers in csv files
 	// 0 - UP(no rotation)
@@ -141,34 +141,34 @@ public:
 	void generate_levels();
 
 	// Get the current level mapping
-	[[nodiscard]] const Mapping& current_map() const;
+	const Mapping& current_map() const;
 
-	[[nodiscard]] const std::array<std::array<Direction, MapUtility::map_size>, MapUtility::map_size>&
+	const std::array<std::array<Direction, MapUtility::map_size>, MapUtility::map_size>&
 	current_rooms_rotation() const;
 
 	// Check if a position is within the bounds of the current level
-	[[nodiscard]] bool is_on_map(uvec2 pos) const;
+	bool is_on_map(uvec2 pos) const;
 
 	// Check if a position on the map is walkable for the player
-	[[nodiscard]] bool walkable(uvec2 pos) const;
+	bool walkable(uvec2 pos) const;
 
 	// Check if a position on the map is walkable for the player and there's currently no entity in it
-	[[nodiscard]] bool walkable_and_free(uvec2 pos) const;
+	bool walkable_and_free(uvec2 pos) const;
 
 	// Check if a position on the map is a wall
-	[[nodiscard]] bool is_wall(uvec2 pos) const;
+	bool is_wall(uvec2 pos) const;
 
 	// Computes the shortest path from start to the first element of end that it encounters via BFS
 	// Returns the path, or an empty vector if no path was found
-	[[nodiscard]] std::vector<uvec2> shortest_path(uvec2 start, uvec2 target, bool use_a_star = true) const;
+	std::vector<uvec2> shortest_path(uvec2 start, uvec2 target, bool use_a_star = true) const;
 
-	[[nodiscard]] MapUtility::TileID
+	MapUtility::TileID
 	get_tile_id_from_room(MapUtility::RoomType room_type, uint8_t row, uint8_t col, Direction rotation) const;
 
-	[[nodiscard]] bool is_next_level_tile(uvec2 pos) const;
-	[[nodiscard]] bool is_last_level_tile(uvec2 pos) const;
+	bool is_next_level_tile(uvec2 pos) const;
+	bool is_last_level_tile(uvec2 pos) const;
 
-	[[nodiscard]] bool is_last_level() const;
+	bool is_last_level() const;
 
 	// Save current level and load the next level
 	void load_next_level();
@@ -180,12 +180,12 @@ public:
 	void load_initial_level();
 
 	// Get player initial position on current level
-	[[nodiscard]] uvec2 get_player_start_position() const;
+	uvec2 get_player_start_position() const;
 
 	// Get player last position on current level
-	[[nodiscard]] uvec2 get_player_end_position() const;
+	uvec2 get_player_end_position() const;
 
 	// Get the 10*10 layout array for a room, mainly used by rendering
-	[[nodiscard]] const std::array<uint32_t, MapUtility::map_size * MapUtility::map_size>&
+	const std::array<uint32_t, MapUtility::map_size * MapUtility::map_size>&
 	get_room_layout(MapUtility::RoomType type) const;
 };

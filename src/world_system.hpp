@@ -51,7 +51,7 @@ public:
 	void handle_collisions();
 
 	// Should the game be over ?
-	[[nodiscard]] bool is_over() const;
+	bool is_over() const;
 
 private:
 	// Input callback functions

@@ -17,7 +17,7 @@ public:
 	void attach_do_attack_callback(
 		const std::function<void(const Entity& attacker, const Entity& target)>& do_attack_callback);
 
-	[[nodiscard]] std::string make_attack_list(Entity entity, size_t current_attack) const;
+	std::string make_attack_list(Entity entity, size_t current_attack) const;
 
 private:
 	// Observer Pattern: callbacks of do_attack().

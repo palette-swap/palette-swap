@@ -467,8 +467,8 @@ struct ResolvedProjectile {
 struct Velocity {
 	float speed;
 	float angle;
-	[[nodiscard]] vec2 get_direction() const { return { sin(angle), -cos(angle) }; }
-	[[nodiscard]] vec2 get_velocity() const { return get_direction() * speed; }
+	vec2 get_direction() const { return { sin(angle), -cos(angle) }; }
+	vec2 get_velocity() const { return get_direction() * speed; }
 };
 
 //---------------------------------------------------------------------------
