@@ -19,12 +19,7 @@ bool TurnSystem::ready_to_act(Entity team) { return get_active_team() == team &&
 
 bool TurnSystem::team_in_queue(Entity team)
 {
-	for (Entity e : team_queue) {
-		if (e == team) {
-			return true;
-		}
-	}
-	return false;
+	return std::any_of(team_queue.begin(), team_queue.end(), [team](Entity e) { return e == team; });
 }
 
 bool TurnSystem::add_team_to_queue(Entity team)
@@ -58,15 +53,15 @@ bool TurnSystem::skip_team_action(Entity team)
 	return complete_team_action(team);
 }
 
-ColorState TurnSystem::get_active_color() { return activeColor; }
+ColorState TurnSystem::get_active_color() { return active_color; }
 
 ColorState TurnSystem::get_inactive_color() { 
-	return (activeColor == ColorState::Red) ? ColorState::Blue : ColorState::Red;
+	return (active_color == ColorState::Red) ? ColorState::Blue : ColorState::Red;
 }
 
 bool TurnSystem::set_active_color(ColorState color) { 
-	activeColor = color;
-	printf("Current color: %d\n", activeColor);
+	active_color = color;
+	printf("Current color: %d\n", active_color);
 	return true; 
 }
 

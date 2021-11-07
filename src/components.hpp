@@ -169,10 +169,10 @@ enum class Sprite_Direction : uint8_t { SPRITE_LEFT, SPRITE_RIGHT};
 // top left is (0,0) bottom right is (99,99)
 struct MapPosition {
 	uvec2 position;
-	MapPosition(uvec2 position)
+	explicit MapPosition(uvec2 position)
 		: position(position)
 	{
-		assert(position.x < 99 && position.y < 99);
+		assert(position.x <= MapUtility::map_down_right.x && position.y <= MapUtility::map_down_right.y);
 	};
 
 	void serialize(const std::string& prefix, rapidjson::Document& json) const;
@@ -183,16 +183,12 @@ struct MapPosition {
 // top left is (0,0), bottom right is (1, 1)
 struct ScreenPosition {
 	vec2 position;
-	ScreenPosition(vec2 position)
-		: position(position) {};
 };
 
 // Represents the world position,
 // top left is (0,0), bottom right is (window_width_px, window_height_px)
 struct WorldPosition {
 	vec2 position;
-	WorldPosition(vec2 position)
-		: position(position) {};
 };
 
 struct Room {
@@ -227,7 +223,13 @@ enum class EnemyType {
 	Wraith = TreeAnt + 1,
 	EnemyCount = Wraith + 1
 };
-extern std::unordered_map<EnemyType, char*> enemy_type_to_string;
+
+const std::array<const char*, (size_t)EnemyType::EnemyCount> enemy_type_to_string = {
+	"Slime",
+	"Raven",
+	"Armor",
+	"TreeAnt",
+};
 
 // Slime:		Idle, Active, Flinched.
 // Raven:		Idle, Actives.
@@ -243,14 +245,13 @@ enum class EnemyState {
 	EnemyStateCount = Immortal + 1
 };
 
-// Maps enemy states to corresponding rows used in the spritesheet
-// Based on how enemy states work for M2 currently
-static std::map<EnemyState, int> enemy_state_to_animation_state = 
-		{ { EnemyState::Idle, 0 },
-		{ EnemyState::Active, 1 },
-		{ EnemyState::Flinched, 2 },
-		{ EnemyState::Powerup, 2 },
-		{ EnemyState::Immortal, 2 } };
+const std::array<int, (size_t)EnemyState::EnemyStateCount> enemy_state_to_animation_state = {
+	0, // Idle
+	1, // Active
+	2, // Flinched
+	2, // Powerup
+	2, // Immortal
+};
 
 // Structure to store enemy information.
 struct Enemy {
@@ -274,11 +275,13 @@ struct Enemy {
 // Maps enemy types to corresponding texture asset
 // Remember to add a mapping to a new texture (or use a default such as a slime)
 // This will help load the animation by enemy type when you load enemies
-const TEXTURE_ASSET_ID enemy_type_textures[static_cast<int>(EnemyType::EnemyCount)] { TEXTURE_ASSET_ID::SLIME,
-																					  TEXTURE_ASSET_ID::RAVEN,
-																					  TEXTURE_ASSET_ID::ARMOR,
-																					  TEXTURE_ASSET_ID::TREEANT,
-																					  TEXTURE_ASSET_ID::WRAITH };
+const std::array<TEXTURE_ASSET_ID, static_cast<int>(EnemyType::EnemyCount)> enemy_type_textures {
+	TEXTURE_ASSET_ID::SLIME,
+	TEXTURE_ASSET_ID::RAVEN,
+	TEXTURE_ASSET_ID::ARMOR,
+	TEXTURE_ASSET_ID::TREEANT,
+	TEXTURE_ASSET_ID::WRAITH
+};
 
 struct RenderRequest {
 	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
@@ -308,7 +311,7 @@ struct Animation {
 
 // Struct denoting irregular animation events (ie attacking, containing information to restore an entity's
 // animations after the irregular event animation completes
-struct Event_Animation {
+struct EventAnimation {
 	bool turn_trigger = false;
 	float speed_adjustment = 1;
 	vec3 restore_color = { 1, 1, 1 };
@@ -338,7 +341,7 @@ enum class TargetingType {
 template <typename T> using DamageTypeList = std::array<T, static_cast<size_t>(DamageType::Count)>;
 
 struct Attack {
-	std::string name = "";
+	std::string name;
 	// Each time an attack is made, a random number is chosen uniformly from [to_hit_min, to_hit_max]
 	// This is added to the attack total
 	int to_hit_min = 1;
@@ -405,18 +408,18 @@ template <typename T> using SlotList = std::array<T, static_cast<size_t>(Slot::C
 struct Inventory {
 	std::map<std::string, Entity> inventory;
 	SlotList<Entity> equipped;
-	Inventory() { equipped.fill(entt::null); }
+	Inventory(): equipped() { equipped.fill(entt::null); }
 };
 
 struct Item {
-	std::string name = "";
+	std::string name;
 	float weight = 0.f;
 	int value = 0;
 	SlotList<bool> allowed_slots = { false };
 };
 
 struct Weapon {
-	Weapon(std::vector<Attack> given_attacks)
+	explicit Weapon(std::vector<Attack> given_attacks)
 		: given_attacks(std::move(given_attacks))
 	{
 	}
@@ -435,6 +438,7 @@ struct Hittable {
 // Stucture to store collision information
 struct Collision {
 	Entity children;
+	static void add(Entity parent, Entity child);
 };
 
 struct Child {
@@ -449,7 +453,7 @@ struct ActiveProjectile {
 	float radius = 6;
 	Entity shooter;
 
-	ActiveProjectile(const Entity& shooter)
+	explicit ActiveProjectile(const Entity& shooter)
 		: shooter(shooter)
 	{
 	}
@@ -463,8 +467,8 @@ struct ResolvedProjectile {
 struct Velocity {
 	float speed;
 	float angle;
-	vec2 get_direction() { return { sin(angle), -cos(angle) }; }
-	vec2 get_velocity() { return get_direction() * speed; }
+	vec2 get_direction() const { return { sin(angle), -cos(angle) }; }
+	vec2 get_velocity() const { return get_direction() * speed; }
 };
 
 //---------------------------------------------------------------------------

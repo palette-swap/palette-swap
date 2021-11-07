@@ -16,6 +16,7 @@
 
 // The glm library provides vector and matrix operations as in GLSL
 #include <glm/ext/vector_int2.hpp> // ivec2
+#include <glm/gtc/constants.hpp>
 #include <glm/mat3x3.hpp> // mat3
 #include <glm/vec2.hpp> // vec2
 #include <glm/vec3.hpp> // vec3
@@ -39,10 +40,6 @@ inline std::string audio_path(const std::string& name) { return data_path() + "/
 inline std::string fonts_path(const std::string& name) { return data_path() + "/fonts/" + std::string(name); };
 inline std::string mesh_path(const std::string& name) { return data_path() + "/meshes/" + std::string(name); };
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323846f
-#endif
-
 // The 'Transform' component handles transformations passed to the Vertex shader
 // (similar to the gl Immediate mode equivalent, e.g., glTranslate()...)
 // We recomment making all components non-copyable by derving from ComponentNonCopyable
@@ -63,7 +60,7 @@ static constexpr float window_default_scale = 0.5;
 namespace AnimationUtility {
 static constexpr vec3 default_enemy_red = { 4, 1, 1 };
 static constexpr vec3 default_enemy_blue = { 1, 1, 4 };
-}
+} // namespace AnimationUtility
 
 namespace MapUtility {
 // Each tile is 32x32 pixels
@@ -74,7 +71,7 @@ static constexpr int room_size = 10;
 static constexpr int map_size = 10;
 // RoomType is just a uint8_t
 using RoomType = uint8_t;
-using TileId = uint8_t;
+using TileID = uint8_t;
 using MapId = uint8_t;
 
 static constexpr uvec2 map_top_left = { 0, 0 };
@@ -117,8 +114,7 @@ static constexpr vec2 top_left_corner = vec2((window_width_px - tile_size * room
 */
 inline vec2 map_position_to_world_position(uvec2 map_pos)
 {
-	return vec2(map_pos.x * tile_size + top_left_corner.x, map_pos.y * tile_size + top_left_corner.y)
-		+ vec2(tile_size / 2, tile_size / 2);
+	return vec2(map_pos) * tile_size + top_left_corner + vec2(tile_size / 2, tile_size / 2);
 }
 
 // Calculates which square an entity is currently overlapping
@@ -139,9 +135,9 @@ inline std::vector<uvec2> get_surrounding_tiles(uvec2 center, uint radius = 1u)
 		}
 	}
 
-	return std::move(tiles);
+	return tiles;
 }
-}
+} // namespace MapUtility
 
 // Represent four directions, that could have many uses, e.g. moving player
 enum class Direction : uint8_t {
@@ -151,22 +147,8 @@ enum class Direction : uint8_t {
 	Down,
 };
 
-static float direction_to_angle(Direction direction)
-{
-	switch (direction) {
-	case Direction::Left:
-		return 3 * M_PI / 2;
-	case Direction::Up:
-		return 0;
-	case Direction::Right:
-		return M_PI / 2;
-	case Direction::Down:
-		return M_PI;
-	default:
-		assert(false && "direction to angle: unexpected direction");
-	}
-	return 0.f;
-}
+float direction_to_angle(Direction direction);
+
 namespace CameraUtility {
 // the size of camera, divide the whole window into camera_grid_size ^ 2 smaller grids
 static constexpr uint camera_grid_size = 3;
@@ -185,7 +167,7 @@ inline std::pair<vec2, vec2> get_buffer_positions(vec2 camera_pos, float width, 
 
 	return std::make_pair(buffer_top_left_pos, buffer_down_right_pos);
 }
-}
+} // namespace CameraUtility
 
 // Explanation for camera
 /**
@@ -219,7 +201,6 @@ edge of map)
 
 */
 
-extern SoLoud::Soloud so_loud; // SoLoud engine
+extern entt::registry registry; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
 
-extern entt::registry registry; // registry
-typedef entt::entity Entity;
+using Entity = entt::entity;
