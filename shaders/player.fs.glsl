@@ -6,7 +6,7 @@ in vec2 texcoord;
 // Application data
 uniform sampler2D sampler0;
 uniform vec3 fcolor;
-uniform int opacity = 1;
+uniform float opacity = 1;
 
 // Output color
 layout(location = 0) out  vec4 color;
