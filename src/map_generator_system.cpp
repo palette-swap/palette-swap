@@ -92,12 +92,11 @@ bool MapGeneratorSystem::is_on_map(uvec2 pos) const
 
 bool MapGeneratorSystem::walkable(uvec2 pos) const
 {
-	const static std::set<uint8_t> walkable_tiles({ 0, 14, 20 });
 	if (!is_on_map(pos)) {
 		return false;
 	}
 
-	return walkable_tiles.find(get_tile_id_from_map_pos(pos)) != walkable_tiles.end();
+	return walkable_tiles().find(get_tile_id_from_map_pos(pos)) != walkable_tiles().end();
 }
 
 bool MapGeneratorSystem::walkable_and_free(uvec2 pos) const
@@ -112,13 +111,11 @@ bool MapGeneratorSystem::walkable_and_free(uvec2 pos) const
 
 bool MapGeneratorSystem::is_wall(uvec2 pos) const
 {
-	const static std::set<uint8_t> wall_tiles(
-		{ 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 15, 17, 18, 19, 23, 25, 26, 27, 33, 35, 41, 42, 43 });
 	if (!is_on_map(pos)) {
 		return false;
 	}
 
-	return wall_tiles.find(get_tile_id_from_map_pos(pos)) != wall_tiles.end();
+	return wall_tiles().find(get_tile_id_from_map_pos(pos)) != wall_tiles().end();
 }
 
 std::vector<uvec2> make_path(std::unordered_map<uvec2, uvec2>& parent, uvec2 start_pos, uvec2 target)
@@ -534,4 +531,17 @@ const std::array<uint32_t, MapUtility::map_size * MapUtility::map_size>&
 MapGeneratorSystem::get_room_layout(MapUtility::RoomType type) const
 {
 	return room_layouts.at(type);
+}
+
+const std::set<uint8_t>& MapUtility::walkable_tiles()
+{
+	const static std::set<uint8_t> walkable_tiles({ 0, 14, 20 });
+	return walkable_tiles;
+}
+
+const std::set<uint8_t>& MapUtility::wall_tiles()
+{
+	const static std::set<uint8_t> wall_tiles(
+		{ 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 15, 17, 18, 19, 23, 25, 26, 27, 33, 35, 41, 42, 43 });
+	return wall_tiles;
 }

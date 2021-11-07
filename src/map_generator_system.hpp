@@ -10,7 +10,8 @@
 namespace MapUtility {
 //////////////////////////////////////////
 // Defines different types of tiles
-extern const std::set<uint8_t> wall_tiles;
+const std::set<uint8_t>& walkable_tiles();
+const std::set<uint8_t>& wall_tiles();
 const uint8_t tile_next_level = 14;
 const uint8_t tile_last_level = 20;
 } // namespace MapUtility
