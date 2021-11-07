@@ -17,15 +17,19 @@
 struct Player {
 };
 
-// Camera component
-struct Camera {
-	uvec2 size, central;
-};
-
 // Data structure for toggling debug mode
 struct Debug {
 	bool in_debug_mode = false;
 	bool in_freeze_mode = false;
+};
+
+//---------------------------------------------------------------------------
+//-------------------------        Rendering        -------------------------
+//---------------------------------------------------------------------------
+
+// Camera component
+struct Camera {
+	uvec2 size, central;
 };
 
 // Sets the brightness of the screen
@@ -36,11 +40,6 @@ struct ScreenState {
 // A struct to refer to debugging graphics in the ECS
 struct DebugComponent {
 	// Note, an empty struct has size 1
-};
-
-// A timer that will be associated to dying salmon
-struct DeathTimer {
-	float counter_ms = 3000;
 };
 
 // Single Vertex Buffer element for non-textured meshes (coloured.vs.glsl & salmon.vs.glsl)
@@ -161,36 +160,6 @@ enum class GEOMETRY_BUFFER_ID : uint8_t {
 };
 const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 
-
-// Represents allowed directions for an animated sprite (e.g whether the sprite is facing left or right)
-enum class Sprite_Direction : uint8_t { SPRITE_LEFT, SPRITE_RIGHT};
-
-// Represents the position on the map,
-// top left is (0,0) bottom right is (99,99)
-struct MapPosition {
-	uvec2 position;
-	explicit MapPosition(uvec2 position)
-		: position(position)
-	{
-		assert(position.x <= MapUtility::map_down_right.x && position.y <= MapUtility::map_down_right.y);
-	};
-
-	void serialize(const std::string& prefix, rapidjson::Document& json) const;
-	void deserialize(const std::string& prefix, const rapidjson::Document& json);
-};
-
-// Represents the screen position,
-// top left is (0,0), bottom right is (1, 1)
-struct ScreenPosition {
-	vec2 position;
-};
-
-// Represents the world position,
-// top left is (0,0), bottom right is (window_width_px, window_height_px)
-struct WorldPosition {
-	vec2 position;
-};
-
 struct Room {
 	// use 0xff to indicate uninitialized value
 	// this can have potential bug if we have up to 255 rooms, but we probably won't...
@@ -271,6 +240,9 @@ struct Enemy {
 //---------------------------------------------------------------------------
 //-------------------------		  ANIMATIONS        -------------------------
 //---------------------------------------------------------------------------
+
+// Represents allowed directions for an animated sprite (e.g whether the sprite is facing left or right)
+enum class Sprite_Direction : uint8_t { SPRITE_LEFT, SPRITE_RIGHT };
 
 // Maps enemy types to corresponding texture asset
 // Remember to add a mapping to a new texture (or use a default such as a slime)
@@ -469,6 +441,36 @@ struct Velocity {
 	float angle;
 	vec2 get_direction() const { return { sin(angle), -cos(angle) }; }
 	vec2 get_velocity() const { return get_direction() * speed; }
+};
+
+//---------------------------------------------------------------------------
+//-------------------------		  Positioning       -------------------------
+//---------------------------------------------------------------------------
+
+// Represents the position on the map,
+// top left is (0,0) bottom right is (99,99)
+struct MapPosition {
+	uvec2 position;
+	explicit MapPosition(uvec2 position)
+		: position(position)
+	{
+		assert(position.x <= MapUtility::map_down_right.x && position.y <= MapUtility::map_down_right.y);
+	};
+
+	void serialize(const std::string& prefix, rapidjson::Document& json) const;
+	void deserialize(const std::string& prefix, const rapidjson::Document& json);
+};
+
+// Represents the screen position,
+// top left is (0,0), bottom right is (1, 1)
+struct ScreenPosition {
+	vec2 position;
+};
+
+// Represents the world position,
+// top left is (0,0), bottom right is (window_width_px, window_height_px)
+struct WorldPosition {
+	vec2 position;
 };
 
 //---------------------------------------------------------------------------
