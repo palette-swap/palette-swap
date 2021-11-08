@@ -15,20 +15,19 @@
 using namespace MapUtility;
 
 MapGeneratorSystem::MapGeneratorSystem()
-	: room_layouts()
-	, levels(num_levels)
+	: levels(num_levels)
 	, level_room_rotations(num_levels)
 	, level_snap_shots(num_levels)
-	//, random_number_distribution(0, 9)
+	, level_generation_confs(num_levels)
+	, room_layouts(num_predefined_rooms)
 {
 	load_rooms_from_csv();
 	//load_levels_from_csv();
 	load_level_configurations();
 	current_level = -1;
 	
-	random_eng.seed(generation_seed);
 
-	generate_levels();
+	generate_level(0);
 }
 
 ////////////////////////////////////
@@ -149,35 +148,85 @@ std::vector<int> MapGeneratorSystem::generate_random_path(int start_row, int sta
 	return path;
 }
 
-void MapGeneratorSystem::generate_levels()
+void MapGeneratorSystem::generate_level(int level)
 {
+	const LevelGenConf& level_gen_conf = level_generation_confs.at(level);
+	random_eng.seed(level_gen_conf.generation_seed);
+
 	// Choose a room as the starting position
 	std::uniform_int_distribution<int> random_number_distribution(0, 9);
 	int row = random_number_distribution(random_eng);
 	int col = random_number_distribution(random_eng);
-
-	// // Choose a path with length from 6 to 10
-	// std::uniform_int_distribution<int> path_length_rand(6, 10);
-	// int path_length = path_length_rand(random_eng);
-	
-	std::vector<int> paths = generate_random_path(row, col, level_path_length);
+	std::vector<int> paths = generate_random_path(row, col, level_gen_conf.level_path_length);
 
 	// from the path, generate level
 	Mapping& level_mapping = levels.at(0);
 	for (int row = 0; row < map_size; row++) {
 		for (int col = 0; col < map_size; col++) {
-			level_mapping.at(row).at(col) = 9;
+			level_mapping.at(row).at(col) = 0;
 		}
 	}
-	for (const int room_position : paths) {
-		level_mapping.at(room_position / map_size).at(room_position % map_size) = 0;
-	}
-	
 	auto& room_rotations = level_room_rotations.at(0);
 	for (int row = 0; row < map_size; row++) {
 		for (int col = 0; col < map_size; col++) {
 			room_rotations.at(row).at(col) = Direction::Up;
 		}
+	}
+
+	// from the generated path, generate rooms
+	for (int i = 0 ; i < paths.size(); i ++) {
+		// 0: left, 1: up, 2: right, 3: down
+		std::set<int> unblocked_direction;
+		int cur_row = paths.at(i) / map_size;
+		int cur_col = paths.at(i) % map_size;
+		if (i + 1 <= paths.size() - 1) {
+			int next_row = paths.at(i + 1) / map_size;
+			int next_col = paths.at(i + 1) % map_size;
+			if (next_row > cur_row) {
+				unblocked_direction.emplace(3);
+			} else if (next_row < cur_row) {
+				unblocked_direction.emplace(1);
+			} else if (next_col > cur_col) {
+				unblocked_direction.emplace(2);
+			} else if (next_col < cur_col) {
+				unblocked_direction.emplace(0);
+			}
+		}
+		if (i - 1 >= 0) {
+			int last_row = paths.at(i - 1) / map_size;
+			int last_col = paths.at(i - 1) % map_size;
+			if (last_row > cur_row) {
+				unblocked_direction.emplace(3);
+			} else if (last_row < cur_row) {
+				unblocked_direction.emplace(1);
+			} else if (last_col > cur_col) {
+				unblocked_direction.emplace(2);
+			} else if (last_col < cur_col) {
+				unblocked_direction.emplace(0);
+			}
+		}
+
+		// generate blocks on the blocked direction,
+		// generate walkable tiles for other locations
+		std::array<uint32_t, map_size * map_size> room_layout;
+		for (int room_i = 0; room_i < room_layout.size(); room_i ++) {
+			int room_row = room_i / 10;
+			int room_col = room_i % 10;
+			if (room_row == 0 && (unblocked_direction.find(1) == unblocked_direction.end())) {
+				room_layout.at(room_i) = 12;
+			} else if (room_row == map_size - 1 && (unblocked_direction.find(3) == unblocked_direction.end())) {
+				room_layout.at(room_i) = 12;
+			} else if (room_col == 0 && (unblocked_direction.find(0) == unblocked_direction.end())) {
+				room_layout.at(room_i) = 12;
+			} else if (room_col == map_size - 1 && (unblocked_direction.find(2) == unblocked_direction.end())) {
+				room_layout.at(room_i) = 12;
+			} else {
+				room_layout.at(room_i) = 0;
+			}
+		}
+		room_layouts.emplace_back(std::move(room_layout));
+		level_mapping.at(cur_row).at(cur_col) = room_layouts.size() - 1;
+
 	}
 }
 
@@ -652,44 +701,49 @@ const std::set<uint8_t>& MapUtility::wall_tiles()
 // Map editor
 void MapGeneratorSystem::regenerate_map()
 {
-	random_eng.seed(generation_seed);
+	// TODO: remove hard-coded value
 	clear_level();
-	generate_levels();
+	room_layouts.resize(num_predefined_rooms);
+	generate_level(0);
 	load_level(0);
 }
 void MapGeneratorSystem::increment_seed()
 {
-	if (generation_seed == UINT_MAX) {
+	LevelGenConf& curr_conf = level_generation_confs.at(current_level);
+	if (curr_conf.generation_seed == UINT_MAX) {
 		return;
 	}
-	generation_seed ++;
-	std::cout << "current seed: " << generation_seed << std::endl;
+	curr_conf.generation_seed++;
+	std::cout << "current seed: " << curr_conf.generation_seed << std::endl;
 	regenerate_map();
 }
 void MapGeneratorSystem::decrement_seed()
 {
-	if (generation_seed == 0) {
+	LevelGenConf& curr_conf = level_generation_confs.at(current_level);
+	if (curr_conf.generation_seed == 0) {
 		return;
 	}
-	generation_seed--;
-	std::cout << "current seed: " << generation_seed << std::endl;
+	curr_conf.generation_seed--;
+	std::cout << "current seed: " << curr_conf.generation_seed << std::endl;
 	regenerate_map();
 }
 void MapGeneratorSystem::increment_path_length() {
-	if (level_path_length == UINT_MAX) {
+	LevelGenConf& curr_conf = level_generation_confs.at(current_level);
+	if (curr_conf.level_path_length == UINT_MAX) {
 		return;
 	}
-	level_path_length++;
-	std::cout << "Current path length: " << level_path_length << std::endl;
+	curr_conf.level_path_length++;
+	std::cout << "Current path length: " << curr_conf.level_path_length << std::endl;
 	regenerate_map();
 }
 void MapGeneratorSystem::decrement_path_length()
 {
-	if (level_path_length == 1) {
+	LevelGenConf& curr_conf = level_generation_confs.at(current_level);
+	if (curr_conf.level_path_length == 1) {
 		return;
 	}
-	level_path_length--;
-	std::cout << "Current path length: " << level_path_length << std::endl;
+	curr_conf.level_path_length--;
+	std::cout << "Current path length: " << curr_conf.level_path_length << std::endl;
 	regenerate_map();
 }
 

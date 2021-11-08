@@ -44,7 +44,11 @@ private:
 
 	////////////////////////////////
 	/// Actual file paths
-	const std::array<std::string, MapUtility::num_rooms> room_paths = {
+	const std::array<std::string, MapUtility::num_predefined_rooms> room_paths = {
+		rooms_layout_path("room_void.csv"), // 0
+	};
+	/*
+	const std::array<std::string, MapUtility::num_predefined_rooms> room_paths = {
 		rooms_layout_path("room_full_opening.csv"), // 0
 		rooms_layout_path("room_bottom_closing.csv"), // 1
 		rooms_layout_path("room_left_closing.csv"), // 2
@@ -63,7 +67,7 @@ private:
 		rooms_layout_path("room_top_opening.csv"), // 15
 		rooms_layout_path("room_vertical.csv"), // 16
 		rooms_layout_path("room_horizontal.csv"), // 17
-	};
+	};*/
 	const std::array<std::string, MapUtility::num_levels> level_paths
 		= { levels_path("help_level.csv"), levels_path("level_one.csv"), levels_path("level_two.csv") };
 	const std::array<std::string, MapUtility::num_levels> room_rotation_paths
@@ -83,15 +87,17 @@ private:
 	void load_level_configurations();
 
 	///////////////////////////////////////////////////////////
-	// Data structures thats saving the information loaded
+	// Data structures that saves the information loaded
 	//
-	// room_layouts define the predefined rooms, index is the room id, that follows the order
-	// in room_paths, each element is a 10*10 array that defines each tile textures in the 10*10 room
+	// room_layouts that contains both predefined rooms and generated rooms,
+	// each element is a 10*10 array that defines each tile textures in the 10*10 room
+	// 
 	// Note: we are saving uint32_t for tile ids, but tile_id is actually 8 bit, this is because opengl
 	// shaders only have 32 bit ints. However, number of tile textures are restricted in 8 bit integer(
 	// since the walkable/wall tiles set are uint8_t and our tile atlas only support 64 tiles),
 	// so it should always be safe to convert from uint32_t to uin8_t
-	std::array<std::array<uint32_t, MapUtility::map_size * MapUtility::map_size>, MapUtility::num_rooms> room_layouts;
+	// Predefined room ids: 0 -- void room
+	std::vector<std::array<uint32_t, MapUtility::map_size * MapUtility::map_size>> room_layouts;
 	// the (procedural) generated levels, each level contains a full map(max 10*10 rooms),
 	// index of the vector will be the map id
 	std::vector<Mapping> levels;
@@ -138,14 +144,18 @@ private:
 	/////////////////////////////////////////
 	// Procedural Generation 
 
-	/* The following values are meant to be editable with the map editor*/
-	// The seed for generating pseudo random numbers, this is a constant so we generate the
-	// same map every time.
-	unsigned int generation_seed = 10;
-	// The number of rooms from start to end on a certain level
-	unsigned int level_path_length = 6;
-
-	/* End of editable values*/
+	// Per-Level generation configuation, used as the metadata for generating a level,
+	// this is meant to be editable and serializable,
+	struct LevelGenConf {
+		// The seed for generating pseudo random numbers, this is a constant so we generate the
+		// same map every time.
+		unsigned int generation_seed = 10;
+		// The number of rooms from start to end on a certain level
+		unsigned int level_path_length = 6;
+	};
+	// the generation configuration for each level
+	std::vector<LevelGenConf> level_generation_confs;
+	
 
 	std::default_random_engine random_eng;
 
@@ -158,7 +168,7 @@ public:
 
 	// Generates the levels, should be called at the beginning of the game,
 	// might want to pass in a seed in the future
-	void generate_levels();
+	void generate_level(int level);
 
 	// Get the current level mapping
 	const Mapping& current_map() const;
