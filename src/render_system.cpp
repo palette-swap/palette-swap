@@ -195,13 +195,28 @@ void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest& render
 	draw_triangles(transform, projection);
 }
 
-void RenderSystem::draw_healthbar(Entity entity, const Stats& stats, const mat3& projection)
+void RenderSystem::draw_ui_element(Entity entity, const UIRenderRequest& ui_render_request, const mat3& projection)
 {
 	Transform transform = get_transform(entity);
-	transform.translate(vec2(2-MapUtility::tile_size / 2, -MapUtility::tile_size / 2));
-	transform.scale(vec2(MapUtility::tile_size - 4, 3));
+	transform.translate(ui_render_request.size
+						* vec2((float)ui_render_request.alignment_x * .5, (float)ui_render_request.alignment_y * .5)
+						* screen_scale);
+	transform.scale(ui_render_request.size * screen_scale);
+	if (ui_render_request.used_effect == EFFECT_ASSET_ID::FANCY_HEALTH) {
+		// Shift according to desired alignment using fancy enum wizardry
+		transform.translate(vec2(-.5f, 0));
+		draw_healthbar(transform,
+					   registry.get<Stats>(registry.view<Player>().front()),
+					   projection,
+					   true,
+					   ui_render_request.size.x / ui_render_request.size.y);
+	}
+}
 
-	const auto program = (GLuint)effects.at((uint8) EFFECT_ASSET_ID::HEALTH);
+void RenderSystem::draw_healthbar(Transform transform, const Stats& stats, const mat3& projection, bool fancy, float ratio = 1.f)
+{
+	const auto program = (fancy) ? (GLuint)effects.at((uint8)EFFECT_ASSET_ID::FANCY_HEALTH)
+								 : (GLuint)effects.at((uint8)EFFECT_ASSET_ID::HEALTH);
 
 	// Setting shaders
 	glUseProgram(program);
@@ -477,8 +492,18 @@ void RenderSystem::draw()
 		}
 	}
 
-	for (auto [entity, stats] : registry.view<Stats>().each()) {
-		draw_healthbar(entity, stats, projection_2d);
+	auto health_group = registry.group<Stats, Enemy>();
+	for (Entity entity : health_group) {
+		Transform transform = get_transform(entity);
+		transform.translate(vec2(2 - MapUtility::tile_size / 2, -MapUtility::tile_size / 2));
+		transform.scale(vec2(MapUtility::tile_size - 4, 3));
+		draw_healthbar(transform, health_group.get<Stats>(entity), projection_2d, false);
+	}
+
+	for (auto [entity, ui_render_request] : registry.view<UIRenderRequest>().each()) {
+		if (ui_render_request.visible) {
+			draw_ui_element(entity, ui_render_request, projection_2d);
+		}
 	}
 
 	for (auto [entity, text] : registry.view<Text>().each()) {
