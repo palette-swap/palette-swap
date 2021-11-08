@@ -20,8 +20,8 @@ class RenderSystem {
 	 * Whenever possible, add to these lists instead of creating dynamic state
 	 * it is easier to debug and faster to execute for the computer.
 	 */
-	std::array<GLuint, texture_count> texture_gl_handles;
-	std::array<ivec2, texture_count> texture_dimensions;
+	std::array<GLuint, texture_count> texture_gl_handles = {};
+	std::array<ivec2, texture_count> texture_dimensions = {};
 
 	// Make sure these paths remain in sync with the associated enumerators.
 	// Associated id with .obj path
@@ -47,7 +47,7 @@ class RenderSystem {
 			textures_path("help.png"),
 			textures_path("End Screen.png")};
 
-	std::array<GLuint, effect_count> effects;
+	std::array<GLuint, effect_count> effects = {};
 	// Make sure these paths remain in sync with the associated enumerators.
 	const std::array<std::string, effect_count> effect_paths = { shader_path("line"),
 																 shader_path("enemy"), 
@@ -69,9 +69,9 @@ class RenderSystem {
 	static constexpr float player_spritesheet_height = 4.f;
 
 	// Static buffers
-	std::array<GLuint, geometry_count> vertex_buffers;
-	std::array<GLuint, geometry_count> index_buffers;
-	std::array<Mesh, geometry_count> meshes;
+	std::array<GLuint, geometry_count> vertex_buffers = {};
+	std::array<GLuint, geometry_count> index_buffers = {};
+	std::array<Mesh, geometry_count> meshes = {};
 
 	// Dynamic text buffers
 	struct TextData {
@@ -79,8 +79,8 @@ class RenderSystem {
 		int texture_width;
 		int texture_height;
 	};
-	std::unordered_map<Text, TextData> text_buffers;
-	std::unordered_map<unsigned int, TTF_Font*> fonts;
+	std::unordered_map<Text, TextData> text_buffers = {};
+	std::unordered_map<unsigned int, TTF_Font*> fonts = {};
 
 	std::shared_ptr<MapGeneratorSystem> map_generator;
 public:
@@ -135,7 +135,7 @@ private:
 
 	////////////////////////////////////////////////////////
 	// Internal drawing functions for each entity type
-	void draw_textured_mesh(Entity entity, const RenderRequest render_request, const mat3& projection);
+	void draw_textured_mesh(Entity entity, const RenderRequest& render_request, const mat3& projection);
 	void draw_healthbar(Entity entity, const Stats& stats, const mat3& projection);
 	void draw_text(Entity entity, const Text& text, const mat3& projection);
 	void draw_line(Entity entity, const Line& line, const mat3& projection);
@@ -143,26 +143,26 @@ private:
 
 	void draw_triangles(const Transform& transform, const mat3& projection);
 	void draw_to_screen();
-	void update_camera_position(WorldPosition& camera_map_pos,
+	void update_camera_position(WorldPosition& camera_world_pos,
 								const vec2& player_pos,
 								const vec2& buffer_top_left,
 								const vec2& buffer_down_right);
 
 	// Window handle
-	GLFWwindow* window;
+	GLFWwindow* window = nullptr;
 
 	// Screen texture handles
-	GLuint frame_buffer;
-	GLuint off_screen_render_buffer_color;
-	GLuint off_screen_render_buffer_depth;
+	GLuint frame_buffer = 0;
+	GLuint off_screen_render_buffer_color = 0;
+	GLuint off_screen_render_buffer_depth = 0;
 
 	Entity screen_state_entity = registry.create();
 	ivec2 screen_size = { window_width_px, window_height_px };
 	ivec2 screen_size_capped = { window_width_px, window_height_px };
-	float screen_scale; // Screen to pixel coordinates scale factor (for apple
-						// retina display?)
 
 	Debug& debugging;
+	float screen_scale = 1; // Screen to pixel coordinates scale factor (for apple
+							// retina display?)
 };
 
 bool load_effect_from_file(const std::string& vs_path, const std::string& fs_path, GLuint& out_program);

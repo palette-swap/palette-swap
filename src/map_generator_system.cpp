@@ -15,7 +15,8 @@
 using namespace MapUtility;
 
 MapGeneratorSystem::MapGeneratorSystem()
-	: levels(num_levels)
+	: room_layouts()
+	, levels(num_levels)
 	, level_room_rotations(num_levels)
 	, level_snap_shots(num_levels)
 	//, random_number_distribution(0, 9)
@@ -32,7 +33,7 @@ MapGeneratorSystem::MapGeneratorSystem()
 
 ////////////////////////////////////
 // Functions to load different entities, e.g. enemy
-static void load_enemy(int enemy_index, const rapidjson::Document& json_doc)
+static void load_enemy(unsigned int enemy_index, const rapidjson::Document& json_doc)
 {
 	auto entity = registry.create();
 	std::string enemy_prefix = "/enemies/" + std::to_string(enemy_index);
@@ -52,7 +53,7 @@ static void load_enemy(int enemy_index, const rapidjson::Document& json_doc)
 	enemy_animation.max_frames = 4;
 
 	registry.emplace<RenderRequest>(entity,
-									enemy_type_textures[static_cast<int>(enemy_component.type)],
+									enemy_type_textures.at(static_cast<int>(enemy_component.type)),
 									  EFFECT_ASSET_ID::ENEMY,
 									GEOMETRY_BUFFER_ID::ENEMY,
 									true);
@@ -197,7 +198,7 @@ bool MapGeneratorSystem::walkable(uvec2 pos) const
 		return false;
 	}
 
-	return walkable_tiles.find(get_tile_id_from_map_pos(pos)) != walkable_tiles.end();
+	return walkable_tiles().find(get_tile_id_from_map_pos(pos)) != walkable_tiles().end();
 }
 
 bool MapGeneratorSystem::walkable_and_free(uvec2 pos) const
@@ -216,7 +217,7 @@ bool MapGeneratorSystem::is_wall(uvec2 pos) const
 		return false;
 	}
 
-	return wall_tiles.find(get_tile_id_from_map_pos(pos)) != wall_tiles.end();
+	return wall_tiles().find(get_tile_id_from_map_pos(pos)) != wall_tiles().end();
 }
 
 std::vector<uvec2> make_path(std::unordered_map<uvec2, uvec2>& parent, uvec2 start_pos, uvec2 target)
@@ -322,7 +323,7 @@ std::vector<uvec2> MapGeneratorSystem::bfs(uvec2 start_pos, uvec2 target) const
 	return std::vector<uvec2>();
 }
 
-TileId MapGeneratorSystem::get_tile_id_from_map_pos(uvec2 pos) const
+TileID MapGeneratorSystem::get_tile_id_from_map_pos(uvec2 pos) const
 {
 	RoomType room_index = current_map().at(pos.y / room_size).at(pos.x / room_size);
 	Direction room_rotation = level_room_rotations.at(current_level).at(pos.y / room_size).at(pos.x / room_size);
@@ -348,7 +349,7 @@ void MapGeneratorSystem::load_rooms_from_csv()
 	}
 }
 
-TileId MapGeneratorSystem::get_tile_id_from_room(RoomType room_type, uint8_t row, uint8_t col, Direction rotation) const
+TileID MapGeneratorSystem::get_tile_id_from_room(RoomType room_type, uint8_t row, uint8_t col, Direction rotation) const
 {
 	switch (rotation) {
 	case Direction::Up:
@@ -370,7 +371,7 @@ TileId MapGeneratorSystem::get_tile_id_from_room(RoomType room_type, uint8_t row
 	default:
 		break;
 	}
-	return room_layouts.at(room_type).at(row * room_size + col);
+	return static_cast<TileID>(room_layouts.at(room_type).at(static_cast<size_t>(row) * room_size + col));
 }
 
 void MapGeneratorSystem::load_levels_from_csv()
@@ -387,7 +388,7 @@ void MapGeneratorSystem::load_levels_from_csv()
 			std::string room_id;
 			std::stringstream ss(line);
 			while (std::getline(ss, room_id, ',')) {
-				level_mapping.at(row).at(col) = std::stoi(room_id);
+				level_mapping.at(row).at(col) = (MapUtility::RoomType) std::stoi(room_id);
 				col++;
 				if (col == room_size) {
 					row++;
@@ -509,7 +510,7 @@ void MapGeneratorSystem::load_level(int level)
 	const rapidjson::Value& enemies = json_doc["enemies"];
 	assert(enemies.IsArray());
 
-	for (auto i = 0; i < enemies.Size(); i++) {
+	for (rapidjson::SizeType i = 0; i < enemies.Size(); i++) {
 		if (!enemies[i].IsNull()) {
 			load_enemy(i, json_doc);
 		}
@@ -578,7 +579,7 @@ void MapGeneratorSystem::load_initial_level()
 }
 
 // Creates a room entity, with room type referencing to the predefined room
-Entity MapGeneratorSystem::create_room(vec2 position, MapUtility::RoomType roomType, float angle) const
+void MapGeneratorSystem::create_room(vec2 position, MapUtility::RoomType roomType, float angle) const
 {
 	auto entity = registry.create();
 
@@ -587,8 +588,6 @@ Entity MapGeneratorSystem::create_room(vec2 position, MapUtility::RoomType roomT
 
 	Room& room = registry.emplace<Room>(entity);
 	room.type = roomType;
-
-	return entity;
 }
 
 void MapGeneratorSystem::create_map(int level) const
@@ -598,11 +597,11 @@ void MapGeneratorSystem::create_map(int level) const
 	const MapGeneratorSystem::Mapping& mapping = levels[level];
 	const auto& room_rotations = level_room_rotations[level];
 	vec2 top_left_corner_pos
-		= middle - vec2(tile_size * room_size * map_size / 2, tile_size * room_size * map_size / 2);
+		= middle - vec2(tile_size * room_size * map_size / 2);
 	for (size_t row = 0; row < mapping.size(); row++) {
 		for (size_t col = 0; col < mapping[0].size(); col++) {
-			vec2 position = top_left_corner_pos + vec2(tile_size * room_size / 2, tile_size * room_size / 2)
-				+ vec2(col * tile_size * room_size, row * tile_size * room_size);
+			vec2 position = top_left_corner_pos + vec2(tile_size * room_size / 2)
+				+ vec2(col, row) * tile_size * static_cast<float>(room_size);
 			create_room(position, mapping.at(row).at(col), direction_to_angle(room_rotations.at(row).at(col)));
 		}
 	}
@@ -610,34 +609,43 @@ void MapGeneratorSystem::create_map(int level) const
 
 uvec2 MapGeneratorSystem::get_player_start_position() const
 {
-	uvec2 pos;
 	rapidjson::Document json_doc;
 	json_doc.Parse(level_snap_shots.at(current_level).c_str());
 
 	const auto* x = rapidjson::GetValueByPointer(json_doc, rapidjson::Pointer("/player/start_position/x"));
-	pos.x = x->GetInt();
 	const auto* y = rapidjson::GetValueByPointer(json_doc, rapidjson::Pointer("/player/start_position/y"));
-	pos.y = y->GetInt();
-	return pos;
+
+	return { x->GetInt(), y->GetInt() };
 }
 
 uvec2 MapGeneratorSystem::get_player_end_position() const
 {
-	uvec2 pos;
 	rapidjson::Document json_doc;
 	json_doc.Parse(level_snap_shots.at(current_level).c_str());
 
 	const auto* x = rapidjson::GetValueByPointer(json_doc, rapidjson::Pointer("/player/end_position/x"));
-	pos.x = x->GetInt();
 	const auto* y = rapidjson::GetValueByPointer(json_doc, rapidjson::Pointer("/player/end_position/y"));
-	pos.y = y->GetInt();
-	return pos;
+
+	return { x->GetInt(), y->GetInt() };
 }
 
 const std::array<uint32_t, MapUtility::map_size * MapUtility::map_size>&
 MapGeneratorSystem::get_room_layout(MapUtility::RoomType type) const
 {
 	return room_layouts.at(type);
+}
+
+const std::set<uint8_t>& MapUtility::walkable_tiles()
+{
+	const static std::set<uint8_t> walkable_tiles({ 0, 14, 20 });
+	return walkable_tiles;
+}
+
+const std::set<uint8_t>& MapUtility::wall_tiles()
+{
+	const static std::set<uint8_t> wall_tiles(
+		{ 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 15, 17, 18, 19, 23, 25, 26, 27, 33, 35, 41, 42, 43 });
+	return wall_tiles;
 }
 
 /////////////////////
@@ -684,3 +692,4 @@ void MapGeneratorSystem::decrement_path_length()
 	std::cout << "Current path length: " << level_path_length << std::endl;
 	regenerate_map();
 }
+

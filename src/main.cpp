@@ -21,6 +21,10 @@ using Clock = std::chrono::high_resolution_clock;
 // Entry point
 int main()
 {
+	// Audio core
+	std::shared_ptr<SoLoud::Soloud> so_loud = std::make_shared<SoLoud::Soloud>();
+	so_loud->init();
+
 	// Combat System
 	std::shared_ptr<CombatSystem> combat = std::make_shared<CombatSystem>();
 
@@ -35,10 +39,10 @@ int main()
 
 	// Global systems
 	Debug debugging;
-	WorldSystem world(debugging, combat, map, turns, animations);
+	WorldSystem world(debugging, combat, map, turns, animations, so_loud);
 	RenderSystem renderer(debugging);
 	PhysicsSystem physics(debugging, map);
-	AISystem ai(debugging, combat, map, turns, animations);
+	AISystem ai(debugging, combat, map, turns, animations, so_loud);
 
 	// Initializing window
 	GLFWwindow* window = world.create_window(window_width_px, window_height_px);
@@ -50,7 +54,6 @@ int main()
 	}
 
 	// initialize the main systems
-	so_loud.init();
 	renderer.init(window_width_px, window_height_px, window, map);
 	world.init(&renderer);
 	animations->init();
@@ -75,8 +78,6 @@ int main()
 		renderer.draw();
 		turns->step();
 	}
-	// Destroy music components
-	so_loud.deinit();
 
 	return EXIT_SUCCESS;
 }

@@ -2,10 +2,10 @@
 
 #include <sstream>
 
-void CombatSystem::init(std::shared_ptr<std::default_random_engine> rng, std::shared_ptr<AnimationSystem> animations)
+void CombatSystem::init(std::shared_ptr<std::default_random_engine> global_rng, std::shared_ptr<AnimationSystem> animation_system)
 {
-	this->rng = std::move(rng);
-	this->animations = std::move(animations);
+	this->rng = std::move(global_rng);
+	this->animations = std::move(animation_system);
 }
 
 bool CombatSystem::do_attack(Entity attacker_entity, Attack& attack, Entity target_entity)

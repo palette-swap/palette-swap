@@ -59,7 +59,7 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 	stats.base_attack.damage_max = 15;
 
 	// Maps position of enemy to actual position (for reference)
-	vec2 actual_position = MapUtility::map_position_to_world_position(map_pos);
+	// vec2 actual_position = MapUtility::map_position_to_world_position(map_pos);
 
 	// Indicates enemy is hittable by objects
 	registry.emplace<Hittable>(entity);
@@ -108,7 +108,7 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 	}
 
 	registry.emplace<RenderRequest>(
-		entity, enemy_type_textures[static_cast<int>(type)], EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY, true);
+		entity, enemy_type_textures.at(static_cast<int>(type)), EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY, true);
 	if (team == ColorState::Red) {
 		registry.emplace<Color>(entity, AnimationUtility::default_enemy_red);
 	} else if (team == ColorState::Blue) {
@@ -188,7 +188,7 @@ Entity create_team()
 	return entity;
 }
 
-Entity create_item(const std::string& name, SlotList<bool> allowed_slots)
+Entity create_item(const std::string& name, const SlotList<bool>& allowed_slots)
 {
 	Entity entity = registry.create();
 	registry.emplace<Item>(entity, name, 0.f, 0, allowed_slots);

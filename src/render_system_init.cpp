@@ -36,7 +36,6 @@ bool RenderSystem::init(
 	// For some high DPI displays (ex. Retina Display on Macbooks)
 	// https://stackoverflow.com/questions/36672935/why-retina-screen-coordinate-value-is-twice-the-value-of-pixel-value
 	screen_scale = static_cast<float>(window_width_px) / static_cast<float>(width) * window_default_scale;
-	(int)height; // dummy to avoid warning
 
 	// ASK(Camilo): Setup error callback. This can not be done in mac os, so do not enable
 	// it unless you are on Linux or Windows. You will need to change the window creation
@@ -45,7 +44,7 @@ bool RenderSystem::init(
 
 	// We are not really using VAO's but without at least one bound we will crash in
 	// some systems.
-	GLuint vao;
+	GLuint vao = 0;
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 	gl_has_errors();
@@ -69,7 +68,7 @@ void RenderSystem::initialize_gl_textures()
 		const std::string& path = texture_paths.at(i);
 		ivec2& dimensions = texture_dimensions.at(i);
 
-		stbi_uc* data;
+		stbi_uc* data = nullptr;
 		data = stbi_load(path.c_str(), &dimensions.x, &dimensions.y, nullptr, 4);
 
 		if (data == nullptr) {
@@ -111,7 +110,8 @@ template <class T> void RenderSystem::bind_vbo_and_ibo(uint gid, std::vector<T> 
 	gl_has_errors();
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffers.at((uint)gid));
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices[0]) * indices.size(), indices.data(), GL_STATIC_DRAW);
+	glBufferData(
+		GL_ELEMENT_ARRAY_BUFFER, static_cast<int>(sizeof(indices[0]) * indices.size()), indices.data(), GL_STATIC_DRAW);
 	gl_has_errors();
 }
 
@@ -155,6 +155,17 @@ void RenderSystem::initialize_gl_geometry_buffers()
 	// Counterclockwise as it's the default opengl front winding direction.
 	const std::vector<uint16_t> textured_indices = { 0, 3, 1, 1, 3, 2 };
 	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::SPRITE, textured_vertices, textured_indices);
+
+	////////////////////////////
+	// Initialize TileMap
+	const int total_vertices = MapUtility::room_size * MapUtility::room_size * 2 * 3;
+	std::vector<int> tilemap_vertices(total_vertices);
+	std::vector<uint16_t> tilemap_indices(total_vertices);
+	for (int i = 0; i < total_vertices; i++) {
+		tilemap_vertices[i] = i;
+		tilemap_indices[i] = static_cast<uint16_t>(i);
+		bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::ROOM, tilemap_vertices, tilemap_indices);
+	}
 
 	//////////////////////////
 	// TODO: Consolidate all animated sprites (quads) into a single type
@@ -229,7 +240,7 @@ void RenderSystem::initialize_gl_geometry_buffers()
 	constexpr int num_triangles = 62;
 
 	for (int i = 0; i < num_triangles; i++) {
-		const float t = float(i) * M_PI * 2.f / float(num_triangles - 1);
+		const float t = float(i) * glm::pi<float>() * 2.f / float(num_triangles - 1);
 		pebble_vertices.push_back({});
 		pebble_vertices.back().position = { 0.5 * cos(t), 0.5 * sin(t), z };
 		pebble_vertices.back().color = { 0.8, 0.8, 0.8 };
@@ -282,33 +293,37 @@ void RenderSystem::initialize_gl_geometry_buffers()
 
 RenderSystem::~RenderSystem()
 {
-	// Don't need to free gl resources since they last for as long as the program,
-	// but it's polite to clean after yourself.
-	glDeleteBuffers((GLsizei)vertex_buffers.size(), vertex_buffers.data());
-	glDeleteBuffers((GLsizei)index_buffers.size(), index_buffers.data());
-	glDeleteTextures((GLsizei)texture_gl_handles.size(), texture_gl_handles.data());
-	glDeleteTextures(1, &off_screen_render_buffer_color);
-	glDeleteRenderbuffers(1, &off_screen_render_buffer_depth);
-	gl_has_errors();
+	try {
+		// Don't need to free gl resources since they last for as long as the program,
+		// but it's polite to clean after yourself.
+		glDeleteBuffers((GLsizei)vertex_buffers.size(), vertex_buffers.data());
+		glDeleteBuffers((GLsizei)index_buffers.size(), index_buffers.data());
+		glDeleteTextures((GLsizei)texture_gl_handles.size(), texture_gl_handles.data());
+		glDeleteTextures(1, &off_screen_render_buffer_color);
+		glDeleteRenderbuffers(1, &off_screen_render_buffer_depth);
+		gl_has_errors();
 
-	for (const auto effect : effects) {
-		glDeleteProgram(effect);
-	}
-	// delete allocated resources
-	glDeleteFramebuffers(1, &frame_buffer);
-	gl_has_errors();
+		for (const auto effect : effects) {
+			glDeleteProgram(effect);
+		}
+		// delete allocated resources
+		glDeleteFramebuffers(1, &frame_buffer);
+		gl_has_errors();
 
-	// Delete text-related resources
-	for (auto& text_data : text_buffers) {
-		glDeleteTextures(1, &text_data.second.texture);
-	}
-	for (auto& font : fonts) {
-		TTF_CloseFont(font.second);
-	}
+		// Delete text-related resources
+		for (auto& text_data : text_buffers) {
+			glDeleteTextures(1, &text_data.second.texture);
+		}
+		for (auto& font : fonts) {
+			TTF_CloseFont(font.second);
+		}
 
-	// remove all entities created by the render system
-	auto view = registry.view<RenderRequest>();
-	registry.destroy(view.begin(), view.end());
+		// remove all entities created by the render system
+		auto view = registry.view<RenderRequest>();
+		registry.destroy(view.begin(), view.end());
+	} catch (...) {
+		/* Destructors really shouldn't throw anything */
+	}
 }
 
 // Initialize the screen texture from a standard sprite
@@ -342,7 +357,7 @@ bool gl_compile_shader(GLuint shader)
 	GLint success = 0;
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 	if (success == GL_FALSE) {
-		GLint log_len;
+		GLint log_len = 0;
 		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &log_len);
 		std::vector<char> log(log_len);
 		glGetShaderInfoLog(shader, log_len, &log_len, log.data());
@@ -408,7 +423,7 @@ bool load_effect_from_file(const std::string& vs_path, const std::string& fs_pat
 		GLint is_linked = GL_FALSE;
 		glGetProgramiv(out_program, GL_LINK_STATUS, &is_linked);
 		if (is_linked == GL_FALSE) {
-			GLint log_len;
+			GLint log_len = 0;
 			glGetProgramiv(out_program, GL_INFO_LOG_LENGTH, &log_len);
 			std::vector<char> log(log_len);
 			glGetProgramInfoLog(out_program, log_len, &log_len, log.data());

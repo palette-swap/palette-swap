@@ -10,11 +10,6 @@
 
 #include "rapidjson/pointer.h"
 
-std::unordered_map<EnemyType, char*> enemy_type_to_string({ { EnemyType::Slime, "Slime" },
-															{ EnemyType::Raven, "Raven" },
-															{ EnemyType::Armor, "Armor" },
-															{ EnemyType::TreeAnt, "TreeAnt" } });
-
 // Very, VERY simple OBJ loader from https://github.com/opengl-tutorials/ogl tutorial 7
 // (modified to also read vertex color and omit uv and normals)
 bool Mesh::load_from_obj_file(const std::string& obj_path,
@@ -227,4 +222,17 @@ void Stats::deserialize(const std::string& prefix, const rapidjson::Document& js
 
 bool operator==(const Text& t1, const Text& t2) {
 	return t1.text == t2.text && t1.font_size == t2.font_size;
+}
+
+void Collision::add(Entity parent, Entity child)
+{
+	Collision* collision = registry.try_get<Collision>(parent);
+	if (collision == nullptr) {
+		collision = &(registry.emplace<Collision>(parent, registry.create()));
+		registry.emplace<Child>(collision->children, parent, entt::null, child);
+	} else {
+		Entity new_collision = registry.create();
+		registry.emplace<Child>(new_collision, parent, collision->children, child);
+		collision->children = new_collision;
+	}
 }
