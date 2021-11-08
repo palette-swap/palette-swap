@@ -252,6 +252,11 @@ void RenderSystem::draw_healthbar(Transform transform, const Stats& stats, const
 	GLint health_loc = glGetUniformLocation(program, "health");
 	glUniform1f(health_loc, max(static_cast<float>(stats.health), 0.f) / static_cast<float>(stats.health_max));
 
+	if (fancy) {
+		GLint xy_ratio_loc = glGetUniformLocation(program, "xy_ratio");
+		glUniform1f(xy_ratio_loc, ratio);
+	}
+
 	draw_triangles(transform, projection);
 }
 
