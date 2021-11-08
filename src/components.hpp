@@ -2,16 +2,13 @@
 #include "../ext/stb_image/stb_image.h"
 #include "common.hpp"
 
-#include "map_utility.hpp"
-
 #include <array>
 #include <map>
 #include <unordered_map>
 
 #include "../ext/stb_image/stb_image.h"
 #include "rapidjson/document.h"
-
-#include "map_generator_system.hpp"
+#include "rapidjson/rapidjson.h"
 
 // Player component
 struct Player {
@@ -459,6 +456,11 @@ struct MapPosition {
 
 	void serialize(const std::string& prefix, rapidjson::Document& json) const;
 	void deserialize(const std::string& prefix, const rapidjson::Document& json);
+};
+
+struct MapSize {
+	uvec2 area;
+	uvec2 center;
 };
 
 // Represents the screen position,

@@ -104,9 +104,22 @@ bool MapGeneratorSystem::walkable_and_free(uvec2 pos) const
 	if (!walkable(pos)) {
 		return false;
 	}
-	return !std::any_of(registry.view<MapPosition>().begin(),
-						registry.view<MapPosition>().end(),
-						[pos](const Entity e) { return registry.get<MapPosition>(e).position == pos; });
+
+	for (auto [entity, map_pos] : registry.view<MapPosition>().each()) {
+		if (map_pos.position == pos) {
+			return false;
+		}
+	}
+
+	for (auto [entity, map_pos, map_size] : registry.group<MapPosition, MapSize>().each()) {
+		for (uvec2 area_pos: MapArea(map_pos, map_size)) {
+			if (area_pos == pos) {
+				return false;
+			}
+		}
+	}
+
+	return true;
 }
 
 bool MapGeneratorSystem::is_wall(uvec2 pos) const
