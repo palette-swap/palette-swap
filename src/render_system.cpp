@@ -198,18 +198,15 @@ void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest& render
 void RenderSystem::draw_ui_element(Entity entity, const UIRenderRequest& ui_render_request, const mat3& projection)
 {
 	Transform transform = get_transform(entity);
-	transform.translate(ui_render_request.size
-						* vec2((float)ui_render_request.alignment_x * .5, (float)ui_render_request.alignment_y * .5)
-						* screen_scale);
-	transform.scale(ui_render_request.size * screen_scale);
+	transform.scale(ui_render_request.size * screen_scale * vec2(window_width_px, window_height_px));
+	transform.translate(vec2((float)ui_render_request.alignment_x * .5, (float)ui_render_request.alignment_y * .5));
 	if (ui_render_request.used_effect == EFFECT_ASSET_ID::FANCY_HEALTH) {
-		// Shift according to desired alignment using fancy enum wizardry
 		transform.translate(vec2(-.5f, 0));
 		draw_healthbar(transform,
 					   registry.get<Stats>(registry.view<Player>().front()),
 					   projection,
 					   true,
-					   ui_render_request.size.x / ui_render_request.size.y);
+					   ui_render_request.size.x / ui_render_request.size.y * 2.f);
 	} else if (ui_render_request.used_effect == EFFECT_ASSET_ID::RECTANGLE) {
 		draw_rectangle(entity, transform, ui_render_request.size * vec2(window_width_px, window_height_px), projection);
 	}
