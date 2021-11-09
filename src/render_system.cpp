@@ -210,6 +210,8 @@ void RenderSystem::draw_ui_element(Entity entity, const UIRenderRequest& ui_rend
 					   projection,
 					   true,
 					   ui_render_request.size.x / ui_render_request.size.y);
+	} else if (ui_render_request.used_effect == EFFECT_ASSET_ID::RECTANGLE) {
+		draw_rectangle(entity, transform, ui_render_request.size * vec2(window_width_px, window_height_px), projection);
 	}
 }
 
@@ -255,6 +257,59 @@ void RenderSystem::draw_healthbar(Transform transform, const Stats& stats, const
 	if (fancy) {
 		GLint xy_ratio_loc = glGetUniformLocation(program, "xy_ratio");
 		glUniform1f(xy_ratio_loc, ratio);
+	}
+
+	draw_triangles(transform, projection);
+}
+
+void RenderSystem::draw_rectangle(Entity entity, Transform transform, vec2 scale, const mat3& projection)
+{
+	const auto program = (GLuint)effects.at((uint8)EFFECT_ASSET_ID::RECTANGLE);
+
+	// Setting shaders
+	glUseProgram(program);
+	gl_has_errors();
+
+	const GLuint vbo = vertex_buffers.at((int)GEOMETRY_BUFFER_ID::LINE);
+	const GLuint ibo = index_buffers.at((int)GEOMETRY_BUFFER_ID::LINE);
+
+	// Setting vertex and index buffers
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+	gl_has_errors();
+
+	GLint in_position_loc = glGetAttribLocation(program, "in_position");
+	gl_has_errors();
+
+	GLint in_color_loc = glGetAttribLocation(program, "in_color");
+	gl_has_errors();
+
+	glEnableVertexAttribArray(in_position_loc);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), nullptr);
+	gl_has_errors();
+
+	glEnableVertexAttribArray(in_color_loc);
+	glVertexAttribPointer(
+		in_color_loc,
+		3,
+		GL_FLOAT,
+		GL_FALSE,
+		sizeof(ColoredVertex),
+		(void*)sizeof(vec3)); // NOLINT(performance-no-int-to-ptr,cppcoreguidelines-pro-type-cstyle-cast)
+	gl_has_errors();
+
+	GLint scale_loc = glGetUniformLocation(program, "scale");
+	glUniform2f(scale_loc, scale.x, scale.y);
+
+	GLint thickness_loc = glGetUniformLocation(program, "thickness");
+	glUniform1f(thickness_loc, 6);
+
+	// Setup coloring
+	if (registry.any_of<Color>(entity)) {
+		GLint color_uloc = glGetUniformLocation(program, "fcolor");
+		const vec3 color = registry.get<Color>(entity).color;
+		glUniform3fv(color_uloc, 1, glm::value_ptr(color));
+		gl_has_errors();
 	}
 
 	draw_triangles(transform, projection);

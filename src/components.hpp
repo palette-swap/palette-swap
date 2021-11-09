@@ -137,7 +137,8 @@ static constexpr std::array<vec2, texture_count> scaling_factors = {
 
 enum class EFFECT_ASSET_ID {
 	LINE = 0,
-	ENEMY = LINE + 1,
+	RECTANGLE = LINE + 1,
+	ENEMY = RECTANGLE + 1,
 	PLAYER = ENEMY + 1,
 	HEALTH = PLAYER + 1,
 	FANCY_HEALTH = HEALTH + 1,
