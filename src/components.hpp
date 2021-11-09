@@ -540,6 +540,11 @@ struct UIGroup {
 	static void add(Entity group, Entity element, UIRenderRequest ui_render_request);
 };
 
+struct InventorySlot {
+	Entity owner;
+	size_t slot;
+};
+
 struct Line {
 	vec2 scale;
 	float angle;
