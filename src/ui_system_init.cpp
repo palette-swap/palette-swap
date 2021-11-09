@@ -6,6 +6,9 @@ void UISystem::restart_game()
 	Entity player = registry.view<Player>().front();
 
 	Entity game_hud = create_ui_group(true);
+	// Player Health Bar
+
+	create_fancy_healthbar(game_hud);
 
 	// Inventory
 	inventory_group = create_ui_group(false);

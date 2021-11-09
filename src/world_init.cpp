@@ -119,7 +119,6 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 		registry.emplace<Color>(entity, vec3(1, 1, 1));
 	}
 
-
 	Animation& enemy_animation = registry.emplace<Animation>(entity);
 	enemy_animation.max_frames = 4;
 
@@ -213,5 +212,41 @@ Entity create_ui_group(bool visible)
 {
 	Entity entity = registry.create();
 	registry.emplace<UIGroup>(entity, visible);
+	return entity;
+}
+
+Entity create_fancy_healthbar(Entity ui_group)
+{
+	Entity entity = registry.create();
+	registry.emplace<ScreenPosition>(entity, vec2(.02f, .02f));
+	UIRenderRequest& ui_render_request = registry.emplace<UIRenderRequest>(entity,
+																		   TEXTURE_ASSET_ID::TEXTURE_COUNT,
+																		   EFFECT_ASSET_ID::FANCY_HEALTH,
+																		   GEOMETRY_BUFFER_ID::FANCY_HEALTH,
+																		   vec2(.25f, .0625f),
+																		   0.f,
+																		   Alignment::Start,
+																		   Alignment::Start,
+																		   ui_group,
+																		   true);
+	UIGroup::add(ui_group, entity, ui_render_request);
+	return entity;
+}
+
+Entity create_ui_rectangle(Entity ui_group, vec2 pos, vec2 size)
+{
+	Entity entity = registry.create();
+	registry.emplace<ScreenPosition>(entity, pos);
+	registry.emplace<Color>(entity, vec3(1, 1, 1));
+	registry.emplace<UIRenderRequest>(entity,
+									  TEXTURE_ASSET_ID::TEXTURE_COUNT,
+									  EFFECT_ASSET_ID::RECTANGLE,
+									  GEOMETRY_BUFFER_ID::LINE,
+									  size,
+									  0.f,
+									  Alignment::Center,
+									  Alignment::Center,
+									  ui_group,
+									  true);
 	return entity;
 }
