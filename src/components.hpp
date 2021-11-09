@@ -513,7 +513,6 @@ struct UIRenderRequest {
 		, angle(angle)
 		, alignment_x(Alignment::Center)
 		, alignment_y(Alignment::Center)
-		, visible(true)
 	{
 		if (used_effect == EFFECT_ASSET_ID::LINE) {
 			used_geometry = GEOMETRY_BUFFER_ID::LINE;

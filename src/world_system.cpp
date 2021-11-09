@@ -137,7 +137,6 @@ void WorldSystem::init(RenderSystem* renderer_arg)
 
 	// Set all states to default
 	restart_game();
-	ui->restart_game();
 }
 
 // Update our game world
@@ -248,6 +247,9 @@ void WorldSystem::restart_game()
 	registry.get<RenderRequest>(player_arrow).visible
 		= registry.get<Weapon>(current_weapon).given_attacks.at(current_attack).targeting_type
 		== TargetingType::Projectile;
+
+	// Restart the UISystem
+	ui->restart_game();
 }
 
 // Compute collisions between entities
