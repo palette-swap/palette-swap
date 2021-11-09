@@ -1,6 +1,5 @@
 #include "world_init.hpp"
 
-
 Entity create_player(uvec2 pos)
 {
 	auto entity = registry.create();
@@ -15,13 +14,13 @@ Entity create_player(uvec2 pos)
 	// Setup Casting
 	Attack arcane_orb = { "Arcane Orb", 10, 10, 5, 10, DamageType::Magical, TargetingType::Projectile };
 	Attack fireball = { "Fireball", -3, 10, 10, 20, DamageType::Fire, TargetingType::Projectile };
-	inventory.inventory.emplace("Spellbook", create_weapon("Spellbook", std::vector<Attack>({ arcane_orb, fireball })));
+	inventory.inventory.push_back(create_weapon("Spellbook", std::vector<Attack>({ arcane_orb, fireball })));
 
 	// Setup Sword
 	Attack sword_light = { "Light", 4, 18, 12, 22, DamageType::Physical, TargetingType::Adjacent };
 	Attack sword_heavy = { "Heavy", 1, 14, 20, 30, DamageType::Physical, TargetingType::Adjacent };
 	Entity sword = create_weapon("Sword", std::vector<Attack>({ sword_light, sword_heavy }));
-	inventory.inventory.emplace("Sword", sword);
+	inventory.inventory.push_back(sword);
 
 	inventory.equipped.at(static_cast<uint8>(Slot::PrimaryHand)) = sword;
 
@@ -34,7 +33,7 @@ Entity create_player(uvec2 pos)
 	player_animation.speed_adjustment = 1.5;
 
 	registry.emplace<Color>(entity, vec3(1, 1, 1));
-	
+
 	return entity;
 }
 
@@ -82,7 +81,7 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 	case EnemyType::Raven:
 		enemy.radius = 6;
 		enemy.speed = 2;
-		enemy.attack_range = 1 ;
+		enemy.attack_range = 1;
 		break;
 
 	case EnemyType::Armor:
@@ -107,8 +106,11 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 		throw std::runtime_error("Invalid enemy type.");
 	}
 
-	registry.emplace<RenderRequest>(
-		entity, enemy_type_textures.at(static_cast<int>(type)), EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY, true);
+	registry.emplace<RenderRequest>(entity,
+									enemy_type_textures.at(static_cast<int>(type)),
+									EFFECT_ASSET_ID::ENEMY,
+									GEOMETRY_BUFFER_ID::ENEMY,
+									true);
 	if (team == ColorState::Red) {
 		registry.emplace<Color>(entity, AnimationUtility::default_enemy_red);
 	} else if (team == ColorState::Blue) {
@@ -176,7 +178,7 @@ Entity create_camera(uvec2 pos)
 
 	// Setting initial position for camera
 	registry.emplace<Camera>(entity);
-	
+
 	registry.emplace<WorldPosition>(entity, MapUtility::map_position_to_world_position(pos));
 
 	return entity;

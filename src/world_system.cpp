@@ -477,12 +477,12 @@ void WorldSystem::equip_next_weapon()
 	}
 	Inventory& inventory = registry.get<Inventory>(player);
 	Entity& curr = inventory.equipped[static_cast<uint8>(Slot::PrimaryHand)];
-	auto next = inventory.inventory.upper_bound(registry.get<Item>(curr).name);
+	auto& next = ++std::find(inventory.inventory.begin(), inventory.inventory.end(), curr);
 	if (next == inventory.inventory.end()) {
 		next = inventory.inventory.begin();
 	}
-	while (next->second != curr) {
-		if (registry.get<Item>(next->second).allowed_slots[static_cast<uint8>(Slot::PrimaryHand)]) {
+	while (*next != curr) {
+		if (registry.get<Item>(*next).allowed_slots[static_cast<uint8>(Slot::PrimaryHand)]) {
 			break;
 		}
 		if (next == inventory.inventory.end()) {
@@ -491,8 +491,8 @@ void WorldSystem::equip_next_weapon()
 			next++;
 		}
 	};
-	if (curr != next->second && turns->execute_team_action(player)) {
-		curr = next->second;
+	if (curr != *next && turns->execute_team_action(player)) {
+		curr = *next;
 		current_weapon = curr;
 		current_attack = 0;
 		registry.get<RenderRequest>(player_arrow).visible

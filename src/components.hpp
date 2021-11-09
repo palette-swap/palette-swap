@@ -409,7 +409,8 @@ enum class Slot {
 template <typename T> using SlotList = std::array<T, static_cast<size_t>(Slot::Count)>;
 
 struct Inventory {
-	std::map<std::string, Entity> inventory;
+	size_t inventory_size = 12;
+	std::vector<Entity> inventory;
 	SlotList<Entity> equipped;
 	Inventory(): equipped() { equipped.fill(entt::null); }
 };
