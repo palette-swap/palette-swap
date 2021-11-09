@@ -208,3 +208,10 @@ Entity create_weapon(const std::string& name, std::vector<Attack> attacks)
 	registry.emplace<Weapon>(entity, std::move(attacks));
 	return entity;
 }
+
+Entity create_ui_group(bool visible)
+{
+	Entity entity = registry.create();
+	registry.emplace<UIGroup>(entity, visible);
+	return entity;
+}

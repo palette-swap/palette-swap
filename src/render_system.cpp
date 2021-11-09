@@ -558,7 +558,7 @@ void RenderSystem::draw()
 	}
 
 	for (auto [entity, ui_render_request] : registry.view<UIRenderRequest>().each()) {
-		if (ui_render_request.visible) {
+		if (registry.get<UIGroup>(ui_render_request.group).visible && ui_render_request.visible) {
 			draw_ui_element(entity, ui_render_request, projection_2d);
 		}
 	}
