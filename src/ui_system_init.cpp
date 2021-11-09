@@ -19,4 +19,8 @@ void UISystem::restart_game()
 	for (size_t i = 0; i < inventory.inventory_size; i++) {
 		create_inventory_slot(inventory_group, i, player, large_count, small_count);
 	}
+	static const auto num_slots = (size_t) Slot::Count;
+	for (size_t i = 0; i < num_slots; i++) {
+		create_equip_slot(inventory_group, (Slot)i, player, 1, num_slots);
+	}
 }

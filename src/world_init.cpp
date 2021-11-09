@@ -251,12 +251,28 @@ Entity create_ui_rectangle(Entity ui_group, vec2 pos, vec2 size)
 	return entity;
 }
 
-Entity create_inventory_slot(
-	Entity ui_group, size_t slot, Entity inventory, float width, float height, Geometry::Rectangle area)
+Entity create_grid_rectangle(
+	Entity ui_group, size_t slot, Entity inventory, float width, float height, const Geometry::Rectangle& area)
 {
+	assert(width > 0 && height > 0);
 	vec2 pos = area.top_left() + vec2(static_cast<float>((slot % static_cast<size_t>(width)) + 1) / (width + 1),
 					(floorf(static_cast<float>(slot) / width) + 1) / (height + 1)) * area.size;
 	Entity entity = create_ui_rectangle(ui_group, pos, area.size * vec2(.75f / (width + 1), .75f / (height + 1)));
+	return entity;
+}
+
+Entity create_inventory_slot(
+	Entity ui_group, size_t slot, Entity inventory, float width, float height, const Geometry::Rectangle& area)
+{
+	Entity entity = create_grid_rectangle(ui_group, slot, inventory, width, height, area);
 	registry.emplace<InventorySlot>(entity, inventory, slot);
+	return entity;
+}
+
+Entity create_equip_slot(
+	Entity ui_group, Slot slot, Entity inventory, float width, float height, const Geometry::Rectangle& area)
+{
+	Entity entity = create_grid_rectangle(ui_group, (size_t)slot, inventory, width, height, area);
+	registry.emplace<EquipSlot>(entity, inventory, slot);
 	return entity;
 }

@@ -545,6 +545,11 @@ struct InventorySlot {
 	size_t slot;
 };
 
+struct EquipSlot {
+	Entity owner;
+	Slot slot;
+};
+
 struct Line {
 	vec2 scale;
 	float angle;
