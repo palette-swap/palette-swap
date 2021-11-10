@@ -106,13 +106,17 @@ struct PlayerVertex {
 
 enum class TEXTURE_ASSET_ID : uint8_t {
 	PALADIN = 0,
-	SLIME = PALADIN + 1,
+	DUMMY = PALADIN + 1,
+	SLIME = DUMMY + 1,
 	ARMOR = SLIME + 1,
 	TREEANT = ARMOR + 1,
 	RAVEN = TREEANT + 1,
 	WRAITH = RAVEN + 1,
 	DRAKE = WRAITH + 1,
-	CANNONBALL = DRAKE + 1,
+	MUSHROOM = DRAKE + 1,
+	SPIDER = MUSHROOM + 1,
+	CLONE = SPIDER + 1,
+	CANNONBALL = CLONE + 1,
 	TILE_SET = CANNONBALL + 1,
 	HELP_PIC = TILE_SET + 1,
 	END_PIC = HELP_PIC + 1,
@@ -123,6 +127,10 @@ const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 // Define the scaling factors needed for each textures
 // Note: This needs to stay the same order as TEXTURE_ASSET_ID and texture_paths
 static constexpr std::array<vec2, texture_count> scaling_factors = {
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
@@ -216,12 +224,25 @@ enum class ColorState { None = 0, Red = 1, Blue = 2, All = Blue + 1 };
 // TreeAnt (Super Saiyan): normal stats; long attack range; power up attack range and damage when HP is low.
 // Wraith (invisible ghost): weak stats; shortest radius; a variance of Raven but invisible until active.
 enum class EnemyType {
-	Slime = 0,
+	TrainingDummy = 0,
+	Slime = TrainingDummy + 1,
 	Raven = Slime + 1,
 	Armor = Raven + 1,
 	TreeAnt = Armor + 1,
 	Wraith = TreeAnt + 1,
-	EnemyCount = Wraith + 1
+	Drake = Wraith + 1,
+	Mushroom = Drake + 1,
+	Spider = Mushroom + 1,
+	Clone = Spider + 1,
+	EnemyCount = Clone + 1
+};
+
+enum class EnemyBehaviour { 
+	Basic = 0,
+	Cowardly = Basic + 1,
+	Defensive = Cowardly + 1,
+	Aggressive = Defensive + 1,
+	EnemyBehaviourCount = Aggressive + 1,
 };
 
 const std::array<const char*, (size_t)EnemyType::EnemyCount> enemy_type_to_string = {
@@ -253,11 +274,25 @@ const std::array<int, (size_t)EnemyState::EnemyStateCount> enemy_state_to_animat
 	2, // Immortal
 };
 
+const std::array<EnemyBehaviour, (size_t)EnemyType::EnemyCount> enemy_type_to_behaviour = {
+	EnemyBehaviour::Basic, 
+	EnemyBehaviour::Cowardly,
+	EnemyBehaviour::Basic,
+	EnemyBehaviour::Defensive,
+	EnemyBehaviour::Aggressive, 
+	EnemyBehaviour::Basic,	   
+	EnemyBehaviour::Basic, 
+	EnemyBehaviour::Cowardly,
+	EnemyBehaviour::Aggressive, 
+	EnemyBehaviour::Defensive
+};
+
 // Structure to store enemy information.
 struct Enemy {
 	// Default is a slime.
 	ColorState team = ColorState::Red;
 	EnemyType type = EnemyType::Slime;
+	EnemyBehaviour behaviour = EnemyBehaviour::Basic;
 	EnemyState state = EnemyState::Idle;
 	uvec2 nest_map_pos = { 0, 0 };
 
@@ -276,11 +311,16 @@ struct Enemy {
 // Remember to add a mapping to a new texture (or use a default such as a slime)
 // This will help load the animation by enemy type when you load enemies
 const std::array<TEXTURE_ASSET_ID, static_cast<int>(EnemyType::EnemyCount)> enemy_type_textures {
+	TEXTURE_ASSET_ID::DUMMY,
 	TEXTURE_ASSET_ID::SLIME,
 	TEXTURE_ASSET_ID::RAVEN,
 	TEXTURE_ASSET_ID::ARMOR,
 	TEXTURE_ASSET_ID::TREEANT,
-	TEXTURE_ASSET_ID::WRAITH
+	TEXTURE_ASSET_ID::WRAITH, 
+	TEXTURE_ASSET_ID::DRAKE,
+	TEXTURE_ASSET_ID::MUSHROOM,
+	TEXTURE_ASSET_ID::SPIDER,
+	TEXTURE_ASSET_ID::CLONE,
 };
 
 struct RenderRequest {

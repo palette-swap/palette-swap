@@ -33,6 +33,8 @@ static void load_enemy(unsigned int enemy_index, const rapidjson::Document& json
 	std::string enemy_prefix = "/enemies/" + std::to_string(enemy_index);
 	Enemy& enemy_component = registry.emplace<Enemy>(entity);
 	enemy_component.deserialize(enemy_prefix, json_doc);
+	// Loads enemy behaviour based on pre-designated enemy type
+	enemy_component.behaviour = enemy_type_to_behaviour.at(static_cast<int>(enemy_component.type));
 
 	MapPosition& map_position_component = registry.emplace<MapPosition>(entity, uvec2(0, 0));
 	map_position_component.deserialize(enemy_prefix, json_doc);
