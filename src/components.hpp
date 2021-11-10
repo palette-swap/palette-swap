@@ -224,6 +224,14 @@ enum class EnemyType {
 	EnemyCount = Wraith + 1
 };
 
+enum class EnemyBehaviour { 
+	Basic = 0,
+	Cowardly = Basic + 1,
+	Immortal = Cowardly + 1,
+	Aggressive = Immortal + 1,
+	EnemyBehaviourCount = Aggressive + 1,
+};
+
 const std::array<const char*, (size_t)EnemyType::EnemyCount> enemy_type_to_string = {
 	"Slime",
 	"Raven",
@@ -258,6 +266,7 @@ struct Enemy {
 	// Default is a slime.
 	ColorState team = ColorState::Red;
 	EnemyType type = EnemyType::Slime;
+	EnemyBehaviour behaviour = EnemyBehaviour::Basic;
 	EnemyState state = EnemyState::Idle;
 	uvec2 nest_map_pos = { 0, 0 };
 
