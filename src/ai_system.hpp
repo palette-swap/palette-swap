@@ -29,10 +29,10 @@ public:
 
 private:
 	// Execute state machine of particular type of enemy
-	void execute_slime(const Entity& slime);
-	void execute_raven(const Entity& raven);
-	void execute_armor(const Entity& living_armor);
-	void execute_treeant(const Entity& tree_ant);
+	void execute_cowardly_sm(const Entity& slime);
+	void execute_basic_sm(const Entity& raven);
+	void execute_defensive_sm(const Entity& living_armor);
+	void execute_aggressive_sm(const Entity& tree_ant);
 
 	// Remove an entity if it is dead.
 	bool remove_dead_entity(const Entity& entity);

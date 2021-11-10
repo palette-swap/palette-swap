@@ -240,8 +240,8 @@ enum class EnemyType {
 enum class EnemyBehaviour { 
 	Basic = 0,
 	Cowardly = Basic + 1,
-	Immortal = Cowardly + 1,
-	Aggressive = Immortal + 1,
+	Defensive = Cowardly + 1,
+	Aggressive = Defensive + 1,
 	EnemyBehaviourCount = Aggressive + 1,
 };
 
@@ -275,8 +275,16 @@ const std::array<int, (size_t)EnemyState::EnemyStateCount> enemy_state_to_animat
 };
 
 const std::array<EnemyBehaviour, (size_t)EnemyType::EnemyCount> enemy_type_to_behaviour = {
-	EnemyBehaviour::Basic,
+	EnemyBehaviour::Basic, 
 	EnemyBehaviour::Cowardly,
+	EnemyBehaviour::Basic,
+	EnemyBehaviour::Defensive,
+	EnemyBehaviour::Aggressive, 
+	EnemyBehaviour::Basic,	   
+	EnemyBehaviour::Basic, 
+	EnemyBehaviour::Cowardly,
+	EnemyBehaviour::Aggressive, 
+	EnemyBehaviour::Defensive
 };
 
 // Structure to store enemy information.
