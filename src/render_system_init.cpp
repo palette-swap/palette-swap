@@ -167,7 +167,7 @@ void RenderSystem::initialize_gl_geometry_buffers()
 	// TODO: Consolidate all animated sprites (quads) into a single type
 	// Initialize ENEMY sprites
 	// The position corresponds to the center of the texture.
-	std::vector<EnemyVertex> enemy_vertices(4);
+	std::vector<SmallSpriteVertex> enemy_vertices(4);
 	enemy_vertices[0].position = { -1.f / 2, +1.f / 2, 0.f };
 	enemy_vertices[1].position = { +1.f / 2, +1.f / 2, 0.f };
 	enemy_vertices[2].position = { +1.f / 2, -1.f / 2, 0.f };

@@ -69,16 +69,11 @@ struct Mesh {
 
 // Test Texture Buffer element for enemies
 // TODO: change to animated vertices after bringing player into this 3D element group
-struct EnemyVertex {
+struct SmallSpriteVertex {
 	vec3 position;
 	vec2 texcoord;
 };
 
-// Temp struct denoting PlayerVertices (specifies quad proportions from player spritesheet
-struct PlayerVertex {
-	vec3 position;
-	vec2 texcoord;
-};
 
 /**
  * The following enumerators represent global identifiers refering to graphic
@@ -360,6 +355,10 @@ struct EventAnimation {
 	int restore_state = 0;
 	float restore_speed = 1;
 	int frame = 0;
+};
+
+// Denotes that an entity has an textured asset, and should be rendered after regular assets (such as player/enemy)
+struct Effects {
 };
 //---------------------------------------------------------------------------
 //-------------------------         COMBAT          -------------------------
