@@ -26,7 +26,7 @@ Entity create_player(uvec2 pos)
 	inventory.equipped.at(static_cast<uint8>(Slot::PrimaryHand)) = sword;
 
 	registry.emplace<RenderRequest>(
-		entity, TEXTURE_ASSET_ID::PALADIN, EFFECT_ASSET_ID::PLAYER, GEOMETRY_BUFFER_ID::PLAYER, true);
+		entity, TEXTURE_ASSET_ID::PALADIN, EFFECT_ASSET_ID::PLAYER, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);
 
 	Animation& player_animation = registry.emplace<Animation>(entity);
 	player_animation.max_frames = 6;
@@ -108,7 +108,7 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 	}
 
 	registry.emplace<RenderRequest>(
-		entity, enemy_type_textures.at(static_cast<int>(type)), EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY, true);
+		entity, enemy_type_textures.at(static_cast<int>(type)), EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);
 	if (team == ColorState::Red) {
 		registry.emplace<Color>(entity, AnimationUtility::default_enemy_red);
 	} else if (team == ColorState::Blue) {
@@ -132,8 +132,14 @@ Entity create_arrow(vec2 position)
 	registry.emplace<Velocity>(entity, 0.f, 0.f);
 
 	// Create and (empty) player component to be able to refer to other enttities
+	// TODO: replace with single geometry buffer sprites
 	registry.emplace<RenderRequest>(
-		entity, TEXTURE_ASSET_ID::CANNONBALL, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE, true);
+		entity, TEXTURE_ASSET_ID::SPELLS, EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);
+	Animation& spell_animation = registry.emplace<Animation>(entity);
+	spell_animation.max_frames = 8;
+	spell_animation.color = ColorState::None;
+	spell_animation.state = 0;
+	spell_animation.speed_adjustment = 1.5;
 	registry.emplace<Color>(entity, vec3(1, 1, 1));
 
 	return entity;

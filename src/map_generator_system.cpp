@@ -51,7 +51,7 @@ static void load_enemy(unsigned int enemy_index, const rapidjson::Document& json
 	registry.emplace<RenderRequest>(entity,
 									enemy_type_textures.at(static_cast<int>(enemy_component.type)),
 									  EFFECT_ASSET_ID::ENEMY,
-									GEOMETRY_BUFFER_ID::ENEMY,
+									GEOMETRY_BUFFER_ID::SMALL_SPRITE,
 									true);
 	if (enemy_component.team == ColorState::Red) {
 		enemy_animation.color = ColorState::Red;

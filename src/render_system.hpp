@@ -47,6 +47,7 @@ class RenderSystem {
 			textures_path("./Spider/Spider Spritesheet.png"),
 			textures_path("./Clone/Clone Spritesheet.png"),
 			textures_path("cannon_ball.png"),
+			textures_path("/01/Spell Spritesheet.png"),
 			textures_path("tile_set.png"),
 			textures_path("help.png"),
 			textures_path("End Screen.png")};

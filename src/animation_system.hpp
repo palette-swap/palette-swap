@@ -28,6 +28,11 @@ static constexpr float player_melee_speed = 2.5f;
 static constexpr float player_heavy_melee_speed = 1.f;
 static constexpr float player_running_speed = 4;
 static constexpr float player_blue_red_switch_speed = 1;
+
+// Used for spell animation details
+static constexpr float player_spell_animation_speed = 3.f;
+static constexpr int player_spell_states = 4;
+
 // Value denoting the animation states for the player
 // KEEP ALIGNED WITH STATES REPRESENTED IN PLAYER SPRITESHEET
 enum class PlayerAnimationStates {
@@ -76,6 +81,8 @@ public:
 	void player_spellcast_animation(const Entity& player);
 	// Toggles player's weapon selection
 	void player_toggle_weapon(const Entity& player);
+	// Toggles player's spell_arrow
+	void player_toggle_spell(const Entity& player_arrow);
 	// TODO: Maybe generalize these two event animations to a general one
 	// Triggers attack animation for a entity specified as the player
 	void player_attack_animation(const Entity& player);
@@ -83,7 +90,8 @@ public:
 	void player_running_animation(const Entity& player);
 	// Triggers player transition between red/blue
 	void player_red_blue_animation(const Entity& player, ColorState color);
-
+	// Toggles player spell states based on the animation
+	
 	// Returns a boolean denoting whether or not all "irregular animations" such as attack
 	// or damage calculations have been completed
 	bool animation_events_completed();

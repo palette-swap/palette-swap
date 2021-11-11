@@ -179,25 +179,7 @@ void RenderSystem::initialize_gl_geometry_buffers()
 
 	// Counterclockwise as it's the default opengl front winding direction.
 	const std::vector<uint16_t> enemy_indices = { 0, 3, 1, 1, 3, 2 };
-	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::ENEMY, enemy_vertices, enemy_indices);
-
-	//////////////////////////
-	// TODO: Consolidate all animated sprites (quads) into a single type
-	// Initialize PLAYER geometry
-	// The position corresponds to the center of the texture.
-	std::vector<PlayerVertex> player_vertices(4);
-	player_vertices[0].position = { -1.f / 2, +1.f / 2, 0.f };
-	player_vertices[1].position = { +1.f / 2, +1.f / 2, 0.f };
-	player_vertices[2].position = { +1.f / 2, -1.f / 2, 0.f };
-	player_vertices[3].position = { -1.f / 2, -1.f / 2, 0.f };
-	player_vertices[0].texcoord = { 0, sprite_size / player_spritesheet_height };
-	player_vertices[1].texcoord = { sprite_size / player_spritesheet_width, sprite_size / player_spritesheet_height };
-	player_vertices[2].texcoord = { sprite_size / player_spritesheet_width, 0 };
-	player_vertices[3].texcoord = { 0, 0 };
-
-	// Counterclockwise as it's the default opengl front winding direction.
-	const std::vector<uint16_t> player_indices = { 0, 3, 1, 1, 3, 2 };
-	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::PLAYER, player_vertices, player_indices);
+	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::SMALL_SPRITE, enemy_vertices, enemy_indices);
 
 	//////////////////////////////////
 	// Initialize health bars
