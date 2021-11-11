@@ -22,6 +22,7 @@ WorldSystem::WorldSystem(Debug& debugging,
 						 std::shared_ptr<MapGeneratorSystem> map,
 						 std::shared_ptr<TurnSystem> turns,
 						 std::shared_ptr<AnimationSystem> animations,
+						 std::shared_ptr<UISystem> ui,
 						 std::shared_ptr<SoLoud::Soloud> so_loud)
 
 	: current_weapon(entt::null) 
@@ -35,6 +36,7 @@ WorldSystem::WorldSystem(Debug& debugging,
 	, combat(std::move(combat))
 	, map_generator(std::move(map))
 	, turns(std::move(turns))
+	, ui(std::move(ui))
 {
 	this->combat->init(rng, this->animations);
 }
@@ -127,6 +129,7 @@ GLFWwindow* WorldSystem::create_window(int width, int height)
 void WorldSystem::init(RenderSystem* renderer_arg)
 {
 	this->renderer = renderer_arg;
+
 	// Playing background music indefinitely
 	bgm_red = so_loud->play(bgm_red_wav);
 	bgm_blue = so_loud->play(bgm_blue_wav, 0.f);
@@ -244,6 +247,9 @@ void WorldSystem::restart_game()
 	registry.get<RenderRequest>(player_arrow).visible
 		= registry.get<Weapon>(current_weapon).given_attacks.at(current_attack).targeting_type
 		== TargetingType::Projectile;
+
+	// Restart the UISystem
+	ui->restart_game();
 }
 
 // Compute collisions between entities
@@ -295,6 +301,7 @@ void WorldSystem::return_arrow_to_player()
 // On key callback
 void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 {
+	ui->on_key(key, action, mod);
 	if (turns && action != GLFW_RELEASE) {
 
 		if (key == GLFW_KEY_D) {
@@ -537,10 +544,14 @@ void WorldSystem::change_color()
 // TODO: Integrate into turn state to only enable if player's turn is on
 void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 {
-	if (turns->get_active_team() != player) {
-		return;
-	}
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+		// Get screen position of mouse
+		dvec2 mouse_screen_pos = {};
+		glfwGetCursorPos(window, &mouse_screen_pos.x, &mouse_screen_pos.y);
+		ui->on_left_click(mouse_screen_pos);
+		if (turns->get_active_team() != player) {
+			return;
+		}
 		Attack& attack = registry.get<Weapon>(current_weapon).given_attacks[current_attack];
 		if (attack.targeting_type == TargetingType::Projectile) {
 			try_fire_projectile();

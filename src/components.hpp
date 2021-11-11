@@ -148,7 +148,8 @@ enum class EFFECT_ASSET_ID {
 	ENEMY = LINE + 1,
 	PLAYER = ENEMY + 1,
 	HEALTH = PLAYER + 1,
-	TEXTURED = HEALTH + 1,
+	FANCY_HEALTH = HEALTH + 1,
+	TEXTURED = FANCY_HEALTH + 1,
 	WATER = TEXTURED + 1,
 	TILE_MAP = WATER + 1,
 	EFFECT_COUNT = TILE_MAP + 1
@@ -161,7 +162,8 @@ enum class GEOMETRY_BUFFER_ID : uint8_t {
 	PLAYER = SPRITE + 1,
 	ENEMY = PLAYER + 1,
 	HEALTH = ENEMY + 1,
-	LINE = HEALTH + 1,
+	FANCY_HEALTH = HEALTH + 1,
+	LINE = FANCY_HEALTH + 1,
 	DEBUG_LINE = LINE + 1,
 	SCREEN_TRIANGLE = DEBUG_LINE + 1,
 	ROOM = SCREEN_TRIANGLE + 1,
@@ -519,6 +521,43 @@ enum class Alignment {
 	Start = 1,
 	Center = 0,
 	End = -1,
+};
+
+struct UIRenderRequest {
+	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
+	EFFECT_ASSET_ID used_effect = EFFECT_ASSET_ID::EFFECT_COUNT;
+	GEOMETRY_BUFFER_ID used_geometry = GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
+
+	vec2 size;
+	float angle = 0;
+	Alignment alignment_x;
+	Alignment alignment_y;
+
+	bool visible = true;
+
+	UIRenderRequest(TEXTURE_ASSET_ID used_texture, EFFECT_ASSET_ID used_effect, GEOMETRY_BUFFER_ID used_geometry, vec2 size, float angle, Alignment alignment_x, Alignment alignment_y, bool visible)
+		: used_texture(used_texture)
+		, used_effect(used_effect)
+		, used_geometry(used_geometry)
+		, size(size)
+		, angle(angle)
+		, alignment_x(alignment_x)
+		, alignment_y(alignment_y)
+		, visible(visible)
+	{
+	}
+
+	UIRenderRequest(EFFECT_ASSET_ID used_effect, vec2 size, float angle)
+		: used_effect(used_effect)
+		, size(size)
+		, angle(angle)
+		, alignment_x(Alignment::Center)
+		, alignment_y(Alignment::Center)
+	{
+		if (used_effect == EFFECT_ASSET_ID::LINE) {
+			used_geometry = GEOMETRY_BUFFER_ID::LINE;
+		}
+	}
 };
 
 struct Line {
