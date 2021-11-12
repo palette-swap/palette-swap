@@ -64,7 +64,7 @@ static constexpr vec3 default_enemy_blue = { 1, 1, 4 };
 
 // Used to test out various inactive enemy displays
 static constexpr vec4 inactive_invisible = { 1, 1, 1, 0 };
-}
+} // namespace AnimationUtility
 
 namespace MapUtility {
 // Each tile is 32x32 pixels

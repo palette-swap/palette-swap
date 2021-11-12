@@ -140,7 +140,7 @@ void AnimationSystem::set_all_inactive_colours(ColorState inactive_color)
 		}
 		for (auto [entity, animation] : registry.view<Animation, BlueEnemy>().each()) {
 			animation.display_color = { AnimationUtility::default_enemy_blue, 1 };
-			registry.remove_if_exists<InactiveEnemy>(entity);
+			registry.remove<InactiveEnemy>(entity);
 		}
 	} else if (inactive_color == ColorState::Blue) {
 		for (auto [entity, animation] : registry.view<Animation, BlueEnemy>().each()) {
@@ -149,7 +149,7 @@ void AnimationSystem::set_all_inactive_colours(ColorState inactive_color)
 		}
 		for (auto [entity, animation] : registry.view<Animation, RedEnemy>().each()) {
 			animation.display_color = { AnimationUtility::default_enemy_red, 1 };
-			registry.remove_if_exists<InactiveEnemy>(entity);
+			registry.remove<InactiveEnemy>(entity);
 		}
 	}
 }
