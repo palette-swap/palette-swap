@@ -69,8 +69,7 @@ static constexpr float tile_size = 32.f;
 static constexpr int room_size = 10;
 // Each map is 10x10 rooms
 static constexpr int map_size = 10;
-// RoomType is just a uint8_t
-using RoomType = uint8_t;
+using RoomID = uint8_t;
 using TileID = uint8_t;
 using MapId = uint8_t;
 
@@ -145,9 +144,8 @@ enum class Direction : uint8_t {
 	Up,
 	Right,
 	Down,
+  Undefined
 };
-
-float direction_to_angle(Direction direction);
 
 namespace CameraUtility {
 // the size of camera, divide the whole window into camera_grid_size ^ 2 smaller grids

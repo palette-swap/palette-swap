@@ -2,11 +2,11 @@
 
 #include "common.hpp"
 #include "components.hpp"
+#include "map_generator.hpp"
 #include "map_utility.hpp"
 
 #include <array>
 #include <set>
-#include <random>
 
 namespace MapUtility {
 //////////////////////////////////////////
@@ -19,23 +19,16 @@ const uint8_t tile_last_level = 20;
 
 // Manages and store the generated maps
 class MapGeneratorSystem {
-public:
-	// This mapping can be used for both map and room, as they have same size(10)
-	using Mapping = std::array<std::array<MapUtility::RoomType, MapUtility::room_size>, MapUtility::room_size>;
 private:
 	/////////////////////////////////////////////
 	// Helper functions to retrieve file paths
-	static std::string rooms_layout_path(const std::string& name)
+	static std::string predefined_rooms_path(const std::string& name)
 	{
 		return data_path() + "/rooms/" + std::string(name);
 	};
 	static std::string levels_path(const std::string& name)
 	{
 		return data_path() + "/level_rooms/" + std::string(name);
-	};
-	static std::string room_rotations_path(const std::string& name)
-	{
-		return data_path() + "/level_room_rotations/" + std::string(name);
 	};
 	static std::string level_configurations_path(const std::string& name)
 	{
@@ -44,37 +37,29 @@ private:
 
 	////////////////////////////////
 	/// Actual file paths
-	const std::array<std::string, MapUtility::num_predefined_rooms> room_paths = {
-		rooms_layout_path("room_void.csv"), // 0
+	const std::array<std::string, MapUtility::num_predefined_rooms> predefined_room_paths = {
+		predefined_rooms_path("room_full_opening.csv"), // 0
+		predefined_rooms_path("room_bottom_closing.csv"), // 1
+		predefined_rooms_path("room_left_closing.csv"), // 2
+		predefined_rooms_path("room_right_closing.csv"), // 3
+		predefined_rooms_path("room_top_closing.csv"), // 4
+		predefined_rooms_path("room_next_level.csv"), // 5
+		predefined_rooms_path("room_big_top_left.csv"), // 6
+		predefined_rooms_path("room_big_top_right.csv"), // 7
+		predefined_rooms_path("room_big_side_top.csv"), // 8
+		predefined_rooms_path("room_void.csv"), // 9
+		predefined_rooms_path("room_next_level_help.csv"), // 10
+		predefined_rooms_path("room_last_level.csv"), // 11
+		predefined_rooms_path("room_bot_opening.csv"), // 12
+		predefined_rooms_path("room_left_opening.csv"), // 13
+		predefined_rooms_path("room_right_opening.csv"), // 14
+		predefined_rooms_path("room_top_opening.csv"), // 15
+		predefined_rooms_path("room_vertical.csv"), // 16
+		predefined_rooms_path("room_horizontal.csv"), // 17
 	};
-	/*
-	const std::array<std::string, MapUtility::num_predefined_rooms> room_paths = {
-		rooms_layout_path("room_full_opening.csv"), // 0
-		rooms_layout_path("room_bottom_closing.csv"), // 1
-		rooms_layout_path("room_left_closing.csv"), // 2
-		rooms_layout_path("room_right_closing.csv"), // 3
-		rooms_layout_path("room_top_closing.csv"), // 4
-		rooms_layout_path("room_next_level.csv"), // 5
-		rooms_layout_path("room_big_top_left.csv"), // 6
-		rooms_layout_path("room_big_top_right.csv"), // 7
-		rooms_layout_path("room_big_side_top.csv"), // 8
-		rooms_layout_path("room_void.csv"), // 9
-		rooms_layout_path("room_next_level_help.csv"), // 10
-		rooms_layout_path("room_last_level.csv"), // 11
-		rooms_layout_path("room_bot_opening.csv"), // 12
-		rooms_layout_path("room_left_opening.csv"), // 13
-		rooms_layout_path("room_right_opening.csv"), // 14
-		rooms_layout_path("room_top_opening.csv"), // 15
-		rooms_layout_path("room_vertical.csv"), // 16
-		rooms_layout_path("room_horizontal.csv"), // 17
-	};*/
-	const std::array<std::string, MapUtility::num_levels> level_paths
+	const std::array<std::string, MapUtility::num_predefined_levels> predefined_level_paths
 		= { levels_path("help_level.csv"), levels_path("level_one.csv"), levels_path("level_two.csv") };
-	const std::array<std::string, MapUtility::num_levels> room_rotation_paths
-		= { room_rotations_path("help_level.csv"),
-			room_rotations_path("level_one.csv"),
-			room_rotations_path("level_two.csv") };
-	const std::array<std::string, MapUtility::num_levels> level_configuration_paths = {
+	const std::array<std::string, MapUtility::num_predefined_levels> level_configuration_paths = {
 		level_configurations_path("help_level.json"),
 		level_configurations_path("level_one.json"),
 		level_configurations_path("level_two.json"),
@@ -89,42 +74,30 @@ private:
 	///////////////////////////////////////////////////////////
 	// Data structures that saves the information loaded
 	//
-	// room_layouts that contains both predefined rooms and generated rooms,
-	// each element is a 10*10 array that defines each tile textures in the 10*10 room
+	// saves predefined rooms layout
 	// 
 	// Note: we are saving uint32_t for tile ids, but tile_id is actually 8 bit, this is because opengl
 	// shaders only have 32 bit ints. However, number of tile textures are restricted in 8 bit integer(
 	// since the walkable/wall tiles set are uint8_t and our tile atlas only support 64 tiles),
 	// so it should always be safe to convert from uint32_t to uin8_t
 	// Predefined room ids: 0 -- void room
-	std::vector<std::array<uint32_t, MapUtility::map_size * MapUtility::map_size>> room_layouts;
-	// the (procedural) generated levels, each level contains a full map(max 10*10 rooms),
+	std::array<std::array<uint32_t, MapUtility::room_size * MapUtility::room_size>, MapUtility::num_predefined_rooms> predefined_rooms;
+	// the predefined levels, each level contains a full map(max 10*10 rooms),
 	// index of the vector will be the map id
-	std::vector<Mapping> levels;
-	std::vector<std::array<std::array<Direction, MapUtility::map_size>, MapUtility::map_size>> level_room_rotations;
+	std::array<MapUtility::Grid, MapUtility::num_predefined_levels> predefined_levels;
 	// Involving all dynamic components on a map, stored in json format
 	std::vector<std::string> level_snap_shots;
 
-	// End of file loaders
-	/////////////////////////////
-
 	int current_level = -1;
-	
-	// Entity for the help picture
-	Entity help_picture = entt::null;
-	void create_picture();
+
+    // get the map layout of given level, return a 10*10 grid,
+	// each cell in the grid is a room.
+	const MapUtility::Grid & get_level_layout(int level) const;
 
 	// get the tile texture id, of the position on a map
 	MapUtility::TileID get_tile_id_from_map_pos(uvec2 pos) const;
 
 	std::vector<uvec2> bfs(uvec2 start_pos, uvec2 target) const;
-
-	// helper to convert an integer to Direction, as we save integers in csv files
-	// 0 - UP(no rotation)
-	// 1 - RIGHT
-	// 2 - DOWN
-	// 3 - LEFT
-	Direction integer_to_direction(int direction);
 
 	// Take current level snapshot
 	void snapshot_level();
@@ -139,42 +112,20 @@ private:
 	// Create the current map
 	void create_map(int level) const;
 	// Create a room
-	void create_room(vec2 position, MapUtility::RoomType roomType, float angle) const;
+	void create_room(vec2 position, MapUtility::RoomID room_id) const;
 
-	/////////////////////////////////////////
-	// Procedural Generation 
+	// map generator
+	MapGenerator map_generator;
 
-	// Per-Level generation configuation, used as the metadata for generating a level,
-	// this is meant to be editable and serializable,
-	struct LevelGenConf {
-		// The seed for generating pseudo random numbers, this is a constant so we generate the
-		// same map every time.
-		unsigned int generation_seed = 10;
-		// The number of rooms from start to end on a certain level
-		unsigned int level_path_length = 6;
-	};
-	// the generation configuration for each level
-	std::vector<LevelGenConf> level_generation_confs;
-	
-
-	std::default_random_engine random_eng;
-
-	// generate a random path of length
-	std::vector<int> generate_random_path(int start_row, int start_col, int length);
-	void regenerate_map();
+	// Entity for the help picture
+	Entity help_picture = entt::null;
+	void create_picture();
 
 public:
 	MapGeneratorSystem();
 
-	// Generates the levels, should be called at the beginning of the game,
-	// might want to pass in a seed in the future
-	void generate_level(int level);
-
 	// Get the current level mapping
-	const Mapping& current_map() const;
-
-	const std::array<std::array<Direction, MapUtility::map_size>, MapUtility::map_size>&
-	current_rooms_rotation() const;
+	const MapUtility::Grid& current_map() const;
 
 	// Check if a position is within the bounds of the current level
 	bool is_on_map(uvec2 pos) const;
@@ -193,7 +144,7 @@ public:
 	std::vector<uvec2> shortest_path(uvec2 start, uvec2 target, bool use_a_star = true) const;
 
 	MapUtility::TileID
-	get_tile_id_from_room(MapUtility::RoomType room_type, uint8_t row, uint8_t col, Direction rotation) const;
+	get_tile_id_from_room(MapUtility::RoomID room_id, uint8_t row, uint8_t col) const;
 
 	bool is_next_level_tile(uvec2 pos) const;
 	bool is_last_level_tile(uvec2 pos) const;
@@ -217,13 +168,15 @@ public:
 
 	// Get the 10*10 layout array for a room, mainly used by rendering
 	const std::array<uint32_t, MapUtility::map_size * MapUtility::map_size>&
-	get_room_layout(MapUtility::RoomType type) const;
-
+	get_room_layout(MapUtility::RoomID room_id) const;
 
 	/////////////////////////////////////////////////
-	// Map Editor Utils
+	// Map Editor
+	void regenerate_map();
 	void increment_seed();
 	void decrement_seed();
 	void increment_path_length();
 	void decrement_path_length();
+	void increase_room_density();
+	void decrease_room_density();
 };

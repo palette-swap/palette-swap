@@ -398,12 +398,19 @@ void WorldSystem::check_debug_keys(int key, int action, int mod)
 		if (key == GLFW_KEY_S && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
 			map_generator->decrement_path_length();
 		}
+		if (key == GLFW_KEY_Z && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->increase_room_density();
+		}
+		if (key == GLFW_KEY_X && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->decrease_room_density();
+		}
 	}
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_M) {
 		is_editing_map = true;
 		debugging.in_debug_mode = true;
 		// move player to center to center camera
 		registry.get<MapPosition>(player).position = uvec2(55, 55);
+		map_generator->regenerate_map();
 		std::cout << "editing map" << std::endl;
 	}
 }
