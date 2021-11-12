@@ -62,13 +62,8 @@ namespace AnimationUtility {
 static constexpr vec3 default_enemy_red = { 4, 1, 1 };
 static constexpr vec3 default_enemy_blue = { 1, 1, 4 };
 
-static vec4 inactive_color = { 1, 1, 1, 1 };
 // Used to test out various inactive enemy displays
-static constexpr vec4 inactive_dark = { 0.5, 0.5, 0.5, 1 };
-static constexpr vec4 inactive_opaque = { 1, 1, 1, 0.5 };
 static constexpr vec4 inactive_invisible = { 1, 1, 1, 0 };
-
-static constexpr vec4 inactive_colors[3] = { inactive_dark, inactive_opaque, inactive_invisible };
 }
 
 namespace MapUtility {

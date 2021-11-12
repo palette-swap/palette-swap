@@ -6,8 +6,24 @@ void AnimationSystem::init()
 
 void AnimationSystem::update_animations(float elapsed_ms, ColorState inactive_color)
 {
-	for (auto [entity, animation]: registry.view<Animation>().each()) {
-		if (animation.color != inactive_color) {
+	if (inactive_color == ColorState::Red) {
+		for (auto [entity, animation] : registry.view<Animation>(entt::exclude<RedEnemy>).each()) {
+			animation.elapsed_time += elapsed_ms;
+			if (animation.elapsed_time >= base_animation_speed / animation.speed_adjustment) {
+				animation.elapsed_time = 0;
+				animation.frame = ((animation.frame) + 1) % animation.max_frames;
+			}
+		}
+	} else if (inactive_color == ColorState::Blue) {
+		for (auto [entity, animation] : registry.view<Animation>(entt::exclude<BlueEnemy>).each()) {
+			animation.elapsed_time += elapsed_ms;
+			if (animation.elapsed_time >= base_animation_speed / animation.speed_adjustment) {
+				animation.elapsed_time = 0;
+				animation.frame = ((animation.frame) + 1) % animation.max_frames;
+			}
+		}
+	} else {
+		for (auto [entity, animation] : registry.view<Animation>().each()) {
 			animation.elapsed_time += elapsed_ms;
 			if (animation.elapsed_time >= base_animation_speed / animation.speed_adjustment) {
 				animation.elapsed_time = 0;
@@ -36,10 +52,9 @@ void AnimationSystem::damage_animation(const Entity& entity)
 {
 	if (!registry.any_of<EventAnimation>(entity)) {
 		Animation& entity_animation = registry.get<Animation>(entity);
-		vec3& entity_color = registry.get<Color>(entity).color;
 		EventAnimation& damage_animation = registry.emplace<EventAnimation>(entity);
 		this->animation_event_setup(entity_animation, damage_animation, entity_animation.display_color);
-		entity_color = damage_color;
+		entity_animation.display_color = damage_color;
 		entity_animation.speed_adjustment = damage_animation_speed;
 	}
 }
