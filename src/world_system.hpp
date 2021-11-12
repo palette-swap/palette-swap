@@ -19,6 +19,7 @@
 #include "map_generator_system.hpp"
 #include "render_system.hpp"
 #include "turn_system.hpp"
+#include "ui_system.hpp"
 
 // Container for all our entities and game logic. Individual rendering / update is
 // deferred to the relative update() methods
@@ -29,6 +30,7 @@ public:
 				std::shared_ptr<MapGeneratorSystem> map,
 				std::shared_ptr<TurnSystem> turns,
 				std::shared_ptr<AnimationSystem> animations,
+				std::shared_ptr<UISystem> ui,
 				std::shared_ptr<SoLoud::Soloud> so_loud);
 
 	// Creates a window
@@ -128,4 +130,5 @@ private:
 	std::shared_ptr<CombatSystem> combat;
 	std::shared_ptr<MapGeneratorSystem> map_generator;
 	std::shared_ptr<TurnSystem> turns;
+	std::shared_ptr<UISystem> ui;
 };

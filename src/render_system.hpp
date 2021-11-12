@@ -58,6 +58,7 @@ class RenderSystem {
 																 shader_path("enemy"), 
 																 shader_path("player"),
 																 shader_path("health_bar"),
+																 shader_path("fancy_bar"),
 																 shader_path("textured"),
 																 shader_path("water"),
 																 shader_path("tilemap") };
@@ -142,7 +143,8 @@ private:
 	////////////////////////////////////////////////////////
 	// Internal drawing functions for each entity type
 	void draw_textured_mesh(Entity entity, const RenderRequest& render_request, const mat3& projection);
-	void draw_healthbar(Entity entity, const Stats& stats, const mat3& projection);
+	void draw_ui_element(Entity entity, const UIRenderRequest& ui_render_request, const mat3& projection);
+	void draw_healthbar(Transform transform, const Stats& stats, const mat3& projection, bool fancy, float ratio);
 	void draw_text(Entity entity, const Text& text, const mat3& projection);
 	void draw_line(Entity entity, const Line& line, const mat3& projection);
 	void draw_map(const mat3& projection);
