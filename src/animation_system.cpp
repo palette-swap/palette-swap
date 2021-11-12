@@ -25,10 +25,8 @@ void AnimationSystem::set_sprite_direction(const Entity& sprite, Sprite_Directio
 
 	if (direction == Sprite_Direction::SPRITE_LEFT) {
 		sprite_animation.direction = -1;
-	} else if (direction == Sprite_Direction::SPRITE_RIGHT) {
-		sprite_animation.direction = 1;
-		// Sets direction to be facing right by default
 	} else {
+		// Sets direction to be facing right by default
 		sprite_animation.direction = 1;
 	}
 }
@@ -109,7 +107,7 @@ void AnimationSystem::enemy_attack_animation(const Entity& enemy)
 		this->animation_event_setup(enemy_animation, enemy_attack, enemy_color);
 
 		// Sets animation state to be the beginning of the melee animation
-		enemy_animation.state = static_cast<int>(enemy_animation_events::Attack);
+		enemy_animation.state = static_cast<int>(EnemyAnimationEvents::Attack);
 		enemy_animation.frame = 0;
 		enemy_animation.speed_adjustment = enemy_attack_speed;
 	}
@@ -144,7 +142,7 @@ void AnimationSystem::set_player_animation(const Entity& player)
 
 	// Sets player rendering/animations to deafult values
 	player_color = { 1, 1, 1 };
-	player_animation.state = static_cast<int>(player_animation_states::Idle);
+	player_animation.state = static_cast<int>(PlayerAnimationStates::Idle);
 	player_animation.frame = 0;
 	player_animation.max_frames = player_num_frames;
 	player_animation.direction = 1;
@@ -159,7 +157,7 @@ void AnimationSystem::player_idle_animation(const Entity& player)
 {
 	assert(registry.any_of<Player>(player));
 	Animation& player_animation = registry.get<Animation>(player);
-	player_animation.state = static_cast<int>(player_animation_states::Idle);
+	player_animation.state = static_cast<int>(PlayerAnimationStates::Idle);
 	player_animation.frame = 0;
 }
 
@@ -167,7 +165,7 @@ void AnimationSystem::player_spellcast_animation(const Entity& player)
 {
 	assert(registry.any_of<Player>(player));
 	Animation& player_animation = registry.get<Animation>(player);
-	player_animation.state = static_cast<int>(player_animation_states::Spellcast);
+	player_animation.state = static_cast<int>(PlayerAnimationStates::Spellcast);
 	player_animation.frame = 0;
 }
 
@@ -192,7 +190,7 @@ void AnimationSystem::player_attack_animation(const Entity& player)
 	assert(registry.any_of<Player>(player));
 	Animation& player_animation = registry.get<Animation>(player);
 	vec3& player_color = registry.get<Color>(player).color;
-	if (player_animation.state == static_cast<int>(player_animation_states::Spellcast)) {
+	if (player_animation.state == static_cast<int>(PlayerAnimationStates::Spellcast)) {
 		return;
 	}
 	if (!registry.any_of<EventAnimation>(player)) {
@@ -201,7 +199,7 @@ void AnimationSystem::player_attack_animation(const Entity& player)
 		this->animation_event_setup(player_animation, player_melee, player_color);
 
 		// Sets animation state to be the beginning of the melee animation
-		player_animation.state = static_cast<int>(player_animation_states::Melee);
+		player_animation.state = static_cast<int>(PlayerAnimationStates::Melee);
 		player_animation.frame = 0;
 		player_animation.speed_adjustment = player_melee_speed;
 	}
@@ -219,7 +217,7 @@ void AnimationSystem::player_running_animation(const Entity& player)
 		this->animation_event_setup(player_animation, player_running, player_color);
 
 		// Sets animation state to be the beginning of the melee animation
-		player_animation.state = static_cast<int>(player_animation_states::Running);
+		player_animation.state = static_cast<int>(PlayerAnimationStates::Running);
 		player_animation.frame = 0;
 		player_animation.speed_adjustment = player_running_speed;
 	}
@@ -283,10 +281,10 @@ void AnimationSystem::resolve_event_animations()
 	}
 }
 
-void AnimationSystem::animation_event_setup(Animation& animation, EventAnimation& event_animation, vec3& color) 
+void AnimationSystem::animation_event_setup(Animation& animation, EventAnimation& EventAnimation, vec3& color) 
 {
 	// Stores restoration states for the player's animations, to be called after animation event is resolved
-	event_animation.restore_speed = animation.speed_adjustment;
-	event_animation.restore_state = animation.state;
-	event_animation.restore_color = color;
+	EventAnimation.restore_speed = animation.speed_adjustment;
+	EventAnimation.restore_state = animation.state;
+	EventAnimation.restore_color = color;
 }

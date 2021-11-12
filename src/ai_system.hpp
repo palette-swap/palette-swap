@@ -4,10 +4,11 @@
 #include <vector>
 
 #include "common.hpp"
+
+#include "animation_system.hpp"
 #include "combat_system.hpp"
 #include "map_generator_system.hpp"
 #include "turn_system.hpp"
-#include "animation_system.hpp"
 
 #include "soloud_wav.h"
 
@@ -17,7 +18,8 @@ public:
 			 std::shared_ptr<CombatSystem> combat,
 			 std::shared_ptr<MapGeneratorSystem> map_generator,
 			 std::shared_ptr<TurnSystem> turns,
-			 std::shared_ptr<AnimationSystem> animations);
+			 std::shared_ptr<AnimationSystem> animations,
+			 std::shared_ptr<SoLoud::Soloud> so_loud);
 
 	void step(float elapsed_ms);
 
@@ -26,17 +28,11 @@ public:
 	void do_attack_callback(const Entity& attacker, const Entity& target);
 
 private:
-	// Execute state machine of Slime.
-	void execute_Slime(const Entity& slime);
-
-	// Execute state machine of Raven.
-	void execute_Raven(const Entity& raven);
-
-	// Execute state machine of Living Armor.
-	void execute_Armor(const Entity& living_armor);
-
-	// Execute state machine of Tree Ant.
-	void execute_TreeAnt(const Entity& tree_ant);
+	// Execute state machine of particular type of enemy
+	void execute_cowardly_sm(const Entity& enemy);
+	void execute_basic_sm(const Entity& enemy);
+	void execute_defensive_sm(const Entity& enemy);
+	void execute_aggressive_sm(const Entity& enemy);
 
 	// Remove an entity if it is dead.
 	bool remove_dead_entity(const Entity& entity);
@@ -76,20 +72,24 @@ private:
 	// An entity become powerup if flag is true. Otherwise cancel powerup.
 	void become_powerup(const Entity& entity, bool flag);
 
+	//////////////////////////
+	//
 	// Debugging
 	const Debug& debugging;
 
-	// Shared resource: Combat system.
+	void draw_pathing_debug();
+
+	//////////////////////////
+
+	// Related Systems
+	std::shared_ptr<AnimationSystem> animations;
 	std::shared_ptr<CombatSystem> combat;
-
-	// Shared resource: Map system.
 	std::shared_ptr<MapGeneratorSystem> map_generator;
-
-	// Shared resource: Turn system.
 	std::shared_ptr<TurnSystem> turns;
 
-	// Shared resource: Animation System.
-	std::shared_ptr<AnimationSystem> animations;
+	// Sound stuff
+	std::shared_ptr<SoLoud::Soloud> so_loud;
+	SoLoud::Wav enemy_attack1_wav;
 
 	// Entity representing the enemy team's turn.
 	Entity enemy_team;
@@ -97,6 +97,4 @@ private:
 	// C++ random number generator
 	std::default_random_engine rng;
 	std::uniform_real_distribution<float> uniform_dist; // number between 0..1
-
-	SoLoud::Wav enemy_attack1_wav;
 };

@@ -106,14 +106,14 @@ struct PlayerVertex {
 
 enum class TEXTURE_ASSET_ID : uint8_t {
 	PALADIN = 0,
-	SLIME = PALADIN + 1,
+	DUMMY = PALADIN + 1,
+	SLIME = DUMMY + 1,
 	ARMOR = SLIME + 1,
 	TREEANT = ARMOR + 1,
 	RAVEN = TREEANT + 1,
 	WRAITH = RAVEN + 1,
 	DRAKE = WRAITH + 1,
-	DUMMY = DRAKE + 1,
-	MUSHROOM = DUMMY + 1,
+	MUSHROOM = DRAKE + 1,
 	SPIDER = MUSHROOM + 1,
 	CLONE = SPIDER + 1,
 	CANNONBALL = CLONE + 1,
@@ -148,7 +148,8 @@ enum class EFFECT_ASSET_ID {
 	ENEMY = LINE + 1,
 	PLAYER = ENEMY + 1,
 	HEALTH = PLAYER + 1,
-	TEXTURED = HEALTH + 1,
+	FANCY_HEALTH = HEALTH + 1,
+	TEXTURED = FANCY_HEALTH + 1,
 	WATER = TEXTURED + 1,
 	TILE_MAP = WATER + 1,
 	EFFECT_COUNT = TILE_MAP + 1
@@ -161,7 +162,8 @@ enum class GEOMETRY_BUFFER_ID : uint8_t {
 	PLAYER = SPRITE + 1,
 	ENEMY = PLAYER + 1,
 	HEALTH = ENEMY + 1,
-	LINE = HEALTH + 1,
+	FANCY_HEALTH = HEALTH + 1,
+	LINE = FANCY_HEALTH + 1,
 	DEBUG_LINE = LINE + 1,
 	SCREEN_TRIANGLE = DEBUG_LINE + 1,
 	ROOM = SCREEN_TRIANGLE + 1,
@@ -177,10 +179,10 @@ enum class Sprite_Direction : uint8_t { SPRITE_LEFT, SPRITE_RIGHT};
 // top left is (0,0) bottom right is (99,99)
 struct MapPosition {
 	uvec2 position;
-	MapPosition(uvec2 position)
+	explicit MapPosition(uvec2 position)
 		: position(position)
 	{
-		assert(position.x < 99 && position.y < 99);
+		assert(position.x <= MapUtility::map_down_right.x && position.y <= MapUtility::map_down_right.y);
 	};
 
 	void serialize(const std::string& prefix, rapidjson::Document& json) const;
@@ -191,16 +193,12 @@ struct MapPosition {
 // top left is (0,0), bottom right is (1, 1)
 struct ScreenPosition {
 	vec2 position;
-	ScreenPosition(vec2 position)
-		: position(position) {};
 };
 
 // Represents the world position,
 // top left is (0,0), bottom right is (window_width_px, window_height_px)
 struct WorldPosition {
 	vec2 position;
-	WorldPosition(vec2 position)
-		: position(position) {};
 };
 
 struct Room {
@@ -228,14 +226,33 @@ enum class ColorState { None = 0, Red = 1, Blue = 2, All = Blue + 1 };
 // TreeAnt (Super Saiyan): normal stats; long attack range; power up attack range and damage when HP is low.
 // Wraith (invisible ghost): weak stats; shortest radius; a variance of Raven but invisible until active.
 enum class EnemyType {
-	Slime = 0,
+	TrainingDummy = 0,
+	Slime = TrainingDummy + 1,
 	Raven = Slime + 1,
 	Armor = Raven + 1,
 	TreeAnt = Armor + 1,
 	Wraith = TreeAnt + 1,
-	EnemyCount = Wraith + 1
+	Drake = Wraith + 1,
+	Mushroom = Drake + 1,
+	Spider = Mushroom + 1,
+	Clone = Spider + 1,
+	EnemyCount = Clone + 1
 };
-extern std::unordered_map<EnemyType, char*> enemy_type_to_string;
+
+enum class EnemyBehaviour { 
+	Basic = 0,
+	Cowardly = Basic + 1,
+	Defensive = Cowardly + 1,
+	Aggressive = Defensive + 1,
+	EnemyBehaviourCount = Aggressive + 1,
+};
+
+const std::array<const char*, (size_t)EnemyType::EnemyCount> enemy_type_to_string = {
+	"Slime",
+	"Raven",
+	"Armor",
+	"TreeAnt",
+};
 
 // Slime:		Idle, Active, Flinched.
 // Raven:		Idle, Actives.
@@ -251,20 +268,33 @@ enum class EnemyState {
 	EnemyStateCount = Immortal + 1
 };
 
-// Maps enemy states to corresponding rows used in the spritesheet
-// Based on how enemy states work for M2 currently
-static std::map<EnemyState, int> enemy_state_to_animation_state = 
-		{ { EnemyState::Idle, 0 },
-		{ EnemyState::Active, 1 },
-		{ EnemyState::Flinched, 2 },
-		{ EnemyState::Powerup, 2 },
-		{ EnemyState::Immortal, 2 } };
+const std::array<int, (size_t)EnemyState::EnemyStateCount> enemy_state_to_animation_state = {
+	0, // Idle
+	1, // Active
+	2, // Flinched
+	2, // Powerup
+	2, // Immortal
+};
+
+const std::array<EnemyBehaviour, (size_t)EnemyType::EnemyCount> enemy_type_to_behaviour = {
+	EnemyBehaviour::Basic, 
+	EnemyBehaviour::Cowardly,
+	EnemyBehaviour::Basic,
+	EnemyBehaviour::Defensive,
+	EnemyBehaviour::Aggressive, 
+	EnemyBehaviour::Basic,	   
+	EnemyBehaviour::Basic, 
+	EnemyBehaviour::Cowardly,
+	EnemyBehaviour::Aggressive, 
+	EnemyBehaviour::Defensive
+};
 
 // Structure to store enemy information.
 struct Enemy {
 	// Default is a slime.
 	ColorState team = ColorState::Red;
 	EnemyType type = EnemyType::Slime;
+	EnemyBehaviour behaviour = EnemyBehaviour::Basic;
 	EnemyState state = EnemyState::Idle;
 	uvec2 nest_map_pos = { 0, 0 };
 
@@ -282,11 +312,18 @@ struct Enemy {
 // Maps enemy types to corresponding texture asset
 // Remember to add a mapping to a new texture (or use a default such as a slime)
 // This will help load the animation by enemy type when you load enemies
-const TEXTURE_ASSET_ID enemy_type_textures[static_cast<int>(EnemyType::EnemyCount)] { TEXTURE_ASSET_ID::SLIME,
-																					  TEXTURE_ASSET_ID::RAVEN,
-																					  TEXTURE_ASSET_ID::ARMOR,
-																					  TEXTURE_ASSET_ID::TREEANT,
-																					  TEXTURE_ASSET_ID::WRAITH };
+const std::array<TEXTURE_ASSET_ID, static_cast<int>(EnemyType::EnemyCount)> enemy_type_textures {
+	TEXTURE_ASSET_ID::DUMMY,
+	TEXTURE_ASSET_ID::SLIME,
+	TEXTURE_ASSET_ID::RAVEN,
+	TEXTURE_ASSET_ID::ARMOR,
+	TEXTURE_ASSET_ID::TREEANT,
+	TEXTURE_ASSET_ID::WRAITH, 
+	TEXTURE_ASSET_ID::DRAKE,
+	TEXTURE_ASSET_ID::MUSHROOM,
+	TEXTURE_ASSET_ID::SPIDER,
+	TEXTURE_ASSET_ID::CLONE,
+};
 
 struct RenderRequest {
 	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
@@ -357,7 +394,7 @@ enum class TargetingType {
 template <typename T> using DamageTypeList = std::array<T, static_cast<size_t>(DamageType::Count)>;
 
 struct Attack {
-	std::string name = "";
+	std::string name;
 	// Each time an attack is made, a random number is chosen uniformly from [to_hit_min, to_hit_max]
 	// This is added to the attack total
 	int to_hit_min = 1;
@@ -424,18 +461,18 @@ template <typename T> using SlotList = std::array<T, static_cast<size_t>(Slot::C
 struct Inventory {
 	std::map<std::string, Entity> inventory;
 	SlotList<Entity> equipped;
-	Inventory() { equipped.fill(entt::null); }
+	Inventory(): equipped() { equipped.fill(entt::null); }
 };
 
 struct Item {
-	std::string name = "";
+	std::string name;
 	float weight = 0.f;
 	int value = 0;
 	SlotList<bool> allowed_slots = { false };
 };
 
 struct Weapon {
-	Weapon(std::vector<Attack> given_attacks)
+	explicit Weapon(std::vector<Attack> given_attacks)
 		: given_attacks(std::move(given_attacks))
 	{
 	}
@@ -454,6 +491,7 @@ struct Hittable {
 // Stucture to store collision information
 struct Collision {
 	Entity children;
+	static void add(Entity parent, Entity child);
 };
 
 struct Child {
@@ -468,7 +506,7 @@ struct ActiveProjectile {
 	float radius = 6;
 	Entity shooter;
 
-	ActiveProjectile(const Entity& shooter)
+	explicit ActiveProjectile(const Entity& shooter)
 		: shooter(shooter)
 	{
 	}
@@ -482,8 +520,8 @@ struct ResolvedProjectile {
 struct Velocity {
 	float speed;
 	float angle;
-	vec2 get_direction() { return { sin(angle), -cos(angle) }; }
-	vec2 get_velocity() { return get_direction() * speed; }
+	vec2 get_direction() const { return { sin(angle), -cos(angle) }; }
+	vec2 get_velocity() const { return get_direction() * speed; }
 };
 
 //---------------------------------------------------------------------------
@@ -494,6 +532,43 @@ enum class Alignment {
 	Start = 1,
 	Center = 0,
 	End = -1,
+};
+
+struct UIRenderRequest {
+	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
+	EFFECT_ASSET_ID used_effect = EFFECT_ASSET_ID::EFFECT_COUNT;
+	GEOMETRY_BUFFER_ID used_geometry = GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
+
+	vec2 size;
+	float angle = 0;
+	Alignment alignment_x;
+	Alignment alignment_y;
+
+	bool visible = true;
+
+	UIRenderRequest(TEXTURE_ASSET_ID used_texture, EFFECT_ASSET_ID used_effect, GEOMETRY_BUFFER_ID used_geometry, vec2 size, float angle, Alignment alignment_x, Alignment alignment_y, bool visible)
+		: used_texture(used_texture)
+		, used_effect(used_effect)
+		, used_geometry(used_geometry)
+		, size(size)
+		, angle(angle)
+		, alignment_x(alignment_x)
+		, alignment_y(alignment_y)
+		, visible(visible)
+	{
+	}
+
+	UIRenderRequest(EFFECT_ASSET_ID used_effect, vec2 size, float angle)
+		: used_effect(used_effect)
+		, size(size)
+		, angle(angle)
+		, alignment_x(Alignment::Center)
+		, alignment_y(Alignment::Center)
+	{
+		if (used_effect == EFFECT_ASSET_ID::LINE) {
+			used_geometry = GEOMETRY_BUFFER_ID::LINE;
+		}
+	}
 };
 
 struct Line {

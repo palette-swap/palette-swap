@@ -11,14 +11,15 @@
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
 #define WITH_SDL2 1
-#include "soloud_wavstream.h"
 #include "soloud_wav.h"
+#include "soloud_wavstream.h"
 
+#include "animation_system.hpp"
 #include "combat_system.hpp"
 #include "map_generator_system.hpp"
 #include "render_system.hpp"
 #include "turn_system.hpp"
-#include "animation_system.hpp"
+#include "ui_system.hpp"
 
 // Container for all our entities and game logic. Individual rendering / update is
 // deferred to the relative update() methods
@@ -28,7 +29,9 @@ public:
 				std::shared_ptr<CombatSystem> combat,
 				std::shared_ptr<MapGeneratorSystem> map,
 				std::shared_ptr<TurnSystem> turns,
-				std::shared_ptr<AnimationSystem> animations);
+				std::shared_ptr<AnimationSystem> animations,
+				std::shared_ptr<UISystem> ui,
+				std::shared_ptr<SoLoud::Soloud> so_loud);
 
 	// Creates a window
 	GLFWwindow* create_window(int width, int height);
@@ -38,6 +41,10 @@ public:
 
 	// Releases all associated resources
 	~WorldSystem();
+	WorldSystem(const WorldSystem&) = delete;
+	WorldSystem& operator=(const WorldSystem&) = delete;
+	WorldSystem(WorldSystem&&) = delete;
+	WorldSystem& operator=(WorldSystem&&) = delete;
 
 	// Steps the game ahead by ms milliseconds
 	bool step(float elapsed_ms);
@@ -55,6 +62,13 @@ private:
 	void on_mouse_click(int button, int action, int /*mods*/);
 	void on_mouse_scroll(float offset);
 	void on_resize(int width, int height);
+
+	// Key helpers
+	void check_debug_keys(int key, int action, int mod);
+
+	// Mouse Click helpers
+	void try_fire_projectile();
+	void try_adjacent_attack(Attack& attack);
 
 	// restart level
 	void restart_game();
@@ -85,7 +99,7 @@ private:
 	// Game configuration
 	bool player_arrow_fired = false;
 	// TODO: Track why my projectile speed had slowed throughout
-	const size_t projectile_speed = 200;
+	const float projectile_speed = 200.f;
 
 	// Game state
 	RenderSystem* renderer = nullptr;
@@ -101,6 +115,7 @@ private:
 	Debug& debugging;
 
 	// music references
+	std::shared_ptr<SoLoud::Soloud> so_loud;
 	SoLoud::WavStream bgm_red_wav;
 	SoLoud::WavStream bgm_blue_wav;
 	SoLoud::handle bgm_red;
@@ -111,11 +126,12 @@ private:
 	SoLoud::Wav cannon_wav;
 
 	// C++ random number generator
-	std::shared_ptr <std::default_random_engine> rng;
+	std::shared_ptr<std::default_random_engine> rng;
 	std::uniform_real_distribution<float> uniform_dist; // number between 0..1
 
+	std::shared_ptr<AnimationSystem> animations;
 	std::shared_ptr<CombatSystem> combat;
 	std::shared_ptr<MapGeneratorSystem> map_generator;
 	std::shared_ptr<TurnSystem> turns;
-	std::shared_ptr<AnimationSystem> animations;
+	std::shared_ptr<UISystem> ui;
 };

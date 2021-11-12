@@ -48,7 +48,7 @@ void RenderSystem::prepare_for_textured(GLuint texture_id)
 						  GL_FLOAT,
 						  GL_FALSE,
 						  sizeof(TexturedVertex),
-						  (void*)sizeof(vec3)); // note the stride to skip the preceeding vertex position
+						  (void*)sizeof(vec3)); // NOLINT(performance-no-int-to-ptr,cppcoreguidelines-pro-type-cstyle-cast)
 	// Enabling and binding texture to slot 0
 	glActiveTexture(GL_TEXTURE0);
 	gl_has_errors();
@@ -107,7 +107,7 @@ RenderSystem::TextData RenderSystem::generate_text(const Text& text)
 	return text_data;
 }
 
-void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest render_request, const mat3& projection)
+void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest& render_request, const mat3& projection)
 {
 	Transform transform = get_transform(entity);
 
@@ -154,7 +154,7 @@ void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest render_
 							  GL_FLOAT,
 							  GL_FALSE,
 							  sizeof(EnemyVertex),
-							  (void*)sizeof(vec3)); // note the stride to skip the preceeding vertex position
+							  (void*)sizeof(vec3));  // NOLINT(performance-no-int-to-ptr,cppcoreguidelines-pro-type-cstyle-cast)
 		// Enabling and binding texture to slot 0
 		glActiveTexture(GL_TEXTURE0);
 		gl_has_errors();
@@ -202,13 +202,28 @@ void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest render_
 	draw_triangles(transform, projection);
 }
 
-void RenderSystem::draw_healthbar(Entity entity, const Stats& stats, const mat3& projection)
+void RenderSystem::draw_ui_element(Entity entity, const UIRenderRequest& ui_render_request, const mat3& projection)
 {
 	Transform transform = get_transform(entity);
-	transform.translate(vec2(2-MapUtility::tile_size / 2, -MapUtility::tile_size / 2));
-	transform.scale(vec2(MapUtility::tile_size - 4, 3));
+	transform.translate(ui_render_request.size
+						* vec2((float)ui_render_request.alignment_x * .5, (float)ui_render_request.alignment_y * .5)
+						* screen_scale);
+	transform.scale(ui_render_request.size * screen_scale);
+	if (ui_render_request.used_effect == EFFECT_ASSET_ID::FANCY_HEALTH) {
+		// Shift according to desired alignment using fancy enum wizardry
+		transform.translate(vec2(-.5f, 0));
+		draw_healthbar(transform,
+					   registry.get<Stats>(registry.view<Player>().front()),
+					   projection,
+					   true,
+					   ui_render_request.size.x / ui_render_request.size.y);
+	}
+}
 
-	const auto program = (GLuint)effects.at((uint8) EFFECT_ASSET_ID::HEALTH);
+void RenderSystem::draw_healthbar(Transform transform, const Stats& stats, const mat3& projection, bool fancy, float ratio = 1.f)
+{
+	const auto program = (fancy) ? (GLuint)effects.at((uint8)EFFECT_ASSET_ID::FANCY_HEALTH)
+								 : (GLuint)effects.at((uint8)EFFECT_ASSET_ID::HEALTH);
 
 	// Setting shaders
 	glUseProgram(program);
@@ -229,15 +244,25 @@ void RenderSystem::draw_healthbar(Entity entity, const Stats& stats, const mat3&
 	gl_has_errors();
 
 	glEnableVertexAttribArray(in_position_loc);
-	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), (void*)0);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), nullptr);
 	gl_has_errors();
 
 	glEnableVertexAttribArray(in_color_loc);
-	glVertexAttribPointer(in_color_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), (void*)sizeof(vec3));
+	glVertexAttribPointer(in_color_loc,
+						  3,
+						  GL_FLOAT,
+						  GL_FALSE,
+						  sizeof(ColoredVertex),
+						  (void*)sizeof(vec3)); // NOLINT(performance-no-int-to-ptr,cppcoreguidelines-pro-type-cstyle-cast)
 	gl_has_errors();
 
 	GLint health_loc = glGetUniformLocation(program, "health");
 	glUniform1f(health_loc, max(static_cast<float>(stats.health), 0.f) / static_cast<float>(stats.health_max));
+
+	if (fancy) {
+		GLint xy_ratio_loc = glGetUniformLocation(program, "xy_ratio");
+		glUniform1f(xy_ratio_loc, ratio);
+	}
 
 	draw_triangles(transform, projection);
 }
@@ -311,11 +336,17 @@ void RenderSystem::draw_line(Entity entity, const Line& line, const mat3& projec
 	gl_has_errors();
 
 	glEnableVertexAttribArray(in_position_loc);
-	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), (void*)0);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), nullptr);
 	gl_has_errors();
 
 	glEnableVertexAttribArray(in_color_loc);
-	glVertexAttribPointer(in_color_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), (void*)sizeof(vec3));
+	glVertexAttribPointer(
+		in_color_loc,
+		3,
+		GL_FLOAT,
+		GL_FALSE,
+		sizeof(ColoredVertex),
+		((void*)sizeof(vec3))); // NOLINT(performance-no-int-to-ptr,cppcoreguidelines-pro-type-cstyle-cast)
 	gl_has_errors();
 
 	// Setup coloring
@@ -356,7 +387,7 @@ void RenderSystem::draw_map(const mat3& projection)
 
 		const auto& room_layout = map_generator->get_room_layout(room_id);
 		GLint room_layout_loc = glGetUniformLocation(program, "room_layout");
-		glUniform1uiv(room_layout_loc, room_layout.size(), room_layout.data());
+		glUniform1uiv(room_layout_loc, (GLsizei) room_layout.size(), room_layout.data());
 
 		GLint vertex_id_loc = glGetAttribLocation(program, "cur_vertex_id");
 		glEnableVertexAttribArray(vertex_id_loc);
@@ -374,7 +405,7 @@ void RenderSystem::draw_triangles(const Transform& transform, const mat3& projec
 	glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
 	gl_has_errors();
 
-	GLsizei num_indices = (int)size / sizeof(uint16_t);
+	auto num_indices = static_cast<GLsizei>(size / sizeof(uint16_t));
 
 	GLint curr_program = 0;
 	glGetIntegerv(GL_CURRENT_PROGRAM, &curr_program);
@@ -473,8 +504,18 @@ void RenderSystem::draw()
 		}
 	}
 
-	for (auto [entity, stats] : registry.view<Stats>().each()) {
-		draw_healthbar(entity, stats, projection_2d);
+	auto health_group = registry.group<Stats, Enemy>();
+	for (Entity entity : health_group) {
+		Transform transform = get_transform(entity);
+		transform.translate(vec2(2 - MapUtility::tile_size / 2, -MapUtility::tile_size / 2));
+		transform.scale(vec2(MapUtility::tile_size - 4, 3));
+		draw_healthbar(transform, health_group.get<Stats>(entity), projection_2d, false);
+	}
+
+	for (auto [entity, ui_render_request] : registry.view<UIRenderRequest>().each()) {
+		if (ui_render_request.visible) {
+			draw_ui_element(entity, ui_render_request, projection_2d);
+		}
 	}
 
 	for (auto [entity, text] : registry.view<Text>().each()) {
@@ -500,11 +541,13 @@ mat3 RenderSystem::create_projection_matrix()
 
 	vec2 top_left, bottom_right;
 	std::tie(top_left, bottom_right) = get_window_bounds();
+	
+	vec2 scaled_screen = vec2(screen_size) * screen_scale;
 
-	float sx = 2.f / (screen_size.x * screen_scale);
-	float sy = -2.f / (screen_size.y * screen_scale);
-	float tx = -(bottom_right.x + top_left.x) / (screen_size.x * screen_scale);
-	float ty = (bottom_right.y + top_left.y) / (screen_size.y * screen_scale);
+	float sx = 2.f / (scaled_screen.x);
+	float sy = -2.f / (scaled_screen.y);
+	float tx = -(bottom_right.x + top_left.x) / (scaled_screen.x);
+	float ty = (bottom_right.y + top_left.y) / (scaled_screen.y);
 	return { { sx, 0.f, 0.f }, { 0.f, sy, 0.f }, { tx, ty, 1.f } };
 }
 

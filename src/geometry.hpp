@@ -35,4 +35,4 @@ struct Circle {
 	bool intersects(Circle c) const { return glm::distance2(center, c.center) <= radius * radius; }
 	bool intersects(const Rectangle& r) const;
 };
-}
+} // namespace Geometry
