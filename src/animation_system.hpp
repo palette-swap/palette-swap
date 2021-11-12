@@ -68,7 +68,7 @@ public:
 	// triggers an enemy attack animation
 	void enemy_attack_animation(const Entity& enemy);
 	// Sets all inactive enemy colours to be a specific defaulted inactive colour
-	void set_all_inactive_colours(ColorState inactive_color, int colour_choice);
+	void set_all_inactive_colours(ColorState inactive_color);
 
 	// initializes animation values for a player entity
 	// NOTE: weird things will happen if the entity initialized as player is not a player
@@ -96,7 +96,7 @@ private:
 	// be restored
 	void resolve_event_animations();
 	// helper function for setting animation events
-	void animation_event_setup(Animation& animation, EventAnimation& EventAnimation, vec3& color);
+	void animation_event_setup(Animation& animation, EventAnimation& EventAnimation, vec4& color);
 };
 
 

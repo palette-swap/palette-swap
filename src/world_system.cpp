@@ -348,8 +348,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		
 	}
 	if (action == GLFW_RELEASE && key == GLFW_KEY_K) {
-		inactive_colour_selection = (inactive_colour_selection + 1) % 3;
-		animations->set_all_inactive_colours(turns->get_inactive_color(), inactive_colour_selection);
+		
 	}
 
 	check_debug_keys(key, action, mod);
@@ -468,9 +467,11 @@ void WorldSystem::move_player(Direction direction)
 		}
 
 		map_generator->load_next_level();
+		animations->set_all_inactive_colours(turns->get_inactive_color());
 		registry.get<MapPosition>(player).position = map_generator->get_player_start_position();
 	} else if (map_generator->is_last_level_tile(new_pos)) {
 		map_generator->load_last_level();
+		animations->set_all_inactive_colours(turns->get_inactive_color());
 		registry.get<MapPosition>(player).position = map_generator->get_player_end_position();
 	}
 }
@@ -515,6 +516,7 @@ void WorldSystem::change_color()
 	if (!turns->ready_to_act(player)) {
 		return;
 	}
+
 	ColorState active_color = turns->get_active_color();
 	switch (active_color) {
 	case ColorState::Red:
@@ -535,6 +537,8 @@ void WorldSystem::change_color()
 		turns->set_active_color(ColorState::Red);
 		break;
 	}
+
+	animations->set_all_inactive_colours(turns->get_inactive_color());
 
 	// ColorState active_color = turns->get_active_color();
 	// for (long long i = registry.enemies.entities.size() - 1; i >= 0; i--) {
