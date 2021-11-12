@@ -142,7 +142,6 @@ void AnimationSystem::set_all_inactive_colours(ColorState inactive_color)
 			animation.display_color = { AnimationUtility::default_enemy_blue, 1 };
 			registry.remove_if_exists<InactiveEnemy>(entity);
 		}
-		
 	} else if (inactive_color == ColorState::Blue) {
 		for (auto [entity, animation] : registry.view<Animation, BlueEnemy>().each()) {
 			animation.display_color = AnimationUtility::inactive_invisible;

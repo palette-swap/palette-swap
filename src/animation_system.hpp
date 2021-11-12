@@ -24,9 +24,9 @@ static constexpr int player_weapon_states = 2;
 static constexpr float player_animation_speed = 1.2f;
 
 // Used for animation event speeds for the player
-static constexpr float player_melee_speed = 2.5f;
+static constexpr float player_melee_speed = 3.f;
 static constexpr float player_heavy_melee_speed = 1.f;
-static constexpr float player_running_speed = 3.5;
+static constexpr float player_running_speed = 3;
 static constexpr float player_blue_red_switch_speed = 1;
 // Value denoting the animation states for the player
 // KEEP ALIGNED WITH STATES REPRESENTED IN PLAYER SPRITESHEET
