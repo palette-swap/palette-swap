@@ -123,7 +123,7 @@ void AnimationSystem::set_all_inactive_colours(ColorState inactive_color, int co
 			animation.display_color = { AnimationUtility::default_enemy_blue, 1 };
 		}
 		for (auto [entity, animation] : registry.view<Animation>(entt::exclude<BlueEnemy, Player>).each()) {
-			animation.display_color = AnimationUtility::inactive_colors[colour_choice];
+			animation.display_color = AnimationUtility::inactive_invisible;
 		}
 		
 	} else if (inactive_color == ColorState::Blue) {
@@ -131,7 +131,7 @@ void AnimationSystem::set_all_inactive_colours(ColorState inactive_color, int co
 			animation.display_color = { AnimationUtility::default_enemy_red, 1 };
 		}
 		for (auto [entity, animation] : registry.view<Animation>(entt::exclude<RedEnemy, Player>).each()) {
-			animation.display_color = AnimationUtility::inactive_colors[colour_choice];
+			animation.display_color = AnimationUtility::inactive_invisible;
 		}
 	}
 }
