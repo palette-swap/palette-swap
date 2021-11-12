@@ -337,10 +337,18 @@ struct Color {
 	vec3 color;
 };
 
+// Denotes that an enemy is on the red team
 struct RedEnemy {
+
 };
 
+// Denotes that an enemy is on the blue team
 struct BlueEnemy {
+
+};
+
+// Denotes that an enemy is on the red team
+struct InactiveEnemy {
 
 };
 

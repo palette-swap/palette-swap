@@ -49,7 +49,7 @@ static void load_enemy(unsigned int enemy_index, const rapidjson::Document& json
 	enemy_animation.max_frames = 4;
 	enemy_animation.state = enemy_state_to_animation_state.at(static_cast<int>(enemy_component.state));
 	registry.emplace<RenderRequest>(entity,
-									enemy_type_textures[static_cast<int>(enemy_component.type)],
+									enemy_type_textures.at(static_cast<int>(enemy_component.type)),
 									EFFECT_ASSET_ID::ENEMY,
 									GEOMETRY_BUFFER_ID::ENEMY,
 									true);

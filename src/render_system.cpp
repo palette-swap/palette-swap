@@ -504,7 +504,7 @@ void RenderSystem::draw()
 		}
 	}
 
-	auto health_group = registry.group<Stats, Enemy>();
+	auto health_group = registry.group<Stats, Enemy>(entt::exclude<InactiveEnemy>);
 	for (Entity entity : health_group) {
 		Transform transform = get_transform(entity);
 		transform.translate(vec2(2 - MapUtility::tile_size / 2, -MapUtility::tile_size / 2));
