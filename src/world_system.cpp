@@ -421,6 +421,11 @@ void WorldSystem::move_player(Direction direction)
 	WorldPosition& arrow_position = registry.get<WorldPosition>(player_arrow);
 	uvec2 new_pos = map_pos.position;
 
+	if (map_pos.position == new_pos || !map_generator->walkable_and_free(new_pos)
+		|| !turns->execute_team_action(player)) {
+		return;
+	}
+
 	if (direction == Direction::Left && map_pos.position.x > 0) {
 		new_pos = uvec2(map_pos.position.x - 1, map_pos.position.y);
 
@@ -439,11 +444,6 @@ void WorldSystem::move_player(Direction direction)
 			   && (float)map_pos.position.y < MapUtility::room_size * MapUtility::tile_size - 1) {
 		new_pos = uvec2(map_pos.position.x, map_pos.position.y + 1);
 		animations->player_running_animation(player);
-	}
-
-	if (map_pos.position == new_pos || !map_generator->walkable_and_free(new_pos)
-		|| !turns->execute_team_action(player)) {
-		return;
 	}
 
 	// Temp update for arrow position
