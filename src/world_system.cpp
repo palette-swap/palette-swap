@@ -428,30 +428,29 @@ void WorldSystem::move_player(Direction direction)
 	WorldPosition& arrow_position = registry.get<WorldPosition>(player_arrow);
 	uvec2 new_pos = map_pos.position;
 
-	if (map_pos.position == new_pos || !map_generator->walkable_and_free(new_pos)
-		|| !turns->execute_team_action(player)) {
-		return;
-	}
-
 	if (direction == Direction::Left && map_pos.position.x > 0) {
 		new_pos = uvec2(map_pos.position.x - 1, map_pos.position.y);
 
 		animations->set_sprite_direction(player, Sprite_Direction::SPRITE_LEFT);
-		animations->player_running_animation(player);
+
 	} else if (direction == Direction::Up && map_pos.position.y > 0) {
 		new_pos = uvec2(map_pos.position.x, map_pos.position.y - 1);
-		animations->player_running_animation(player);
 	} else if (direction == Direction::Right
 			   && (float)map_pos.position.x < MapUtility::room_size * MapUtility::tile_size - 1) {
 		new_pos = uvec2(map_pos.position.x + 1, map_pos.position.y);
 
 		animations->set_sprite_direction(player, Sprite_Direction::SPRITE_RIGHT);
-		animations->player_running_animation(player);
 	} else if (direction == Direction::Down
 			   && (float)map_pos.position.y < MapUtility::room_size * MapUtility::tile_size - 1) {
 		new_pos = uvec2(map_pos.position.x, map_pos.position.y + 1);
-		animations->player_running_animation(player);
 	}
+
+	if (map_pos.position == new_pos || !map_generator->walkable_and_free(new_pos)
+		|| !turns->execute_team_action(player)) {
+		return;
+	}
+
+	animations->player_running_animation(player);
 
 	// Temp update for arrow position
 	if (!player_arrow_fired) {
