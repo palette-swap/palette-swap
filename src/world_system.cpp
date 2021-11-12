@@ -410,7 +410,7 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 		vec2 eucl_diff = mouse_world_position - player_screen_position;
 
 		// Calculates arrow position based on position of mouse relative to player
-		vec2 new_arrow_position = normalize(eucl_diff) * 20.f + player_screen_position;
+		vec2 new_arrow_position = normalize(eucl_diff) * spell_distance_from_player + player_screen_position;
 		arrow_position.position = new_arrow_position;
 
 		// Calculates arrow angle based on position of mouse

@@ -60,6 +60,7 @@ class RenderSystem {
 																 shader_path("health_bar"),
 																 shader_path("fancy_bar"),
 																 shader_path("textured"),
+																 shader_path("spell"),
 																 shader_path("water"),
 																 shader_path("tilemap") };
 
@@ -132,6 +133,8 @@ private:
 	std::pair<vec2, vec2> get_window_bounds();
 	// Helper to get position transform
 	Transform get_transform(Entity entity);
+	// Helper to get position transform without rotation
+	Transform get_transform_no_rotation(Entity entity);
 
 	// Helper to ready to draw the Textured effect
 	void prepare_for_textured(GLuint texture_id);
@@ -143,6 +146,7 @@ private:
 	////////////////////////////////////////////////////////
 	// Internal drawing functions for each entity type
 	void draw_textured_mesh(Entity entity, const RenderRequest& render_request, const mat3& projection);
+	void draw_effect(Entity entity, const RenderRequest& render_request, const mat3& projection);
 	void draw_ui_element(Entity entity, const UIRenderRequest& ui_render_request, const mat3& projection);
 	void draw_healthbar(Transform transform, const Stats& stats, const mat3& projection, bool fancy, float ratio);
 	void draw_text(Entity entity, const Text& text, const mat3& projection);

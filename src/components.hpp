@@ -147,7 +147,8 @@ enum class EFFECT_ASSET_ID {
 	HEALTH = PLAYER + 1,
 	FANCY_HEALTH = HEALTH + 1,
 	TEXTURED = FANCY_HEALTH + 1,
-	WATER = TEXTURED + 1,
+	SPELL = TEXTURED + 1,
+	WATER = SPELL + 1,
 	TILE_MAP = WATER + 1,
 	EFFECT_COUNT = TILE_MAP + 1
 };
@@ -244,10 +245,16 @@ enum class EnemyBehaviour {
 };
 
 const std::array<const char*, (size_t)EnemyType::EnemyCount> enemy_type_to_string = {
+	"TrainingDummy",
 	"Slime",
 	"Raven",
 	"Armor",
-	"TreeAnt",
+	"TreeAnt", 
+	"Wraith",
+	"Drake",
+	"Mushroom",
+	"Spider",
+	"Clone"
 };
 
 // Slime:		Idle, Active, Flinched.
@@ -360,6 +367,14 @@ struct EventAnimation {
 };
 
 // Denotes that an entity has an textured asset, and should be rendered after regular assets (such as player/enemy)
+struct EffectRenderRequest {
+	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
+	EFFECT_ASSET_ID used_effect = EFFECT_ASSET_ID::EFFECT_COUNT;
+	GEOMETRY_BUFFER_ID used_geometry = GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
+
+	bool visible = true;
+};
+
 struct Effects {
 };
 //---------------------------------------------------------------------------

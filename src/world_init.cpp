@@ -134,7 +134,7 @@ Entity create_arrow(vec2 position)
 	// Create and (empty) player component to be able to refer to other enttities
 	// TODO: replace with single geometry buffer sprites
 	registry.emplace<RenderRequest>(
-		entity, TEXTURE_ASSET_ID::SPELLS, EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);
+		entity, TEXTURE_ASSET_ID::SPELLS, EFFECT_ASSET_ID::SPELL, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);
 	Animation& spell_animation = registry.emplace<Animation>(entity);
 	spell_animation.max_frames = 8;
 	spell_animation.color = ColorState::None;

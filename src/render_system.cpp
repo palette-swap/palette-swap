@@ -26,6 +26,22 @@ Transform RenderSystem::get_transform(Entity entity)
 	return transform;
 }
 
+Transform RenderSystem::get_transform_no_rotation(Entity entity)
+{
+	Transform transform;
+	if (registry.any_of<MapPosition>(entity)) {
+		MapPosition& map_position = registry.get<MapPosition>(entity);
+		transform.translate(MapUtility::map_position_to_world_position(map_position.position));
+	} else if (registry.any_of<WorldPosition>(entity)) {
+		// Most objects in the game are expected to use MapPosition, exceptions are:
+		// Arrow, Room.
+		transform.translate(registry.get<WorldPosition>(entity).position);
+	} else {
+		transform.translate(screen_position_to_world_position(registry.get<ScreenPosition>(entity).position * vec2(screen_size)));
+	}
+	return transform;
+}
+
 void RenderSystem::prepare_for_textured(GLuint texture_id)
 {
 	const auto program = (GLuint)effects.at((uint8)EFFECT_ASSET_ID::TEXTURED);
@@ -183,6 +199,84 @@ void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest& render
 	} else {
 		assert(false && "Type of render request not supported");
 	}
+
+	// Getting uniform locations for glUniform* calls
+	if (registry.any_of<Color>(entity)) {
+		GLint color_uloc = glGetUniformLocation(program, "fcolor");
+		const vec3 color = registry.get<Color>(entity).color;
+		glUniform3fv(color_uloc, 1, glm::value_ptr(color));
+		gl_has_errors();
+	}
+
+	draw_triangles(transform, projection);
+}
+
+void RenderSystem::draw_effect(Entity entity, const RenderRequest& render_request, const mat3& projection)
+{
+	Transform transform = get_transform_no_rotation(entity);
+
+	transform.scale(scaling_factors.at(static_cast<int>(render_request.used_texture)));
+
+	const auto used_effect_enum = (GLuint)render_request.used_effect;
+	assert(used_effect_enum != (GLuint)EFFECT_ASSET_ID::EFFECT_COUNT);
+	const auto program = (GLuint)effects.at(used_effect_enum);
+
+	// Setting shaders
+	glUseProgram(program);
+	gl_has_errors();
+
+	assert(render_request.used_geometry != GEOMETRY_BUFFER_ID::GEOMETRY_COUNT);
+	int vbo_ibo_offset = 0;
+
+	const GLuint vbo = vertex_buffers.at((int)render_request.used_geometry + vbo_ibo_offset);
+	const GLuint ibo = index_buffers.at((int)render_request.used_geometry + vbo_ibo_offset);
+
+	// Setting vertex and index buffers
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+	gl_has_errors();
+
+	GLint in_position_loc = glGetAttribLocation(program, "in_position");
+	GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
+	gl_has_errors();
+	assert(in_texcoord_loc >= 0);
+
+	glEnableVertexAttribArray(in_position_loc);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(SmallSpriteVertex), nullptr);
+	gl_has_errors();
+
+	glEnableVertexAttribArray(in_texcoord_loc);
+	glVertexAttribPointer(
+		in_texcoord_loc,
+		2,
+		GL_FLOAT,
+		GL_FALSE,
+		sizeof(SmallSpriteVertex),
+		(void*)sizeof(vec3)); // NOLINT(performance-no-int-to-ptr,cppcoreguidelines-pro-type-cstyle-cast)
+	// Enabling and binding texture to slot 0
+	glActiveTexture(GL_TEXTURE0);
+	gl_has_errors();
+
+	Animation& animation = registry.get<Animation>(entity);
+	assert(registry.any_of<Animation>(entity));
+
+	// Switches direction based on requested animation direction
+	transform.scale({ animation.direction, 1 });
+
+	// Updates frame for entity
+	GLint frame_loc = glGetUniformLocation(program, "frame");
+	glUniform1i(frame_loc, animation.frame);
+	gl_has_errors();
+
+	// Updates frame for entity
+	GLint state_loc = glGetUniformLocation(program, "state");
+	glUniform1i(state_loc, animation.state);
+	gl_has_errors();
+
+	GLuint texture_id = texture_gl_handles.at((GLuint)render_request.used_texture);
+
+	glBindTexture(GL_TEXTURE_2D, texture_id);
+	gl_has_errors();
 
 	// Getting uniform locations for glUniform* calls
 	if (registry.any_of<Color>(entity)) {
@@ -489,7 +583,7 @@ void RenderSystem::draw()
 
 	draw_map(projection_2d);
 
-	for (auto [entity, render_request] : registry.view<RenderRequest>().each()) {
+	for (auto [entity, render_request] : registry.view<RenderRequest>(entt::exclude<Effects>).each()) {
 		// Note, its not very efficient to access elements indirectly via the entity
 		// albeit iterating through all Sprites in sequence. A good point to optimize
 		if (render_request.visible) {
@@ -503,6 +597,14 @@ void RenderSystem::draw()
 		transform.translate(vec2(2 - MapUtility::tile_size / 2, -MapUtility::tile_size / 2));
 		transform.scale(vec2(MapUtility::tile_size - 4, 3));
 		draw_healthbar(transform, health_group.get<Stats>(entity), projection_2d, false);
+	}
+
+	for (auto [entity, render_request] : registry.view<RenderRequest, Effects>().each()) {
+		// Note, its not very efficient to access elements indirectly via the entity
+		// albeit iterating through all Sprites in sequence. A good point to optimize
+		if (render_request.visible) {
+			draw_effect(entity, render_request, projection_2d);
+		}
 	}
 
 	for (auto [entity, ui_render_request] : registry.view<UIRenderRequest>().each()) {
