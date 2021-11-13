@@ -273,3 +273,11 @@ Entity create_equip_slot(
 	registry.emplace<EquipSlot>(entity, inventory, slot);
 	return entity;
 }
+
+Entity create_ui_text(Entity ui_group, vec2 screen_position, const std::string& text) {
+	Entity entity = registry.create();
+	registry.emplace<ScreenPosition>(entity, screen_position);
+	registry.emplace<Text>(entity, text, (uint16)48, Alignment::Center, Alignment::Center);
+	UIGroup::add(ui_group, entity, registry.emplace<UIElement>(entity, ui_group, true));
+	return entity;
+}

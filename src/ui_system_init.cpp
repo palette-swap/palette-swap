@@ -23,4 +23,11 @@ void UISystem::restart_game()
 	for (size_t i = 0; i < num_slots; i++) {
 		create_equip_slot(inventory_group, (Slot)i, player, 1, num_slots);
 	}
+	size_t i = 1;
+	for (Entity item : inventory.inventory) {
+		if (item == entt::null) {
+			continue;
+		}
+		create_ui_text(inventory_group, vec2(.75f / 5 * (i++), .25f), registry.get<Item>(item).name);
+	}
 }
