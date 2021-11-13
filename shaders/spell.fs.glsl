@@ -16,9 +16,14 @@ layout(location = 0) out  vec4 color;
 
 vec4 fireShader(vec4 input_color)
 {
-	float fire_r = input_color.x * (1 + 0.2 * sin(time));
-	float fire_g = input_color.y * (1 + 0.3 * sin(time + 30));
-	float fire_b = input_color.z;
+	float darken = 0;
+	float ball = distance(vpos, vec2(-0.028,0.022));
+	if (ball <= 0.18) {
+		darken = 0.2;
+	}
+	float fire_r = input_color.x * (1 + 0.5 * (1 - vpos.y - 0.7) * sin(time/3)) - darken;
+	float fire_g = input_color.y * (1 + 0.1 * (1 - vpos.y - 0.7) * sin(time/3)) - darken;
+	float fire_b = input_color.z - darken;
 	float fire_opacity = input_color.w;
 	return vec4(fire_r, fire_g, fire_b, fire_opacity);
 }
