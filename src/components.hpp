@@ -397,13 +397,13 @@ struct Stats {
 };
 
 enum class Slot {
-	PrimaryHand = 0,
-	Body = PrimaryHand + 1,
-	Head = Body + 1,
-	Neck = Head + 1,
-	Hands = Neck + 1,
-	Feet = Hands + 1,
-	Count = Feet + 1,
+	Weapon = 0,
+	Armor = Weapon + 1,
+	Spell1 = Armor + 1,
+	Spell2 = Spell1 + 1,
+	Ring = Spell2 + 1,
+	Amulet = Ring + 1,
+	Count = Amulet + 1,
 };
 
 template <typename T> using SlotList = std::array<T, static_cast<size_t>(Slot::Count)>;

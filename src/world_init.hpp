@@ -19,6 +19,8 @@ Entity create_path_point(vec2 position);
 Entity create_team();
 // Creates an item
 Entity create_item(const std::string& name, const SlotList<bool>& allowed_slots);
+// Creates a spell (also an item)
+Entity create_spell(const std::string& name, std::vector<Attack> attacks);
 // Creates a weapon (also an item)
 Entity create_weapon(const std::string& name, std::vector<Attack> attacks);
 

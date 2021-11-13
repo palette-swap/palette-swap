@@ -14,15 +14,14 @@ Entity create_player(uvec2 pos)
 	// Setup Casting
 	Attack arcane_orb = { "Arcane Orb", 10, 10, 5, 10, DamageType::Magical, TargetingType::Projectile };
 	Attack fireball = { "Fireball", -3, 10, 10, 20, DamageType::Fire, TargetingType::Projectile };
-	inventory.inventory.at(0) = create_weapon("Spellbook", std::vector<Attack>({ arcane_orb, fireball }));
+	inventory.equipped.at(static_cast<uint8>(Slot::Spell1))
+		= create_spell("Fireball", std::vector<Attack>({ fireball }));
 
 	// Setup Sword
 	Attack sword_light = { "Light", 4, 18, 12, 22, DamageType::Physical, TargetingType::Adjacent };
 	Attack sword_heavy = { "Heavy", 1, 14, 20, 30, DamageType::Physical, TargetingType::Adjacent };
-	Entity sword = create_weapon("Sword", std::vector<Attack>({ sword_light, sword_heavy }));
-	inventory.inventory.at(1) = sword;
-
-	inventory.equipped.at(static_cast<uint8>(Slot::PrimaryHand)) = sword;
+	inventory.equipped.at(static_cast<uint8>(Slot::Weapon))
+		= create_weapon("Sword", std::vector<Attack>({ sword_light, sword_heavy }));
 
 	registry.emplace<RenderRequest>(
 		entity, TEXTURE_ASSET_ID::PALADIN, EFFECT_ASSET_ID::PLAYER, GEOMETRY_BUFFER_ID::PLAYER, true);
@@ -196,11 +195,24 @@ Entity create_item(const std::string& name, const SlotList<bool>& allowed_slots)
 	return entity;
 }
 
+Entity create_spell(const std::string& name, std::vector<Attack> attacks)
+{
+	const SlotList<bool> spell_slots = [] {
+		SlotList<bool> slots = { false };
+		slots[static_cast<uint8>(Slot::Spell1)] = true;
+		slots[static_cast<uint8>(Slot::Spell2)] = true;
+		return slots;
+	}();
+	Entity entity = create_item(name, spell_slots);
+	registry.emplace<Weapon>(entity, std::move(attacks));
+	return entity;
+}
+
 Entity create_weapon(const std::string& name, std::vector<Attack> attacks)
 {
 	const SlotList<bool> weapon_slots = [] {
 		SlotList<bool> slots = { false };
-		slots[static_cast<uint8>(Slot::PrimaryHand)] = true;
+		slots[static_cast<uint8>(Slot::Weapon)] = true;
 		return slots;
 	}();
 	Entity entity = create_item(name, weapon_slots);

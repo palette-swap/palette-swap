@@ -228,7 +228,7 @@ void WorldSystem::restart_game()
 	turns->add_team_to_queue(player);
 	// Reset current weapon & attack
 	Inventory& inventory = registry.get<Inventory>(player);
-	current_weapon = inventory.equipped[static_cast<uint8>(Slot::PrimaryHand)];
+	current_weapon = inventory.equipped[static_cast<uint8>(Slot::Weapon)];
 	current_attack = 0;
 	attack_display = registry.create();
 	registry.emplace<ScreenPosition>(attack_display, vec2(0, 1));
@@ -478,13 +478,13 @@ void WorldSystem::equip_next_weapon()
 		return;
 	}
 	Inventory& inventory = registry.get<Inventory>(player);
-	Entity& curr = inventory.equipped[static_cast<uint8>(Slot::PrimaryHand)];
+	Entity& curr = inventory.equipped[static_cast<uint8>(Slot::Weapon)];
 	auto& next = ++std::find(inventory.inventory.begin(), inventory.inventory.end(), curr);
 	if (next == inventory.inventory.end()) {
 		next = inventory.inventory.begin();
 	}
 	while (*next != curr) {
-		if (registry.get<Item>(*next).allowed_slots[static_cast<uint8>(Slot::PrimaryHand)]) {
+		if (registry.get<Item>(*next).allowed_slots[static_cast<uint8>(Slot::Weapon)]) {
 			break;
 		}
 		if (next == inventory.inventory.end()) {
