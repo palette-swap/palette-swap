@@ -316,6 +316,11 @@ struct BlueEnemy {
 
 struct InactiveEnemy {
 };
+
+// Component that denotes what colour the player cannot see at the moment
+struct PlayerInactivePerception {
+	ColorState inactive = ColorState::Red;
+};
 //---------------------------------------------------------------------------
 //-------------------------		  ANIMATIONS        -------------------------
 //---------------------------------------------------------------------------

@@ -34,6 +34,7 @@ Entity create_player(uvec2 pos)
 	player_animation.speed_adjustment = 1.5;
 
 	registry.emplace<Color>(entity, vec3(1, 1, 1));
+	registry.emplace<PlayerInactivePerception>(entity);
 	
 	return entity;
 }

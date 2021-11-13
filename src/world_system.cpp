@@ -225,6 +225,10 @@ void WorldSystem::restart_game()
 	// TODO: Should move into create_player (under world init) afterwards
 	animations->set_player_animation(player);
 
+	// Initializes the perception of the player for what is inactive
+	PlayerInactivePerception& inactive_perception = registry.get<PlayerInactivePerception>(player);
+	inactive_perception.inactive = turns->get_inactive_color();
+
 	turns->add_team_to_queue(player);
 	// Reset current weapon & attack
 	Inventory& inventory = registry.get<Inventory>(player);
