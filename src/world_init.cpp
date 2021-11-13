@@ -289,9 +289,18 @@ Entity create_equip_slot(
 	Entity ui_group, Slot slot, Entity inventory, float width, float height, const Geometry::Rectangle& area)
 {
 	Entity entity = create_grid_rectangle(ui_group, (size_t)slot, width, height, area);
-	registry.emplace<InteractArea>(entity, registry.get<UIRenderRequest>(entity).size);
+	UIRenderRequest& request = registry.get<UIRenderRequest>(entity);
+	registry.get<Color>(entity).color = vec3(.7, .7, 1);
+	registry.emplace<InteractArea>(entity, request.size);
 	registry.emplace<UISlot>(entity, inventory);
 	registry.emplace<EquipSlot>(entity, slot);
+
+	create_ui_text(ui_group,
+				   registry.get<ScreenPosition>(entity).position - request.size / 2.f,
+				   slot_names.at((size_t)slot),
+				   Alignment::Start,
+				   Alignment::End);
+
 	return entity;
 }
 
@@ -308,12 +317,12 @@ Entity create_ui_item(Entity ui_group, Entity slot, Entity item)
 	return ui_item;
 }
 
-Entity create_ui_text(Entity ui_group, vec2 screen_position, const std::string& text)
+Entity create_ui_text(Entity ui_group, vec2 screen_position, const std::string& text, Alignment alignment_x, Alignment alignment_y)
 {
 	Entity entity = registry.create();
 	registry.emplace<ScreenPosition>(entity, screen_position);
 	registry.emplace<Color>(entity, vec3(1.f));
-	registry.emplace<Text>(entity, text, (uint16)48, Alignment::Center, Alignment::Center);
+	registry.emplace<Text>(entity, text, (uint16)48, alignment_x, alignment_y);
 	UIGroup::add(ui_group, entity, registry.emplace<UIElement>(entity, ui_group, true));
 	return entity;
 }

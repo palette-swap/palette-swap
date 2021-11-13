@@ -54,6 +54,34 @@ void UISystem::insert_into_slot(Entity item, Entity container)
 	}
 }
 
+bool UISystem::swap_or_move_item(ScreenPosition& container_pos,
+								 ScreenPosition& held_pos,
+								 ScreenPosition& new_pos,
+								 Draggable& draggable,
+								 Entity new_slot_entity,
+								 UISlot& new_slot)
+{
+	if (!can_insert_into_slot(held_under_mouse, new_slot_entity)) {
+		return false;
+	}
+	if (new_slot.contents != entt::null) {
+		if (!can_insert_into_slot(new_slot.contents, draggable.container)) {
+			return false;
+		}
+		// Swap positions if already exists
+		registry.get<ScreenPosition>(new_slot.contents).position = container_pos.position;
+		registry.get<Draggable>(new_slot.contents).container = draggable.container;
+	}
+	insert_into_slot(new_slot.contents, draggable.container);
+	registry.get<UISlot>(draggable.container).contents = new_slot.contents;
+	held_pos.position = new_pos.position;
+	draggable.container = new_slot_entity;
+	insert_into_slot(held_under_mouse, new_slot_entity);
+	new_slot.contents = held_under_mouse;
+	registry.get<Text>(attack_display).text = make_attack_display_text();
+	return true;
+}
+
 void UISystem::on_left_click(int action, dvec2 mouse_screen_pos)
 {
 	if (action == GLFW_PRESS) {
@@ -71,27 +99,13 @@ void UISystem::on_left_click(int action, dvec2 mouse_screen_pos)
 		bool found_new_target = false;
 		Geometry::Rectangle target
 			= Geometry::Rectangle(held_pos.position, registry.get<InteractArea>(held_under_mouse).size);
-		for (auto [new_slot_entity, new_slot, pos, area] : registry.view<UISlot, ScreenPosition, InteractArea>().each()) {
-			if (Geometry::Rectangle(pos.position, area.size).intersects(target)) {
-				if (!can_insert_into_slot(held_under_mouse, new_slot_entity)) {
+		for (auto [new_slot_entity, new_slot, new_pos, area] :
+			 registry.view<UISlot, ScreenPosition, InteractArea>().each()) {
+			if (Geometry::Rectangle(new_pos.position, area.size).intersects(target)) {
+				if (!swap_or_move_item(container_pos, held_pos, new_pos, draggable, new_slot_entity, new_slot)) {
 					continue;
 				}
-				if (new_slot.contents != entt::null) {
-					if (!can_insert_into_slot(new_slot.contents, draggable.container)) {
-						continue;
-					}
-					// Swap positions if already exists
-					registry.get<ScreenPosition>(new_slot.contents).position = container_pos.position;
-					registry.get<Draggable>(new_slot.contents).container = draggable.container;
-				}
-				insert_into_slot(new_slot.contents, draggable.container);
-				registry.get<UISlot>(draggable.container).contents = new_slot.contents;
-				held_pos.position = pos.position;
-				draggable.container = new_slot_entity;
-				insert_into_slot(held_under_mouse, new_slot_entity);
-				new_slot.contents = held_under_mouse;
 				found_new_target = true;
-				registry.get<Text>(attack_display).text = make_attack_display_text();
 				break;
 			}
 		}
@@ -152,5 +166,5 @@ std::string UISystem::make_attack_display_text()
 			}
 		}
 	}
-	return std::move(text);
+	return text;
 }

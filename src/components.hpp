@@ -406,6 +406,10 @@ enum class Slot {
 	Count = Amulet + 1,
 };
 
+const std::array<std::string, (size_t)Slot::Count> slot_names = {
+	"Weapon", "Armor", "Spell", "Spell", "Ring", "Amulet",
+};
+
 template <typename T> using SlotList = std::array<T, static_cast<size_t>(Slot::Count)>;
 
 struct Inventory {

@@ -16,6 +16,12 @@ public:
 private:
 	bool can_insert_into_slot(Entity item, Entity container);
 	void insert_into_slot(Entity item, Entity container);
+	bool swap_or_move_item(ScreenPosition& container_pos,
+						   ScreenPosition& held_pos,
+						   ScreenPosition& new_pos,
+						   Draggable& draggable,
+						   Entity new_slot_entity,
+						   UISlot& new_slot);
 
 	void set_current_attack(Slot slot, size_t attack);
 

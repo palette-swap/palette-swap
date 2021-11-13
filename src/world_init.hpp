@@ -44,4 +44,8 @@ Entity create_equip_slot(Entity ui_group,
 						 float height,
 						 const Geometry::Rectangle& area = { vec2(.875, .5), vec2(.25, 1) });
 Entity create_ui_item(Entity ui_group, Entity slot, Entity item);
-Entity create_ui_text(Entity ui_group, vec2 screen_position, const std::string& text);
+Entity create_ui_text(Entity ui_group,
+					  vec2 screen_position,
+					  const std::string& text,
+					  Alignment alignment_x = Alignment::Center,
+					  Alignment alignment_y = Alignment::Center);
