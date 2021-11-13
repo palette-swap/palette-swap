@@ -248,15 +248,18 @@ Entity create_ui_rectangle(Entity ui_group, vec2 pos, vec2 size)
 	return entity;
 }
 
-Entity create_grid_rectangle(
-	Entity ui_group, size_t slot, float width, float height, const Geometry::Rectangle& area)
+Entity create_grid_rectangle(Entity ui_group, size_t slot, float width, float height, const Geometry::Rectangle& area)
 {
+	static constexpr float padding = .75;
 	assert(width > 0 && height > 0);
 	vec2 pos = area.top_left()
-		+ vec2(static_cast<float>((slot % static_cast<size_t>(width)) + 1) / (width + 1),
-			   (floorf(static_cast<float>(slot) / width) + 1) / (height + 1))
+		+ vec2((static_cast<float>(slot % static_cast<size_t>(width)) + padding) / (width + (padding * 2.f) - 1.f),
+			   (floorf(static_cast<float>(slot) / width) + padding) / (height + (padding * 2.f) - 1.f))
 			* area.size;
-	Entity entity = create_ui_rectangle(ui_group, pos, area.size * vec2(.75f / (width + 1), .75f / (height + 1)));
+	Entity entity = create_ui_rectangle(
+		ui_group,
+		pos,
+		area.size * vec2(.75f / (width + (padding * 2.f) - 1.f), .75f / (height + (padding * 2.f) - 1.f)));
 	return entity;
 }
 
@@ -264,7 +267,9 @@ Entity create_inventory_slot(
 	Entity ui_group, size_t slot, Entity inventory, float width, float height, const Geometry::Rectangle& area)
 {
 	Entity entity = create_grid_rectangle(ui_group, slot, width, height, area);
-	registry.emplace<InventorySlot>(entity, inventory, slot);
+	registry.emplace<InteractArea>(entity, registry.get<UIRenderRequest>(entity).size);
+	registry.emplace<UISlot>(entity, inventory);
+	registry.emplace<InventorySlot>(entity, slot);
 	return entity;
 }
 
@@ -272,7 +277,9 @@ Entity create_equip_slot(
 	Entity ui_group, Slot slot, Entity inventory, float width, float height, const Geometry::Rectangle& area)
 {
 	Entity entity = create_grid_rectangle(ui_group, (size_t)slot, width, height, area);
-	registry.emplace<EquipSlot>(entity, inventory, slot);
+	registry.emplace<InteractArea>(entity, registry.get<UIRenderRequest>(entity).size);
+	registry.emplace<UISlot>(entity, inventory);
+	registry.emplace<EquipSlot>(entity, slot);
 	return entity;
 }
 
@@ -280,6 +287,7 @@ Entity create_ui_text(Entity ui_group, vec2 screen_position, const std::string& 
 {
 	Entity entity = registry.create();
 	registry.emplace<ScreenPosition>(entity, screen_position);
+	registry.emplace<Color>(entity, vec3(1.f));
 	registry.emplace<Text>(entity, text, (uint16)48, Alignment::Center, Alignment::Center);
 	UIGroup::add(ui_group, entity, registry.emplace<UIElement>(entity, ui_group, true));
 	return entity;

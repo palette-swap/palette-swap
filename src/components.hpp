@@ -549,17 +549,24 @@ struct UIGroup {
 	static void add(Entity group, Entity element, UIElement& ui_element);
 };
 
-struct InventorySlot {
+struct UISlot {
 	Entity owner;
+	Entity contents = entt::null;
+};
+
+struct InventorySlot {
 	size_t slot;
 };
 
 struct EquipSlot {
-	Entity owner;
 	Slot slot;
 };
 
 struct Draggable {
+	Entity container;
+};
+
+struct InteractArea {
 	vec2 size;
 };
 

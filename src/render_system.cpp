@@ -576,10 +576,6 @@ void RenderSystem::draw()
 		}
 	}
 
-	for (auto [entity, text] : registry.view<Text>(entt::exclude<UIElement>).each()) {
-		draw_text(entity, text, projection_2d);
-	}
-
 	for (auto [entity, line] : registry.view<Line>(entt::exclude<UIElement>).each()) {
 		draw_line(entity, line, projection_2d);
 	}

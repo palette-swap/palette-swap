@@ -17,18 +17,19 @@ void UISystem::restart_game()
 	float small_count = floorf(sqrtf(inventory_size));
 	float large_count = ceilf(inventory_size / small_count);
 	for (size_t i = 0; i < Inventory::inventory_size; i++) {
-		create_inventory_slot(inventory_group, i, player, large_count, small_count);
-	}
-	static const auto num_slots = (size_t) Slot::Count;
-	for (size_t i = 0; i < num_slots; i++) {
-		create_equip_slot(inventory_group, (Slot)i, player, 1, num_slots);
-	}
-	size_t i = 1;
-	for (Entity item : inventory.inventory) {
+		Entity slot = create_inventory_slot(inventory_group, i, player, large_count, small_count);
+		Entity item = inventory.inventory.at(i);
 		if (item == entt::null) {
 			continue;
 		}
-		Entity text = create_ui_text(inventory_group, vec2(.75f / 5 * static_cast<float>(i++), .25f), registry.get<Item>(item).name);
-		registry.emplace<Draggable>(text, vec2(.1f));
+		Entity text = create_ui_text(
+			inventory_group, registry.get<ScreenPosition>(slot).position, registry.get<Item>(item).name);
+		registry.emplace<Draggable>(text, slot);
+		registry.emplace<InteractArea>(text, vec2(.1));
+		registry.get<UISlot>(slot).contents = text;
+	}
+	static const auto num_slots = (size_t)Slot::Count;
+	for (size_t i = 0; i < num_slots; i++) {
+		create_equip_slot(inventory_group, (Slot)i, player, 2, static_cast<float>(num_slots / 2 + num_slots % 2));
 	}
 }
