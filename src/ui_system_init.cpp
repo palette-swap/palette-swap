@@ -26,6 +26,12 @@ void UISystem::restart_game()
 	}
 	static const auto num_slots = (size_t)Slot::Count;
 	for (size_t i = 0; i < num_slots; i++) {
-		create_equip_slot(inventory_group, (Slot)i, player, 2, ceilf(static_cast<float>(num_slots) / 2.f));
+		Entity slot
+			= create_equip_slot(inventory_group, (Slot)i, player, 2, ceilf(static_cast<float>(num_slots) / 2.f));
+		Entity item = inventory.equipped.at(i);
+		if (item == entt::null) {
+			continue;
+		}
+		create_ui_item(inventory_group, slot, item);
 	}
 }
