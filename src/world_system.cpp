@@ -411,6 +411,8 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 		// Calculates arrow angle based on position of mouse
 		arrow_velocity.angle = atan2(eucl_diff.x, -eucl_diff.y);
 	}
+
+	ui->on_mouse_move(mouse_position / vec2(window_default_size));
 }
 
 void WorldSystem::move_player(Direction direction)
@@ -544,19 +546,22 @@ void WorldSystem::change_color()
 // TODO: Integrate into turn state to only enable if player's turn is on
 void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 {
-	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+	if (button == GLFW_MOUSE_BUTTON_LEFT) {
 		// Get screen position of mouse
 		dvec2 mouse_screen_pos = {};
 		glfwGetCursorPos(window, &mouse_screen_pos.x, &mouse_screen_pos.y);
-		ui->on_left_click(mouse_screen_pos);
-		if (turns->get_active_team() != player) {
-			return;
-		}
-		Attack& attack = registry.get<Weapon>(current_weapon).given_attacks[current_attack];
-		if (attack.targeting_type == TargetingType::Projectile) {
-			try_fire_projectile();
-		} else if (attack.targeting_type == TargetingType::Adjacent) {
-			try_adjacent_attack(attack);
+		ui->on_left_click(action, mouse_screen_pos / dvec2(window_default_size));
+
+		if (action == GLFW_PRESS) {
+			if (turns->get_active_team() != player) {
+				return;
+			}
+			Attack& attack = registry.get<Weapon>(current_weapon).given_attacks[current_attack];
+			if (attack.targeting_type == TargetingType::Projectile) {
+				try_fire_projectile();
+			} else if (attack.targeting_type == TargetingType::Adjacent) {
+				try_adjacent_attack(attack);
+			}
 		}
 	}
 }

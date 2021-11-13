@@ -413,11 +413,11 @@ struct Inventory {
 	std::array<Entity, inventory_size> inventory;
 	SlotList<Entity> equipped;
 	Inventory()
-		: equipped()
-		, inventory()
+		: inventory()
+		, equipped()
 	{
-		equipped.fill(entt::null);
 		inventory.fill(entt::null);
+		equipped.fill(entt::null);
 	}
 };
 
@@ -533,7 +533,7 @@ struct UIRenderRequest {
 
 struct UIElement {
 	Entity group;
-	Entity next;
+	Entity next = entt::null;
 	bool visible = true;
 	UIElement(Entity group, bool visible)
 		: group(group)
@@ -557,6 +557,10 @@ struct InventorySlot {
 struct EquipSlot {
 	Entity owner;
 	Slot slot;
+};
+
+struct Draggable {
+	vec2 size;
 };
 
 struct Line {

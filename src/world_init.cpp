@@ -219,14 +219,14 @@ Entity create_fancy_healthbar(Entity ui_group)
 {
 	Entity entity = registry.create();
 	registry.emplace<ScreenPosition>(entity, vec2(.02f, .02f));
-	UIRenderRequest& ui_render_request = registry.emplace<UIRenderRequest>(entity,
-																		   TEXTURE_ASSET_ID::TEXTURE_COUNT,
-																		   EFFECT_ASSET_ID::FANCY_HEALTH,
-																		   GEOMETRY_BUFFER_ID::FANCY_HEALTH,
-																		   vec2(.25f, .0625f),
-																		   0.f,
-																		   Alignment::Start,
-																		   Alignment::Start);
+	registry.emplace<UIRenderRequest>(entity,
+									  TEXTURE_ASSET_ID::TEXTURE_COUNT,
+									  EFFECT_ASSET_ID::FANCY_HEALTH,
+									  GEOMETRY_BUFFER_ID::FANCY_HEALTH,
+									  vec2(.25f, .0625f),
+									  0.f,
+									  Alignment::Start,
+									  Alignment::Start);
 	UIGroup::add(ui_group, entity, registry.emplace<UIElement>(entity, ui_group, true));
 	return entity;
 }
@@ -249,11 +249,13 @@ Entity create_ui_rectangle(Entity ui_group, vec2 pos, vec2 size)
 }
 
 Entity create_grid_rectangle(
-	Entity ui_group, size_t slot, Entity inventory, float width, float height, const Geometry::Rectangle& area)
+	Entity ui_group, size_t slot, float width, float height, const Geometry::Rectangle& area)
 {
 	assert(width > 0 && height > 0);
-	vec2 pos = area.top_left() + vec2(static_cast<float>((slot % static_cast<size_t>(width)) + 1) / (width + 1),
-					(floorf(static_cast<float>(slot) / width) + 1) / (height + 1)) * area.size;
+	vec2 pos = area.top_left()
+		+ vec2(static_cast<float>((slot % static_cast<size_t>(width)) + 1) / (width + 1),
+			   (floorf(static_cast<float>(slot) / width) + 1) / (height + 1))
+			* area.size;
 	Entity entity = create_ui_rectangle(ui_group, pos, area.size * vec2(.75f / (width + 1), .75f / (height + 1)));
 	return entity;
 }
@@ -261,7 +263,7 @@ Entity create_grid_rectangle(
 Entity create_inventory_slot(
 	Entity ui_group, size_t slot, Entity inventory, float width, float height, const Geometry::Rectangle& area)
 {
-	Entity entity = create_grid_rectangle(ui_group, slot, inventory, width, height, area);
+	Entity entity = create_grid_rectangle(ui_group, slot, width, height, area);
 	registry.emplace<InventorySlot>(entity, inventory, slot);
 	return entity;
 }
@@ -269,12 +271,13 @@ Entity create_inventory_slot(
 Entity create_equip_slot(
 	Entity ui_group, Slot slot, Entity inventory, float width, float height, const Geometry::Rectangle& area)
 {
-	Entity entity = create_grid_rectangle(ui_group, (size_t)slot, inventory, width, height, area);
+	Entity entity = create_grid_rectangle(ui_group, (size_t)slot, width, height, area);
 	registry.emplace<EquipSlot>(entity, inventory, slot);
 	return entity;
 }
 
-Entity create_ui_text(Entity ui_group, vec2 screen_position, const std::string& text) {
+Entity create_ui_text(Entity ui_group, vec2 screen_position, const std::string& text)
+{
 	Entity entity = registry.create();
 	registry.emplace<ScreenPosition>(entity, screen_position);
 	registry.emplace<Text>(entity, text, (uint16)48, Alignment::Center, Alignment::Center);
