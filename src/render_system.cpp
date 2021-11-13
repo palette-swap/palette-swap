@@ -235,43 +235,49 @@ void RenderSystem::draw_effect(Entity entity, const RenderRequest& render_reques
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 	gl_has_errors();
+	if (render_request.used_effect == EFFECT_ASSET_ID::SPELL) {
 
-	GLint in_position_loc = glGetAttribLocation(program, "in_position");
-	GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
-	gl_has_errors();
-	assert(in_texcoord_loc >= 0);
+		GLint in_position_loc = glGetAttribLocation(program, "in_position");
+		GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
+		gl_has_errors();
+		assert(in_texcoord_loc >= 0);
 
-	glEnableVertexAttribArray(in_position_loc);
-	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(SmallSpriteVertex), nullptr);
-	gl_has_errors();
+		glEnableVertexAttribArray(in_position_loc);
+		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(SmallSpriteVertex), nullptr);
+		gl_has_errors();
 
-	glEnableVertexAttribArray(in_texcoord_loc);
-	glVertexAttribPointer(
-		in_texcoord_loc,
-		2,
-		GL_FLOAT,
-		GL_FALSE,
-		sizeof(SmallSpriteVertex),
-		(void*)sizeof(vec3)); // NOLINT(performance-no-int-to-ptr,cppcoreguidelines-pro-type-cstyle-cast)
-	// Enabling and binding texture to slot 0
-	glActiveTexture(GL_TEXTURE0);
-	gl_has_errors();
+		glEnableVertexAttribArray(in_texcoord_loc);
+		glVertexAttribPointer(
+			in_texcoord_loc,
+			2,
+			GL_FLOAT,
+			GL_FALSE,
+			sizeof(SmallSpriteVertex),
+			(void*)sizeof(vec3)); // NOLINT(performance-no-int-to-ptr,cppcoreguidelines-pro-type-cstyle-cast)
+		// Enabling and binding texture to slot 0
+		glActiveTexture(GL_TEXTURE0);
+		gl_has_errors();
 
-	Animation& animation = registry.get<Animation>(entity);
-	assert(registry.any_of<Animation>(entity));
+		Animation& animation = registry.get<Animation>(entity);
+		assert(registry.any_of<Animation>(entity));
 
-	// Switches direction based on requested animation direction
-	transform.scale({ animation.direction, 1 });
+		// Updates time in shader program
+		GLint time_uloc = glGetUniformLocation(program, "time");
+		glUniform1f(time_uloc, (float)(glfwGetTime() * 10.0f));
 
-	// Updates frame for entity
-	GLint frame_loc = glGetUniformLocation(program, "frame");
-	glUniform1i(frame_loc, animation.frame);
-	gl_has_errors();
+		// Updates frame for entity
+		GLint frame_loc = glGetUniformLocation(program, "frame");
+		glUniform1i(frame_loc, animation.frame);
+		gl_has_errors();
 
-	// Updates frame for entity
-	GLint state_loc = glGetUniformLocation(program, "state");
-	glUniform1i(state_loc, animation.state);
-	gl_has_errors();
+		// Updates frame for entity
+		GLint state_loc = glGetUniformLocation(program, "state");
+		glUniform1i(state_loc, animation.state);
+
+		// Updates frame for entity
+		GLint spell_loc = glGetUniformLocation(program, "spelltype");
+		glUniform1i(spell_loc, animation.state);
+	}
 
 	GLuint texture_id = texture_gl_handles.at((GLuint)render_request.used_texture);
 
