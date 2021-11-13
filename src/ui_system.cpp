@@ -83,8 +83,8 @@ void UISystem::on_left_click(int action, dvec2 mouse_screen_pos)
 					// Swap positions if already exists
 					registry.get<ScreenPosition>(new_slot.contents).position = container_pos.position;
 					registry.get<Draggable>(new_slot.contents).container = draggable.container;
-					insert_into_slot(new_slot.contents, draggable.container);
 				}
+				insert_into_slot(new_slot.contents, draggable.container);
 				registry.get<UISlot>(draggable.container).contents = new_slot.contents;
 				held_pos.position = pos.position;
 				draggable.container = new_slot_entity;
