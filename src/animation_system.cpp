@@ -153,6 +153,10 @@ void AnimationSystem::set_all_inactive_colours(ColorState inactive_color)
 			registry.remove<InactiveEnemy>(entity);
 		}
 	}
+
+	for (auto [entity, player_inactive_perception] : registry.view<PlayerInactivePerception>().each()) {
+		player_inactive_perception.inactive = inactive_color;
+	}
 }
 
 void AnimationSystem::set_player_animation(const Entity& player)

@@ -155,7 +155,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 
 	// Processing the player state
 	assert(registry.size<ScreenState>() <= 1);
-	// ScreenState& screen = registry.screen_states.components[0];
+
 	if ((registry.get<Stats>(player).health <= 0) && turns->ready_to_act(player)) {
 		restart_game();
 		return true;
