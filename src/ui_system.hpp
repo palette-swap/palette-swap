@@ -17,6 +17,8 @@ private:
 	bool can_insert_into_slot(Entity item, Entity container);
 	void insert_into_slot(Entity item, Entity container);
 
+	static constexpr std::array<Slot, 3> attacks_slots = {Slot::Weapon, Slot::Spell1, Slot::Spell2};
+	
 	Slot current_attack_slot = Slot::Count;
 	size_t current_attack = 0;
 

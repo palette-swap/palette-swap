@@ -10,6 +10,26 @@ void UISystem::on_key(int key, int action, int /*mod*/)
 	if (action == GLFW_PRESS && key == GLFW_KEY_ESCAPE) {
 		registry.get<UIGroup>(inventory_group).visible = false;
 	}
+
+	// Change attack
+	// TODO: Generalize for many attacks, check out of bounds
+	// Key Codes for 1-9
+	if (49 <= key && key <= 57) {
+		if (key - 49 < 4) {
+			size_t index = ((size_t)key) - 49;
+			for (Slot slot: attacks_slots) {
+				Entity weapon_entity = Inventory::get(registry.view<Player>().front(), slot);
+				if (weapon_entity != entt::null) {
+					Weapon& weapon = registry.get<Weapon>(weapon_entity);
+					if (index < weapon.given_attacks.size()) {
+						set_current_attack(slot, index);
+						break;
+					}
+					index -= weapon.given_attacks.size();
+				}
+			}
+		}
+	}
 }
 
 bool UISystem::can_insert_into_slot(Entity item, Entity container)
