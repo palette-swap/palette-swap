@@ -314,6 +314,10 @@ void RenderSystem::draw_rectangle(Entity entity, Transform transform, vec2 scale
 
 void RenderSystem::draw_text(Entity entity, const Text& text, const mat3& projection)
 {
+	if (text.text.empty()) {
+		return;
+	}
+
 	Transform transform = get_transform(entity);
 
 	const auto program = (GLuint)effects.at((uint8)EFFECT_ASSET_ID::TEXTURED);

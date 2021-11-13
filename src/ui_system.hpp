@@ -17,11 +17,16 @@ private:
 	bool can_insert_into_slot(Entity item, Entity container);
 	void insert_into_slot(Entity item, Entity container);
 
+	void set_current_attack(Slot slot, size_t attack);
+
+	std::string make_attack_display_text();
+
 	static constexpr std::array<Slot, 3> attacks_slots = {Slot::Weapon, Slot::Spell1, Slot::Spell2};
 	
 	Slot current_attack_slot = Slot::Count;
 	size_t current_attack = 0;
 
+	Entity attack_display = entt::null;
 	Entity inventory_group = entt::null;
 	Entity held_under_mouse = entt::null;
 };

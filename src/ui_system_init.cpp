@@ -6,13 +6,23 @@ void UISystem::restart_game()
 	Entity player = registry.view<Player>().front();
 
 	Entity game_hud = create_ui_group(true);
-	// Player Health Bar
 
+	// Player Health Bar
 	create_fancy_healthbar(game_hud);
+
+	// Attack Display
+	Inventory& inventory = registry.get<Inventory>(player);
+	attack_display = registry.create();
+	registry.emplace<ScreenPosition>(attack_display, vec2(0, 1));
+	registry.emplace<Text>(attack_display, make_attack_display_text(),
+						   (uint16)48,
+						   Alignment::Start,
+						   Alignment::End);
+	registry.emplace<Color>(attack_display, vec3(1, 1, 1));
+	UIGroup::add(game_hud, attack_display, registry.emplace<UIElement>(attack_display, game_hud, true));
 
 	// Inventory
 	inventory_group = create_ui_group(false);
-	Inventory& inventory = registry.get<Inventory>(player);
 	auto inventory_size = static_cast<float>(Inventory::inventory_size);
 	float small_count = floorf(sqrtf(inventory_size));
 	float large_count = ceilf(inventory_size / small_count);

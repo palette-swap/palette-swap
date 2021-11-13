@@ -91,6 +91,7 @@ void UISystem::on_left_click(int action, dvec2 mouse_screen_pos)
 				insert_into_slot(held_under_mouse, new_slot_entity);
 				new_slot.contents = held_under_mouse;
 				found_new_target = true;
+				registry.get<Text>(attack_display).text = make_attack_display_text();
 				break;
 			}
 		}
@@ -130,4 +131,26 @@ void UISystem::set_current_attack(Slot slot, size_t attack)
 {
 	current_attack_slot = (Slot)slot;
 	current_attack = attack;
+	registry.get<Text>(attack_display).text = make_attack_display_text();
+}
+
+std::string UISystem::make_attack_display_text()
+{
+	std::string text;
+	size_t count = 0;
+	for (Slot slot : attacks_slots) {
+		Entity weapon_entity = Inventory::get(registry.view<Player>().front(), slot);
+		if (weapon_entity != entt::null) {
+			Weapon& weapon = registry.get<Weapon>(weapon_entity);
+			for (size_t i = 0; i < weapon.given_attacks.size(); i++) {
+				Attack& attack = weapon.given_attacks.at(i);
+				if (slot == current_attack_slot && i == current_attack) {
+					text += "\n[" + std::to_string(++count) + "] " + attack.name;
+				} else {
+					text += "\n " + std::to_string(++count) + "  " + attack.name;
+				}
+			}
+		}
+	}
+	return std::move(text);
 }
