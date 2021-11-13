@@ -12,6 +12,16 @@ void UISystem::on_key(int key, int action, int /*mod*/)
 	}
 }
 
+static void insert_into_slot(Entity item, Entity container) {
+	Inventory& inventory = registry.get<Inventory>(registry.view<Player>().front());
+	Entity actual_item = registry.get<UIItem>(item).actual_item;
+	if (InventorySlot* inv_slot = registry.try_get<InventorySlot>(container)) {
+		inventory.inventory.at(inv_slot->slot) = actual_item;
+	} else if (EquipSlot* equip_slot = registry.try_get<EquipSlot>(container)) {
+		inventory.equipped.at((size_t)equip_slot->slot) = actual_item;
+	}
+}
+
 void UISystem::on_left_click(int action, dvec2 mouse_screen_pos)
 {
 	if (action == GLFW_PRESS) {

@@ -22,14 +22,10 @@ void UISystem::restart_game()
 		if (item == entt::null) {
 			continue;
 		}
-		Entity text = create_ui_text(
-			inventory_group, registry.get<ScreenPosition>(slot).position, registry.get<Item>(item).name);
-		registry.emplace<Draggable>(text, slot);
-		registry.emplace<InteractArea>(text, vec2(.1));
-		registry.get<UISlot>(slot).contents = text;
+		create_ui_item(inventory_group, slot, item);
 	}
 	static const auto num_slots = (size_t)Slot::Count;
 	for (size_t i = 0; i < num_slots; i++) {
-		create_equip_slot(inventory_group, (Slot)i, player, 2, static_cast<float>(num_slots / 2 + num_slots % 2));
+		create_equip_slot(inventory_group, (Slot)i, player, 2, ceilf(static_cast<float>(num_slots) / 2.f));
 	}
 }

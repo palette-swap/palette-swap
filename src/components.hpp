@@ -549,8 +549,12 @@ struct UIGroup {
 	static void add(Entity group, Entity element, UIElement& ui_element);
 };
 
+struct UIItem {
+	Entity actual_item;
+};
+
 struct UISlot {
-	Entity owner;
+	Entity owner = entt::null;
 	Entity contents = entt::null;
 };
 
