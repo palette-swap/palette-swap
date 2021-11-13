@@ -87,7 +87,8 @@ void AnimationSystem::set_enemy_animation(const Entity& enemy, TEXTURE_ASSET_ID 
 	enemy_animation.speed_adjustment = 1;
 
 	// Loads specific enemy spritesheet desired
-	enemy_render = { enemy_type, EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY };
+	enemy_render = { enemy_type, EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::SMALL_SPRITE
+	};
 
 	// Changes enemy color to a predefined default of red or blue (or nothing, if that's what you want)
 	if (color == ColorState::Red) {
@@ -171,7 +172,7 @@ void AnimationSystem::set_player_animation(const Entity& player)
 	player_animation.speed_adjustment = player_animation_speed;
 
 	// Loads specific enemy spritesheet desired
-	player_render = { TEXTURE_ASSET_ID::PALADIN, EFFECT_ASSET_ID::PLAYER, GEOMETRY_BUFFER_ID::PLAYER };
+	player_render = { TEXTURE_ASSET_ID::PALADIN, EFFECT_ASSET_ID::PLAYER, GEOMETRY_BUFFER_ID::SMALL_SPRITE };
 }
 
 void AnimationSystem::player_idle_animation(const Entity& player)

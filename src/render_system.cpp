@@ -145,7 +145,7 @@ void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest& render
 		assert(in_texcoord_loc >= 0);
 
 		glEnableVertexAttribArray(in_position_loc);
-		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(EnemyVertex), nullptr);
+		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(SmallSpriteVertex), nullptr);
 		gl_has_errors();
 
 		glEnableVertexAttribArray(in_texcoord_loc);
@@ -153,7 +153,7 @@ void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest& render
 							  2,
 							  GL_FLOAT,
 							  GL_FALSE,
-							  sizeof(EnemyVertex),
+							  sizeof(SmallSpriteVertex),
 							  (void*)sizeof(vec3));  // NOLINT(performance-no-int-to-ptr,cppcoreguidelines-pro-type-cstyle-cast)
 		// Enabling and binding texture to slot 0
 		glActiveTexture(GL_TEXTURE0);
