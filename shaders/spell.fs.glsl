@@ -51,7 +51,7 @@ vec4 rockShader(vec4 input_color)
 vec4 windShader(vec4 input_color)
 {
 	float wind_r = input_color.x;
-	float wind_g = input_color.y * (3 - 20 * vpos.y - 2 * distance(vpos - vec2(0,0.3), vec2(0,0)));
+	float wind_g = input_color.y * (3 - 20 * vpos.y - 10 * pow(vpos.x,2) - 2 * distance(vpos - vec2(0,0.3), vec2(0,0)));
 	float wind_b = input_color.z;
 	float wind_opacity = input_color.w;
 
