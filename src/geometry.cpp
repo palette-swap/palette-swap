@@ -24,7 +24,7 @@ bool Geometry::Rectangle::intersects(const Circle& c) const
 	return glm::distance2(distance, half_size) <= c.radius * c.radius;
 }
 
-bool Geometry::Rectangle::contains(const vec2 p) const {
+bool Geometry::Rectangle::contains(const vec2& p) const {
 	vec2 difference = p - center;
 	return abs(difference.x) <= size.x && abs(difference.y) <= size.y;
 }
