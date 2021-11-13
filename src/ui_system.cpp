@@ -12,6 +12,14 @@ void UISystem::on_key(int key, int action, int /*mod*/)
 	}
 }
 
+static bool can_insert_into_slot(Entity item, Entity container)
+{
+	if (EquipSlot* equip_slot = registry.try_get<EquipSlot>(container)) {
+		return registry.get<Item>(registry.get<UIItem>(item).actual_item).allowed_slots.at((size_t) equip_slot->slot);
+	}
+	return true;
+}
+
 static void insert_into_slot(Entity item, Entity container) {
 	Inventory& inventory = registry.get<Inventory>(registry.view<Player>().front());
 	Entity actual_item = registry.get<UIItem>(item).actual_item;
@@ -41,7 +49,13 @@ void UISystem::on_left_click(int action, dvec2 mouse_screen_pos)
 			= Geometry::Rectangle(held_pos.position, registry.get<InteractArea>(held_under_mouse).size);
 		for (auto [new_slot_entity, new_slot, pos, area] : registry.view<UISlot, ScreenPosition, InteractArea>().each()) {
 			if (Geometry::Rectangle(pos.position, area.size).intersects(target)) {
+				if (!can_insert_into_slot(held_under_mouse, new_slot_entity)) {
+					continue;
+				}
 				if (new_slot.contents != entt::null) {
+					if (!can_insert_into_slot(new_slot.contents, draggable.container)) {
+						continue;
+					}
 					// Swap positions if already exists
 					registry.get<ScreenPosition>(new_slot.contents).position = container_pos.position;
 					registry.get<Draggable>(new_slot.contents).container = draggable.container;
