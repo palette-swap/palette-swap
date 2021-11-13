@@ -143,11 +143,6 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 {
 	// Get the screen dimensions
 
-	// Updating window title with points
-	std::stringstream title_ss;
-	title_ss << "Points: " << points;
-	glfwSetWindowTitle(window, title_ss.str().c_str());
-
 	// Remove debug info from the last step
 	auto debug_view = registry.view<DebugComponent>();
 	registry.destroy(debug_view.begin(), debug_view.end());
