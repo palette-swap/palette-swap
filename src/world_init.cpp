@@ -226,10 +226,8 @@ Entity create_fancy_healthbar(Entity ui_group)
 																		   vec2(.25f, .0625f),
 																		   0.f,
 																		   Alignment::Start,
-																		   Alignment::Start,
-																		   ui_group,
-																		   true);
-	UIGroup::add(ui_group, entity, ui_render_request);
+																		   Alignment::Start);
+	UIGroup::add(ui_group, entity, registry.emplace<UIElement>(entity, ui_group, true));
 	return entity;
 }
 
@@ -245,9 +243,8 @@ Entity create_ui_rectangle(Entity ui_group, vec2 pos, vec2 size)
 									  size,
 									  0.f,
 									  Alignment::Center,
-									  Alignment::Center,
-									  ui_group,
-									  true);
+									  Alignment::Center);
+	UIGroup::add(ui_group, entity, registry.emplace<UIElement>(entity, ui_group, true));
 	return entity;
 }
 

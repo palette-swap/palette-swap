@@ -237,9 +237,9 @@ void Collision::add(Entity parent, Entity child)
 	}
 }
 
-void UIGroup::add(Entity group, Entity element, UIRenderRequest ui_render_request)
+void UIGroup::add(Entity group, Entity element, UIElement& ui_element)
 {
 	UIGroup& g = registry.get<UIGroup>(group);
-	ui_render_request.next = g.first_element;
+	ui_element.next = g.first_element;
 	g.first_element = element;
 }

@@ -557,17 +557,30 @@ void RenderSystem::draw()
 		draw_healthbar(transform, health_group.get<Stats>(entity), projection_2d, false);
 	}
 
-	for (auto [entity, ui_render_request] : registry.view<UIRenderRequest>().each()) {
-		if (registry.get<UIGroup>(ui_render_request.group).visible && ui_render_request.visible) {
-			draw_ui_element(entity, ui_render_request, projection_2d);
+	for (auto [entity, group] : registry.view<UIGroup>().each()) {
+		if (group.visible) {
+			Entity curr = group.first_element;
+			while (curr != entt::null) {
+				UIElement& element = registry.get<UIElement>(curr);
+				if (element.visible) {
+					if (UIRenderRequest* ui_render_request = registry.try_get<UIRenderRequest>(curr)) {
+						draw_ui_element(curr, *ui_render_request, projection_2d);
+					} else if (Text* text = registry.try_get<Text>(curr)) {
+						draw_text(curr, *text, projection_2d);
+					} else if (Line* line = registry.try_get<Line>(curr)) {
+						draw_line(entity, *line, projection_2d);
+					}
+				}
+				curr = element.next;
+			}
 		}
 	}
 
-	for (auto [entity, text] : registry.view<Text>().each()) {
+	for (auto [entity, text] : registry.view<Text>(entt::exclude<UIElement>).each()) {
 		draw_text(entity, text, projection_2d);
 	}
 
-	for (auto [entity, line] : registry.view<Line>().each()) {
+	for (auto [entity, line] : registry.view<Line>(entt::exclude<UIElement>).each()) {
 		draw_line(entity, line, projection_2d);
 	}
 

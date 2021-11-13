@@ -501,19 +501,13 @@ struct UIRenderRequest {
 	Alignment alignment_x;
 	Alignment alignment_y;
 
-	Entity group;
-	Entity next;
-	bool visible = true;
-
 	UIRenderRequest(TEXTURE_ASSET_ID used_texture,
 					EFFECT_ASSET_ID used_effect,
 					GEOMETRY_BUFFER_ID used_geometry,
 					vec2 size,
 					float angle,
 					Alignment alignment_x,
-					Alignment alignment_y,
-					Entity group,
-					bool visible)
+					Alignment alignment_y)
 		: used_texture(used_texture)
 		, used_effect(used_effect)
 		, used_geometry(used_geometry)
@@ -521,8 +515,6 @@ struct UIRenderRequest {
 		, angle(angle)
 		, alignment_x(alignment_x)
 		, alignment_y(alignment_y)
-		, group(group)
-		, visible(visible)
 	{
 	}
 
@@ -539,11 +531,22 @@ struct UIRenderRequest {
 	}
 };
 
+struct UIElement {
+	Entity group;
+	Entity next;
+	bool visible = true;
+	UIElement(Entity group, bool visible)
+		: group(group)
+		, visible(visible)
+	{
+	}
+};
+
 struct UIGroup {
 	bool visible = false;
 	Entity first_element = entt::null;
 
-	static void add(Entity group, Entity element, UIRenderRequest ui_render_request);
+	static void add(Entity group, Entity element, UIElement& ui_element);
 };
 
 struct InventorySlot {
