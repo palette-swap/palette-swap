@@ -19,7 +19,7 @@ vec4 fireShader(vec4 input_color)
 	float darken = 0;
 	float ball = distance(vpos, vec2(-0.028,0.022));
 	if (ball <= 0.18) {
-		darken = 0.2;
+		darken = 0.3;
 	}
 	float fire_r = input_color.x * (1 + 0.5 * (1 - vpos.y - 0.7) * sin(time/3)) - darken;
 	float fire_g = input_color.y * (1 + 0.1 * (1 - vpos.y - 0.7) * sin(time/3)) - darken;
