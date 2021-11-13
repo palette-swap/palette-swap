@@ -14,13 +14,13 @@ Entity create_player(uvec2 pos)
 	// Setup Casting
 	Attack arcane_orb = { "Arcane Orb", 10, 10, 5, 10, DamageType::Magical, TargetingType::Projectile };
 	Attack fireball = { "Fireball", -3, 10, 10, 20, DamageType::Fire, TargetingType::Projectile };
-	inventory.inventory.push_back(create_weapon("Spellbook", std::vector<Attack>({ arcane_orb, fireball })));
+	inventory.inventory.at(0) = create_weapon("Spellbook", std::vector<Attack>({ arcane_orb, fireball }));
 
 	// Setup Sword
 	Attack sword_light = { "Light", 4, 18, 12, 22, DamageType::Physical, TargetingType::Adjacent };
 	Attack sword_heavy = { "Heavy", 1, 14, 20, 30, DamageType::Physical, TargetingType::Adjacent };
 	Entity sword = create_weapon("Sword", std::vector<Attack>({ sword_light, sword_heavy }));
-	inventory.inventory.push_back(sword);
+	inventory.inventory.at(1) = sword;
 
 	inventory.equipped.at(static_cast<uint8>(Slot::PrimaryHand)) = sword;
 

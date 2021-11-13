@@ -409,10 +409,16 @@ enum class Slot {
 template <typename T> using SlotList = std::array<T, static_cast<size_t>(Slot::Count)>;
 
 struct Inventory {
-	size_t inventory_size = 12;
-	std::vector<Entity> inventory;
+	static constexpr size_t inventory_size = 12;
+	std::array<Entity, inventory_size> inventory;
 	SlotList<Entity> equipped;
-	Inventory(): equipped() { equipped.fill(entt::null); }
+	Inventory()
+		: equipped()
+		, inventory()
+	{
+		equipped.fill(entt::null);
+		inventory.fill(entt::null);
+	}
 };
 
 struct Item {
