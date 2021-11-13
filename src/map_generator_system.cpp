@@ -103,23 +103,26 @@ bool MapGeneratorSystem::walkable(uvec2 pos) const
 	return walkable_tiles().find(get_tile_id_from_map_pos(pos)) != walkable_tiles().end();
 }
 
-bool MapGeneratorSystem::is_active_enemy(Entity e) const
+bool MapGeneratorSystem::is_active_enemy(Entity e, bool active_color) const
 { 
 	if (Enemy* enemy = registry.try_get<Enemy>(e)) {
-		return enemy->team == turns->get_active_color();
+		if (active_color)
+			return enemy->team == turns->get_active_color();
+		else 
+			return enemy->team == turns->get_inactive_color();
 	}
 	return false;
 }
 
-bool MapGeneratorSystem::walkable_and_free(uvec2 pos) const
+bool MapGeneratorSystem::walkable_and_free(uvec2 pos, bool active_color) const
 {
 	if (!walkable(pos)) {
 		return false;
 	}
 	return !std::any_of(registry.view<MapPosition>().begin(),
 						registry.view<MapPosition>().end(), 
-		[pos, this](const Entity e) {
-			return registry.get<MapPosition>(e).position == pos && this->is_active_enemy(e);
+		[pos, this, active_color](const Entity e) {
+			return registry.get<MapPosition>(e).position == pos && this->is_active_enemy(e, active_color);
 		});
 }
 
