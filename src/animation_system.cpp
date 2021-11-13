@@ -263,13 +263,13 @@ void AnimationSystem::player_red_blue_animation(const Entity& player, ColorState
 
 		switch (color) {
 		case ColorState::Red:
-			player_animation.display_color = { 2, 0.8, 0.8, 1 };
+			player_animation.display_color = player_red_transition_colour;
 			break;
 		case ColorState::Blue:
-			player_animation.display_color = { 0.5, 0.5, 3, 1 };
+			player_animation.display_color = player_blue_transition_colour;
 			break;
 		default:
-			player_animation.display_color = { 1, 1, 1, 1};
+			player_animation.display_color = original_colours;
 			break;
 		}
 		

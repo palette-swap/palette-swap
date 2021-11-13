@@ -40,8 +40,17 @@ enum class EnemyAnimationEvents {
 	Attack = 3,
 };
 
+static constexpr vec4 original_colours = { 1, 1, 1, 1 };
+
+// Player transition colours between dimensions
+static constexpr vec4 player_red_transition_colour = { 2, 0.8, 0.8, 1 };
+static constexpr vec4 player_blue_transition_colour = { 0.5, 0.5, 3, 1 };
+
+
+// Default enemy colours for each team
 static constexpr vec4 default_enemy_red = { 2, 1, 1, 1 };
 static constexpr vec4 default_enemy_blue = { 1, 1, 2, 1 };
+
 static constexpr vec4 damage_color = { 5, 5, 5, 1 };
 
 static constexpr int max_inactive_colors = 3;
