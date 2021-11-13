@@ -29,17 +29,19 @@ void UISystem::on_left_click(int action, dvec2 mouse_screen_pos)
 		bool found_new_target = false;
 		Geometry::Rectangle target
 			= Geometry::Rectangle(held_pos.position, registry.get<InteractArea>(held_under_mouse).size);
-		for (auto [entity, slot, pos, area] : registry.view<UISlot, ScreenPosition, InteractArea>().each()) {
+		for (auto [new_slot_entity, new_slot, pos, area] : registry.view<UISlot, ScreenPosition, InteractArea>().each()) {
 			if (Geometry::Rectangle(pos.position, area.size).intersects(target)) {
-				if (slot.contents != entt::null) {
+				if (new_slot.contents != entt::null) {
 					// Swap positions if already exists
-					registry.get<ScreenPosition>(slot.contents).position = container_pos.position;
-					registry.get<Draggable>(slot.contents).container = draggable.container;
+					registry.get<ScreenPosition>(new_slot.contents).position = container_pos.position;
+					registry.get<Draggable>(new_slot.contents).container = draggable.container;
+					insert_into_slot(new_slot.contents, draggable.container);
 				}
-				registry.get<UISlot>(draggable.container).contents = slot.contents;
+				registry.get<UISlot>(draggable.container).contents = new_slot.contents;
 				held_pos.position = pos.position;
-				draggable.container = entity;
-				slot.contents = held_under_mouse;
+				draggable.container = new_slot_entity;
+				insert_into_slot(held_under_mouse, new_slot_entity);
+				new_slot.contents = held_under_mouse;
 				found_new_target = true;
 				break;
 			}
