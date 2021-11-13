@@ -27,8 +27,8 @@ vec4 iceShader(vec4 input_color)
 {
 	float ice_r = input_color.x;
 	float ice_g = input_color.y;
-	float ice_b = input_color.z + input_color.z * (1 + 0.3 * sin(time/300 + texcoord.x * 4 + texcoord.y * 4));
-	float ice_opacity = input_color.w * (1 + 0.3 * sin(time/300 + texcoord.x * 4 + texcoord.y * 4));
+	float ice_b = input_color.z + input_color.z * (1 + 0.1 * sin(time/3 + (vpos.x) + (vpos.y)));
+	float ice_opacity = input_color.w * (1 + 0.2 * sin(time/3 + (vpos.x) + (vpos.y)));
 
 	return vec4(ice_r, ice_g, ice_b, ice_opacity);
 }
