@@ -419,6 +419,8 @@ struct Inventory {
 		inventory.fill(entt::null);
 		equipped.fill(entt::null);
 	}
+
+	static Entity get(Entity entity, Slot slot);
 };
 
 struct Item {

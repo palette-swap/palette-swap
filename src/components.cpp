@@ -243,3 +243,5 @@ void UIGroup::add(Entity group, Entity element, UIElement& ui_element)
 	ui_element.next = g.first_element;
 	g.first_element = element;
 }
+
+Entity Inventory::get(Entity entity, Slot slot) { return registry.get<Inventory>(entity).equipped.at((size_t)slot); }

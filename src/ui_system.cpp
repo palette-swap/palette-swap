@@ -12,7 +12,7 @@ void UISystem::on_key(int key, int action, int /*mod*/)
 	}
 }
 
-static bool can_insert_into_slot(Entity item, Entity container)
+bool UISystem::can_insert_into_slot(Entity item, Entity container)
 {
 	if (EquipSlot* equip_slot = registry.try_get<EquipSlot>(container)) {
 		return registry.get<Item>(registry.get<UIItem>(item).actual_item).allowed_slots.at((size_t) equip_slot->slot);
@@ -20,9 +20,13 @@ static bool can_insert_into_slot(Entity item, Entity container)
 	return true;
 }
 
-static void insert_into_slot(Entity item, Entity container) {
+void UISystem::insert_into_slot(Entity item, Entity container)
+{
 	Inventory& inventory = registry.get<Inventory>(registry.view<Player>().front());
-	Entity actual_item = registry.get<UIItem>(item).actual_item;
+	Entity actual_item = (item == entt::null) ? entt::null : registry.get<UIItem>(item).actual_item;
+	if (current_attack_slot != Slot::Count && inventory.equipped.at((size_t)current_attack_slot) == actual_item) {
+		set_current_attack(Slot::Count, 0);
+	}
 	if (InventorySlot* inv_slot = registry.try_get<InventorySlot>(container)) {
 		inventory.inventory.at(inv_slot->slot) = actual_item;
 	} else if (EquipSlot* equip_slot = registry.try_get<EquipSlot>(container)) {
@@ -82,4 +86,28 @@ void UISystem::on_mouse_move(vec2 mouse_screen_pos)
 	if (held_under_mouse != entt::null) {
 		registry.get<ScreenPosition>(held_under_mouse).position = mouse_screen_pos;
 	}
+}
+
+bool UISystem::has_current_attack() const {
+	if (current_attack_slot == Slot::Count) {
+		return false;
+	}
+	Entity weapon_entity = Inventory::get(registry.view<Player>().front(), current_attack_slot);
+	if (weapon_entity == entt::null) {
+		return false;
+	}
+	const auto& given_attacks = registry.get<Weapon>(weapon_entity).given_attacks;
+	return current_attack < given_attacks.size();
+}
+
+Attack& UISystem::get_current_attack()
+{
+	return registry.get<Weapon>(Inventory::get(registry.view<Player>().front(), current_attack_slot))
+		.given_attacks.at(current_attack);
+}
+
+void UISystem::set_current_attack(Slot slot, size_t attack)
+{
+	current_attack_slot = (Slot)slot;
+	current_attack = attack;
 }
