@@ -1,4 +1,5 @@
 #include "map_generator_system.hpp"
+#include "turn_system.hpp"
 
 #include <queue>
 #include <sstream>
@@ -13,11 +14,12 @@
 
 using namespace MapUtility;
 
-MapGeneratorSystem::MapGeneratorSystem()
+MapGeneratorSystem::MapGeneratorSystem(std::shared_ptr<TurnSystem> turns)
 	: room_layouts()
 	, levels(num_levels)
 	, level_room_rotations(num_levels)
 	, level_snap_shots(num_levels)
+	, turns(std::move(turns))
 {
 	load_rooms_from_csv();
 	load_levels_from_csv();
@@ -101,14 +103,24 @@ bool MapGeneratorSystem::walkable(uvec2 pos) const
 	return walkable_tiles().find(get_tile_id_from_map_pos(pos)) != walkable_tiles().end();
 }
 
+bool MapGeneratorSystem::is_active_enemy(Entity e) const
+{ 
+	if (Enemy* enemy = registry.try_get<Enemy>(e)) {
+		return enemy->team == turns->get_active_color();
+	}
+	return false;
+}
+
 bool MapGeneratorSystem::walkable_and_free(uvec2 pos) const
 {
 	if (!walkable(pos)) {
 		return false;
 	}
 	return !std::any_of(registry.view<MapPosition>().begin(),
-						registry.view<MapPosition>().end(),
-						[pos](const Entity e) { return registry.get<MapPosition>(e).position == pos; });
+						registry.view<MapPosition>().end(), 
+		[pos, this](const Entity e) {
+			return registry.get<MapPosition>(e).position == pos && this->is_active_enemy(e);
+		});
 }
 
 bool MapGeneratorSystem::is_wall(uvec2 pos) const
