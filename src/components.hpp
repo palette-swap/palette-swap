@@ -112,8 +112,7 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 	SPIDER = MUSHROOM + 1,
 	CLONE = SPIDER + 1,
 	CANNONBALL = CLONE + 1,
-	SPELLS = CANNONBALL + 1,
-	TILE_SET = SPELLS + 1,
+	TILE_SET = CANNONBALL + 1,
 	HELP_PIC = TILE_SET + 1,
 	END_PIC = HELP_PIC + 1,
 	TEXTURE_COUNT = END_PIC + 1,
@@ -135,7 +134,6 @@ static constexpr std::array<vec2, texture_count> scaling_factors = {
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size * 0.5, MapUtility::tile_size * 0.5),
-	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size* MapUtility::room_size, MapUtility::tile_size* MapUtility::room_size),
 	vec2(MapUtility::tile_size* MapUtility::room_size * 3, MapUtility::tile_size* MapUtility::room_size * 2),
 };
@@ -147,8 +145,7 @@ enum class EFFECT_ASSET_ID {
 	HEALTH = PLAYER + 1,
 	FANCY_HEALTH = HEALTH + 1,
 	TEXTURED = FANCY_HEALTH + 1,
-	SPELL = TEXTURED + 1,
-	WATER = SPELL + 1,
+	WATER = TEXTURED + 1,
 	TILE_MAP = WATER + 1,
 	EFFECT_COUNT = TILE_MAP + 1
 };
