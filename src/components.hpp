@@ -69,16 +69,11 @@ struct Mesh {
 
 // Test Texture Buffer element for enemies
 // TODO: change to animated vertices after bringing player into this 3D element group
-struct EnemyVertex {
+struct SmallSpriteVertex {
 	vec3 position;
 	vec2 texcoord;
 };
 
-// Temp struct denoting PlayerVertices (specifies quad proportions from player spritesheet
-struct PlayerVertex {
-	vec3 position;
-	vec2 texcoord;
-};
 
 /**
  * The following enumerators represent global identifiers refering to graphic
@@ -117,7 +112,8 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 	SPIDER = MUSHROOM + 1,
 	CLONE = SPIDER + 1,
 	CANNONBALL = CLONE + 1,
-	TILE_SET = CANNONBALL + 1,
+	SPELLS = CANNONBALL + 1,
+	TILE_SET = SPELLS + 1,
 	HELP_PIC = TILE_SET + 1,
 	END_PIC = HELP_PIC + 1,
 	TEXTURE_COUNT = END_PIC + 1,
@@ -139,6 +135,7 @@ static constexpr std::array<vec2, texture_count> scaling_factors = {
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size * 0.5, MapUtility::tile_size * 0.5),
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size* MapUtility::room_size, MapUtility::tile_size* MapUtility::room_size),
 	vec2(MapUtility::tile_size* MapUtility::room_size * 3, MapUtility::tile_size* MapUtility::room_size * 2),
 };
@@ -150,7 +147,8 @@ enum class EFFECT_ASSET_ID {
 	HEALTH = PLAYER + 1,
 	FANCY_HEALTH = HEALTH + 1,
 	TEXTURED = FANCY_HEALTH + 1,
-	WATER = TEXTURED + 1,
+	SPELL = TEXTURED + 1,
+	WATER = SPELL + 1,
 	TILE_MAP = WATER + 1,
 	EFFECT_COUNT = TILE_MAP + 1
 };
@@ -159,9 +157,8 @@ constexpr int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 enum class GEOMETRY_BUFFER_ID : uint8_t {
 	SALMON = 0,
 	SPRITE = SALMON + 1,
-	PLAYER = SPRITE + 1,
-	ENEMY = PLAYER + 1,
-	HEALTH = ENEMY + 1,
+	SMALL_SPRITE = SPRITE + 1,
+	HEALTH = SMALL_SPRITE + 1,
 	FANCY_HEALTH = HEALTH + 1,
 	LINE = FANCY_HEALTH + 1,
 	DEBUG_LINE = LINE + 1,
@@ -248,10 +245,16 @@ enum class EnemyBehaviour {
 };
 
 const std::array<const char*, (size_t)EnemyType::EnemyCount> enemy_type_to_string = {
+	"TrainingDummy",
 	"Slime",
 	"Raven",
 	"Armor",
-	"TreeAnt",
+	"TreeAnt", 
+	"Wraith",
+	"Drake",
+	"Mushroom",
+	"Spider",
+	"Clone"
 };
 
 // Slime:		Idle, Active, Flinched.
@@ -337,31 +340,11 @@ struct Color {
 	vec3 color;
 };
 
-// Denotes that an enemy is on the red team
-struct RedEnemy {
-
-};
-
-// Denotes that an enemy is on the blue team
-struct BlueEnemy {
-
-};
-
-// Denotes that an enemy is on the red team
-struct InactiveEnemy {
-
-};
-
 // Struct for denoting the frame that the rendering system should be rendering
 // to the screen for a spritesheet
 struct Animation {
 	ColorState color = ColorState::None;
-
-	// display color and direction for a specific animated entity
 	int direction = 1;
-	vec4 display_color = { 1, 1, 1, 1 };
-
-	// Changes 
 	int frame = 0;
 	int max_frames = 1;
 	int state = 0;
@@ -376,10 +359,23 @@ struct Animation {
 struct EventAnimation {
 	bool turn_trigger = false;
 	float speed_adjustment = 1;
-	vec4 restore_color = { 1, 1, 1, 1 };
+	vec3 restore_color = { 1, 1, 1 };
+
 	int restore_state = 0;
 	float restore_speed = 1;
 	int frame = 0;
+};
+
+// Denotes that an entity has an textured asset, and should be rendered after regular assets (such as player/enemy)
+struct EffectRenderRequest {
+	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
+	EFFECT_ASSET_ID used_effect = EFFECT_ASSET_ID::EFFECT_COUNT;
+	GEOMETRY_BUFFER_ID used_geometry = GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
+
+	bool visible = true;
+};
+
+struct Effects {
 };
 //---------------------------------------------------------------------------
 //-------------------------         COMBAT          -------------------------
