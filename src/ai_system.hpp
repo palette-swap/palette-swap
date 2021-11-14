@@ -113,7 +113,7 @@ private:
 		virtual BTState process(Entity e, AISystem* ai) = 0;
 	};
 
-	// Leaf nodes.
+	// Leaf action node: DoNothing
 	class DoNothing : public BTNode {
 	public:
 		void init(Entity e) override { printf("Debug: DoNothing.init\n"); }
@@ -121,6 +121,19 @@ private:
 		BTState process(Entity /*e*/, AISystem* ai) override
 		{
 			printf("Debug: DoNothing.process\n");
+			return BTState::Success;
+		}
+	};
+
+	// Leaf action node: RecoverHealth
+	class RecoverHealth : public BTNode {
+	public:
+		void init(Entity e) override { printf("Debug: RecoverHealth.init\n"); }
+
+		BTState process(Entity e, AISystem* ai) override
+		{
+			ai->recover_health(e, 0.2f);
+			printf("Debug: RecoverHealth.process\n");
 			return BTState::Success;
 		}
 	};
@@ -152,7 +165,7 @@ private:
 
 		static std::unique_ptr<BTNode> summoner_tree_factory()
 		{
-			std::unique_ptr<BTNode> do_nothing = std::make_unique<DoNothing>();
+			std::unique_ptr<BTNode> do_nothing = std::make_unique<RecoverHealth>();
 			return std::make_unique<SummonerTree>(std::move(do_nothing));
 		}
 
