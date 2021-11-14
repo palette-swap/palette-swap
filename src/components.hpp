@@ -306,11 +306,11 @@ struct Enemy {
 	void deserialize(const std::string& prefix, const rapidjson::Document& json);
 };
 
-struct RedEnemy {
+struct RedExclusive {
 
 };
 
-struct BlueEnemy {
+struct BlueExclusive {
 
 };
 

@@ -9,7 +9,7 @@ void AnimationSystem::update_animations(float elapsed_ms, ColorState inactive_co
 
 	switch (inactive_color) {
 		case ColorState::Red:
-		for (auto [entity, animation] : registry.view<Animation>(entt::exclude<RedEnemy>).each()) {
+		for (auto [entity, animation] : registry.view<Animation>(entt::exclude<RedExclusive>).each()) {
 			animation.elapsed_time += elapsed_ms;
 			if (animation.elapsed_time >= base_animation_speed / animation.speed_adjustment) {
 				animation.elapsed_time = 0;
@@ -18,7 +18,7 @@ void AnimationSystem::update_animations(float elapsed_ms, ColorState inactive_co
 		}
 
 		case ColorState::Blue:
-		for (auto [entity, animation] : registry.view<Animation>(entt::exclude<BlueEnemy>).each()) {
+		for (auto [entity, animation] : registry.view<Animation>(entt::exclude<BlueExclusive>).each()) {
 			animation.elapsed_time += elapsed_ms;
 			if (animation.elapsed_time >= base_animation_speed / animation.speed_adjustment) {
 				animation.elapsed_time = 0;
@@ -135,20 +135,20 @@ void AnimationSystem::enemy_attack_animation(const Entity& enemy)
 void AnimationSystem::set_all_inactive_colours(ColorState inactive_color)
 {
 	if (inactive_color == ColorState::Red) {
-		for (auto [entity, animation] : registry.view<Animation, RedEnemy>().each()) {
+		for (auto [entity, animation] : registry.view<Animation, RedExclusive>().each()) {
 			animation.display_color = AnimationUtility::inactive_invisible;
 			registry.emplace<InactiveEnemy>(entity);
 		}
-		for (auto [entity, animation] : registry.view<Animation, BlueEnemy>().each()) {
+		for (auto [entity, animation] : registry.view<Animation, BlueExclusive>().each()) {
 			animation.display_color = { AnimationUtility::default_enemy_blue, 1 };
 			registry.remove<InactiveEnemy>(entity);
 		}
 	} else if (inactive_color == ColorState::Blue) {
-		for (auto [entity, animation] : registry.view<Animation, BlueEnemy>().each()) {
+		for (auto [entity, animation] : registry.view<Animation, BlueExclusive>().each()) {
 			animation.display_color = AnimationUtility::inactive_invisible;
 			registry.emplace<InactiveEnemy>(entity);
 		}
-		for (auto [entity, animation] : registry.view<Animation, RedEnemy>().each()) {
+		for (auto [entity, animation] : registry.view<Animation, RedExclusive>().each()) {
 			animation.display_color = { AnimationUtility::default_enemy_red, 1 };
 			registry.remove<InactiveEnemy>(entity);
 		}
