@@ -508,7 +508,7 @@ void RenderSystem::draw()
 		}
 	};
 
-	auto health_group_lambda = [&](Entity entity, Stats& stats, Enemy& enemy) {
+	auto health_group_lambda = [&](Entity entity, Stats& stats, Enemy& /*enemy*/) {
 		Transform transform = get_transform(entity);
 		transform.translate(vec2(2 - MapUtility::tile_size / 2, -MapUtility::tile_size / 2));
 		transform.scale(vec2(MapUtility::tile_size - 4, 3));

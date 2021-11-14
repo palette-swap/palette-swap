@@ -6,33 +6,23 @@ void AnimationSystem::init()
 
 void AnimationSystem::update_animations(float elapsed_ms, ColorState inactive_color)
 {
+	auto animation_step_lambda = [&](Entity /*entity*/, Animation& animation) {
+		animation.elapsed_time += elapsed_ms;
+		if (animation.elapsed_time >= base_animation_speed / animation.speed_adjustment) {
+			animation.elapsed_time = 0;
+			animation.frame = ((animation.frame) + 1) % animation.max_frames;
+		}
+	};
 
 	switch (inactive_color) {
 		case ColorState::Red:
-		for (auto [entity, animation] : registry.view<Animation>(entt::exclude<RedExclusive>).each()) {
-			animation.elapsed_time += elapsed_ms;
-			if (animation.elapsed_time >= base_animation_speed / animation.speed_adjustment) {
-				animation.elapsed_time = 0;
-				animation.frame = ((animation.frame) + 1) % animation.max_frames;
-			}
-		}
+			registry.view<Animation>(entt::exclude<RedExclusive>).each(animation_step_lambda);
 
 		case ColorState::Blue:
-		for (auto [entity, animation] : registry.view<Animation>(entt::exclude<BlueExclusive>).each()) {
-			animation.elapsed_time += elapsed_ms;
-			if (animation.elapsed_time >= base_animation_speed / animation.speed_adjustment) {
-				animation.elapsed_time = 0;
-				animation.frame = ((animation.frame) + 1) % animation.max_frames;
-			}
-		}
+			registry.view<Animation>(entt::exclude<BlueExclusive>).each(animation_step_lambda);
+
 		default:
-		for (auto [entity, animation] : registry.view<Animation>().each()) {
-			animation.elapsed_time += elapsed_ms;
-			if (animation.elapsed_time >= base_animation_speed / animation.speed_adjustment) {
-				animation.elapsed_time = 0;
-				animation.frame = ((animation.frame) + 1) % animation.max_frames;
-			}
-		}
+			registry.view<Animation>().each(animation_step_lambda);
 	}
 	resolve_event_animations();
 }
