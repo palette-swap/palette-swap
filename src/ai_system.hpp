@@ -29,10 +29,10 @@ public:
 
 private:
 	// Execute small enemy behaviours (state machines).
-	void execute_basic_sm(const Entity& enemy);
-	void execute_cowardly_sm(const Entity& enemy);
-	void execute_defensive_sm(const Entity& enemy);
-	void execute_aggressive_sm(const Entity& enemy);
+	void execute_basic_sm(const Entity& entity);
+	void execute_cowardly_sm(const Entity& entity);
+	void execute_defensive_sm(const Entity& entity);
+	void execute_aggressive_sm(const Entity& entity);
 
 	// Remove an entity if it is dead.
 	bool remove_dead_entity(const Entity& entity);
@@ -72,14 +72,9 @@ private:
 	// An entity become powerup if flag is true. Otherwise cancel powerup.
 	void become_powerup(const Entity& entity, bool flag);
 
-	//////////////////////////
-	//
 	// Debugging
 	const Debug& debugging;
-
 	void draw_pathing_debug();
-
-	//////////////////////////
 
 	// Related Systems
 	std::shared_ptr<AnimationSystem> animations;
