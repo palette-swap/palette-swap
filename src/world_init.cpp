@@ -69,6 +69,7 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 
 	enemy.team = team;
 	enemy.type = type;
+	enemy.behaviour = enemy_type_to_behaviour.at(static_cast<int>(enemy.type));
 	enemy.state = EnemyState::Idle;
 	enemy.nest_map_pos = map_pos;
 
@@ -99,6 +100,12 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 
 	case EnemyType::Wraith:
 		enemy.radius = 1;
+		enemy.speed = 1;
+		enemy.attack_range = 1;
+		break;
+
+	case EnemyType::Mushroom:
+		enemy.radius = 5;
 		enemy.speed = 1;
 		enemy.attack_range = 1;
 		break;

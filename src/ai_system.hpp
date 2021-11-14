@@ -72,6 +72,9 @@ private:
 	// An entity become powerup if flag is true. Otherwise cancel powerup.
 	void become_powerup(const Entity& entity, bool flag);
 
+	// An entity summons new enemies with a certain type and number.
+	void summon_enemies(const Entity& entity, EnemyType enemy_type, int num);
+
 	// Debugging
 	const Debug& debugging;
 	void draw_pathing_debug();
@@ -98,18 +101,54 @@ private:
 	//---------------------------------------------------------------------------
 	//-------------------------		  Nested Classes     ------------------------
 	//---------------------------------------------------------------------------
-	// Declare behaviour tree classes as nested classes in AISystem. This allows behaviour tree have access to the
-	// members of AISystem, while avoiding circuilar dependency.
+	// Declare behaviour tree classes as nested classes in AISystem.
+	// This allows behaviour tree have access to the members of AISystem, while avoiding circuilar dependency.
 
 	// The return type of behaviour tree processing.
 	enum class BTState { Running, Success, Failure };
 
-	// Base node: BTNode - representing any node in our behaviour tree.
+	// Base node: BTNode
 	class BTNode {
 	public:
 		virtual void init(Entity e) {};
 
 		virtual BTState process(Entity e, AISystem* ai) = 0;
+	};
+
+	// Leaf action node: RecoverHealth
+	class SummonEnemies : public BTNode {
+	public:
+		SummonEnemies(EnemyType type, int num)
+			: m_type(type)
+			, m_num(num)
+		{
+		}
+
+		void init(Entity e) override { printf("Debug: SummonEnemies.init\n"); }
+
+		BTState process(Entity e, AISystem* ai) override
+		{
+			printf("Debug: SummonEnemies.process\n");
+			ai->summon_enemies(e, m_type, m_num);
+			return BTState::Success;
+		}
+
+	private:
+		EnemyType m_type;
+		int m_num;
+	};
+
+	// Leaf action node: RecoverHealth
+	class RecoverHealth : public BTNode {
+	public:
+		void init(Entity e) override { printf("Debug: RecoverHealth.init\n"); }
+
+		BTState process(Entity e, AISystem* ai) override
+		{
+			printf("Debug: RecoverHealth.process\n");
+			ai->recover_health(e, 0.2f);
+			return BTState::Success;
+		}
 	};
 
 	// Leaf action node: DoNothing
@@ -120,19 +159,6 @@ private:
 		BTState process(Entity /*e*/, AISystem* ai) override
 		{
 			printf("Debug: DoNothing.process\n");
-			return BTState::Success;
-		}
-	};
-
-	// Leaf action node: RecoverHealth
-	class RecoverHealth : public BTNode {
-	public:
-		void init(Entity e) override { printf("Debug: RecoverHealth.init\n"); }
-
-		BTState process(Entity e, AISystem* ai) override
-		{
-			ai->recover_health(e, 0.2f);
-			printf("Debug: RecoverHealth.process\n");
 			return BTState::Success;
 		}
 	};
@@ -218,7 +244,7 @@ private:
 		static std::unique_ptr<BTNode> summoner_tree_factory(AISystem* ai)
 		{
 			// Selector - attack
-			auto do_nothing1 = std::make_unique<DoNothing>();
+			auto summon_enemies = std::make_unique<SummonEnemies>(EnemyType::Mushroom, 2);
 
 			// Selector - idle
 			auto recover_health = std::make_unique<RecoverHealth>();
@@ -230,7 +256,7 @@ private:
 			// Selector - active
 			auto selector_active = std::make_unique<Selector>(std::move(selector_idle));
 			selector_active->add_precond_and_child([ai](Entity e) { return ai->is_player_spotted(e); },
-												   std::move(do_nothing1));
+												   std::move(summon_enemies));
 
 			return std::make_unique<SummonerTree>(std::move(selector_active));
 		}

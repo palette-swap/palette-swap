@@ -415,6 +415,19 @@ void AISystem::become_powerup(const Entity& entity, bool flag)
 	}
 }
 
+void AISystem::summon_enemies(const Entity& entity, EnemyType enemy_type, int num)
+{
+	Enemy& enemy = registry.get<Enemy>(entity);
+	MapPosition& map_pos = registry.get<MapPosition>(entity);
+
+	for (size_t i = 0; i < num; ++i) {
+		uvec2 new_map_pos = { map_pos.position.x, map_pos.position.y + 1 + i };
+		if (map_generator->walkable_and_free(new_map_pos)) {
+			create_enemy(enemy.team, enemy_type, new_map_pos);
+		}
+	}
+}
+
 void AISystem::draw_pathing_debug()
 {
 	for (auto [enemy_entity, enemy, entity_map_position] : registry.view<Enemy, MapPosition>().each()) {
