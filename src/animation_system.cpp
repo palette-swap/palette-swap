@@ -134,29 +134,9 @@ void AnimationSystem::enemy_attack_animation(const Entity& enemy)
 
 void AnimationSystem::set_all_inactive_colours(ColorState inactive_color)
 {
-	if (inactive_color == ColorState::Red) {
-		for (auto [entity, animation] : registry.view<Animation, RedExclusive>().each()) {
-			animation.display_color = AnimationUtility::inactive_invisible;
-			registry.emplace<InactiveEnemy>(entity);
-		}
-		for (auto [entity, animation] : registry.view<Animation, BlueExclusive>().each()) {
-			animation.display_color = { AnimationUtility::default_enemy_blue, 1 };
-			registry.remove<InactiveEnemy>(entity);
-		}
-	} else if (inactive_color == ColorState::Blue) {
-		for (auto [entity, animation] : registry.view<Animation, BlueExclusive>().each()) {
-			animation.display_color = AnimationUtility::inactive_invisible;
-			registry.emplace<InactiveEnemy>(entity);
-		}
-		for (auto [entity, animation] : registry.view<Animation, RedExclusive>().each()) {
-			animation.display_color = { AnimationUtility::default_enemy_red, 1 };
-			registry.remove<InactiveEnemy>(entity);
-		}
-	}
-
-	for (auto [entity, player_inactive_perception] : registry.view<PlayerInactivePerception>().each()) {
-		player_inactive_perception.inactive = inactive_color;
-	}
+	Entity player = registry.view<Player>().front();
+	PlayerInactivePerception& player_perception = registry.get<PlayerInactivePerception>(player);
+	player_perception.inactive = inactive_color;
 }
 
 void AnimationSystem::set_player_animation(const Entity& player)

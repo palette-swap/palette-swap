@@ -496,20 +496,35 @@ void RenderSystem::draw()
 
 	draw_map(projection_2d);
 
-	for (auto [entity, render_request] : registry.view<RenderRequest>().each()) {
-		// Note, its not very efficient to access elements indirectly via the entity
-		// albeit iterating through all Sprites in sequence. A good point to optimize
+	// Grabs player's perception of which colour is "inactive"
+	Entity player = registry.view<Player>().front();
+	PlayerInactivePerception& player_perception = registry.get<PlayerInactivePerception>(player);
+	ColorState& inactive_color = player_perception.inactive;
+
+
+	auto render_requests_lambda = [&](Entity entity, RenderRequest& render_request) {
 		if (render_request.visible) {
 			draw_textured_mesh(entity, render_request, projection_2d);
 		}
-	}
+	};
 
-	auto health_group = registry.group<Stats, Enemy>(entt::exclude<InactiveEnemy>);
-	for (Entity entity : health_group) {
+	auto health_group_lambda = [&](Entity entity, Stats& stats, Enemy& enemy) {
 		Transform transform = get_transform(entity);
 		transform.translate(vec2(2 - MapUtility::tile_size / 2, -MapUtility::tile_size / 2));
 		transform.scale(vec2(MapUtility::tile_size - 4, 3));
-		draw_healthbar(transform, health_group.get<Stats>(entity), projection_2d, false);
+		draw_healthbar(transform, stats, projection_2d, false);
+	};
+
+	// Renders entities + healthbars depending on which state we are in
+	if (inactive_color == ColorState::Red) {
+		registry.view<RenderRequest>(entt::exclude<RedExclusive>).each(render_requests_lambda);
+		registry.view<Stats, Enemy>(entt::exclude<RedExclusive>).each(health_group_lambda);
+	} else if (inactive_color == ColorState::Blue) {
+		registry.view<RenderRequest>(entt::exclude<BlueExclusive>).each(render_requests_lambda);
+		registry.view<Stats, Enemy>(entt::exclude<BlueExclusive>).each(health_group_lambda);
+	} else {
+		registry.view<RenderRequest>().each(render_requests_lambda);
+		registry.view<Stats, Enemy>().each(health_group_lambda);
 	}
 
 	for (auto [entity, ui_render_request] : registry.view<UIRenderRequest>().each()) {
