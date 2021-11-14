@@ -64,7 +64,7 @@ void AISystem::step(float /*elapsed_ms*/)
 				case EnemyBehaviour::Summoner: {
 					if ((bosses.find(enemy_entity) == bosses.end())) {
 						// A boss entity occurs for the 1st time, create its corresponding behaviour tree & initialize.
-						bosses[enemy_entity] = SummonerTree::summoner_tree_factory();
+						bosses[enemy_entity] = SummonerTree::summoner_tree_factory(this);
 						bosses[enemy_entity]->init(enemy_entity);
 					}
 					if (bosses[enemy_entity]->process(enemy_entity, this) != BTState::Running) {

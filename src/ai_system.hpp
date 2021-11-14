@@ -98,18 +98,17 @@ private:
 	//---------------------------------------------------------------------------
 	//-------------------------		  Nested Classes     ------------------------
 	//---------------------------------------------------------------------------
-	// Declare behaviour tree classes as nested classes in AISystem. This allows behaviour tree have access to the members of
-	// AISystem, while avoiding circuilar dependency.
+	// Declare behaviour tree classes as nested classes in AISystem. This allows behaviour tree have access to the
+	// members of AISystem, while avoiding circuilar dependency.
 
 	// The return type of behaviour tree processing.
 	enum class BTState { Running, Success, Failure };
 
-	// The base class representing any node in our behaviour tree.
+	// Base node: BTNode - representing any node in our behaviour tree.
 	class BTNode {
 	public:
 		virtual void init(Entity e) {};
 
-		// Passing AISystem reference into process() allows behaviour trees have access to the members of AISystem.
 		virtual BTState process(Entity e, AISystem* ai) = 0;
 	};
 
@@ -138,6 +137,59 @@ private:
 		}
 	};
 
+	// Composite logic node: Selector
+	class Selector : public BTNode {
+	public:
+		Selector(std::unique_ptr<BTNode> default_child)
+			: m_index(-1)
+			, m_default_child(std::move(default_child))
+		{
+		}
+
+		void add_precond_and_child(std::function<bool(Entity)> precond, std::unique_ptr<BTNode> child)
+		{
+			m_preconditions.push_back(precond);
+			m_children.push_back(std::move(child));
+		}
+
+		void init(Entity e) override {
+			printf("Debug: Selector.init\n");
+			m_index = -1;
+			for (const auto& child: m_children) {
+				child->init(e);
+			}
+			m_default_child->init(e);
+		}
+
+		BTState process(Entity e, AISystem* ai) override
+		{
+			printf("Debug: Selector.process\n");
+			if (m_index == -1) {
+				size_t i;
+				for (i = 0; i < m_preconditions.size(); ++i) {
+					if (m_preconditions[i](e)) {
+						m_index = i;
+						return m_children[i]->process(e, ai);
+					}
+				}
+				m_index = i;
+				return m_default_child->process(e, ai);
+			} else {
+				if (m_index < m_preconditions.size()) {
+					return m_children[m_index]->process(e, ai);
+				} else {
+					return m_default_child->process(e, ai);
+				}
+			}
+		}
+
+	private:
+		int m_index;
+		std::vector<std::function<bool(Entity)>> m_preconditions;
+		std::vector<std::unique_ptr<BTNode>> m_children;
+		std::unique_ptr<BTNode> m_default_child;
+	};
+
 	class SummonerTree : public BTNode {
 	public:
 		explicit SummonerTree(std::unique_ptr<BTNode> child)
@@ -163,10 +215,24 @@ private:
 			return state;
 		}
 
-		static std::unique_ptr<BTNode> summoner_tree_factory()
+		static std::unique_ptr<BTNode> summoner_tree_factory(AISystem* ai)
 		{
-			std::unique_ptr<BTNode> do_nothing = std::make_unique<RecoverHealth>();
-			return std::make_unique<SummonerTree>(std::move(do_nothing));
+			// Selector - attack
+			auto do_nothing1 = std::make_unique<DoNothing>();
+
+			// Selector - idle
+			auto recover_health = std::make_unique<RecoverHealth>();
+			auto do_nothing = std::make_unique<DoNothing>();
+			auto selector_idle = std::make_unique<Selector>(std::move(do_nothing));
+			selector_idle->add_precond_and_child([ai](Entity e) { return ai->is_health_below(e, 1.0f); },
+												  std::move(recover_health));
+
+			// Selector - active
+			auto selector_active = std::make_unique<Selector>(std::move(selector_idle));
+			selector_active->add_precond_and_child([ai](Entity e) { return ai->is_player_spotted(e, 5); },
+												   std::move(do_nothing1));
+
+			return std::make_unique<SummonerTree>(std::move(selector_active));
 		}
 
 	private:
