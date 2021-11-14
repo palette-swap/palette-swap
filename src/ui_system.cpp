@@ -5,10 +5,14 @@
 void UISystem::on_key(int key, int action, int /*mod*/)
 {
 	if (action == GLFW_PRESS && key == GLFW_KEY_I) {
-		registry.get<UIGroup>(inventory_group).visible ^= true;
+		UIGroup& group = registry.get<UIGroup>(inventory_group);
+		group.visible = !group.visible;
+		registry.get<UIGroup>(hud_group).visible = !group.visible;
 	}
 	if (action == GLFW_PRESS && key == GLFW_KEY_ESCAPE) {
-		registry.get<UIGroup>(inventory_group).visible = false;
+		UIGroup& group = registry.get<UIGroup>(inventory_group);
+		group.visible = false;
+		registry.get<UIGroup>(hud_group).visible = true;
 	}
 
 	// Change attack

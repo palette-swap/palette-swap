@@ -5,10 +5,10 @@ void UISystem::restart_game()
 {
 	Entity player = registry.view<Player>().front();
 
-	Entity game_hud = create_ui_group(true);
+	hud_group = create_ui_group(true);
 
 	// Player Health Bar
-	create_fancy_healthbar(game_hud);
+	create_fancy_healthbar(hud_group);
 
 	// Attack Display
 	Inventory& inventory = registry.get<Inventory>(player);
@@ -19,7 +19,7 @@ void UISystem::restart_game()
 						   Alignment::Start,
 						   Alignment::End);
 	registry.emplace<Color>(attack_display, vec3(1, 1, 1));
-	UIGroup::add(game_hud, attack_display, registry.emplace<UIElement>(attack_display, game_hud, true));
+	UIGroup::add(hud_group, attack_display, registry.emplace<UIElement>(attack_display, hud_group, true));
 
 	// Inventory
 	inventory_group = create_ui_group(false);

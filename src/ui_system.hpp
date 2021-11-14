@@ -34,5 +34,6 @@ private:
 
 	Entity attack_display = entt::null;
 	Entity inventory_group = entt::null;
+	Entity hud_group = entt::null;
 	Entity held_under_mouse = entt::null;
 };
