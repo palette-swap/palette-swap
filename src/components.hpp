@@ -220,12 +220,9 @@ enum class ColorState { None = 0, Red = 1, Blue = 2, All = Blue + 1 };
 //-------------------------           AI            -------------------------
 //---------------------------------------------------------------------------
 
-// Slime (cute coward): weak stats; run away when HP is low.
-// Raven (annoying bug): weak stats; large radius and fast speed.
-// Armor (Immortal Hulk): normal stats; nearsighted; a certain chance to become immortal for one turn.
-// TreeAnt (Super Saiyan): normal stats; long attack range; power up attack range and damage when HP is low.
-// Wraith (invisible ghost): weak stats; shortest radius; a variance of Raven but invisible until active.
+// Enemy List: https://docs.google.com/document/d/1HyGTf5afBIQPUthAuvrTZ-UZRlS8scZUTA4rekU3-kE/edit#heading=h.am6gzz477ssj
 enum class EnemyType {
+	// Small Enemy Types
 	TrainingDummy = 0,
 	Slime = TrainingDummy + 1,
 	Raven = Slime + 1,
@@ -236,44 +233,20 @@ enum class EnemyType {
 	Mushroom = Drake + 1,
 	Spider = Mushroom + 1,
 	Clone = Spider + 1,
-	EnemyCount = Clone + 1
+	// Boss Enemy Types
+	KingMush = Clone + 1,
+	EnemyCount = KingMush + 1,
 };
 
-enum class EnemyBehaviour { 
+enum class EnemyBehaviour {
+	// Small Enemy Behaviours (State Machines)
 	Basic = 0,
 	Cowardly = Basic + 1,
 	Defensive = Cowardly + 1,
 	Aggressive = Defensive + 1,
-	EnemyBehaviourCount = Aggressive + 1,
-};
-
-const std::array<const char*, (size_t)EnemyType::EnemyCount> enemy_type_to_string = {
-	"Slime",
-	"Raven",
-	"Armor",
-	"TreeAnt",
-};
-
-// Slime:		Idle, Active, Flinched.
-// Raven:		Idle, Actives.
-// Armor:		Idle, Active, Immortal.
-// TreeAnt:		Idle, Active, Powerup.
-// Wraith:		A variance of Raven.
-enum class EnemyState {
-	Idle = 0,
-	Active = Idle + 1,
-	Flinched = Active + 1,
-	Powerup = Flinched + 1,
-	Immortal = Powerup + 1,
-	EnemyStateCount = Immortal + 1
-};
-
-const std::array<int, (size_t)EnemyState::EnemyStateCount> enemy_state_to_animation_state = {
-	0, // Idle
-	1, // Active
-	2, // Flinched
-	2, // Powerup
-	2, // Immortal
+	// Boss Enemy Behaviours (Behaviour Trees)
+	Summoner = Aggressive + 1,
+	EnemyBehaviourCount = Summoner + 1,
 };
 
 const std::array<EnemyBehaviour, (size_t)EnemyType::EnemyCount> enemy_type_to_behaviour = {
@@ -286,7 +259,23 @@ const std::array<EnemyBehaviour, (size_t)EnemyType::EnemyCount> enemy_type_to_be
 	EnemyBehaviour::Basic, 
 	EnemyBehaviour::Cowardly,
 	EnemyBehaviour::Aggressive, 
-	EnemyBehaviour::Defensive
+	EnemyBehaviour::Defensive,
+	EnemyBehaviour::Summoner,
+};
+
+enum class EnemyState {
+	// Small Enemy Behaviours (State Machines) uses the following states.
+	// Basic:		Idle, Active.
+	// Cowardly:	Idle, Active, Flinched.
+	// Defensive:	Idle, Active, Immortal.
+	// Aggressive:	Idle, Active, Powerup.
+	Idle = 0,
+	Active = Idle + 1,
+	Flinched = Active + 1,
+	Powerup = Flinched + 1,
+	Immortal = Powerup + 1,
+	// Boss Enemy Behaviours (Behaviour Trees) uses EnemyStateCount as the default state since they're not applicable.
+	EnemyStateCount = Immortal + 1,
 };
 
 // Structure to store enemy information.
@@ -294,7 +283,7 @@ struct Enemy {
 	// Default is a slime.
 	ColorState team = ColorState::Red;
 	EnemyType type = EnemyType::Slime;
-	EnemyBehaviour behaviour = EnemyBehaviour::Basic;
+	EnemyBehaviour behaviour = EnemyBehaviour::Cowardly;
 	EnemyState state = EnemyState::Idle;
 	uvec2 nest_map_pos = { 0, 0 };
 
@@ -305,6 +294,7 @@ struct Enemy {
 	void serialize(const std::string & prefix, rapidjson::Document &json) const;
 	void deserialize(const std::string& prefix, const rapidjson::Document& json);
 };
+
 //---------------------------------------------------------------------------
 //-------------------------		  ANIMATIONS        -------------------------
 //---------------------------------------------------------------------------
@@ -323,6 +313,16 @@ const std::array<TEXTURE_ASSET_ID, static_cast<int>(EnemyType::EnemyCount)> enem
 	TEXTURE_ASSET_ID::MUSHROOM,
 	TEXTURE_ASSET_ID::SPIDER,
 	TEXTURE_ASSET_ID::CLONE,
+	// TODO (Evan): temporarily used MUSHROOM to mock KINGMUSH for testing, please replace it when available.
+	TEXTURE_ASSET_ID::MUSHROOM,
+};
+
+const std::array<int, (size_t)EnemyState::EnemyStateCount> enemy_state_to_animation_state = {
+	0, // Idle
+	1, // Active
+	2, // Flinched
+	2, // Powerup
+	2, // Immortal
 };
 
 struct RenderRequest {

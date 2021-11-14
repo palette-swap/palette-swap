@@ -43,6 +43,7 @@ void AISystem::step(float /*elapsed_ms*/)
 
 				switch (enemy.behaviour) {
 
+				// Small Enemy Behaviours (State Machines)
 				case EnemyBehaviour::Basic:
 					execute_basic_sm(enemy_entity);
 					break;
@@ -59,8 +60,13 @@ void AISystem::step(float /*elapsed_ms*/)
 					execute_aggressive_sm(enemy_entity);
 					break;
 
+				// Boss Enemy Behaviours (Behaviour Trees)
+				case EnemyBehaviour::Summoner:
+					// TODO: process KingMush's behaviour tree.
+					break;
+
 				default:
-					throw std::runtime_error("Invalid enemy type.");
+					throw std::runtime_error("Invalid enemy behaviour.");
 				}
 			}
 		}
@@ -82,6 +88,37 @@ void AISystem::do_attack_callback(const Entity& attacker, const Entity& target)
 			|| (enemy.state != EnemyState::Idle && !is_player_spotted(target, enemy.radius * 2))) {
 			enemy.radius = MapUtility::room_size * MapUtility::map_size;
 		}
+	}
+}
+
+void AISystem::execute_basic_sm(const Entity& entity)
+{
+	const Enemy& enemy = registry.get<Enemy>(entity);
+
+	switch (enemy.state) {
+
+	case EnemyState::Idle:
+		if (is_player_spotted(entity, enemy.radius)) {
+			switch_enemy_state(entity, EnemyState::Active);
+			execute_basic_sm(entity);
+			return;
+		}
+		break;
+
+	case EnemyState::Active:
+		if (is_player_spotted(entity, enemy.radius * 2)) {
+			if (is_player_in_attack_range(entity, enemy.attack_range)) {
+				attack_player(entity);
+			} else {
+				approach_player(entity, enemy.speed);
+			}
+		} else {
+			switch_enemy_state(entity, EnemyState::Idle);
+		}
+		break;
+
+	default:
+		throw std::runtime_error("Invalid enemy state of Raven.");
 	}
 }
 
@@ -129,37 +166,6 @@ void AISystem::execute_cowardly_sm(const Entity& entity)
 
 	default:
 		throw std::runtime_error("Invalid enemy state of Slime.");
-	}
-}
-
-void AISystem::execute_basic_sm(const Entity& entity)
-{
-	const Enemy& enemy = registry.get<Enemy>(entity);
-
-	switch (enemy.state) {
-
-	case EnemyState::Idle:
-		if (is_player_spotted(entity, enemy.radius)) {
-			switch_enemy_state(entity, EnemyState::Active);
-			execute_basic_sm(entity);
-			return;
-		}
-		break;
-
-	case EnemyState::Active:
-		if (is_player_spotted(entity, enemy.radius * 2)) {
-			if (is_player_in_attack_range(entity, enemy.attack_range)) {
-				attack_player(entity);
-			} else {
-				approach_player(entity, enemy.speed);
-			}
-		} else {
-			switch_enemy_state(entity, EnemyState::Idle);
-		}
-		break;
-
-	default:
-		throw std::runtime_error("Invalid enemy state of Raven.");
 	}
 }
 
@@ -296,11 +302,6 @@ void AISystem::attack_player(const Entity& entity)
 {
 	Entity player = registry.view<Player>().front();
 	combat->do_attack(entity, registry.get<Stats>(entity).base_attack, player);
-
-	// TODO: temporarily for debugging in console, remove it later.
-	const char* enemy_type = enemy_type_to_string.at((uint) registry.get<Enemy>(entity).type);
-	printf("%s_%u attacks player!\n", enemy_type, (uint)entity);
-
 	so_loud->play(enemy_attack1_wav);
 }
 

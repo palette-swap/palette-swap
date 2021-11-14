@@ -28,9 +28,9 @@ public:
 	void do_attack_callback(const Entity& attacker, const Entity& target);
 
 private:
-	// Execute state machine of particular type of enemy
-	void execute_cowardly_sm(const Entity& enemy);
+	// Execute small enemy behaviours (state machines).
 	void execute_basic_sm(const Entity& enemy);
+	void execute_cowardly_sm(const Entity& enemy);
 	void execute_defensive_sm(const Entity& enemy);
 	void execute_aggressive_sm(const Entity& enemy);
 
