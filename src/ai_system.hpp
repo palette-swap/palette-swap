@@ -92,4 +92,74 @@ private:
 	// C++ random number generator
 	std::default_random_engine rng;
 	std::uniform_real_distribution<float> uniform_dist; // number between 0..1
+
+
+
+	//---------------------------------------------------------------------------
+	//-------------------------		  Nested Classes     ------------------------
+	//---------------------------------------------------------------------------
+	// Declare behaviour tree classes as nested classes in AISystem. This allows behaviour tree have access to the members of
+	// AISystem, while avoiding circuilar dependency.
+
+	// The return type of behaviour tree processing.
+	enum class BTState { Running, Success, Failure };
+
+	// The base class representing any node in our behaviour tree.
+	class BTNode {
+	public:
+		virtual void init(Entity e) {};
+
+		// Passing AISystem reference into process() allows behaviour trees have access to the members of AISystem.
+		virtual BTState process(Entity e, AISystem* ai) = 0;
+	};
+
+	// Leaf nodes.
+	class DoNothing : public BTNode {
+	public:
+		void init(Entity e) override { printf("Debug: DoNothing.init\n"); }
+
+		BTState process(Entity /*e*/, AISystem* ai) override
+		{
+			printf("Debug: DoNothing.process\n");
+			return BTState::Success;
+		}
+	};
+
+	class SummonerTree : public BTNode {
+	public:
+		explicit SummonerTree(std::unique_ptr<BTNode> child)
+			: m_child(std::move(child))
+		{
+		}
+
+		void init(Entity e) override
+		{
+			printf("Debug: SummonerTree.init\n");
+			m_child->init(e);
+		}
+
+		BTState process(Entity e, AISystem* ai) override
+		{
+			printf("--------------------------------------------------\n");
+			printf("Debug: SummonerTree.process\n");
+			BTState state = m_child->process(e, ai);
+			printf("Debug: State after process = %s\n",
+				   state == BTState::Running	   ? "Running"
+					   : state == BTState::Success ? "Success"
+												   : "Failure");
+			return state;
+		}
+
+		static std::unique_ptr<BTNode> summoner_tree_factory()
+		{
+			std::unique_ptr<BTNode> do_nothing = std::make_unique<DoNothing>();
+			return std::make_unique<SummonerTree>(std::move(do_nothing));
+		}
+
+	private:
+		std::unique_ptr<BTNode> m_child;
+	};
+
+	// Boss entities and its corresponding behaviour trees.
+	std::unordered_map<Entity, std::unique_ptr<BTNode>> bosses;
 };

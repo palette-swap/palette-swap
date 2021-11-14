@@ -3,74 +3,6 @@
 #include "components.hpp"
 #include "world_init.hpp"
 
-// The return type of behaviour tree processing.
-enum class BTState {
-    Running,
-    Success,
-    Failure
-};
-
-std::string state_to_string(BTState s) {
-	switch (s) {
-	case BTState::Running: return "Running";
-	case BTState::Success: return "Success";
-	case BTState::Failure: return "Failure";
-	default: return "[Unknown BTState]";
-	}
-}
-
-// The base class representing any node in our behaviour tree.
-class BTNode {
-public:
-	virtual void init(Entity e) {};
-
-	virtual BTState process(Entity e) = 0;
-};
-
-// Leaf nodes.
-class DoNothing : public BTNode {
-public:
-	void init(Entity e) override {
-		printf("Debug: DoNothing.init\n");
-	}
-
-	BTState process(Entity /*e*/) override {
-		printf("Debug: DoNothing.process\n");
-		return BTState::Success;
-	}
-};
-
-class TreeSummoner : public BTNode {
-public:
-	explicit TreeSummoner(std::unique_ptr<BTNode> child)
-		: m_child(std::move(child))
-	{
-	}
-
-	void init(Entity e) override {
-		printf("Debug: TreeSummoner.init\n");
-		m_child->init(e);
-	}
-
-	BTState process(Entity e) override {
-		printf("--------------------------------------------------\n");
-		printf("Debug: TreeSummoner.process\n");
-		return m_child->process(e);
-	}
-
-	static std::unique_ptr<BTNode> tree_summoner_factory() {
-		std::unique_ptr<BTNode> do_nothing = std::make_unique<DoNothing>();
-		return std::make_unique<TreeSummoner>(std::move(do_nothing));
-	}
-
-private:
-	std::unique_ptr<BTNode> m_child;
-};
-
-// TODO: refactoring bosses to ai_system.hpp after PR review.
-// Boss entities and its corresponding behaviour trees.
-std::unordered_map<Entity, std::unique_ptr<BTNode>> bosses;
-
 // AI logic
 AISystem::AISystem(const Debug& debugging,
 				   std::shared_ptr<CombatSystem> combat,
@@ -130,16 +62,12 @@ void AISystem::step(float /*elapsed_ms*/)
 
 				// Boss Enemy Behaviours (Behaviour Trees)
 				case EnemyBehaviour::Summoner: {
-					// If a boss entity occurs for the first time, create its corresponding behaviour tree and
-					// initialize.
 					if ((bosses.find(enemy_entity) == bosses.end())) {
-						bosses[enemy_entity] = TreeSummoner::tree_summoner_factory();
+						// A boss entity occurs for the 1st time, create its corresponding behaviour tree & initialize.
+						bosses[enemy_entity] = SummonerTree::summoner_tree_factory();
 						bosses[enemy_entity]->init(enemy_entity);
 					}
-
-					BTState state = bosses[enemy_entity]->process(enemy_entity);
-					printf("Debug: Tree State = %s\n", state_to_string(state).c_str());
-					if (state != BTState::Running) {
+					if (bosses[enemy_entity]->process(enemy_entity, this) != BTState::Running) {
 						bosses[enemy_entity]->init(enemy_entity);
 					}
 					break;
