@@ -92,8 +92,7 @@ void AISystem::do_attack_callback(const Entity& attacker, const Entity& target)
 {
 	if (registry.any_of<Player>(attacker)) {
 		Enemy& enemy = registry.get<Enemy>(target);
-		if ((enemy.state == EnemyState::Idle && !is_player_spotted(target, enemy.radius))
-			|| (enemy.state != EnemyState::Idle && !is_player_spotted(target, enemy.radius * 2))) {
+		if (!is_player_spotted(target)) {
 			enemy.radius = MapUtility::room_size * MapUtility::map_size;
 		}
 	}
@@ -106,7 +105,7 @@ void AISystem::execute_basic_sm(const Entity& entity)
 	switch (enemy.state) {
 
 	case EnemyState::Idle:
-		if (is_player_spotted(entity, enemy.radius)) {
+		if (is_player_spotted(entity)) {
 			switch_enemy_state(entity, EnemyState::Active);
 			execute_basic_sm(entity);
 			return;
@@ -114,8 +113,8 @@ void AISystem::execute_basic_sm(const Entity& entity)
 		break;
 
 	case EnemyState::Active:
-		if (is_player_spotted(entity, enemy.radius * 2)) {
-			if (is_player_in_attack_range(entity, enemy.attack_range)) {
+		if (is_player_spotted(entity)) {
+			if (is_player_in_attack_range(entity)) {
 				attack_player(entity);
 			} else {
 				approach_player(entity, enemy.speed);
@@ -137,7 +136,7 @@ void AISystem::execute_cowardly_sm(const Entity& entity)
 	switch (enemy.state) {
 
 	case EnemyState::Idle:
-		if (is_player_spotted(entity, enemy.radius)) {
+		if (is_player_spotted(entity)) {
 			switch_enemy_state(entity, EnemyState::Active);
 			execute_cowardly_sm(entity);
 			return;
@@ -145,8 +144,8 @@ void AISystem::execute_cowardly_sm(const Entity& entity)
 		break;
 
 	case EnemyState::Active:
-		if (is_player_spotted(entity, enemy.radius * 2)) {
-			if (is_player_in_attack_range(entity, enemy.attack_range)) {
+		if (is_player_spotted(entity)) {
+			if (is_player_in_attack_range(entity)) {
 				attack_player(entity);
 			} else {
 				approach_player(entity, enemy.speed);
@@ -163,7 +162,7 @@ void AISystem::execute_cowardly_sm(const Entity& entity)
 	case EnemyState::Flinched:
 		if (is_at_nest(entity)) {
 			enemy.radius = 3;
-			if (!is_player_spotted(entity, enemy.radius * 2)) {
+			if (!is_player_spotted(entity)) {
 				recover_health(entity, 1.f);
 				switch_enemy_state(entity, EnemyState::Idle);
 			}
@@ -184,7 +183,7 @@ void AISystem::execute_defensive_sm(const Entity& entity)
 	switch (enemy.state) {
 
 	case EnemyState::Idle:
-		if (is_player_spotted(entity, enemy.radius)) {
+		if (is_player_spotted(entity)) {
 			switch_enemy_state(entity, EnemyState::Active);
 			execute_defensive_sm(entity);
 			return;
@@ -192,8 +191,8 @@ void AISystem::execute_defensive_sm(const Entity& entity)
 		break;
 
 	case EnemyState::Active:
-		if (is_player_spotted(entity, enemy.radius * 2)) {
-			if (is_player_in_attack_range(entity, enemy.attack_range)) {
+		if (is_player_spotted(entity)) {
+			if (is_player_in_attack_range(entity)) {
 				attack_player(entity);
 			} else {
 				approach_player(entity, enemy.speed);
@@ -225,7 +224,7 @@ void AISystem::execute_aggressive_sm(const Entity& entity)
 	switch (enemy.state) {
 
 	case EnemyState::Idle:
-		if (is_player_spotted(entity, enemy.radius)) {
+		if (is_player_spotted(entity)) {
 			switch_enemy_state(entity, EnemyState::Active);
 			execute_aggressive_sm(entity);
 			return;
@@ -233,8 +232,8 @@ void AISystem::execute_aggressive_sm(const Entity& entity)
 		break;
 
 	case EnemyState::Active:
-		if (is_player_spotted(entity, enemy.radius * 2)) {
-			if (is_player_in_attack_range(entity, enemy.attack_range)) {
+		if (is_player_spotted(entity)) {
+			if (is_player_in_attack_range(entity)) {
 				attack_player(entity);
 			} else {
 				approach_player(entity, enemy.speed);
@@ -250,8 +249,8 @@ void AISystem::execute_aggressive_sm(const Entity& entity)
 		break;
 
 	case EnemyState::Powerup:
-		if (is_player_spotted(entity, enemy.radius * 2)) {
-			if (is_player_in_attack_range(entity, enemy.attack_range * 2)) {
+		if (is_player_spotted(entity)) {
+			if (is_player_in_attack_range(entity)) {
 				attack_player(entity);
 			}
 			// TreeAnt can't move when it's powered up.
@@ -288,8 +287,10 @@ void AISystem::switch_enemy_state(const Entity& enemy_entity, EnemyState new_sta
 	animations->set_enemy_state(enemy_entity, new_state_id);
 }
 
-bool AISystem::is_player_spotted(const Entity& entity, const uint radius)
+bool AISystem::is_player_spotted(const Entity& entity)
 {
+	const uint radius = registry.get<Enemy>(entity).radius;
+
 	uvec2 player_map_pos = registry.get<MapPosition>(registry.view<Player>().front()).position;
 	uvec2 entity_map_pos = registry.get<MapPosition>(entity).position;
 
@@ -297,9 +298,15 @@ bool AISystem::is_player_spotted(const Entity& entity, const uint radius)
 	return uint(abs(distance.x)) <= radius && uint(abs(distance.y)) <= radius;
 }
 
-bool AISystem::is_player_in_attack_range(const Entity& entity, const uint attack_range)
+bool AISystem::is_player_in_attack_range(const Entity& entity)
 {
-	return is_player_spotted(entity, attack_range);
+	const uint attack_range = registry.get<Enemy>(entity).attack_range;
+
+	uvec2 player_map_pos = registry.get<MapPosition>(registry.view<Player>().front()).position;
+	uvec2 entity_map_pos = registry.get<MapPosition>(entity).position;
+
+	ivec2 distance = entity_map_pos - player_map_pos;
+	return uint(abs(distance.x)) <= attack_range && uint(abs(distance.y)) <= attack_range;
 }
 
 bool AISystem::is_at_nest(const Entity& entity)
@@ -386,6 +393,10 @@ void AISystem::become_immortal(const Entity& entity, bool flag)
 
 void AISystem::become_powerup(const Entity& entity, bool flag)
 {
+	Enemy& enemy = registry.get<Enemy>(entity);
+	enemy.radius *= 2;
+	enemy.attack_range *= 2;
+
 	Stats& stats = registry.get<Stats>(entity);
 	if (flag) {
 		stats.to_hit_bonus *= 2;
@@ -419,7 +430,7 @@ void AISystem::draw_pathing_debug()
 				for (const uvec2& path_point : shortest_path) {
 					create_path_point(MapUtility::map_position_to_world_position(path_point));
 				}
-			} else if (enemy.state != EnemyState::Idle && is_player_spotted(enemy_entity, enemy.radius * 2)) {
+			} else if (enemy.state == EnemyState::Active && is_player_spotted(enemy_entity)) {
 				Entity player = registry.view<Player>().front();
 				std::vector<uvec2> shortest_path
 					= map_generator->shortest_path(entity_map_pos, registry.get<MapPosition>(player).position);

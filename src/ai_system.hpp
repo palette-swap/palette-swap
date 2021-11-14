@@ -40,11 +40,11 @@ private:
 	// Switch enemy state.
 	void switch_enemy_state(const Entity& enemy_entity, EnemyState new_state);
 
-	// Check if the player is spotted by an entity within its radius.
-	bool is_player_spotted(const Entity& entity, uint radius);
+	// Check if the player is spotted by an entity.
+	bool is_player_spotted(const Entity& entity);
 
-	// Check if the player is reachable by an entity within its attack range.
-	bool is_player_in_attack_range(const Entity& entity, uint attack_range);
+	// Check if the player is in the attack range of an entity.
+	bool is_player_in_attack_range(const Entity& entity);
 
 	// Check if an entity is at its nest.
 	bool is_at_nest(const Entity& entity);
@@ -229,7 +229,7 @@ private:
 
 			// Selector - active
 			auto selector_active = std::make_unique<Selector>(std::move(selector_idle));
-			selector_active->add_precond_and_child([ai](Entity e) { return ai->is_player_spotted(e, 5); },
+			selector_active->add_precond_and_child([ai](Entity e) { return ai->is_player_spotted(e); },
 												   std::move(do_nothing1));
 
 			return std::make_unique<SummonerTree>(std::move(selector_active));
