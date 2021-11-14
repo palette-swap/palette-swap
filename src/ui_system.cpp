@@ -5,7 +5,7 @@
 void UISystem::on_key(int key, int action, int /*mod*/)
 {
 	if (action == GLFW_PRESS && key == GLFW_KEY_I) {
-		registry.get<UIGroup>(inventory_group).visible = true;
+		registry.get<UIGroup>(inventory_group).visible ^= true;
 	}
 	if (action == GLFW_PRESS && key == GLFW_KEY_ESCAPE) {
 		registry.get<UIGroup>(inventory_group).visible = false;
