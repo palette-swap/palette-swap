@@ -40,27 +40,27 @@ public:
 	}
 };
 
-class SummonerTree : public BTNode {
+class TreeSummoner : public BTNode {
 public:
-	explicit SummonerTree(std::unique_ptr<BTNode> child)
+	explicit TreeSummoner(std::unique_ptr<BTNode> child)
 		: m_child(std::move(child))
 	{
 	}
 
 	void init(Entity e) override {
-		printf("Debug: SummonerTree.init\n");
+		printf("Debug: TreeSummoner.init\n");
 		m_child->init(e);
 	}
 
 	BTState process(Entity e) override {
 		printf("--------------------------------------------------\n");
-		printf("Debug: SummonerTree.process\n");
+		printf("Debug: TreeSummoner.process\n");
 		return m_child->process(e);
 	}
 
-	static std::unique_ptr<BTNode> summoner_tree_factory() {
+	static std::unique_ptr<BTNode> tree_summoner_factory() {
 		std::unique_ptr<BTNode> do_nothing = std::make_unique<DoNothing>();
-		return std::make_unique<SummonerTree>(std::move(do_nothing));
+		return std::make_unique<TreeSummoner>(std::move(do_nothing));
 	}
 
 private:
@@ -133,12 +133,12 @@ void AISystem::step(float /*elapsed_ms*/)
 					// If a boss entity occurs for the first time, create its corresponding behaviour tree and
 					// initialize.
 					if ((bosses.find(enemy_entity) == bosses.end())) {
-						bosses[enemy_entity] = SummonerTree::summoner_tree_factory();
+						bosses[enemy_entity] = TreeSummoner::tree_summoner_factory();
 						bosses[enemy_entity]->init(enemy_entity);
 					}
 
 					BTState state = bosses[enemy_entity]->process(enemy_entity);
-					printf("Debug: SummonerTree.state = %s\n", state_to_string(state).c_str());
+					printf("Debug: Tree State = %s\n", state_to_string(state).c_str());
 					if (state != BTState::Running) {
 						bosses[enemy_entity]->init(enemy_entity);
 					}
