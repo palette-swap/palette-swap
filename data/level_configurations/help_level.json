@@ -14,9 +14,9 @@
       "team": 3,
       "type": 10,
       "state": 5,
-      "radius": 5,
+      "radius": 10,
       "speed": 0,
-      "attack_range": 5,
+      "attack_range": 10,
       "nest_position": {
         "x": 42,
         "y": 46
@@ -26,8 +26,8 @@
         "y": 46
       },
       "stats": {
-        "health": 100,
-        "health_max": 200,
+        "health": 60,
+        "health_max": 100,
         "mana": 100,
         "mana_max": 100,
         "to_hit_bonus": 6,

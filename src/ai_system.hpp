@@ -355,7 +355,7 @@ private:
 			Selector* p = selector_attack.get();
 			selector_attack->add_precond_and_child(
 				// Summoner summons enemies every fifth process during attack.
-				[p](Entity e) { return p->get_process_count() % 5 == 0; },
+				[p](Entity e) { return (p->get_process_count() % 5 == 0) && (p->get_process_count() != 0); },
 				std::move(summon_enemies));
 			selector_attack->add_precond_and_child(
 				// Summoner has 20% chance to make an AOE attack.

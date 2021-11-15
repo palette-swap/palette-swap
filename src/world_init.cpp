@@ -105,7 +105,7 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 		break;
 
 	case EnemyType::Mushroom:
-		enemy.radius = 5;
+		enemy.radius = 10;
 		enemy.speed = 1;
 		enemy.attack_range = 1;
 		break;
