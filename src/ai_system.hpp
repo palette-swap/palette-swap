@@ -334,16 +334,8 @@ private:
 
 		static std::unique_ptr<BTNode> summoner_tree_factory(AISystem* ai)
 		{
-			// Selector - attack
+			// Selector - active
 			auto summon_enemies = std::make_unique<SummonEnemies>(EnemyType::Mushroom, 1);
-
-			/** Summoner has the following area_pattern for AOEAttack.
-				┌───┐
-				│ x │
-				│xPx|
-				|   |
-				└───┘
-			*/
 			std::vector<ivec2> area_pattern;
 			area_pattern.push_back(ivec2(0, 0));
 			area_pattern.push_back(ivec2(0, -1));
@@ -351,14 +343,19 @@ private:
 			area_pattern.push_back(ivec2(1, 0));
 			auto aoe_attack = std::make_unique<AOEAttack>(area_pattern);
 			auto regular_attack = std::make_unique<RegularAttack>();
-			auto selector_attack = std::make_unique<Selector>(std::move(regular_attack));
-			Selector* p = selector_attack.get();
-			selector_attack->add_precond_and_child(
+			auto selector_active = std::make_unique<Selector>(std::move(regular_attack));
+			Selector* p = selector_active.get();
+			selector_active->add_precond_and_child(
 				// Summoner summons enemies every fifth process during attack.
 				[p](Entity e) { return (p->get_process_count() % 5 == 0) && (p->get_process_count() != 0); },
 				std::move(summon_enemies));
-			selector_attack->add_precond_and_child(
-				// Summoner has 20% chance to make an AOE attack.
+			selector_active->add_precond_and_child(
+				// Summoner has 20% chance to make an AOE attack with the following area pattern.
+				// ┌───┐
+				// │ x │
+				// │xPx|
+				// |   |
+				// └───┘
 				[ai](Entity e) { return ai->chance_to_happen(0.20f); },
 				std::move(aoe_attack));
 
@@ -371,14 +368,14 @@ private:
 				[ai](Entity e) { return ai->is_health_below(e, 1.00f); },
 				std::move(recover_health));
 
-			// Selector - active
-			auto selector_active = std::make_unique<Selector>(std::move(selector_idle));
-			selector_active->add_precond_and_child(
+			// Selector - alive
+			auto selector_alive = std::make_unique<Selector>(std::move(selector_idle));
+			selector_alive->add_precond_and_child(
 				// Summoner switch to attack if it spots the player during active.
 				[ai](Entity e) { return ai->is_player_spotted(e); },
-				std::move(selector_attack));
+				std::move(selector_active));
 
-			return std::make_unique<SummonerTree>(std::move(selector_active));
+			return std::make_unique<SummonerTree>(std::move(selector_alive));
 		}
 
 	private:
