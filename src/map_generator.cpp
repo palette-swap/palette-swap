@@ -69,9 +69,9 @@ static bool is_straight_room(const std::set<Direction> & open_sides) {
 	return (opposite_direction(*(open_sides.begin())) == *(open_sides.end()));
 }
 
-void MapGenerator::generate_room(const std::set<Direction> & open_sides_TODO_REWORK_THIS, unsigned int level, RoomType room_type)
+void MapGenerator::generate_room(const std::set<Direction> & path_directions, unsigned int level, RoomType room_type)
 {
-	std::set<Direction> open_sides = open_sides_TODO_REWORK_THIS;
+	std::set<Direction> open_sides = path_directions;
 
 	const static std::map<RoomType, RoomLayout> room_templates = {
 		{ RoomType::Start,
@@ -104,41 +104,27 @@ void MapGenerator::generate_room(const std::set<Direction> & open_sides_TODO_REW
 
     // Contants
 	const static uint8_t solid_block_tile = 12;
-	const static int path_entrance_size = 2;
+	const static uint8_t void_tile = 10;
+	const static std::array<uint8_t, 2> trap_tiles = { 8, 16 };
+	// the entrance size on each open side
+	const static int room_entrance_size = 2;
+	// the start and end position of the entrance
+	const static int room_entrance_start = (room_size - room_entrance_size) / 2;
+	const static int room_entrance_end = (room_size + room_entrance_size) / 2 - 1;
 
 	const LevelGenConf& level_gen_conf = level_generation_confs.at(level);
-
-    // get an arbitary starting poistion given the starting direction
-	auto get_starting_position = [&](Direction starting_direction) {
-		std::uniform_int_distribution<int> starting_pos_dist((room_size - path_entrance_size) / 2, (room_size + path_entrance_size) / 2 - 1);
-		int starting_pos = starting_pos_dist(random_eng);
-		if (starting_direction == Direction::Left) {
-			return room_size * starting_pos;
-		}
-		if (starting_direction == Direction::Right) {
-			return room_size * (starting_pos + 1) - 1;
-		}
-		if (starting_direction == Direction::Up) {
-			return starting_pos;
-		}
-		if (starting_direction == Direction::Down) {
-			return room_size * (room_size - 1) + starting_pos;
-		}
-		assert(0);
-		return -1;
-	};
 
 	static const double max_side_path_probability = 0.9;
 	// get a random direction when generating path
 	auto get_next_direction = [&](Direction starting_direction) {
 		std::bernoulli_distribution side_path_dist(max_side_path_probability * level_gen_conf.room_path_complexity);
-		if (!side_path_dist(random_eng)) {
+		if (!side_path_dist(room_random_eng)) {
 			return opposite_direction(starting_direction);
 		}
 
 		// randomly choose a side to side step
 		std::bernoulli_distribution side_dist(0.5);
-		bool left_side = side_dist(random_eng);
+		bool left_side = side_dist(room_random_eng);
 
 		if (starting_direction == Direction::Left || starting_direction == Direction::Right) {
 			return left_side ? Direction::Up : Direction::Down;
@@ -166,6 +152,86 @@ void MapGenerator::generate_room(const std::set<Direction> & open_sides_TODO_REW
 		}
 	};
 
+    // based on room orientation, decide if the room is a corridar
+	auto is_corridar_room = [&]() {
+		return (path_directions.size() == 2 &&
+			path_directions.find(opposite_direction(*(path_directions.begin()))) != path_directions.end());
+	};
+
+	// // We could change this to a random value as well, but constant corridar width seems fine, note the width includes boundaries
+	// const static int corridar_width = 4;
+	std::uniform_int_distribution<int> corridar_width_dist(4, 8);
+	int corridar_width = corridar_width_dist(room_random_eng);
+
+	int first_row = 0;
+	int last_row = room_size - 1;
+	int first_col = 0;
+	int last_col = room_size - 1;
+	if (is_corridar_room()) {
+		if (path_directions.find(Direction::Up) != path_directions.end())
+		{
+			first_col = (room_size - corridar_width) / 2;
+			last_col = (room_size + corridar_width) / 2 - 1;
+		}
+		if (path_directions.find(Direction::Left) != path_directions.end())
+		{
+			first_row = (room_size - corridar_width) / 2;
+			last_row = (room_size + corridar_width) / 2 - 1;
+		}
+	}
+
+	// checks if a tile is on the entrance path
+	auto is_on_entrance_path = [&](int room_tile_position) {
+		int room_tile_row = room_tile_position / 10;
+		int room_tile_col = room_tile_position % 10;
+		return (
+			(path_directions.find(Direction::Up) != path_directions.end() &&
+			(room_tile_row == first_row && (room_entrance_start <= room_tile_col && room_tile_col <= room_entrance_end))) ||
+			(path_directions.find(Direction::Left) != path_directions.end() &&
+			(room_tile_col == first_col && (room_entrance_start <= room_tile_row && room_tile_row <= room_entrance_end))) ||
+			(path_directions.find(Direction::Down) != path_directions.end() &&
+			(room_tile_row == last_row && (room_entrance_start <= room_tile_col && room_tile_col <= room_entrance_end))) ||
+			(path_directions.find(Direction::Right) != path_directions.end() &&
+			(room_tile_col == last_col && (room_entrance_start <= room_tile_row && room_tile_row <= room_entrance_end))));
+	};
+	
+	// check if a tile is on the boundary, this is used for generating the boundary tiles(walls)
+	auto is_boundary_tile = [&](int room_tile_position) {
+		bool asdad = is_on_entrance_path(room_tile_position);
+		return (!is_on_entrance_path(room_tile_position) && (
+			(room_tile_position / room_size == first_row) ||
+			(room_tile_position / room_size == last_row) ||
+			(room_tile_position % room_size == first_col) ||
+			(room_tile_position % room_size == last_col)));
+	};
+
+	// Check if a tile is outside of a room
+	auto is_outside_tile = [&](int room_tile_position) {
+		return (first_row > (room_tile_position / room_size) || (room_tile_position / room_size) > last_row ||
+			   first_col > (room_tile_position % room_size) || (room_tile_position % room_size) > last_col);
+	};
+	
+
+	// get an arbitary starting poistion given the starting direction
+	auto get_starting_position = [&](Direction starting_direction) {
+		std::uniform_int_distribution<int> starting_pos_dist(room_entrance_start, room_entrance_end);
+		int starting_pos = starting_pos_dist(room_random_eng);
+		if (starting_direction == Direction::Left) {
+			return room_size * starting_pos + first_col;
+		}
+		if (starting_direction == Direction::Right) {
+			return room_size * starting_pos + last_col;
+		}
+		if (starting_direction == Direction::Up) {
+			return room_size * first_row +  starting_pos;
+		}
+		if (starting_direction == Direction::Down) {
+			return room_size * last_row + starting_pos;
+		}
+		assert(0);
+		return -1;
+	};
+
 	std::set<int> critical_locations;
 	Direction starting_direction = *(open_sides.begin());
 	int previous_room_position = get_starting_position(starting_direction);
@@ -177,58 +243,42 @@ void MapGenerator::generate_room(const std::set<Direction> & open_sides_TODO_REW
 		// the opposite direction of starting direction has bigger chance to be explored,
 		// the verticle directions are less likely to be explored, depending on room path complexity.
 		
-		while (open_sides.size() > 0) {
+		while (!open_sides.empty()) {
 			Direction next_direction = get_next_direction(starting_direction);
 			int next_room_position =
-				(critical_locations.size() == 0)
+				(critical_locations.empty())
 				? previous_room_position
-				: previous_room_position + 10 * direction_vec.at(static_cast<Direction>(next_direction)).at(1)
+				: previous_room_position + room_size * direction_vec.at(static_cast<Direction>(next_direction)).at(1)
 					+ direction_vec.at(static_cast<Direction>(next_direction)).at(0);
-			if (next_room_position < 0 || next_room_position >= 100 || critical_locations.find(next_room_position) != critical_locations.end()) {
+			if (next_room_position < 0 || next_room_position >= room_size * room_size || is_boundary_tile(next_room_position)
+				|| critical_locations.find(next_room_position) != critical_locations.end()) {
 				continue;
 			}
 
-			int next_row = next_room_position / 10;
-			int next_col = next_room_position % 10;
+			int next_row = next_room_position / room_size;
+			int next_col = next_room_position % room_size;
 
 			// check if current position is aligned with any opening sides, we directly go straight towards it
-			if (next_row >= (room_size - path_entrance_size) / 2 && next_row < (room_size + path_entrance_size) / 2) {
+			if (next_row >= room_entrance_start && next_row <= room_entrance_end) {
 				if (open_sides.find(Direction::Left) != open_sides.end()) {
-					add_straight_path(critical_locations, next_room_position, next_row * room_size);
+					add_straight_path(critical_locations, next_room_position, next_row * room_size + first_col);
 					open_sides.erase(Direction::Left);
 				}
 				if (open_sides.find(Direction::Right) != open_sides.end()) {
-					add_straight_path(critical_locations, next_room_position, next_row * room_size + room_size - 1);
+					add_straight_path(critical_locations, next_room_position, next_row * room_size + last_col);
 					open_sides.erase(Direction::Right);
 				}
 			}
-			if (next_col >= (room_size - path_entrance_size) / 2 && next_col < (room_size + path_entrance_size) / 2) {
+			if (next_col >= room_entrance_start && next_col <= room_entrance_end) {
 				if (open_sides.find(Direction::Up) != open_sides.end()) {
-					add_straight_path(critical_locations, next_room_position, next_col);
+					add_straight_path(critical_locations, next_room_position, first_row * room_size + next_col);
 					open_sides.erase(Direction::Up);
 				}
 				if (open_sides.find(Direction::Down) != open_sides.end()) {
-					add_straight_path(critical_locations, next_room_position, room_size * (room_size - 1) + next_col);
+					add_straight_path(critical_locations, next_room_position, last_row * room_size + next_col);
 					open_sides.erase(Direction::Down);
 				}
 			}
-			// if we reached the boundary but have not cleared a path, directly draw a path
-			// std::uniform_int_distribution<int> exit_position_dist((room_size - path_entrance_size) / 2, (room_size + path_entrance_size) / 2 - 1);
-			// int exit_position = exit_position_dist(random_eng);
-			// if (next_row == 0 && open_sides.find(Direction::Up) != open_sides.end()) {
-			// 	add_straight_path(critical_locations, next_room_position, next_row * room_size + exit_position);
-			// 	open_sides.erase(Direction::Up);
-			// } else if (next_row == room_size - 1 && open_sides.find(Direction::Down) != open_sides.end()) {
-			// 	add_straight_path(critical_locations, next_room_position, next_row * room_size + exit_position);
-			// 	open_sides.erase(Direction::Down);
-			// }
-			// if (next_col == 0 && open_sides.find(Direction::Left) != open_sides.end()) {
-			// 	add_straight_path(critical_locations, next_room_position, exit_position * room_size + next_col);
-			// 	open_sides.erase(Direction::Left);
-			// } else if (next_col == room_size - 1 && open_sides.find(Direction::Right) != open_sides.end()) {
-			// 	add_straight_path(critical_locations, next_room_position, exit_position * room_size + next_col);
-			// 	open_sides.erase(Direction::Right);
-			// }
 
 			// add the current position and continue searching
 			critical_locations.emplace(next_room_position);
@@ -239,25 +289,31 @@ void MapGenerator::generate_room(const std::set<Direction> & open_sides_TODO_REW
 	}
 
 	std::bernoulli_distribution blocks_dist(level_gen_conf.room_density);
+	std::bernoulli_distribution spawn_traps_dist(level_gen_conf.room_trap_density);
+	std::uniform_int_distribution<int> traps_dist(0, trap_tiles.size() - 1);
 	for (int room_row = 0; room_row < room_size; room_row ++) {
 		for (int room_col = 0; room_col < room_size; room_col ++) {
 			int room_index = room_row * room_size + room_col;
-			if (room_row == 0 && (open_sides_TODO_REWORK_THIS.find(Direction::Up) == open_sides_TODO_REWORK_THIS.end())) {
-				room_layout.at(room_index) = 12;
-			} else if (room_row == room_size - 1 && open_sides_TODO_REWORK_THIS.find(Direction::Down) == open_sides_TODO_REWORK_THIS.end()) {
-				room_layout.at(room_index) = 12;
-			} else if (room_col == 0 && open_sides_TODO_REWORK_THIS.find(Direction::Left) == open_sides_TODO_REWORK_THIS.end()) {
-				room_layout.at(room_index) = 12;
-			} else if (room_col == room_size - 1 && open_sides_TODO_REWORK_THIS.find(Direction::Right) == open_sides_TODO_REWORK_THIS.end()) {
-				room_layout.at(room_index) = 12;
-			} else if ((room_type == RoomType::Critical) &&
-				(critical_locations.find(room_index) == critical_locations.end()) &&
-				blocks_dist(random_eng) == true) {
+			// also add entrance paths to critical locations
+			if (is_on_entrance_path(room_index)) {
+				critical_locations.emplace(room_index);
+			}
+
+			if (is_outside_tile(room_index)) {
+				room_layout.at(room_index) = void_tile;
+			} else if (is_boundary_tile(room_index)) {
 				room_layout.at(room_index) = solid_block_tile;
+			} else {
+				if (spawn_traps_dist(random_eng)) {
+					room_layout.at(room_index) = trap_tiles.at(traps_dist(random_eng));
+				} else if ((room_type == RoomType::Critical)
+					&& (critical_locations.find(room_index) == critical_locations.end())
+					&& blocks_dist(room_random_eng) == true) {
+					room_layout.at(room_index) = solid_block_tile;
+				}
 			}
 		}
 	}
-	
 	for (int room_loc : critical_locations) {
 		room_layout.at(room_loc) = 10;
 	}
@@ -389,7 +445,7 @@ void MapGenerator::generate_level(int level)
 		int to_row =  to_room_index / 10;
 		int to_col = to_room_index % 10;
 
-		if (to_row < from_row) { return Direction::Up;   }
+		if (to_row < from_row) { return Direction::Up; }
 		if (to_row > from_row) { return Direction::Down; }
 		if (to_col < from_col) { return Direction::Left; }
 		if (to_col > from_col) { return Direction::Right; }
@@ -404,7 +460,11 @@ void MapGenerator::generate_level(int level)
 	};
 
 	// generate room layouts
-	std::bernoulli_distribution side_room_dist(level_gen_conf.room_side_path_density);
+	std::bernoulli_distribution side_room_dist(level_gen_conf.side_room_percentage);
+	// refresh random engine
+	random_eng.seed(level_gen_conf.generation_seed);
+	room_random_eng.seed(level_gen_conf.generation_seed);
+	room_traps_random_eng.seed(level_gen_conf.generation_seed);
 	for (int i = 0; i < path.size(); i++) {
 		std::set<Direction> open_directions;
 		int room_position = path.at(i);

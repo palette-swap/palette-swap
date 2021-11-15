@@ -521,7 +521,7 @@ void MapGeneratorSystem::increment_path_length() {
 void MapGeneratorSystem::decrement_path_length()
 {
 	auto& curr_conf = map_generator.get_level_generation_confs().at(current_level - num_predefined_levels);
-	if (curr_conf.level_path_length == 1) {
+	if (curr_conf.level_path_length == 2) {
 		return;
 	}
 	curr_conf.level_path_length--;
@@ -549,5 +549,45 @@ void MapGeneratorSystem::increase_room_density()
 	}
 	curr_conf.room_density += 0.1;
 	std::cout << "Current room density: " << curr_conf.room_density << std::endl;
+	regenerate_map();
+}
+void MapGeneratorSystem::increase_side_rooms()
+{
+	auto& curr_conf = map_generator.get_level_generation_confs().at(current_level - num_predefined_levels);
+	if (curr_conf.side_room_percentage <= 0.05) {
+		return;
+	}
+	curr_conf.side_room_percentage -= 0.1;
+	std::cout << "Current side room percentage: " << curr_conf.side_room_percentage << std::endl;
+	regenerate_map();
+}
+void MapGeneratorSystem::decrease_side_rooms()
+{
+	auto& curr_conf = map_generator.get_level_generation_confs().at(current_level - num_predefined_levels);
+	if (curr_conf.side_room_percentage >= 0.95) {
+		return;
+	}
+	curr_conf.side_room_percentage += 0.1;
+	std::cout << "Current side room percentage: " << curr_conf.side_room_percentage << std::endl;
+	regenerate_map();
+}
+void MapGeneratorSystem::increase_room_path_complexity()
+{
+	auto& curr_conf = map_generator.get_level_generation_confs().at(current_level - num_predefined_levels);
+	if (curr_conf.room_path_complexity >= 0.95) {
+		return;
+	}
+	curr_conf.room_path_complexity += 0.1;
+	std::cout << "Current room path complexity: " << curr_conf.room_path_complexity << std::endl;
+	regenerate_map();
+}
+void MapGeneratorSystem::decrease_room_path_complexity()
+{
+	auto& curr_conf = map_generator.get_level_generation_confs().at(current_level - num_predefined_levels);
+	if (curr_conf.room_path_complexity <= 0.15) {
+		return;
+	}
+	curr_conf.room_path_complexity -= 0.1;
+	std::cout << "Current room path complexity: " << curr_conf.room_path_complexity << std::endl;
 	regenerate_map();
 }

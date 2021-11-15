@@ -388,21 +388,24 @@ void WorldSystem::check_debug_keys(int key, int action, int mod)
 
 		if (key == GLFW_KEY_Q && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
 			map_generator->increment_seed();
-		}
-		if (key == GLFW_KEY_W && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+		} else if (key == GLFW_KEY_W && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
 			map_generator->decrement_seed();
-		}
-		if (key == GLFW_KEY_A && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+		} else if (key == GLFW_KEY_A && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
 			map_generator->increment_path_length();
-		}
-		if (key == GLFW_KEY_S && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+		} else if (key == GLFW_KEY_S && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
 			map_generator->decrement_path_length();
-		}
-		if (key == GLFW_KEY_Z && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+		} else if (key == GLFW_KEY_Z && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
 			map_generator->increase_room_density();
-		}
-		if (key == GLFW_KEY_X && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+		} else if (key == GLFW_KEY_X && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
 			map_generator->decrease_room_density();
+		} else if (key == GLFW_KEY_E && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->increase_side_rooms();
+		} else if (key == GLFW_KEY_R && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->decrease_side_rooms();
+		} else if (key == GLFW_KEY_D && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->increase_room_path_complexity();
+		} else if (key == GLFW_KEY_F && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->decrease_room_path_complexity();
 		}
 	}
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_M) {

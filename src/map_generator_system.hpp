@@ -179,4 +179,8 @@ public:
 	void decrement_path_length();
 	void increase_room_density();
 	void decrease_room_density();
+	void increase_side_rooms();
+	void decrease_side_rooms();
+	void increase_room_path_complexity();
+	void decrease_room_path_complexity();
 };

@@ -34,21 +34,20 @@ private:
 		float room_differences = 1.0f;
 		// decides how many wall tiles are spawned in a room
 		double room_density = 0.2;
-		// how many side paths we have, 1 indicates there a side path besides each room
-		double room_side_path_density = 0.2;
+		// how many side rooms we have, 1 indicates there a side room next to each room
+		double side_room_percentage = 0.2;
 		// how complex the path in a room is
 		double room_path_complexity = 0.5;
-
-        // chances of a horizontal/vertical room is converted to a corridor
-		double room_corridors = 0.5;
+		// how dense traps are spawned
+		double room_trap_density = 0.1;
 	};
 	// the generation configuration for each level
 	std::vector<LevelGenConf> level_generation_confs;
 	
+	// we need multiple random engines here to keep the editable random variables independent
 	std::default_random_engine random_eng;
-
-	// generate a random path of length
-	// std::vector<int> generate_random_path(int start_row, int start_col, int path_length, const LevelGenConf& level_gen_conf);
+	std::default_random_engine room_random_eng;
+	std::default_random_engine room_traps_random_eng;
 
     // room types for procedural generation
 	enum class RoomType : uint8_t {
@@ -60,7 +59,7 @@ private:
 
 	// generate a room that has paths to all open sides, tile layout will be influenced by the level generation conf
 	// the open sides will be gauranteed to have at least 2 walkable tiles at the middle(row 4,5 or col 4,5)
-    void generate_room(const std::set<Direction> & open_sides_TODO_REWORK_THIS, unsigned int level, RoomType room_type);
+    void generate_room(const std::set<Direction> & path_directions, unsigned int level, RoomType room_type);
 
 public:
 	const std::array<uint32_t, MapUtility::map_size * MapUtility::map_size>&
