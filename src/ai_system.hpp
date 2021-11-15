@@ -149,6 +149,11 @@ private:
 		{
 			printf("Debug: SummonEnemies.process\n");
 			ai->summon_enemies(e, m_type, m_num);
+
+			// TODO (Evan): active(1) + temp-summon.
+			// ai->animations->set_enemy_state(e, 1);
+			// ai->animations->summon_animation(e);
+
 			return handle_process_result(BTState::Success);
 		}
 
@@ -177,11 +182,7 @@ private:
 		BTState process(Entity e, AISystem* ai) override
 		{
 			printf("Debug: AOEAttack.process\n");
-			if (m_isCharged) {
-				// AOE attack.
-				ai->aoe_attack(e, m_aiming_area);
-				return handle_process_result(BTState::Success);
-			} else {
+			if (!m_isCharged) {
 				// Charging
 				m_isCharged = true;
 				// Aiming area
@@ -193,11 +194,26 @@ private:
 						m_aiming_area.push_back(map_pos);
 					}
 				}
+
 				// Debug
 				for (const uvec2& aiming_point : m_aiming_area) {
 					create_path_point(MapUtility::map_position_to_world_position(aiming_point));
 				}
+
+				// TODO (Evan): charge(2).
+				// ai->animations->set_enemy_state(e, 2);
+				// Need animation to visualize m_aiming_area, like the debug below.
+
 				return handle_process_result(BTState::Running);
+			} else {
+				// AOE attack.
+				ai->aoe_attack(e, m_aiming_area);
+
+				// TODO (Evan): active(1) + temp-aoe.
+				// ai->animations->set_enemy_state(e, 1);
+				// ai->animations->aoe_animation(e, m_aiming_area);
+
+				return handle_process_result(BTState::Success);
 			}
 		}
 
@@ -216,6 +232,11 @@ private:
 		{
 			printf("Debug: RegularAttack.process\n");
 			ai->attack_player(e);
+
+			// TODO (Evan): active(1) + temp-attack.
+			// ai->animations->set_enemy_state(e, 1);
+			// No need for temp-attack here since it will be handled in combat system.
+
 			return handle_process_result(BTState::Success);
 		}
 	};
@@ -234,6 +255,10 @@ private:
 		{
 			printf("Debug: RecoverHealth.process\n");
 			ai->recover_health(e, m_ratio);
+
+			// TODO (Evan): idle(0).
+			// ai->animations->set_enemy_state(e, 0);
+
 			return handle_process_result(BTState::Success);
 		}
 
@@ -249,6 +274,10 @@ private:
 		BTState process(Entity /*e*/, AISystem* ai) override
 		{
 			printf("Debug: DoNothing.process\n");
+
+			// TODO (Evan): idle(0).
+			// ai->animations->set_enemy_state(e, 0);
+
 			return handle_process_result(BTState::Success);
 		}
 	};
