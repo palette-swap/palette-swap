@@ -17,6 +17,8 @@ AISystem::AISystem(const Debug& debugging,
 	, turns(std::move(turns))
 	, so_loud(std::move(so_loud))
 	, enemy_team(registry.create())
+	, rng(std::random_device()())
+	, uniform_dist(0.00f, 1.00f)
 {
 	registry.emplace<DebugComponent>(enemy_team);
 
@@ -198,7 +200,7 @@ void AISystem::execute_defensive_sm(const Entity& entity)
 				approach_player(entity, enemy.speed);
 			}
 
-			if (uniform_dist(rng) < 0.20f) {
+			if (chance_to_happen(0.2f)) {
 				become_immortal(entity, true);
 				switch_enemy_state(entity, EnemyState::Immortal);
 			}
@@ -381,6 +383,12 @@ bool AISystem::is_health_below(const Entity& entity, float ratio)
 {
 	const Stats& stats = registry.get<Stats>(entity);
 	return static_cast<float>(stats.health) < static_cast<float>(stats.health_max) * ratio;
+}
+
+bool AISystem::chance_to_happen(float percent) {
+	float chance = uniform_dist(rng);
+	bool result = chance < percent;
+	return result;
 }
 
 void AISystem::become_immortal(const Entity& entity, bool flag)

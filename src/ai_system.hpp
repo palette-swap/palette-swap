@@ -66,6 +66,9 @@ private:
 	// Check if an entity's health is below a ratio.
 	bool is_health_below(const Entity& entity, float ratio);
 
+	// Return true if a percent chance happens.
+	bool chance_to_happen(float percent);
+
 	// An entity become immortal if flag is true. Otherwise cancel immortality.
 	void become_immortal(const Entity& entity, bool flag);
 
@@ -115,7 +118,21 @@ private:
 		virtual BTState process(Entity e, AISystem* ai) = 0;
 	};
 
-	// Leaf action node: RecoverHealth
+	// Leaf action node: RegularAttack
+	class RegularAttack : public BTNode {
+	public:
+
+		void init(Entity e) override { printf("Debug: RegularAttack.init\n"); }
+
+		BTState process(Entity e, AISystem* ai) override
+		{
+			printf("Debug: RegularAttack.process\n");
+			ai->attack_player(e);
+			return BTState::Success;
+		}
+	};
+
+	// Leaf action node: SummonEnemies
 	class SummonEnemies : public BTNode {
 	public:
 		SummonEnemies(EnemyType type, int num)
@@ -141,14 +158,22 @@ private:
 	// Leaf action node: RecoverHealth
 	class RecoverHealth : public BTNode {
 	public:
+		RecoverHealth(float ratio)
+			: m_ratio(ratio)
+		{
+		}
+
 		void init(Entity e) override { printf("Debug: RecoverHealth.init\n"); }
 
 		BTState process(Entity e, AISystem* ai) override
 		{
 			printf("Debug: RecoverHealth.process\n");
-			ai->recover_health(e, 0.2f);
+			ai->recover_health(e, m_ratio);
 			return BTState::Success;
 		}
+
+	private:
+		float m_ratio;
 	};
 
 	// Leaf action node: DoNothing
@@ -244,19 +269,23 @@ private:
 		static std::unique_ptr<BTNode> summoner_tree_factory(AISystem* ai)
 		{
 			// Selector - attack
+			auto regular_attack = std::make_unique<RegularAttack>();
 			auto summon_enemies = std::make_unique<SummonEnemies>(EnemyType::Mushroom, 2);
+			auto selector_attack = std::make_unique<Selector>(std::move(summon_enemies));
+			selector_attack->add_precond_and_child([ai](Entity e) { return ai->chance_to_happen(0.80f); },
+												   std::move(regular_attack));
 
 			// Selector - idle
-			auto recover_health = std::make_unique<RecoverHealth>();
+			auto recover_health = std::make_unique<RecoverHealth>(0.20f);
 			auto do_nothing = std::make_unique<DoNothing>();
 			auto selector_idle = std::make_unique<Selector>(std::move(do_nothing));
-			selector_idle->add_precond_and_child([ai](Entity e) { return ai->is_health_below(e, 1.0f); },
+			selector_idle->add_precond_and_child([ai](Entity e) { return ai->is_health_below(e, 1.00f); },
 												  std::move(recover_health));
 
 			// Selector - active
 			auto selector_active = std::make_unique<Selector>(std::move(selector_idle));
 			selector_active->add_precond_and_child([ai](Entity e) { return ai->is_player_spotted(e); },
-												   std::move(summon_enemies));
+												   std::move(selector_attack));
 
 			return std::make_unique<SummonerTree>(std::move(selector_active));
 		}
