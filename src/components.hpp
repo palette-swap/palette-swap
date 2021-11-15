@@ -308,6 +308,22 @@ struct Enemy {
 	void serialize(const std::string & prefix, rapidjson::Document &json) const;
 	void deserialize(const std::string& prefix, const rapidjson::Document& json);
 };
+
+struct RedExclusive {
+
+};
+
+struct BlueExclusive {
+
+};
+
+struct InactiveEnemy {
+};
+
+// Component that denotes what colour the player cannot see at the moment
+struct PlayerInactivePerception {
+	ColorState inactive = ColorState::Red;
+};
 //---------------------------------------------------------------------------
 //-------------------------		  ANIMATIONS        -------------------------
 //---------------------------------------------------------------------------
@@ -344,6 +360,7 @@ struct Color {
 // to the screen for a spritesheet
 struct Animation {
 	ColorState color = ColorState::None;
+	vec4 display_color = { 1, 1, 1, 1 };
 	int direction = 1;
 	int frame = 0;
 	int max_frames = 1;
@@ -359,7 +376,7 @@ struct Animation {
 struct EventAnimation {
 	bool turn_trigger = false;
 	float speed_adjustment = 1;
-	vec3 restore_color = { 1, 1, 1 };
+	vec4 restore_color = { 1, 1, 1, 1};
 
 	int restore_state = 0;
 	float restore_speed = 1;

@@ -47,18 +47,22 @@ static void load_enemy(unsigned int enemy_index, const rapidjson::Document& json
 
 	Animation& enemy_animation = registry.emplace<Animation>(entity);
 	enemy_animation.max_frames = 4;
-
+	enemy_animation.state = enemy_state_to_animation_state.at(static_cast<int>(enemy_component.state));
 	registry.emplace<RenderRequest>(entity,
 									enemy_type_textures.at(static_cast<int>(enemy_component.type)),
-									  EFFECT_ASSET_ID::ENEMY,
+									EFFECT_ASSET_ID::ENEMY,
 									GEOMETRY_BUFFER_ID::SMALL_SPRITE,
 									true);
 	if (enemy_component.team == ColorState::Red) {
 		enemy_animation.color = ColorState::Red;
+		enemy_animation.display_color = {AnimationUtility::default_enemy_red,1};
 		registry.emplace<Color>(entity, AnimationUtility::default_enemy_red);
+		registry.emplace<RedExclusive>(entity);
 	} else if (enemy_component.team == ColorState::Blue) {
 		registry.emplace<Color>(entity, AnimationUtility::default_enemy_blue);
 		enemy_animation.color = ColorState::Blue;
+		enemy_animation.display_color = { AnimationUtility::default_enemy_blue, 1 };
+		registry.emplace<BlueExclusive>(entity);
 	} else {
 		registry.emplace<Color>(entity, vec3(1, 1, 1));
 	}
