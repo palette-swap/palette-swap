@@ -16,7 +16,7 @@ uniform float sprite_size = 32;
 // Value used for representing number of frames:
 uniform float num_frames = 8;
 // Value denoting total number of states for an enemy:
-uniform float num_states = 4;
+uniform float num_states = 8;
 // Denotes current frame_state (frame rendered in animation as well as entity state)
 uniform int frame;
 uniform int state;

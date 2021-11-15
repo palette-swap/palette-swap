@@ -149,7 +149,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 
 	// Processing the player state
 	assert(registry.size<ScreenState>() <= 1);
-	// ScreenState& screen = registry.screen_states.components[0];
+
 	if ((registry.get<Stats>(player).health <= 0) && turns->ready_to_act(player)) {
 		restart_game();
 		return true;
@@ -218,6 +218,10 @@ void WorldSystem::restart_game()
 	player = create_player(player_starting_point);
 	// TODO: Should move into create_player (under world init) afterwards
 	animations->set_player_animation(player);
+
+	// Initializes the perception of the player for what is inactive
+	PlayerInactivePerception& inactive_perception = registry.get<PlayerInactivePerception>(player);
+	inactive_perception.inactive = turns->get_inactive_color();
 
 	turns->add_team_to_queue(player);
 	// create camera instance
@@ -298,6 +302,10 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 
 	if (action == GLFW_RELEASE && key == GLFW_KEY_SPACE) {
 		change_color();
+		
+	}
+	if (action == GLFW_RELEASE && key == GLFW_KEY_K) {
+		
 	}
 
 	check_debug_keys(key, action, mod);
@@ -380,28 +388,27 @@ void WorldSystem::move_player(Direction direction)
 
 	if (direction == Direction::Left && map_pos.position.x > 0) {
 		new_pos = uvec2(map_pos.position.x - 1, map_pos.position.y);
-
 		animations->set_sprite_direction(player, Sprite_Direction::SPRITE_LEFT);
-		animations->player_running_animation(player);
+		
 	} else if (direction == Direction::Up && map_pos.position.y > 0) {
 		new_pos = uvec2(map_pos.position.x, map_pos.position.y - 1);
-		animations->player_running_animation(player);
 	} else if (direction == Direction::Right
 			   && (float)map_pos.position.x < MapUtility::room_size * MapUtility::tile_size - 1) {
 		new_pos = uvec2(map_pos.position.x + 1, map_pos.position.y);
 
 		animations->set_sprite_direction(player, Sprite_Direction::SPRITE_RIGHT);
-		animations->player_running_animation(player);
 	} else if (direction == Direction::Down
 			   && (float)map_pos.position.y < MapUtility::room_size * MapUtility::tile_size - 1) {
 		new_pos = uvec2(map_pos.position.x, map_pos.position.y + 1);
-		animations->player_running_animation(player);
 	}
 
 	if (map_pos.position == new_pos || !map_generator->walkable_and_free(new_pos)
 		|| !turns->execute_team_action(player)) {
 		return;
 	}
+
+	// Allows player to run if all checks have been passed
+	animations->player_running_animation(player);
 
 	// Temp update for arrow position
 	if (!player_arrow_fired) {
@@ -418,9 +425,11 @@ void WorldSystem::move_player(Direction direction)
 		}
 
 		map_generator->load_next_level();
+		animations->set_all_inactive_colours(turns->get_inactive_color());
 		registry.get<MapPosition>(player).position = map_generator->get_player_start_position();
 	} else if (map_generator->is_last_level_tile(new_pos)) {
 		map_generator->load_last_level();
+		animations->set_all_inactive_colours(turns->get_inactive_color());
 		registry.get<MapPosition>(player).position = map_generator->get_player_end_position();
 	}
 }
@@ -430,6 +439,7 @@ void WorldSystem::change_color()
 	if (!turns->ready_to_act(player)) {
 		return;
 	}
+
 	ColorState active_color = turns->get_active_color();
 	switch (active_color) {
 	case ColorState::Red:
@@ -448,6 +458,8 @@ void WorldSystem::change_color()
 		turns->set_active_color(ColorState::Red);
 		break;
 	}
+
+	animations->set_all_inactive_colours(turns->get_inactive_color());
 
 	// ColorState active_color = turns->get_active_color();
 	// for (long long i = registry.enemies.entities.size() - 1; i >= 0; i--) {
