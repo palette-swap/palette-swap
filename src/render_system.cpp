@@ -211,7 +211,7 @@ void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest& render
 	draw_triangles(transform, projection);
 }
 
-void RenderSystem::draw_effect(Entity entity, const RenderRequest& render_request, const mat3& projection)
+void RenderSystem::draw_effect(Entity entity, const EffectRenderRequest& render_request, const mat3& projection)
 {
 	Transform transform = get_transform_no_rotation(entity);
 
@@ -617,21 +617,21 @@ void RenderSystem::draw()
 
 	// Renders entities + healthbars depending on which state we are in
 	if (inactive_color == ColorState::Red) {
-		registry.view<RenderRequest>(entt::exclude<RedExclusive, Effects>).each(render_requests_lambda);
+		registry.view<RenderRequest>(entt::exclude<RedExclusive>).each(render_requests_lambda);
 		registry.view<Stats, Enemy>(entt::exclude<RedExclusive>).each(health_group_lambda);
 	} else if (inactive_color == ColorState::Blue) {
-		registry.view<RenderRequest>(entt::exclude<BlueExclusive, Effects>).each(render_requests_lambda);
+		registry.view<RenderRequest>(entt::exclude<BlueExclusive>).each(render_requests_lambda);
 		registry.view<Stats, Enemy>(entt::exclude<BlueExclusive>).each(health_group_lambda);
 	} else {
 		registry.view<RenderRequest>().each(render_requests_lambda);
 		registry.view<Stats, Enemy>().each(health_group_lambda);
 	}
 
-	for (auto [entity, render_request] : registry.view<RenderRequest, Effects>().each()) {
+	for (auto [entity, effect_render_request] : registry.view<EffectRenderRequest>().each()) {
 		// Note, its not very efficient to access elements indirectly via the entity
 		// albeit iterating through all Sprites in sequence. A good point to optimize
-		if (render_request.visible) {
-			draw_effect(entity, render_request, projection_2d);
+		if (effect_render_request.visible) {
+			draw_effect(entity, effect_render_request, projection_2d);
 		}
 	}
 

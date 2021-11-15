@@ -132,9 +132,9 @@ Entity create_arrow(vec2 position)
 	registry.emplace<WorldPosition>(entity, position);
 	registry.emplace<Velocity>(entity, 0.f, 0.f);
 
-	// Create and (empty) player component to be able to refer to other enttities
+	// Create and (empty) player component to be able to refer to other entities
 	// TODO: replace with single geometry buffer sprites
-	registry.emplace<RenderRequest>(
+	registry.emplace<EffectRenderRequest>(
 		entity, TEXTURE_ASSET_ID::SPELLS, EFFECT_ASSET_ID::SPELL, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);
 	Animation& spell_animation = registry.emplace<Animation>(entity);
 	spell_animation.max_frames = 8;
@@ -142,7 +142,6 @@ Entity create_arrow(vec2 position)
 	spell_animation.state = 0;
 	spell_animation.speed_adjustment = 1.5;
 	registry.emplace<Color>(entity, vec3(1, 1, 1));
-	registry.emplace<Effects>(entity);
 	return entity;
 }
 

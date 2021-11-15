@@ -248,7 +248,7 @@ void WorldSystem::restart_game()
 	// Create a new player arrow instance
 	vec2 player_location = MapUtility::map_position_to_world_position(player_starting_point);
 	player_arrow = create_arrow(player_location);
-	registry.get<RenderRequest>(player_arrow).visible
+	registry.get<EffectRenderRequest>(player_arrow).visible
 		= registry.get<Weapon>(current_weapon).given_attacks.at(current_attack).targeting_type
 		== TargetingType::Projectile;
 
@@ -346,7 +346,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 					   attack.damage_min,
 					   attack.damage_max,
 					   attack.targeting_type == TargetingType::Projectile ? "projectile" : "adjacent");
-				registry.get<RenderRequest>(player_arrow).visible = attack.targeting_type == TargetingType::Projectile;
+				registry.get<EffectRenderRequest>(player_arrow).visible = attack.targeting_type == TargetingType::Projectile;
 				registry.get<Text>(attack_display).text = combat->make_attack_list(current_weapon, current_attack);
 			}
 		}
@@ -509,7 +509,7 @@ void WorldSystem::equip_next_weapon()
 		curr = next->second;
 		current_weapon = curr;
 		current_attack = 0;
-		registry.get<RenderRequest>(player_arrow).visible
+		registry.get<EffectRenderRequest>(player_arrow).visible
 			= registry.get<Weapon>(current_weapon).given_attacks.at(current_attack).targeting_type
 			== TargetingType::Projectile;
 		registry.get<Text>(attack_display).text = combat->make_attack_list(current_weapon, current_attack);
