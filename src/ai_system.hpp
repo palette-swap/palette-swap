@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <random>
 #include <vector>
@@ -9,6 +9,7 @@
 #include "combat_system.hpp"
 #include "map_generator_system.hpp"
 #include "turn_system.hpp"
+#include "world_init.hpp"
 
 #include "soloud_wav.h"
 
@@ -78,6 +79,9 @@ private:
 	// An entity summons new enemies with a certain type and number.
 	void summon_enemies(const Entity& entity, EnemyType enemy_type, int num);
 
+	// AOE attack on an area.
+	void aoe_attack(const Entity& entity, const std::vector<uvec2>& area);
+
 	// Debugging
 	const Debug& debugging;
 	void draw_pathing_debug();
@@ -130,19 +134,6 @@ private:
 		size_t process_count = 0;
 	};
 
-	// Leaf action node: RegularAttack
-	class RegularAttack : public BTNode {
-	public:
-		void init(Entity e) override { printf("Debug: RegularAttack.init\n"); }
-
-		BTState process(Entity e, AISystem* ai) override
-		{
-			printf("Debug: RegularAttack.process\n");
-			ai->attack_player(e);
-			return handle_process_result(BTState::Success);
-		}
-	};
-
 	// Leaf action node: SummonEnemies
 	class SummonEnemies : public BTNode {
 	public:
@@ -164,6 +155,69 @@ private:
 	private:
 		EnemyType m_type;
 		int m_num;
+	};
+
+	
+	// Leaf action node: AOEAttack
+	class AOEAttack : public BTNode {
+	public:
+		AOEAttack(const std::vector<ivec2>& area_pattern)
+			: m_area_pattern(area_pattern)
+			, m_isCharged(false)
+		{
+		}
+
+		void init(Entity e) override
+		{
+			printf("Debug: AOEAttack.init\n");
+			m_isCharged = false;
+			m_aiming_area.clear();
+		}
+
+		BTState process(Entity e, AISystem* ai) override
+		{
+			printf("Debug: AOEAttack.process\n");
+			if (m_isCharged) {
+				// AOE attack.
+				ai->aoe_attack(e, m_aiming_area);
+				return handle_process_result(BTState::Success);
+			} else {
+				// Charging
+				m_isCharged = true;
+				// Aiming area
+				Entity player = registry.view<Player>().front();
+				const uvec2& player_map_pos = registry.get<MapPosition>(player).position;
+				for (const ivec2& pattern_pos : m_area_pattern) {
+					ivec2 map_pos = pattern_pos + static_cast<ivec2>(player_map_pos);
+					if (map_pos.x >= 0 || map_pos.y >= 0) {
+						m_aiming_area.push_back(map_pos);
+					}
+				}
+				// Debug
+				for (const uvec2& aiming_point : m_aiming_area) {
+					create_path_point(MapUtility::map_position_to_world_position(aiming_point));
+				}
+				return handle_process_result(BTState::Running);
+			}
+		}
+
+	private:
+		std::vector<ivec2> m_area_pattern;
+		bool m_isCharged;
+		std::vector<uvec2> m_aiming_area;
+	};
+
+	// Leaf action node: RegularAttack
+	class RegularAttack : public BTNode {
+	public:
+		void init(Entity e) override { printf("Debug: RegularAttack.init\n"); }
+
+		BTState process(Entity e, AISystem* ai) override
+		{
+			printf("Debug: RegularAttack.process\n");
+			ai->attack_player(e);
+			return handle_process_result(BTState::Success);
+		}
 	};
 
 	// Leaf action node: RecoverHealth
@@ -282,6 +336,20 @@ private:
 		{
 			// Selector - attack
 			auto summon_enemies = std::make_unique<SummonEnemies>(EnemyType::Mushroom, 1);
+
+			/** Summoner has the following area_pattern for AOEAttack.
+				┌───┐
+				│ x │
+				│xPx|
+				|   |
+				└───┘
+			*/
+			std::vector<ivec2> area_pattern;
+			area_pattern.push_back(ivec2(0, 0));
+			area_pattern.push_back(ivec2(0, -1));
+			area_pattern.push_back(ivec2(-1, 0));
+			area_pattern.push_back(ivec2(1, 0));
+			auto aoe_attack = std::make_unique<AOEAttack>(area_pattern);
 			auto regular_attack = std::make_unique<RegularAttack>();
 			auto selector_attack = std::make_unique<Selector>(std::move(regular_attack));
 			Selector* p = selector_attack.get();
@@ -289,18 +357,26 @@ private:
 				// Summoner summons enemies every fifth process during attack.
 				[p](Entity e) { return p->get_process_count() % 5 == 0; },
 				std::move(summon_enemies));
+			selector_attack->add_precond_and_child(
+				// Summoner has 20% chance to make an AOE attack.
+				[ai](Entity e) { return ai->chance_to_happen(0.20f); },
+				std::move(aoe_attack));
 
 			// Selector - idle
 			auto recover_health = std::make_unique<RecoverHealth>(0.20f);
 			auto do_nothing = std::make_unique<DoNothing>();
 			auto selector_idle = std::make_unique<Selector>(std::move(do_nothing));
-			selector_idle->add_precond_and_child([ai](Entity e) { return ai->is_health_below(e, 1.00f); },
-												  std::move(recover_health));
+			selector_idle->add_precond_and_child(
+				// Summoner recover 20% HP if its HP is not full during idle.
+				[ai](Entity e) { return ai->is_health_below(e, 1.00f); },
+				std::move(recover_health));
 
 			// Selector - active
 			auto selector_active = std::make_unique<Selector>(std::move(selector_idle));
-			selector_active->add_precond_and_child([ai](Entity e) { return ai->is_player_spotted(e); },
-												   std::move(selector_attack));
+			selector_active->add_precond_and_child(
+				// Summoner switch to attack if it spots the player during active.
+				[ai](Entity e) { return ai->is_player_spotted(e); },
+				std::move(selector_attack));
 
 			return std::make_unique<SummonerTree>(std::move(selector_active));
 		}

@@ -436,6 +436,17 @@ void AISystem::summon_enemies(const Entity& entity, EnemyType enemy_type, int nu
 	}
 }
 
+void AISystem::aoe_attack(const Entity& entity, const std::vector<uvec2>& area)
+{
+	Entity player = registry.view<Player>().front();
+	const uvec2& player_map_pos = registry.get<MapPosition>(player).position;
+	for (const auto& map_pos : area) {
+		if (map_pos == player_map_pos) {
+			attack_player(entity);
+		}
+	}
+}
+
 void AISystem::draw_pathing_debug()
 {
 	for (auto [enemy_entity, enemy, entity_map_position] : registry.view<Enemy, MapPosition>().each()) {
