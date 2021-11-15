@@ -11,18 +11,32 @@ uniform float time;
 uniform int spelltype = 0;
 uniform vec2 texcoord_rel;
 
+// Fire spell constants
+uniform vec2 fireball_offset = {-0.028,0.022};
+uniform float fireball_darken = 0.3;
+uniform float fireball_radius = 0.18;
+uniform float fireball_color_gradient = 0.3;
+uniform float fire_time_period = 3;
+uniform float fire_r_amplitude = 0.5;
+uniform float fire_g_amplitude = 0.1;
+
+// Ice spell constants
+uniform float ice_b_constant = 2;
+uniform float ice_b_amplitude = 0.5;
+uniform float ice_time_period = 2;
+uniform float ice_opacity_amplitude = 0.3;
 // Output color
 layout(location = 0) out  vec4 color;
 
 vec4 fireShader(vec4 input_color)
 {
 	float darken = 0;
-	float ball = distance(vpos, vec2(-0.028,0.022));
-	if (ball <= 0.18) {
-		darken = 0.3;
+	float ball = distance(vpos, fireball_offset);
+	if (ball <= fireball_radius) {
+		darken = fireball_darken;
 	}
-	float fire_r = input_color.x * (1 + 0.5 * (1 - vpos.y - 0.7) * sin(time/3)) - darken;
-	float fire_g = input_color.y * (1 + 0.1 * (1 - vpos.y - 0.7) * sin(time/3)) - darken;
+	float fire_r = input_color.x * (1 + fire_r_amplitude * (fireball_color_gradient - vpos.y) * sin(time/fire_time_period)) - darken;
+	float fire_g = input_color.y * (1 + fire_g_amplitude * (fireball_color_gradient - vpos.y) * sin(time/fire_time_period)) - darken;
 	float fire_b = input_color.z - darken;
 	float fire_opacity = input_color.w;
 	return vec4(fire_r, fire_g, fire_b, fire_opacity);
@@ -32,8 +46,8 @@ vec4 iceShader(vec4 input_color)
 {
 	float ice_r = input_color.x;
 	float ice_g = input_color.y;
-	float ice_b = input_color.z + input_color.z * (1 + 0.5 * sin(time/2 + (vpos.x) + (vpos.y)));
-	float ice_opacity = input_color.w * (1 + 0.3 * sin(time/2 + (vpos.x) + (vpos.y)));
+	float ice_b = input_color.z * (ice_b_constant + ice_b_amplitude * sin(time/ice_time_period + (vpos.x) + (vpos.y)));
+	float ice_opacity = input_color.w * (1 + ice_opacity_amplitude * sin(time/ice_time_period + (vpos.x) + (vpos.y)));
 
 	return vec4(ice_r, ice_g, ice_b, ice_opacity);
 }

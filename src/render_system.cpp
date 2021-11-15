@@ -627,6 +627,7 @@ void RenderSystem::draw()
 		registry.view<Stats, Enemy>().each(health_group_lambda);
 	}
 
+	// Renders effects (ie spells), intended to be overlayed on top of regular render effects
 	for (auto [entity, effect_render_request] : registry.view<EffectRenderRequest>().each()) {
 		// Note, its not very efficient to access elements indirectly via the entity
 		// albeit iterating through all Sprites in sequence. A good point to optimize
@@ -635,6 +636,7 @@ void RenderSystem::draw()
 		}
 	}
 
+	// Renders UI elements (ie player healthbar)
 	for (auto [entity, ui_render_request] : registry.view<UIRenderRequest>().each()) {
 		if (ui_render_request.visible) {
 			draw_ui_element(entity, ui_render_request, projection_2d);
