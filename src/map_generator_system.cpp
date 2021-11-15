@@ -118,7 +118,6 @@ bool MapGeneratorSystem::walkable_and_free(uvec2 pos, bool check_active_color) c
 				if (Enemy* enemy = registry.try_get<Enemy>(e)) {
 					return (check_active_color ? enemy->team == active_color : enemy->team != active_color);
 				}
-				return false;
 			} 
 			return false;
 		});

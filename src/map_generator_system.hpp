@@ -156,7 +156,7 @@ public:
 	bool walkable(uvec2 pos) const;
 
 	// Check if a position on the map is walkable for the player and there's currently no entity in it
-	bool walkable_and_free(uvec2 pos, bool active_color = true) const;
+	bool walkable_and_free(uvec2 pos, bool check_active_color = true) const;
 
 	// Check if a position on the map is a wall
 	bool is_wall(uvec2 pos) const;
