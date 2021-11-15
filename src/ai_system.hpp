@@ -116,19 +116,30 @@ private:
 		virtual void init(Entity e) {};
 
 		virtual BTState process(Entity e, AISystem* ai) = 0;
+
+		virtual BTState handle_process_result(BTState state)
+		{
+			process_count += state != BTState::Running ? 1 : 0;
+			return state;
+		}
+
+		virtual size_t get_process_count() { return process_count; }
+
+	private:
+		// Each node counts its own processing times.
+		size_t process_count = 0;
 	};
 
 	// Leaf action node: RegularAttack
 	class RegularAttack : public BTNode {
 	public:
-
 		void init(Entity e) override { printf("Debug: RegularAttack.init\n"); }
 
 		BTState process(Entity e, AISystem* ai) override
 		{
 			printf("Debug: RegularAttack.process\n");
 			ai->attack_player(e);
-			return BTState::Success;
+			return handle_process_result(BTState::Success);
 		}
 	};
 
@@ -147,7 +158,7 @@ private:
 		{
 			printf("Debug: SummonEnemies.process\n");
 			ai->summon_enemies(e, m_type, m_num);
-			return BTState::Success;
+			return handle_process_result(BTState::Success);
 		}
 
 	private:
@@ -169,7 +180,7 @@ private:
 		{
 			printf("Debug: RecoverHealth.process\n");
 			ai->recover_health(e, m_ratio);
-			return BTState::Success;
+			return handle_process_result(BTState::Success);
 		}
 
 	private:
@@ -184,7 +195,7 @@ private:
 		BTState process(Entity /*e*/, AISystem* ai) override
 		{
 			printf("Debug: DoNothing.process\n");
-			return BTState::Success;
+			return handle_process_result(BTState::Success);
 		}
 	};
 
@@ -215,21 +226,22 @@ private:
 		BTState process(Entity e, AISystem* ai) override
 		{
 			printf("Debug: Selector.process\n");
+			BTState state;
 			if (m_index == -1) {
 				size_t i;
 				for (i = 0; i < m_preconditions.size(); ++i) {
 					if (m_preconditions[i](e)) {
 						m_index = i;
-						return m_children[i]->process(e, ai);
+						return handle_process_result(m_children[i]->process(e, ai));
 					}
 				}
 				m_index = i;
-				return m_default_child->process(e, ai);
+				return handle_process_result(m_default_child->process(e, ai));
 			} else {
 				if (m_index < m_preconditions.size()) {
-					return m_children[m_index]->process(e, ai);
+					return handle_process_result(m_children[m_index]->process(e, ai));
 				} else {
-					return m_default_child->process(e, ai);
+					return handle_process_result(m_default_child->process(e, ai));
 				}
 			}
 		}
@@ -243,7 +255,7 @@ private:
 
 	class SummonerTree : public BTNode {
 	public:
-		explicit SummonerTree(std::unique_ptr<BTNode> child)
+		SummonerTree(std::unique_ptr<BTNode> child)
 			: m_child(std::move(child))
 		{
 		}
@@ -263,17 +275,20 @@ private:
 				   state == BTState::Running	   ? "Running"
 					   : state == BTState::Success ? "Success"
 												   : "Failure");
-			return state;
+			return handle_process_result(state);
 		}
 
 		static std::unique_ptr<BTNode> summoner_tree_factory(AISystem* ai)
 		{
 			// Selector - attack
+			auto summon_enemies = std::make_unique<SummonEnemies>(EnemyType::Mushroom, 1);
 			auto regular_attack = std::make_unique<RegularAttack>();
-			auto summon_enemies = std::make_unique<SummonEnemies>(EnemyType::Mushroom, 2);
-			auto selector_attack = std::make_unique<Selector>(std::move(summon_enemies));
-			selector_attack->add_precond_and_child([ai](Entity e) { return ai->chance_to_happen(0.80f); },
-												   std::move(regular_attack));
+			auto selector_attack = std::make_unique<Selector>(std::move(regular_attack));
+			Selector* p = selector_attack.get();
+			selector_attack->add_precond_and_child(
+				// Summoner summons enemies every fifth process during attack.
+				[p](Entity e) { return p->get_process_count() % 5 == 0; },
+				std::move(summon_enemies));
 
 			// Selector - idle
 			auto recover_health = std::make_unique<RecoverHealth>(0.20f);
