@@ -69,16 +69,11 @@ struct Mesh {
 
 // Test Texture Buffer element for enemies
 // TODO: change to animated vertices after bringing player into this 3D element group
-struct EnemyVertex {
+struct SmallSpriteVertex {
 	vec3 position;
 	vec2 texcoord;
 };
 
-// Temp struct denoting PlayerVertices (specifies quad proportions from player spritesheet
-struct PlayerVertex {
-	vec3 position;
-	vec2 texcoord;
-};
 
 /**
  * The following enumerators represent global identifiers refering to graphic
@@ -159,9 +154,8 @@ constexpr int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 enum class GEOMETRY_BUFFER_ID : uint8_t {
 	SALMON = 0,
 	SPRITE = SALMON + 1,
-	PLAYER = SPRITE + 1,
-	ENEMY = PLAYER + 1,
-	HEALTH = ENEMY + 1,
+	SMALL_SPRITE = SPRITE + 1,
+	HEALTH = SMALL_SPRITE + 1,
 	FANCY_HEALTH = HEALTH + 1,
 	LINE = FANCY_HEALTH + 1,
 	DEBUG_LINE = LINE + 1,
@@ -248,10 +242,16 @@ enum class EnemyBehaviour {
 };
 
 const std::array<const char*, (size_t)EnemyType::EnemyCount> enemy_type_to_string = {
+	"TrainingDummy",
 	"Slime",
 	"Raven",
 	"Armor",
-	"TreeAnt",
+	"TreeAnt", 
+	"Wraith",
+	"Drake",
+	"Mushroom",
+	"Spider",
+	"Clone"
 };
 
 // Slime:		Idle, Active, Flinched.
@@ -305,6 +305,22 @@ struct Enemy {
 	void serialize(const std::string & prefix, rapidjson::Document &json) const;
 	void deserialize(const std::string& prefix, const rapidjson::Document& json);
 };
+
+struct RedExclusive {
+
+};
+
+struct BlueExclusive {
+
+};
+
+struct InactiveEnemy {
+};
+
+// Component that denotes what colour the player cannot see at the moment
+struct PlayerInactivePerception {
+	ColorState inactive = ColorState::Red;
+};
 //---------------------------------------------------------------------------
 //-------------------------		  ANIMATIONS        -------------------------
 //---------------------------------------------------------------------------
@@ -341,6 +357,7 @@ struct Color {
 // to the screen for a spritesheet
 struct Animation {
 	ColorState color = ColorState::None;
+	vec4 display_color = { 1, 1, 1, 1 };
 	int direction = 1;
 	int frame = 0;
 	int max_frames = 1;
@@ -356,11 +373,23 @@ struct Animation {
 struct EventAnimation {
 	bool turn_trigger = false;
 	float speed_adjustment = 1;
-	vec3 restore_color = { 1, 1, 1 };
+	vec4 restore_color = { 1, 1, 1, 1};
 
 	int restore_state = 0;
 	float restore_speed = 1;
 	int frame = 0;
+};
+
+// Denotes that an entity has an textured asset, and should be rendered after regular assets (such as player/enemy)
+struct EffectRenderRequest {
+	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
+	EFFECT_ASSET_ID used_effect = EFFECT_ASSET_ID::EFFECT_COUNT;
+	GEOMETRY_BUFFER_ID used_geometry = GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
+
+	bool visible = true;
+};
+
+struct Effects {
 };
 //---------------------------------------------------------------------------
 //-------------------------         COMBAT          -------------------------

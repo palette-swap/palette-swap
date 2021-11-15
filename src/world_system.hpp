@@ -105,6 +105,7 @@ private:
 	RenderSystem* renderer = nullptr;
 	float current_speed = 0;
 	bool end_of_game = false;
+	
 	Entity player = registry.create();
 	Entity camera = registry.create();
 	Entity player_arrow = registry.create();

@@ -145,7 +145,7 @@ void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest& render
 		assert(in_texcoord_loc >= 0);
 
 		glEnableVertexAttribArray(in_position_loc);
-		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(EnemyVertex), nullptr);
+		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(SmallSpriteVertex), nullptr);
 		gl_has_errors();
 
 		glEnableVertexAttribArray(in_texcoord_loc);
@@ -153,7 +153,7 @@ void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest& render
 							  2,
 							  GL_FLOAT,
 							  GL_FALSE,
-							  sizeof(EnemyVertex),
+							  sizeof(SmallSpriteVertex),
 							  (void*)sizeof(vec3));  // NOLINT(performance-no-int-to-ptr,cppcoreguidelines-pro-type-cstyle-cast)
 		// Enabling and binding texture to slot 0
 		glActiveTexture(GL_TEXTURE0);
@@ -185,7 +185,14 @@ void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest& render
 	}
 
 	// Getting uniform locations for glUniform* calls
-	if (registry.any_of<Color>(entity)) {
+	if (registry.any_of<Animation>(entity)) {
+		GLint color_uloc = glGetUniformLocation(program, "fcolor");
+		GLint opacity_uloc = glGetUniformLocation(program, "opacity");
+		const vec4 color = registry.get<Animation>(entity).display_color;
+		glUniform3fv(color_uloc, 1, glm::value_ptr(color));
+		glUniform1f(opacity_uloc, color.w);
+		gl_has_errors();
+	} else if (registry.any_of<Color>(entity)) {
 		GLint color_uloc = glGetUniformLocation(program, "fcolor");
 		const vec3 color = registry.get<Color>(entity).color;
 		glUniform3fv(color_uloc, 1, glm::value_ptr(color));
@@ -489,20 +496,35 @@ void RenderSystem::draw()
 
 	draw_map(projection_2d);
 
-	for (auto [entity, render_request] : registry.view<RenderRequest>().each()) {
-		// Note, its not very efficient to access elements indirectly via the entity
-		// albeit iterating through all Sprites in sequence. A good point to optimize
+	// Grabs player's perception of which colour is "inactive"
+	Entity player = registry.view<Player>().front();
+	PlayerInactivePerception& player_perception = registry.get<PlayerInactivePerception>(player);
+	ColorState& inactive_color = player_perception.inactive;
+
+
+	auto render_requests_lambda = [&](Entity entity, RenderRequest& render_request) {
 		if (render_request.visible) {
 			draw_textured_mesh(entity, render_request, projection_2d);
 		}
-	}
+	};
 
-	auto health_group = registry.group<Stats, Enemy>();
-	for (Entity entity : health_group) {
+	auto health_group_lambda = [&](Entity entity, Stats& stats, Enemy& /*enemy*/) {
 		Transform transform = get_transform(entity);
 		transform.translate(vec2(2 - MapUtility::tile_size / 2, -MapUtility::tile_size / 2));
 		transform.scale(vec2(MapUtility::tile_size - 4, 3));
-		draw_healthbar(transform, health_group.get<Stats>(entity), projection_2d, false);
+		draw_healthbar(transform, stats, projection_2d, false);
+	};
+
+	// Renders entities + healthbars depending on which state we are in
+	if (inactive_color == ColorState::Red) {
+		registry.view<RenderRequest>(entt::exclude<RedExclusive>).each(render_requests_lambda);
+		registry.view<Stats, Enemy>(entt::exclude<RedExclusive>).each(health_group_lambda);
+	} else if (inactive_color == ColorState::Blue) {
+		registry.view<RenderRequest>(entt::exclude<BlueExclusive>).each(render_requests_lambda);
+		registry.view<Stats, Enemy>(entt::exclude<BlueExclusive>).each(health_group_lambda);
+	} else {
+		registry.view<RenderRequest>().each(render_requests_lambda);
+		registry.view<Stats, Enemy>().each(health_group_lambda);
 	}
 
 	for (auto [entity, ui_render_request] : registry.view<UIRenderRequest>().each()) {

@@ -26,7 +26,7 @@ Entity create_player(uvec2 pos)
 	inventory.equipped.at(static_cast<uint8>(Slot::PrimaryHand)) = sword;
 
 	registry.emplace<RenderRequest>(
-		entity, TEXTURE_ASSET_ID::PALADIN, EFFECT_ASSET_ID::PLAYER, GEOMETRY_BUFFER_ID::PLAYER, true);
+		entity, TEXTURE_ASSET_ID::PALADIN, EFFECT_ASSET_ID::PLAYER, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);
 
 	Animation& player_animation = registry.emplace<Animation>(entity);
 	player_animation.max_frames = 6;
@@ -34,6 +34,7 @@ Entity create_player(uvec2 pos)
 	player_animation.speed_adjustment = 1.5;
 
 	registry.emplace<Color>(entity, vec3(1, 1, 1));
+	registry.emplace<PlayerInactivePerception>(entity);
 	
 	return entity;
 }
@@ -108,7 +109,7 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 	}
 
 	registry.emplace<RenderRequest>(
-		entity, enemy_type_textures.at(static_cast<int>(type)), EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::ENEMY, true);
+		entity, enemy_type_textures.at(static_cast<int>(type)), EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);
 	if (team == ColorState::Red) {
 		registry.emplace<Color>(entity, AnimationUtility::default_enemy_red);
 	} else if (team == ColorState::Blue) {
