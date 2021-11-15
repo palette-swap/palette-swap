@@ -205,18 +205,17 @@ void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest& render
 void RenderSystem::draw_ui_element(Entity entity, const UIRenderRequest& ui_render_request, const mat3& projection)
 {
 	Transform transform = get_transform(entity);
-	transform.translate(ui_render_request.size
-						* vec2((float)ui_render_request.alignment_x * .5, (float)ui_render_request.alignment_y * .5)
-						* screen_scale);
-	transform.scale(ui_render_request.size * screen_scale);
+	transform.scale(ui_render_request.size * screen_scale * vec2(window_width_px, window_height_px));
+	transform.translate(vec2((float)ui_render_request.alignment_x * .5, (float)ui_render_request.alignment_y * .5));
 	if (ui_render_request.used_effect == EFFECT_ASSET_ID::FANCY_HEALTH) {
-		// Shift according to desired alignment using fancy enum wizardry
 		transform.translate(vec2(-.5f, 0));
 		draw_healthbar(transform,
 					   registry.get<Stats>(registry.view<Player>().front()),
 					   projection,
 					   true,
-					   ui_render_request.size.x / ui_render_request.size.y);
+					   ui_render_request.size.x / ui_render_request.size.y * 2.f);
+	} else if (ui_render_request.used_effect == EFFECT_ASSET_ID::RECTANGLE) {
+		draw_rectangle(entity, transform, ui_render_request.size * vec2(window_width_px, window_height_px), projection);
 	}
 }
 
@@ -267,8 +266,65 @@ void RenderSystem::draw_healthbar(Transform transform, const Stats& stats, const
 	draw_triangles(transform, projection);
 }
 
+void RenderSystem::draw_rectangle(Entity entity, Transform transform, vec2 scale, const mat3& projection)
+{
+	const auto program = (GLuint)effects.at((uint8)EFFECT_ASSET_ID::RECTANGLE);
+
+	// Setting shaders
+	glUseProgram(program);
+	gl_has_errors();
+
+	const GLuint vbo = vertex_buffers.at((int)GEOMETRY_BUFFER_ID::LINE);
+	const GLuint ibo = index_buffers.at((int)GEOMETRY_BUFFER_ID::LINE);
+
+	// Setting vertex and index buffers
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+	gl_has_errors();
+
+	GLint in_position_loc = glGetAttribLocation(program, "in_position");
+	gl_has_errors();
+
+	GLint in_color_loc = glGetAttribLocation(program, "in_color");
+	gl_has_errors();
+
+	glEnableVertexAttribArray(in_position_loc);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), nullptr);
+	gl_has_errors();
+
+	glEnableVertexAttribArray(in_color_loc);
+	glVertexAttribPointer(
+		in_color_loc,
+		3,
+		GL_FLOAT,
+		GL_FALSE,
+		sizeof(ColoredVertex),
+		(void*)sizeof(vec3)); // NOLINT(performance-no-int-to-ptr,cppcoreguidelines-pro-type-cstyle-cast)
+	gl_has_errors();
+
+	GLint scale_loc = glGetUniformLocation(program, "scale");
+	glUniform2f(scale_loc, scale.x, scale.y);
+
+	GLint thickness_loc = glGetUniformLocation(program, "thickness");
+	glUniform1f(thickness_loc, 6);
+
+	// Setup coloring
+	if (registry.any_of<Color>(entity)) {
+		GLint color_uloc = glGetUniformLocation(program, "fcolor");
+		const vec3 color = registry.get<Color>(entity).color;
+		glUniform3fv(color_uloc, 1, glm::value_ptr(color));
+		gl_has_errors();
+	}
+
+	draw_triangles(transform, projection);
+}
+
 void RenderSystem::draw_text(Entity entity, const Text& text, const mat3& projection)
 {
+	if (text.text.empty()) {
+		return;
+	}
+
 	Transform transform = get_transform(entity);
 
 	const auto program = (GLuint)effects.at((uint8)EFFECT_ASSET_ID::TEXTURED);
@@ -527,17 +583,26 @@ void RenderSystem::draw()
 		registry.view<Stats, Enemy>().each(health_group_lambda);
 	}
 
-	for (auto [entity, ui_render_request] : registry.view<UIRenderRequest>().each()) {
-		if (ui_render_request.visible) {
-			draw_ui_element(entity, ui_render_request, projection_2d);
+	for (auto [entity, group] : registry.view<UIGroup>().each()) {
+		if (group.visible) {
+			Entity curr = group.first_element;
+			while (curr != entt::null) {
+				UIElement& element = registry.get<UIElement>(curr);
+				if (element.visible) {
+					if (UIRenderRequest* ui_render_request = registry.try_get<UIRenderRequest>(curr)) {
+						draw_ui_element(curr, *ui_render_request, projection_2d);
+					} else if (Text* text = registry.try_get<Text>(curr)) {
+						draw_text(curr, *text, projection_2d);
+					} else if (Line* line = registry.try_get<Line>(curr)) {
+						draw_line(entity, *line, projection_2d);
+					}
+				}
+				curr = element.next;
+			}
 		}
 	}
 
-	for (auto [entity, text] : registry.view<Text>().each()) {
-		draw_text(entity, text, projection_2d);
-	}
-
-	for (auto [entity, line] : registry.view<Line>().each()) {
+	for (auto [entity, line] : registry.view<Line>(entt::exclude<UIElement>).each()) {
 		draw_line(entity, line, projection_2d);
 	}
 

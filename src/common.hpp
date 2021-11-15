@@ -55,6 +55,7 @@ bool gl_has_errors();
 // Window sizes
 static constexpr int window_width_px = 1920;
 static constexpr int window_height_px = 1080;
+static constexpr ivec2 window_default_size = vec2(window_width_px, window_height_px);
 static constexpr float window_default_scale = 0.5;
 
 namespace AnimationUtility {
