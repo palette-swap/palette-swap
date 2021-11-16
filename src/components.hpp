@@ -501,6 +501,10 @@ struct Inventory {
 };
 
 struct Item {
+	Entity item_template;
+};
+
+struct ItemTemplate {
 	std::string name;
 	float weight = 0.f;
 	int value = 0;
@@ -630,10 +634,6 @@ struct UIGroup {
 
 	static void add_element(Entity group, Entity element, UIElement& ui_element);
 	static void add_text(Entity group, Entity text, UIElement& ui_element);
-};
-
-struct UIItem {
-	Entity actual_item;
 };
 
 struct UISlot {

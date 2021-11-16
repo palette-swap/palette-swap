@@ -1,5 +1,7 @@
 #include "ui_system.hpp"
 
+#include "ui_init.hpp"
+
 #include "geometry.hpp"
 
 void UISystem::on_key(int key, int action, int /*mod*/)
@@ -39,7 +41,8 @@ void UISystem::on_key(int key, int action, int /*mod*/)
 bool UISystem::can_insert_into_slot(Entity item, Entity container)
 {
 	if (EquipSlot* equip_slot = registry.try_get<EquipSlot>(container)) {
-		return registry.get<Item>(registry.get<UIItem>(item).actual_item).allowed_slots.at((size_t) equip_slot->slot);
+		return registry.get<ItemTemplate>(registry.get<Item>(item).item_template)
+			.allowed_slots.at((size_t)equip_slot->slot);
 	}
 	return true;
 }
@@ -47,7 +50,7 @@ bool UISystem::can_insert_into_slot(Entity item, Entity container)
 void UISystem::insert_into_slot(Entity item, Entity container)
 {
 	Inventory& inventory = registry.get<Inventory>(registry.view<Player>().front());
-	Entity actual_item = (item == entt::null) ? entt::null : registry.get<UIItem>(item).actual_item;
+	Entity actual_item = (item == entt::null) ? entt::null : registry.get<Item>(item).item_template;
 	if (current_attack_slot != Slot::Count && inventory.equipped.at((size_t)current_attack_slot) == actual_item) {
 		set_current_attack(Slot::Count, 0);
 	}

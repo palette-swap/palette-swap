@@ -188,10 +188,10 @@ Entity create_team()
 	return entity;
 }
 
-Entity create_item(const std::string& name, const SlotList<bool>& allowed_slots)
+Entity create_item_template(const std::string& name, const SlotList<bool>& allowed_slots)
 {
 	Entity entity = registry.create();
-	registry.emplace<Item>(entity, name, 0.f, 0, allowed_slots);
+	registry.emplace<ItemTemplate>(entity, name, 0, allowed_slots);
 	return entity;
 }
 
@@ -203,8 +203,8 @@ Entity create_spell(const std::string& name, std::vector<Entity> attacks)
 		slots[static_cast<uint8>(Slot::Spell2)] = true;
 		return slots;
 	}();
-	Entity entity = create_item(name, spell_slots);
-	registry.emplace<Weapon>(entity, std::move(attacks));
+	Entity entity = create_item_template(name, spell_slots);
+	registry.emplace<Weapon>(entity).given_attacks.swap(attacks);
 	return entity;
 }
 
@@ -215,7 +215,7 @@ Entity create_weapon(const std::string& name, std::vector<Entity> attacks)
 		slots[static_cast<uint8>(Slot::Weapon)] = true;
 		return slots;
 	}();
-	Entity entity = create_item(name, weapon_slots);
-	registry.emplace<Weapon>(entity, std::move(attacks));
+	Entity entity = create_item_template(name, weapon_slots);
+	registry.emplace<Weapon>(entity).given_attacks.swap(attacks);
 	return entity;
 }

@@ -116,13 +116,13 @@ bool MapGeneratorSystem::walkable_and_free(uvec2 pos, bool check_active_color) c
 	}
 	ColorState active_color = turns->get_active_color();
 	if ((active_color == ColorState::Red) != check_active_color) {
-		return !std::any_of(registry.view<MapPosition>(entt::exclude<Player, RedExclusive>).begin(),
-							registry.view<MapPosition>(entt::exclude<Player, RedExclusive>).end(),
+		return !std::any_of(registry.view<MapPosition>(entt::exclude<Player, RedExclusive, Item>).begin(),
+							registry.view<MapPosition>(entt::exclude<Player, RedExclusive, Item>).end(),
 							[pos](const Entity e) { return registry.get<MapPosition>(e).position == pos; });
 	}
 
-	return !std::any_of(registry.view<MapPosition>(entt::exclude<Player, BlueExclusive>).begin(),
-						registry.view<MapPosition>(entt::exclude<Player, BlueExclusive>).end(),
+	return !std::any_of(registry.view<MapPosition>(entt::exclude<Player, BlueExclusive, Item>).begin(),
+						registry.view<MapPosition>(entt::exclude<Player, BlueExclusive, Item>).end(),
 						[pos](const Entity e) { return registry.get<MapPosition>(e).position == pos; });
 }
 

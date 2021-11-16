@@ -145,10 +145,10 @@ Entity create_equip_slot(
 Entity create_ui_item(Entity ui_group, Entity slot, Entity item)
 {
 	Entity ui_item
-		= create_ui_text(ui_group, registry.get<ScreenPosition>(slot).position, registry.get<Item>(item).name);
+		= create_ui_text(ui_group, registry.get<ScreenPosition>(slot).position, registry.get<ItemTemplate>(item).name);
 	registry.emplace<Draggable>(ui_item, slot);
 	registry.emplace<InteractArea>(ui_item, vec2(.1f));
-	registry.emplace<UIItem>(ui_item, item);
+	registry.emplace<Item>(ui_item, item);
 
 	registry.get<UISlot>(slot).contents = ui_item;
 
