@@ -13,6 +13,8 @@ public:
 
 	bool do_attack(Entity attacker, Attack& attack, Entity target);
 
+	void kill(Entity entity);
+
 	// Observer Pattern: attach a callback of do_attack().
 	void attach_do_attack_callback(
 		const std::function<void(const Entity& attacker, const Entity& target)>& do_attack_callback);

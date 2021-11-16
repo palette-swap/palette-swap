@@ -34,9 +34,6 @@ private:
 	void execute_defensive_sm(const Entity& enemy);
 	void execute_aggressive_sm(const Entity& enemy);
 
-	// Remove an entity if it is dead.
-	bool remove_dead_entity(const Entity& entity);
-
 	// Switch enemy state.
 	void switch_enemy_state(const Entity& enemy_entity, EnemyState new_state);
 

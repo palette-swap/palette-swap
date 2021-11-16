@@ -44,16 +44,24 @@ bool CombatSystem::do_attack(Entity attacker_entity, Attack& attack, Entity targ
 		target.health -= max(damage_roller(*rng) + attacker.damage_bonus
 								 + target.damage_modifiers[static_cast<int>(attack.damage_type)],
 							 0);
-		printf("Hit! Target's new HP is %i\n", target.health);
-	} else {
-		printf("Miss!\n");
 	}
 
 	for (const auto& callback : do_attack_callbacks) {
 		callback(attacker_entity, target_entity);
 	}
 
+	if (target.health <= 0) {
+		kill(target_entity);
+	}
+
 	return success;
+}
+
+void CombatSystem::kill(Entity entity)
+{
+
+	// TODO: Animate death
+	registry.destroy(entity);
 }
 
 void CombatSystem::attach_do_attack_callback(

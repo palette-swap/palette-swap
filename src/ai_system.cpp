@@ -34,10 +34,6 @@ void AISystem::step(float /*elapsed_ms*/)
 	if (turns->execute_team_action(enemy_team)) {
 		for (auto [enemy_entity, enemy] : registry.view<Enemy>().each()) {
 
-			if (remove_dead_entity(enemy_entity)) {
-				continue;
-			}
-
 			ColorState active_world_color = turns->get_active_color();
 			if (((uint8_t)active_world_color & (uint8_t)enemy.team) > 0) {
 
@@ -250,16 +246,6 @@ void AISystem::execute_aggressive_sm(const Entity& entity)
 	default:
 		throw std::runtime_error("Invalid enemy state of Armor.");
 	}
-}
-
-bool AISystem::remove_dead_entity(const Entity& entity)
-{
-	// TODO: Animate death.
-	if (registry.any_of<Stats>(entity) && registry.get<Stats>(entity).health <= 0) {
-		registry.destroy(entity);
-		return true;
-	}
-	return false;
 }
 
 void AISystem::switch_enemy_state(const Entity& enemy_entity, EnemyState new_state)
