@@ -26,6 +26,8 @@ private:
 						   UISlot& new_slot);
 
 	void set_current_attack(Slot slot, size_t attack);
+	
+	void show_menus_background(bool value);
 
 	std::string make_attack_display_text();
 
@@ -35,6 +37,7 @@ private:
 	size_t current_attack = 0;
 
 	Entity attack_display = entt::null;
+	Entity menus_background = entt::null;
 	Entity inventory_group = entt::null;
 	Entity hud_group = entt::null;
 	Entity held_under_mouse = entt::null;
