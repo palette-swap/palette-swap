@@ -26,8 +26,6 @@ private:
 						   UISlot& new_slot);
 
 	void set_current_attack(Slot slot, size_t attack);
-	
-	void show_menus_background(bool value);
 
 	std::string make_attack_display_text();
 

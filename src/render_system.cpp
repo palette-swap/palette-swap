@@ -575,8 +575,8 @@ void RenderSystem::draw()
 	draw_map(projection_2d);
 
 	// Draw any backgrounds
-	for (auto [entity, background, request] : registry.view<Background, RenderRequest>().each()) {
-		if (background.visible) {
+	for (auto [entity, request] : registry.view<Background, RenderRequest>().each()) {
+		if (request.visible) {
 			draw_textured_mesh(entity, request, projection_2d);
 		}
 	}
@@ -624,8 +624,8 @@ void RenderSystem::draw()
 void RenderSystem::draw_ui(const mat3& projection)
 {
 	// Draw any UI backgrounds
-	for (auto [entity, background, request] : registry.view<Background, UIRenderRequest>().each()) {
-		if (background.visible) {
+	for (auto [entity, element, request] : registry.view<Background, UIElement, UIRenderRequest>().each()) {
+		if (registry.get<UIGroup>(element.group).visible) {
 			draw_ui_element(entity, request, projection);
 		}
 	}

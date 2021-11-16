@@ -344,7 +344,6 @@ const std::array<TEXTURE_ASSET_ID, static_cast<int>(EnemyType::EnemyCount)> enem
 
 // Render behind other elements in its grouping
 struct Background {
-	bool visible = false;
 };
 
 struct RenderRequest {

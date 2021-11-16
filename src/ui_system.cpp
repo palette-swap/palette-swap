@@ -8,13 +8,11 @@ void UISystem::on_key(int key, int action, int /*mod*/)
 		UIGroup& group = registry.get<UIGroup>(inventory_group);
 		group.visible = !group.visible;
 		registry.get<UIGroup>(hud_group).visible = !group.visible;
-		show_menus_background(true);
 	}
 	if (action == GLFW_PRESS && key == GLFW_KEY_ESCAPE) {
 		UIGroup& group = registry.get<UIGroup>(inventory_group);
 		group.visible = false;
 		registry.get<UIGroup>(hud_group).visible = true;
-		show_menus_background(false);
 	}
 
 	// Change attack
@@ -155,8 +153,6 @@ void UISystem::set_current_attack(Slot slot, size_t attack)
 	current_attack = attack;
 	registry.get<Text>(attack_display).text = make_attack_display_text();
 }
-
-void UISystem::show_menus_background(bool value) { registry.get<Background>(menus_background).visible = value; }
 
 std::string UISystem::make_attack_display_text()
 {
