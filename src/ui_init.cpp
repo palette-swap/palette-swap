@@ -18,10 +18,8 @@ void UISystem::restart_game()
 	attack_display = create_ui_text(
 		groups[(size_t)Groups::HUD], vec2(0, 1), make_attack_display_text(), Alignment::Start, Alignment::End);
 
-	// Menus background
-	menus_background = create_ui_rectangle(entt::null, vec2(.5, .5), vec2(1, 1));
-	registry.emplace<Background>(menus_background);
-	registry.emplace<UIRectangle>(menus_background, 1.f, vec4(0, 0, 0, .75));
+	// Inventory background
+	create_background(groups[(size_t)Groups::Inventory], vec2(.5, .5), vec2(1, 1), 1.f, vec4(0, 0, 0, .75));
 
 	// Inventory
 	auto inventory_size = static_cast<float>(Inventory::inventory_size);
@@ -44,6 +42,10 @@ void UISystem::restart_game()
 		}
 		create_ui_item(groups[(size_t)Groups::Inventory], slot, item);
 	}
+
+	// Menu background
+	vec4 menu_background_color = vec4(.1, .1, .1, 1);
+	create_background(groups[(size_t)Groups::MainMenu], vec2(.5, .5), vec2(1, 1), 1.f, menu_background_color);
 }
 
 Entity create_ui_group(bool visible)
@@ -143,13 +145,26 @@ Entity create_ui_item(Entity ui_group, Entity slot, Entity item)
 	return ui_item;
 }
 
-Entity create_ui_text(
-	Entity ui_group, vec2 screen_position, const std::string& text, Alignment alignment_x, Alignment alignment_y)
+Entity create_ui_text(Entity ui_group,
+					  vec2 screen_position,
+					  const std::string_view& text,
+					  Alignment alignment_x,
+					  Alignment alignment_y,
+					  uint16 font_size)
 {
 	Entity entity = registry.create();
 	registry.emplace<ScreenPosition>(entity, screen_position);
 	registry.emplace<Color>(entity, vec3(1.f));
-	registry.emplace<Text>(entity, text, (uint16)48, alignment_x, alignment_y);
+	registry.emplace<Text>(entity, text, font_size, alignment_x, alignment_y);
 	UIGroup::add_text(ui_group, entity, registry.emplace<UIElement>(entity, ui_group, true));
+	return entity;
+}
+
+Entity create_background(Entity ui_group, vec2 pos, vec2 size, float opacity, vec4 fill_color)
+{
+	Entity entity = create_ui_rectangle(entt::null, pos, size);
+	registry.get<UIElement>(entity).group = ui_group;
+	registry.emplace<Background>(entity);
+	registry.emplace<UIRectangle>(entity, opacity, fill_color);
 	return entity;
 }

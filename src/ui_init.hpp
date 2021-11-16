@@ -24,4 +24,7 @@ Entity create_ui_text(Entity ui_group,
 					  vec2 screen_position,
 					  const std::string_view& text,
 					  Alignment alignment_x = Alignment::Center,
-					  Alignment alignment_y = Alignment::Center);
+					  Alignment alignment_y = Alignment::Center,
+					  uint16 font_size = 48);
+Entity create_background(Entity ui_group, vec2 pos, vec2 size, float opacity, vec4 fill_color);
+Entity create_button(Entity ui_group,
