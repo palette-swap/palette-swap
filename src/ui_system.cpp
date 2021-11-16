@@ -86,6 +86,15 @@ bool UISystem::swap_or_move_item(ScreenPosition& container_pos,
 	return true;
 }
 
+void UISystem::do_action(Button& button)
+{
+	if (button.action == ButtonAction::SwitchToGroup) {
+		for (auto [entity, group] : registry.view<UIGroup>().each()) {
+			group.visible = entity == button.action_target;
+		}
+	}
+}
+
 void UISystem::on_left_click(int action, dvec2 mouse_screen_pos)
 {
 	if (action == GLFW_PRESS) {
@@ -93,7 +102,17 @@ void UISystem::on_left_click(int action, dvec2 mouse_screen_pos)
 			 registry.view<Draggable, ScreenPosition, InteractArea>().each()) {
 			if (Geometry::Rectangle(screen_pos.position, interact_area.size).contains(vec2(mouse_screen_pos))) {
 				held_under_mouse = entity;
-				break;
+				return;
+			}
+		}
+		for (auto [entity, element, pos, request, button] :
+			 registry.view<UIElement, ScreenPosition, UIRenderRequest, Button>().each()) {
+			Geometry::Rectangle button_rect = Geometry::Rectangle(
+				pos.position + vec2((float)request.alignment_x, (float)request.alignment_y) * request.size * .5f,
+				request.size);
+			if (registry.get<UIGroup>(element.group).visible && button_rect.contains(vec2(mouse_screen_pos))) {
+				do_action(button);
+				return;
 			}
 		}
 	} else if (action == GLFW_RELEASE && held_under_mouse != entt::null) {

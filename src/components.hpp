@@ -705,3 +705,13 @@ template <> struct std::hash<Text> {
 		return text_hash ^ (size_hash + 0x9e3779b9 + (text_hash << 6) + (text_hash >> 2));
 	}
 };
+
+enum class ButtonAction {
+	SwitchToGroup,
+};
+
+struct Button {
+	Entity label;
+	ButtonAction action;
+	Entity action_target;
+};

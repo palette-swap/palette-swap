@@ -25,6 +25,8 @@ private:
 						   Entity new_slot_entity,
 						   UISlot& new_slot);
 
+	void do_action(Button& button);
+
 	void set_current_attack(Slot slot, size_t attack);
 
 	std::string make_attack_display_text();

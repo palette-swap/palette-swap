@@ -28,3 +28,10 @@ Entity create_ui_text(Entity ui_group,
 					  uint16 font_size = 48);
 Entity create_background(Entity ui_group, vec2 pos, vec2 size, float opacity, vec4 fill_color);
 Entity create_button(Entity ui_group,
+					 vec2 screen_pos,
+					 vec2 size,
+					 vec4 fill_color,
+					 ButtonAction action,
+					 Entity action_target,
+					 const std::string& text,
+					 uint16 font_size = 60);
