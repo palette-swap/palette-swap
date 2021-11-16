@@ -26,12 +26,8 @@ void UISystem::restart_game()
 	float small_count = floorf(sqrtf(inventory_size));
 	float large_count = ceilf(inventory_size / small_count);
 	for (size_t i = 0; i < Inventory::inventory_size; i++) {
-		Entity slot = create_inventory_slot(groups[(size_t)Groups::Inventory], i, player, large_count, small_count);
-		Entity item = inventory.inventory.at(i);
-		if (item == entt::null) {
-			continue;
-		}
-		create_ui_item(groups[(size_t)Groups::Inventory], slot, item);
+		create_inventory_slot(groups[(size_t)Groups::Inventory], i, player, large_count, small_count);
+		add_to_inventory(inventory.inventory.at(i), i);
 	}
 	static const auto num_slots = (size_t)Slot::Count;
 	for (size_t i = 0; i < num_slots; i++) {

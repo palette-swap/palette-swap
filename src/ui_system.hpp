@@ -15,6 +15,8 @@ public:
 	bool has_current_attack() const;
 	Attack& get_current_attack();
 
+	void add_to_inventory(Entity item, size_t slot);
+
 private:
 	bool can_insert_into_slot(Entity item, Entity container);
 	void insert_into_slot(Entity item, Entity container);
@@ -45,6 +47,6 @@ private:
 		Count,
 	};
 
-	std::array<Entity, (size_t)Groups::Count> groups;
+	std::array<Entity, (size_t)Groups::Count> groups = { entt::null };
 	Entity held_under_mouse = entt::null;
 };

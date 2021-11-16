@@ -168,6 +168,20 @@ Attack& UISystem::get_current_attack()
 	return registry.get<Weapon>(Inventory::get(registry.view<Player>().front(), current_attack_slot)).get_attack(current_attack);
 }
 
+void UISystem::add_to_inventory(Entity item, size_t slot) {
+		if (item == entt::null) {
+			return;
+		}
+		auto view = registry.view<InventorySlot>();
+		auto matching_slot = std::find_if(view.begin(), view.end(), [&view, slot](Entity entity) {
+			return view.get<InventorySlot>(entity).slot == slot;
+		});
+		if (matching_slot == view.end()) {
+			return;
+		}
+		create_ui_item(groups[(size_t)Groups::Inventory], (*matching_slot), item);
+}
+
 void UISystem::set_current_attack(Slot slot, size_t attack)
 {
 	current_attack_slot = (Slot)slot;
