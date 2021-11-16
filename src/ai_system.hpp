@@ -151,8 +151,10 @@ private:
 			ai->summon_enemies(e, m_type, m_num);
 
 			// TODO (Evan): active(1) + temp-summon.
-			ai->switch_enemy_state(e, EnemyState::Active);
-			// ai->animations->summon_animation(e);
+			ai->switch_enemy_state(e, EnemyState::Idle);
+			// TODO Change to not be hardcoded, currently aware that 4 is the specific boss's 
+			// summoning state
+			ai->animations->boss_event_animation(e, 4);
 
 			return handle_process_result(BTState::Success);
 		}
@@ -210,7 +212,7 @@ private:
 				ai->aoe_attack(e, m_aiming_area);
 
 				// TODO (Evan): active(1) + temp-aoe.
-				ai->switch_enemy_state(e, EnemyState::Active);
+				ai->switch_enemy_state(e, EnemyState::Idle);
 				// ai->animations->aoe_animation(e, m_aiming_area);
 
 				return handle_process_result(BTState::Success);
@@ -234,7 +236,7 @@ private:
 			ai->attack_player(e);
 
 			// TODO (Evan): active(1) + temp-attack.
-			ai->switch_enemy_state(e, EnemyState::Active);
+			ai->switch_enemy_state(e, EnemyState::Idle);
 			// No need for temp-attack here since it will be handled in combat system.
 
 			return handle_process_result(BTState::Success);

@@ -250,6 +250,21 @@ void AnimationSystem::player_red_blue_animation(const Entity& player, ColorState
 	}
 }
 
+void AnimationSystem::boss_event_animation(const Entity& boss, int event_state) {
+	Animation& enemy_animation = registry.get<Animation>(boss);
+
+	if (!registry.any_of<EventAnimation>(boss)) {
+		EventAnimation& enemy_attack = registry.emplace<EventAnimation>(boss);
+
+		// Stores restoration states for the player's animations, to be called after animation event is resolves
+		this->animation_event_setup(enemy_animation, enemy_attack, enemy_animation.display_color);
+
+		// Sets animation state to be the beginning of the melee animation
+		enemy_animation.state = event_state;
+		enemy_animation.frame = 0;
+		enemy_animation.speed_adjustment = boss_action_speed;
+	}
+}
 
 bool AnimationSystem::animation_events_completed() { return (registry.empty<EventAnimation>()); }
 

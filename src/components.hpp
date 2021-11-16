@@ -341,7 +341,7 @@ const std::array<int, (size_t)EnemyState::EnemyStateCount> enemy_state_to_animat
 	2, // Flinched
 	2, // Powerup
 	2, // Immortal
-	2, // Charging
+	1, // Charging
 };
 
 struct RenderRequest {
