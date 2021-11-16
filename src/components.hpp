@@ -101,6 +101,7 @@ struct SmallSpriteVertex {
 
 enum class TEXTURE_ASSET_ID : uint8_t {
 	PALADIN = 0,
+	// Small Enemies
 	DUMMY = PALADIN + 1,
 	SLIME = DUMMY + 1,
 	ARMOR = SLIME + 1,
@@ -111,7 +112,10 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 	MUSHROOM = DRAKE + 1,
 	SPIDER = MUSHROOM + 1,
 	CLONE = SPIDER + 1,
-	CANNONBALL = CLONE + 1,
+	// Bosses
+	KING_MUSH = CLONE + 1,
+	// Misc Assets
+	CANNONBALL = KING_MUSH + 1,
 	TILE_SET = CANNONBALL + 1,
 	HELP_PIC = TILE_SET + 1,
 	END_PIC = HELP_PIC + 1,
@@ -133,6 +137,7 @@ static constexpr std::array<vec2, texture_count> scaling_factors = {
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size * 3, MapUtility::tile_size * 3),
 	vec2(MapUtility::tile_size * 0.5, MapUtility::tile_size * 0.5),
 	vec2(MapUtility::tile_size* MapUtility::room_size, MapUtility::tile_size* MapUtility::room_size),
 	vec2(MapUtility::tile_size* MapUtility::room_size * 3, MapUtility::tile_size* MapUtility::room_size * 2),
@@ -327,7 +332,7 @@ const std::array<TEXTURE_ASSET_ID, static_cast<int>(EnemyType::EnemyCount)> enem
 	TEXTURE_ASSET_ID::SPIDER,
 	TEXTURE_ASSET_ID::CLONE,
 	// TODO (Evan): temporarily used MUSHROOM to mock KINGMUSH for testing, please replace it when the texture is available.
-	TEXTURE_ASSET_ID::MUSHROOM,
+	TEXTURE_ASSET_ID::KING_MUSH,
 };
 
 const std::array<int, (size_t)EnemyState::EnemyStateCount> enemy_state_to_animation_state = {
