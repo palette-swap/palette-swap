@@ -145,7 +145,7 @@ void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest& render
 		assert(in_texcoord_loc >= 0);
 
 		glEnableVertexAttribArray(in_position_loc);
-		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(EnemyVertex), nullptr);
+		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(SmallSpriteVertex), nullptr);
 		gl_has_errors();
 
 		glEnableVertexAttribArray(in_texcoord_loc);
@@ -153,7 +153,7 @@ void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest& render
 							  2,
 							  GL_FLOAT,
 							  GL_FALSE,
-							  sizeof(EnemyVertex),
+							  sizeof(SmallSpriteVertex),
 							  (void*)sizeof(vec3));  // NOLINT(performance-no-int-to-ptr,cppcoreguidelines-pro-type-cstyle-cast)
 		// Enabling and binding texture to slot 0
 		glActiveTexture(GL_TEXTURE0);
@@ -185,7 +185,14 @@ void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest& render
 	}
 
 	// Getting uniform locations for glUniform* calls
-	if (registry.any_of<Color>(entity)) {
+	if (registry.any_of<Animation>(entity)) {
+		GLint color_uloc = glGetUniformLocation(program, "fcolor");
+		GLint opacity_uloc = glGetUniformLocation(program, "opacity");
+		const vec4 color = registry.get<Animation>(entity).display_color;
+		glUniform3fv(color_uloc, 1, glm::value_ptr(color));
+		glUniform1f(opacity_uloc, color.w);
+		gl_has_errors();
+	} else if (registry.any_of<Color>(entity)) {
 		GLint color_uloc = glGetUniformLocation(program, "fcolor");
 		const vec3 color = registry.get<Color>(entity).color;
 		glUniform3fv(color_uloc, 1, glm::value_ptr(color));
@@ -198,18 +205,17 @@ void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest& render
 void RenderSystem::draw_ui_element(Entity entity, const UIRenderRequest& ui_render_request, const mat3& projection)
 {
 	Transform transform = get_transform(entity);
-	transform.translate(ui_render_request.size
-						* vec2((float)ui_render_request.alignment_x * .5, (float)ui_render_request.alignment_y * .5)
-						* screen_scale);
-	transform.scale(ui_render_request.size * screen_scale);
+	transform.scale(ui_render_request.size * screen_scale * vec2(window_width_px, window_height_px));
+	transform.translate(vec2((float)ui_render_request.alignment_x * .5, (float)ui_render_request.alignment_y * .5));
 	if (ui_render_request.used_effect == EFFECT_ASSET_ID::FANCY_HEALTH) {
-		// Shift according to desired alignment using fancy enum wizardry
 		transform.translate(vec2(-.5f, 0));
 		draw_healthbar(transform,
 					   registry.get<Stats>(registry.view<Player>().front()),
 					   projection,
 					   true,
-					   ui_render_request.size.x / ui_render_request.size.y);
+					   ui_render_request.size.x / ui_render_request.size.y * 2.f);
+	} else if (ui_render_request.used_effect == EFFECT_ASSET_ID::RECTANGLE) {
+		draw_rectangle(entity, transform, ui_render_request.size * vec2(window_width_px, window_height_px), projection);
 	}
 }
 
@@ -260,8 +266,65 @@ void RenderSystem::draw_healthbar(Transform transform, const Stats& stats, const
 	draw_triangles(transform, projection);
 }
 
+void RenderSystem::draw_rectangle(Entity entity, Transform transform, vec2 scale, const mat3& projection)
+{
+	const auto program = (GLuint)effects.at((uint8)EFFECT_ASSET_ID::RECTANGLE);
+
+	// Setting shaders
+	glUseProgram(program);
+	gl_has_errors();
+
+	const GLuint vbo = vertex_buffers.at((int)GEOMETRY_BUFFER_ID::LINE);
+	const GLuint ibo = index_buffers.at((int)GEOMETRY_BUFFER_ID::LINE);
+
+	// Setting vertex and index buffers
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+	gl_has_errors();
+
+	GLint in_position_loc = glGetAttribLocation(program, "in_position");
+	gl_has_errors();
+
+	GLint in_color_loc = glGetAttribLocation(program, "in_color");
+	gl_has_errors();
+
+	glEnableVertexAttribArray(in_position_loc);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), nullptr);
+	gl_has_errors();
+
+	glEnableVertexAttribArray(in_color_loc);
+	glVertexAttribPointer(
+		in_color_loc,
+		3,
+		GL_FLOAT,
+		GL_FALSE,
+		sizeof(ColoredVertex),
+		(void*)sizeof(vec3)); // NOLINT(performance-no-int-to-ptr,cppcoreguidelines-pro-type-cstyle-cast)
+	gl_has_errors();
+
+	GLint scale_loc = glGetUniformLocation(program, "scale");
+	glUniform2f(scale_loc, scale.x, scale.y);
+
+	GLint thickness_loc = glGetUniformLocation(program, "thickness");
+	glUniform1f(thickness_loc, 6);
+
+	// Setup coloring
+	if (registry.any_of<Color>(entity)) {
+		GLint color_uloc = glGetUniformLocation(program, "fcolor");
+		const vec3 color = registry.get<Color>(entity).color;
+		glUniform3fv(color_uloc, 1, glm::value_ptr(color));
+		gl_has_errors();
+	}
+
+	draw_triangles(transform, projection);
+}
+
 void RenderSystem::draw_text(Entity entity, const Text& text, const mat3& projection)
 {
+	if (text.text.empty()) {
+		return;
+	}
+
 	Transform transform = get_transform(entity);
 
 	const auto program = (GLuint)effects.at((uint8)EFFECT_ASSET_ID::TEXTURED);
@@ -489,33 +552,57 @@ void RenderSystem::draw()
 
 	draw_map(projection_2d);
 
-	for (auto [entity, render_request] : registry.view<RenderRequest>().each()) {
-		// Note, its not very efficient to access elements indirectly via the entity
-		// albeit iterating through all Sprites in sequence. A good point to optimize
+	// Grabs player's perception of which colour is "inactive"
+	Entity player = registry.view<Player>().front();
+	PlayerInactivePerception& player_perception = registry.get<PlayerInactivePerception>(player);
+	ColorState& inactive_color = player_perception.inactive;
+
+
+	auto render_requests_lambda = [&](Entity entity, RenderRequest& render_request) {
 		if (render_request.visible) {
 			draw_textured_mesh(entity, render_request, projection_2d);
 		}
-	}
+	};
 
-	auto health_group = registry.group<Stats, Enemy>();
-	for (Entity entity : health_group) {
+	auto health_group_lambda = [&](Entity entity, Stats& stats, Enemy& /*enemy*/) {
 		Transform transform = get_transform(entity);
 		transform.translate(vec2(2 - MapUtility::tile_size / 2, -MapUtility::tile_size / 2));
 		transform.scale(vec2(MapUtility::tile_size - 4, 3));
-		draw_healthbar(transform, health_group.get<Stats>(entity), projection_2d, false);
+		draw_healthbar(transform, stats, projection_2d, false);
+	};
+
+	// Renders entities + healthbars depending on which state we are in
+	if (inactive_color == ColorState::Red) {
+		registry.view<RenderRequest>(entt::exclude<RedExclusive>).each(render_requests_lambda);
+		registry.view<Stats, Enemy>(entt::exclude<RedExclusive>).each(health_group_lambda);
+	} else if (inactive_color == ColorState::Blue) {
+		registry.view<RenderRequest>(entt::exclude<BlueExclusive>).each(render_requests_lambda);
+		registry.view<Stats, Enemy>(entt::exclude<BlueExclusive>).each(health_group_lambda);
+	} else {
+		registry.view<RenderRequest>().each(render_requests_lambda);
+		registry.view<Stats, Enemy>().each(health_group_lambda);
 	}
 
-	for (auto [entity, ui_render_request] : registry.view<UIRenderRequest>().each()) {
-		if (ui_render_request.visible) {
-			draw_ui_element(entity, ui_render_request, projection_2d);
+	for (auto [entity, group] : registry.view<UIGroup>().each()) {
+		if (group.visible) {
+			Entity curr = group.first_element;
+			while (curr != entt::null) {
+				UIElement& element = registry.get<UIElement>(curr);
+				if (element.visible) {
+					if (UIRenderRequest* ui_render_request = registry.try_get<UIRenderRequest>(curr)) {
+						draw_ui_element(curr, *ui_render_request, projection_2d);
+					} else if (Text* text = registry.try_get<Text>(curr)) {
+						draw_text(curr, *text, projection_2d);
+					} else if (Line* line = registry.try_get<Line>(curr)) {
+						draw_line(entity, *line, projection_2d);
+					}
+				}
+				curr = element.next;
+			}
 		}
 	}
 
-	for (auto [entity, text] : registry.view<Text>().each()) {
-		draw_text(entity, text, projection_2d);
-	}
-
-	for (auto [entity, line] : registry.view<Line>().each()) {
+	for (auto [entity, line] : registry.view<Line>(entt::exclude<UIElement>).each()) {
 		draw_line(entity, line, projection_2d);
 	}
 

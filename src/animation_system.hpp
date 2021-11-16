@@ -8,7 +8,7 @@
 // TODO: change number of frames for an animation to vary based on the asset
 
 // Base animation speed for all animated entities
-static constexpr int base_animation_speed = 80;
+static constexpr float base_animation_speed = 100;
 
 // Default damage animation speed
 static constexpr float damage_animation_speed = 1;
@@ -24,9 +24,9 @@ static constexpr int player_weapon_states = 2;
 static constexpr float player_animation_speed = 1.2f;
 
 // Used for animation event speeds for the player
-static constexpr float player_melee_speed = 2.5f;
+static constexpr float player_melee_speed = 3.f;
 static constexpr float player_heavy_melee_speed = 1.f;
-static constexpr float player_running_speed = 4;
+static constexpr float player_running_speed = 3;
 static constexpr float player_blue_red_switch_speed = 1;
 // Value denoting the animation states for the player
 // KEEP ALIGNED WITH STATES REPRESENTED IN PLAYER SPRITESHEET
@@ -40,10 +40,20 @@ enum class EnemyAnimationEvents {
 	Attack = 3,
 };
 
-static constexpr vec3 default_enemy_red = { 2, 1, 1 };
-static constexpr vec3 default_enemy_blue = { 1, 1, 2 };
-static constexpr vec3 damage_color = { 5, 5, 5 };
+static constexpr vec4 original_colours = { 1, 1, 1, 1 };
 
+// Player transition colours between dimensions
+static constexpr vec4 player_red_transition_colour = { 2, 0.8, 0.8, 1 };
+static constexpr vec4 player_blue_transition_colour = { 0.5, 0.5, 3, 1 };
+
+
+// Default enemy colours for each team
+static constexpr vec4 default_enemy_red = { 2, 1, 1, 1 };
+static constexpr vec4 default_enemy_blue = { 1, 1, 2, 1 };
+
+static constexpr vec4 damage_color = { 5, 5, 5, 1 };
+
+static constexpr int max_inactive_colors = 3;
 
 class AnimationSystem {
 
@@ -66,6 +76,8 @@ public:
 	void set_enemy_state(const Entity& enemy, int state);
 	// triggers an enemy attack animation
 	void enemy_attack_animation(const Entity& enemy);
+	// Sets all inactive enemy colours to be a specific defaulted inactive colour
+	void set_all_inactive_colours(ColorState inactive_color);
 
 	// initializes animation values for a player entity
 	// NOTE: weird things will happen if the entity initialized as player is not a player
@@ -93,7 +105,7 @@ private:
 	// be restored
 	void resolve_event_animations();
 	// helper function for setting animation events
-	void animation_event_setup(Animation& animation, EventAnimation& EventAnimation, vec3& color);
+	void animation_event_setup(Animation& animation, EventAnimation& EventAnimation, vec4& color);
 };
 
 
