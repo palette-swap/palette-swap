@@ -38,6 +38,7 @@ WorldSystem::WorldSystem(Debug& debugging,
 	, ui(std::move(ui))
 {
 	this->combat->init(rng, this->animations);
+	this->combat->on_pickup([this](const Entity& item, size_t slot) { this->ui->add_to_inventory(item, slot); });
 }
 
 WorldSystem::~WorldSystem()

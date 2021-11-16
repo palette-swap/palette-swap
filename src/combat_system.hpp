@@ -16,14 +16,16 @@ public:
 	void kill(Entity entity);
 
 	// Observer Pattern: attach a callback of do_attack().
-	void attach_do_attack_callback(
-		const std::function<void(const Entity& attacker, const Entity& target)>& do_attack_callback);
+	void on_attack(const std::function<void(const Entity& attacker, const Entity& target)>& do_attack_callback);
+	void on_pickup(const std::function<void(const Entity& item, size_t slot)>& on_pickup_callback);
 
 	std::string make_attack_list(Entity entity, size_t current_attack) const;
 
 private:
 	// Observer Pattern: callbacks of do_attack().
-	std::vector<std::function<void(const Entity& attacker, const Entity& target)>> do_attack_callbacks;
+	std::vector<std::function<void(const Entity& attacker, const Entity& target)>> attack_callbacks;
+	// Callbacks of try_pickup_items
+	std::vector <std::function<void(const Entity& item, size_t slot)>> pickup_callbacks;
 
 	std::shared_ptr<std::default_random_engine> rng;
 

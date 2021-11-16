@@ -25,7 +25,7 @@ AISystem::AISystem(const Debug& debugging,
 	enemy_attack1_wav.load(audio_path("enemy_attack1.wav").c_str());
 	std::vector<std::function<void(const Entity& attacker, const Entity& target)>> callbacks;
 
-	this->combat->attach_do_attack_callback(
+	this->combat->on_attack(
 		[this](const Entity& attacker, const Entity& target) { this->do_attack_callback(attacker, target); });
 }
 

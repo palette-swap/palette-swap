@@ -46,7 +46,7 @@ bool CombatSystem::do_attack(Entity attacker_entity, Attack& attack, Entity targ
 							 0);
 	}
 
-	for (const auto& callback : do_attack_callbacks) {
+	for (const auto& callback : attack_callbacks) {
 		callback(attacker_entity, target_entity);
 	}
 
@@ -64,10 +64,15 @@ void CombatSystem::kill(Entity entity)
 	registry.destroy(entity);
 }
 
-void CombatSystem::attach_do_attack_callback(
+void CombatSystem::on_attack(
 	const std::function<void(const Entity& attacker, const Entity& target)>& do_attack_callback)
 {
-	do_attack_callbacks.push_back(do_attack_callback);
+	attack_callbacks.push_back(do_attack_callback);
+}
+
+void CombatSystem::on_pickup(const std::function<void(const Entity& item, size_t slot)>& on_pickup_callback)
+{
+	pickup_callbacks.push_back(on_pickup_callback);
 }
 
 std::string get_name(DamageType d)
