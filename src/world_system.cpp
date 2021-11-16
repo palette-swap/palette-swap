@@ -475,7 +475,12 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 	}
 }
 
-void WorldSystem::on_mouse_scroll(float offset) { this->renderer->scale_on_scroll(offset); }
+void WorldSystem::on_mouse_scroll(float offset)
+{
+	if (ui->player_can_act()) {
+		this->renderer->scale_on_scroll(offset);
+	}
+}
 
 // resize callback
 // TODO: update to scale the scene as not changed when window is resized
