@@ -301,7 +301,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 	}
 
 	// Change spell
-	if (key == GLFW_KEY_K) {
+	if (action == GLFW_RELEASE && key == GLFW_KEY_K) {
 		animations->player_toggle_spell(player_arrow);
 	}
 
