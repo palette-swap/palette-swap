@@ -429,7 +429,7 @@ void AISystem::summon_enemies(const Entity& entity, EnemyType enemy_type, int nu
 	MapPosition& map_pos = registry.get<MapPosition>(entity);
 
 	for (size_t i = 0; i < num; ++i) {
-		uvec2 new_map_pos = { map_pos.position.x, map_pos.position.y + 1 + i };
+		uvec2 new_map_pos = { map_pos.position.x - 2 - i, map_pos.position.y};
 		if (map_generator->walkable_and_free(new_map_pos)) {
 			create_enemy(enemy.team, enemy_type, new_map_pos);
 		}
