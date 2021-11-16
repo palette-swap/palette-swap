@@ -113,18 +113,17 @@ bool MapGeneratorSystem::walkable_and_free(uvec2 pos, bool check_active_color) c
 		return false;
 	}
 	ColorState active_color = turns->get_active_color();
+	if ((active_color == ColorState::Red) != check_active_color) {
+		return !std::any_of(registry.view<MapPosition>(entt::exclude<Player, RedExclusive>).begin(),
+							registry.view<MapPosition>(entt::exclude<Player, RedExclusive>).end(),
+							[pos](const Entity e) { return registry.get<MapPosition>(e).position == pos; });
+	} else {
+		return !std::any_of(registry.view<MapPosition>(entt::exclude<Player, BlueExclusive>).begin(),
+							registry.view<MapPosition>(entt::exclude<Player, BlueExclusive>).end(),
+							[pos](const Entity e) { return registry.get<MapPosition>(e).position == pos; });
+	}
 
-	return !std::any_of(registry.view<MapPosition>().begin(),
-						registry.view<MapPosition>().end(), 
-		[pos, active_color, check_active_color](const Entity e) {
-
-			if (registry.get<MapPosition>(e).position == pos) {
-				if (Enemy* enemy = registry.try_get<Enemy>(e)) {
-					return (check_active_color ? enemy->team == active_color : enemy->team != active_color);
-				}
-			} 
-			return false;
-		});
+	
 }
 
 bool MapGeneratorSystem::is_wall(uvec2 pos) const
