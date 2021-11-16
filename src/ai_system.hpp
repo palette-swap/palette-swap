@@ -201,7 +201,7 @@ private:
 					create_path_point(MapUtility::map_position_to_world_position(aiming_point));
 				}
 				Entity aoe_attack = create_aoe_target_squares();
-				registry.emplace<AOEAttackActive>(e, aoe_attack);
+				/*registry.emplace<AOEAttackActive>(e, aoe_attack);*/
 				// TODO (Evan): charge(2).
 				ai->switch_enemy_state(e, EnemyState::Charging);
 				// Need animation to visualize m_aiming_area, like the Debug above.
