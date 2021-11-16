@@ -318,12 +318,24 @@ void RenderSystem::draw_rectangle(Entity entity, Transform transform, vec2 scale
 	glUniform1f(thickness_loc, 6);
 
 	// Setup coloring
+	vec4 color = vec4(1);
+	vec4 fill_color = vec4(0);
 	if (registry.any_of<Color>(entity)) {
-		GLint color_uloc = glGetUniformLocation(program, "fcolor");
-		const vec3 color = registry.get<Color>(entity).color;
-		glUniform3fv(color_uloc, 1, glm::value_ptr(color));
-		gl_has_errors();
+		color = vec4(registry.get<Color>(entity).color, 1.f);
 	}
+	if (registry.any_of<UIRectangle>(entity)) {
+		UIRectangle& rect = registry.get<UIRectangle>(entity);
+		color = vec4(vec3(color), rect.opacity);
+		fill_color = rect.fill_color;
+	}
+
+	GLint fill_color_uloc = glGetUniformLocation(program, "fcolor_fill");
+	glUniform4fv(fill_color_uloc, 1, glm::value_ptr(fill_color));
+	gl_has_errors();
+
+	GLint color_uloc = glGetUniformLocation(program, "fcolor");
+	glUniform4fv(color_uloc, 1, glm::value_ptr(color));
+	gl_has_errors();
 
 	draw_triangles(transform, projection);
 }

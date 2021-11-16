@@ -571,6 +571,11 @@ enum class Alignment {
 	End = -1,
 };
 
+struct UIRectangle {
+	float opacity;
+	vec4 fill_color;
+};
+
 struct UIRenderRequest {
 	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
 	EFFECT_ASSET_ID used_effect = EFFECT_ASSET_ID::EFFECT_COUNT;
