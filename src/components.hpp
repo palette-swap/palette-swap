@@ -142,7 +142,8 @@ static constexpr std::array<vec2, texture_count> scaling_factors = {
 
 enum class EFFECT_ASSET_ID {
 	LINE = 0,
-	ENEMY = LINE + 1,
+	RECTANGLE = LINE + 1,
+	ENEMY = RECTANGLE + 1,
 	PLAYER = ENEMY + 1,
 	HEALTH = PLAYER + 1,
 	FANCY_HEALTH = HEALTH + 1,
@@ -468,21 +469,34 @@ struct Stats {
 };
 
 enum class Slot {
-	PrimaryHand = 0,
-	Body = PrimaryHand + 1,
-	Head = Body + 1,
-	Neck = Head + 1,
-	Hands = Neck + 1,
-	Feet = Hands + 1,
-	Count = Feet + 1,
+	Weapon = 0,
+	Armor = Weapon + 1,
+	Spell1 = Armor + 1,
+	Spell2 = Spell1 + 1,
+	Ring = Spell2 + 1,
+	Amulet = Ring + 1,
+	Count = Amulet + 1,
+};
+
+const std::array<std::string, (size_t)Slot::Count> slot_names = {
+	"Weapon", "Armor", "Spell", "Spell", "Ring", "Amulet",
 };
 
 template <typename T> using SlotList = std::array<T, static_cast<size_t>(Slot::Count)>;
 
 struct Inventory {
-	std::map<std::string, Entity> inventory;
+	static constexpr size_t inventory_size = 12;
+	std::array<Entity, inventory_size> inventory;
 	SlotList<Entity> equipped;
-	Inventory(): equipped() { equipped.fill(entt::null); }
+	Inventory()
+		: inventory()
+		, equipped()
+	{
+		inventory.fill(entt::null);
+		equipped.fill(entt::null);
+	}
+
+	static Entity get(Entity entity, Slot slot);
 };
 
 struct Item {
@@ -565,9 +579,13 @@ struct UIRenderRequest {
 	Alignment alignment_x;
 	Alignment alignment_y;
 
-	bool visible = true;
-
-	UIRenderRequest(TEXTURE_ASSET_ID used_texture, EFFECT_ASSET_ID used_effect, GEOMETRY_BUFFER_ID used_geometry, vec2 size, float angle, Alignment alignment_x, Alignment alignment_y, bool visible)
+	UIRenderRequest(TEXTURE_ASSET_ID used_texture,
+					EFFECT_ASSET_ID used_effect,
+					GEOMETRY_BUFFER_ID used_geometry,
+					vec2 size,
+					float angle,
+					Alignment alignment_x,
+					Alignment alignment_y)
 		: used_texture(used_texture)
 		, used_effect(used_effect)
 		, used_geometry(used_geometry)
@@ -575,7 +593,6 @@ struct UIRenderRequest {
 		, angle(angle)
 		, alignment_x(alignment_x)
 		, alignment_y(alignment_y)
-		, visible(visible)
 	{
 	}
 
@@ -590,6 +607,49 @@ struct UIRenderRequest {
 			used_geometry = GEOMETRY_BUFFER_ID::LINE;
 		}
 	}
+};
+
+struct UIElement {
+	Entity group;
+	Entity next = entt::null;
+	bool visible = true;
+	UIElement(Entity group, bool visible)
+		: group(group)
+		, visible(visible)
+	{
+	}
+};
+
+struct UIGroup {
+	bool visible = false;
+	Entity first_element = entt::null;
+
+	static void add(Entity group, Entity element, UIElement& ui_element);
+};
+
+struct UIItem {
+	Entity actual_item;
+};
+
+struct UISlot {
+	Entity owner = entt::null;
+	Entity contents = entt::null;
+};
+
+struct InventorySlot {
+	size_t slot;
+};
+
+struct EquipSlot {
+	Slot slot;
+};
+
+struct Draggable {
+	Entity container;
+};
+
+struct InteractArea {
+	vec2 size;
 };
 
 struct Line {

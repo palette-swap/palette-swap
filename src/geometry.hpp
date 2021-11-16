@@ -20,6 +20,7 @@ struct Rectangle {
 
 	bool intersects(const Rectangle& r) const;
 	bool intersects(const Circle& c) const;
+	bool contains(const vec2& p) const;
 };
 
 struct Circle {
