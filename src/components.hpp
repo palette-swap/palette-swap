@@ -214,6 +214,7 @@ struct TileMapVertex {
 	vec2 texcoord = vec3(0);
 };
 
+
 enum class ColorState { None = 0, Red = 1, Blue = 2, All = Blue + 1 };
 
 //---------------------------------------------------------------------------
@@ -306,8 +307,16 @@ struct BlueExclusive {
 
 };
 
-struct InactiveEnemy {
+// Component denoting the AOE entity that is displaying a boss's attack
+struct AOEAttackActive {
+	Entity AOEAttack;
 };
+
+// Component denoting an AOE's vector of intended attack targets
+struct AOETargets {
+	
+};
+
 
 // Component that denotes what colour the player cannot see at the moment
 struct PlayerInactivePerception {

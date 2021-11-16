@@ -129,6 +129,13 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 	return entity;
 }
 
+Entity create_aoe_target_squares()
+{ 
+	auto entity = registry.create(); 
+	
+	return entity;
+}
+
 Entity create_arrow(vec2 position)
 {
 	auto entity = registry.create();

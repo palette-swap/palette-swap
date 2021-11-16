@@ -153,7 +153,7 @@ private:
 			// TODO (Evan): active(1) + temp-summon.
 			ai->switch_enemy_state(e, EnemyState::Idle);
 			// TODO Change to not be hardcoded, currently aware that 2 is the specific boss's 
-			// summoning state
+			// summoning animation
 			ai->animations->boss_event_animation(e, 2);
 
 			return handle_process_result(BTState::Success);
@@ -201,7 +201,8 @@ private:
 				for (const uvec2& aiming_point : m_aiming_area) {
 					create_path_point(MapUtility::map_position_to_world_position(aiming_point));
 				}
-
+				Entity aoe_attack = create_aoe_target_squares();
+				registry.emplace<AOEAttackActive>(e, aoe_attack);
 				// TODO (Evan): charge(2).
 				ai->switch_enemy_state(e, EnemyState::Charging);
 				// Need animation to visualize m_aiming_area, like the debug below.
@@ -213,6 +214,7 @@ private:
 
 				// TODO (Evan): active(1) + temp-aoe.
 				ai->switch_enemy_state(e, EnemyState::Idle);
+				ai->animations->boss_event_animation(e, 4);
 				// ai->animations->aoe_animation(e, m_aiming_area);
 
 				return handle_process_result(BTState::Success);
