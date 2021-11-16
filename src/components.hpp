@@ -286,7 +286,7 @@ struct Enemy {
 	// Default is a slime.
 	ColorState team = ColorState::Red;
 	EnemyType type = EnemyType::Slime;
-	EnemyBehaviour behaviour = EnemyBehaviour::Cowardly;
+	EnemyBehaviour behaviour = EnemyBehaviour::Basic;
 	EnemyState state = EnemyState::Idle;
 	uvec2 nest_map_pos = { 0, 0 };
 

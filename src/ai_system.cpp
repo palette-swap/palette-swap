@@ -127,7 +127,7 @@ void AISystem::execute_basic_sm(const Entity& entity)
 		break;
 
 	default:
-		throw std::runtime_error("Invalid enemy state of Raven.");
+		throw std::runtime_error("Invalid enemy state for enemy behaviour Basic.");
 	}
 }
 
@@ -174,7 +174,7 @@ void AISystem::execute_cowardly_sm(const Entity& entity)
 		break;
 
 	default:
-		throw std::runtime_error("Invalid enemy state of Slime.");
+		throw std::runtime_error("Invalid enemy state for enemy behaviour Cowardly.");
 	}
 }
 
@@ -215,7 +215,7 @@ void AISystem::execute_defensive_sm(const Entity& entity)
 		break;
 
 	default:
-		throw std::runtime_error("Invalid enemy state of Armor.");
+		throw std::runtime_error("Invalid enemy state for enemy behaviour Defensive.");
 	}
 }
 
@@ -263,7 +263,7 @@ void AISystem::execute_aggressive_sm(const Entity& entity)
 		break;
 
 	default:
-		throw std::runtime_error("Invalid enemy state of Armor.");
+		throw std::runtime_error("Invalid enemy state for enemy behaviour Aggressive.");
 	}
 }
 
