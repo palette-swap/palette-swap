@@ -76,10 +76,10 @@ std::string get_name(DamageType d)
 }
 
 std::string CombatSystem::make_attack_list(const Entity entity, size_t current_attack) const {
-	const Weapon& weapon = registry.get<Weapon>(entity);
+	Weapon& weapon = registry.get<Weapon>(entity);
 	std::ostringstream attacks;
 	for (size_t i = 0; i < weapon.given_attacks.size(); i++) {
-		const Attack& attack = weapon.given_attacks[i];
+		const Attack& attack = weapon.get_attack(i);
 		if (i == current_attack) {
 			attacks << "\n[" << i + 1 << "] ";
 		} else {

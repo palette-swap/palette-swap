@@ -508,12 +508,9 @@ struct Item {
 };
 
 struct Weapon {
-	explicit Weapon(std::vector<Attack> given_attacks)
-		: given_attacks(std::move(given_attacks))
-	{
-	}
 	// TODO: Potentially replace with intelligent direct/indirect container
-	std::vector<Attack> given_attacks;
+	std::vector<Entity> given_attacks;
+	Attack& get_attack(int i) { return registry.get<Attack>(given_attacks.at(i)); }
 };
 
 //---------------------------------------------------------------------------

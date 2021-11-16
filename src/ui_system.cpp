@@ -162,8 +162,7 @@ bool UISystem::has_current_attack() const {
 
 Attack& UISystem::get_current_attack()
 {
-	return registry.get<Weapon>(Inventory::get(registry.view<Player>().front(), current_attack_slot))
-		.given_attacks.at(current_attack);
+	return registry.get<Weapon>(Inventory::get(registry.view<Player>().front(), current_attack_slot)).get_attack(current_attack);
 }
 
 void UISystem::set_current_attack(Slot slot, size_t attack)
@@ -182,7 +181,7 @@ std::string UISystem::make_attack_display_text()
 		if (weapon_entity != entt::null) {
 			Weapon& weapon = registry.get<Weapon>(weapon_entity);
 			for (size_t i = 0; i < weapon.given_attacks.size(); i++) {
-				Attack& attack = weapon.given_attacks.at(i);
+				Attack& attack = weapon.get_attack(i);
 				if (slot == current_attack_slot && i == current_attack) {
 					text += "\n[" + std::to_string(++count) + "] " + attack.name;
 				} else {
