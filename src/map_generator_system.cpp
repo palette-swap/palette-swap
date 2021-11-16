@@ -18,8 +18,8 @@ MapGeneratorSystem::MapGeneratorSystem(std::shared_ptr<TurnSystem> turns)
 	: room_layouts()
 	, levels(num_levels)
 	, level_room_rotations(num_levels)
-	, level_snap_shots(num_levels)
 	, turns(std::move(turns))
+	, level_snap_shots(num_levels)
 {
 	load_rooms_from_csv();
 	load_levels_from_csv();
@@ -119,13 +119,11 @@ bool MapGeneratorSystem::walkable_and_free(uvec2 pos, bool check_active_color) c
 		return !std::any_of(registry.view<MapPosition>(entt::exclude<Player, RedExclusive>).begin(),
 							registry.view<MapPosition>(entt::exclude<Player, RedExclusive>).end(),
 							[pos](const Entity e) { return registry.get<MapPosition>(e).position == pos; });
-	} else {
-		return !std::any_of(registry.view<MapPosition>(entt::exclude<Player, BlueExclusive>).begin(),
-							registry.view<MapPosition>(entt::exclude<Player, BlueExclusive>).end(),
-							[pos](const Entity e) { return registry.get<MapPosition>(e).position == pos; });
 	}
 
-	
+	return !std::any_of(registry.view<MapPosition>(entt::exclude<Player, BlueExclusive>).begin(),
+						registry.view<MapPosition>(entt::exclude<Player, BlueExclusive>).end(),
+						[pos](const Entity e) { return registry.get<MapPosition>(e).position == pos; });
 }
 
 bool MapGeneratorSystem::is_wall(uvec2 pos) const

@@ -480,7 +480,7 @@ enum class Slot {
 	Count = Amulet + 1,
 };
 
-const std::array<std::string, (size_t)Slot::Count> slot_names = {
+const std::array<std::string_view, (size_t)Slot::Count> slot_names = {
 	"Weapon", "Armor", "Spell", "Spell", "Ring", "Amulet",
 };
 
