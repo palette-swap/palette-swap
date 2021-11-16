@@ -442,37 +442,18 @@ void WorldSystem::change_color()
 	if (!turns->ready_to_act(player)) {
 		return;
 	}
+	MapPosition player_pos = registry.get<MapPosition>(player); 
 
-	ColorState active_color = turns->get_active_color();
-	switch (active_color) {
-	case ColorState::Red:
-		turns->set_active_color(ColorState::Blue);
-		so_loud->fadeVolume(bgm_blue, -1, .25);
-		so_loud->fadeVolume(bgm_red, 0, .25);
-		animations->player_red_blue_animation(player, ColorState::Blue);
-		break;
-	case ColorState::Blue:
-		turns->set_active_color(ColorState::Red);
-		so_loud->fadeVolume(bgm_red, -1, .25);
-		so_loud->fadeVolume(bgm_blue, 0, .25);
-		animations->player_red_blue_animation(player, ColorState::Red);
-		break;
-	default:
-		turns->set_active_color(ColorState::Red);
-		break;
+	if (map_generator->walkable_and_free(player_pos.position, false)) { 
+		ColorState inactive_color = turns->get_inactive_color();
+		turns->set_active_color(inactive_color);
+
+		so_loud->fadeVolume((inactive_color == ColorState::Red ? bgm_red : bgm_blue), -1, .25);
+		so_loud->fadeVolume((inactive_color == ColorState::Red ? bgm_blue : bgm_red), 0, .25);
+		animations->player_red_blue_animation(player, inactive_color);
 	}
 
 	animations->set_all_inactive_colours(turns->get_inactive_color());
-
-	// ColorState active_color = turns->get_active_color();
-	// for (long long i = registry.enemies.entities.size() - 1; i >= 0; i--) {
-	//	const Entity& enemy_entity = registry.enemies.entities[i];
-	//	if (((uint8_t)registry.get<Enemy>(enemy_entity).team & (uint8_t)active_color) == 0) {
-	//		registry.get<RenderRequest>(enemy_entity).visible = false;
-	//	} else {
-	//		registry.get<RenderRequest>(enemy_entity).visible = true;
-	//	}
-	//}
 }
 
 // Fires arrow at a preset speed if it has not been fired already
