@@ -310,9 +310,6 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		change_color();
 		
 	}
-	if (action == GLFW_RELEASE && key == GLFW_KEY_K) {
-		
-	}
 
 	check_debug_keys(key, action, mod);
 }
