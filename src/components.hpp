@@ -69,16 +69,11 @@ struct Mesh {
 
 // Test Texture Buffer element for enemies
 // TODO: change to animated vertices after bringing player into this 3D element group
-struct EnemyVertex {
+struct SmallSpriteVertex {
 	vec3 position;
 	vec2 texcoord;
 };
 
-// Temp struct denoting PlayerVertices (specifies quad proportions from player spritesheet
-struct PlayerVertex {
-	vec3 position;
-	vec2 texcoord;
-};
 
 /**
  * The following enumerators represent global identifiers refering to graphic
@@ -145,7 +140,8 @@ static constexpr std::array<vec2, texture_count> scaling_factors = {
 
 enum class EFFECT_ASSET_ID {
 	LINE = 0,
-	ENEMY = LINE + 1,
+	RECTANGLE = LINE + 1,
+	ENEMY = RECTANGLE + 1,
 	PLAYER = ENEMY + 1,
 	HEALTH = PLAYER + 1,
 	FANCY_HEALTH = HEALTH + 1,
@@ -159,9 +155,8 @@ constexpr int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 enum class GEOMETRY_BUFFER_ID : uint8_t {
 	SALMON = 0,
 	SPRITE = SALMON + 1,
-	PLAYER = SPRITE + 1,
-	ENEMY = PLAYER + 1,
-	HEALTH = ENEMY + 1,
+	SMALL_SPRITE = SPRITE + 1,
+	HEALTH = SMALL_SPRITE + 1,
 	FANCY_HEALTH = HEALTH + 1,
 	LINE = FANCY_HEALTH + 1,
 	DEBUG_LINE = LINE + 1,
@@ -295,6 +290,21 @@ struct Enemy {
 	void deserialize(const std::string& prefix, const rapidjson::Document& json);
 };
 
+struct RedExclusive {
+
+};
+
+struct BlueExclusive {
+
+};
+
+struct InactiveEnemy {
+};
+
+// Component that denotes what colour the player cannot see at the moment
+struct PlayerInactivePerception {
+	ColorState inactive = ColorState::Red;
+};
 //---------------------------------------------------------------------------
 //-------------------------		  ANIMATIONS        -------------------------
 //---------------------------------------------------------------------------
@@ -341,6 +351,7 @@ struct Color {
 // to the screen for a spritesheet
 struct Animation {
 	ColorState color = ColorState::None;
+	vec4 display_color = { 1, 1, 1, 1 };
 	int direction = 1;
 	int frame = 0;
 	int max_frames = 1;
@@ -356,11 +367,23 @@ struct Animation {
 struct EventAnimation {
 	bool turn_trigger = false;
 	float speed_adjustment = 1;
-	vec3 restore_color = { 1, 1, 1 };
+	vec4 restore_color = { 1, 1, 1, 1};
 
 	int restore_state = 0;
 	float restore_speed = 1;
 	int frame = 0;
+};
+
+// Denotes that an entity has an textured asset, and should be rendered after regular assets (such as player/enemy)
+struct EffectRenderRequest {
+	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
+	EFFECT_ASSET_ID used_effect = EFFECT_ASSET_ID::EFFECT_COUNT;
+	GEOMETRY_BUFFER_ID used_geometry = GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
+
+	bool visible = true;
+};
+
+struct Effects {
 };
 //---------------------------------------------------------------------------
 //-------------------------         COMBAT          -------------------------
@@ -436,21 +459,34 @@ struct Stats {
 };
 
 enum class Slot {
-	PrimaryHand = 0,
-	Body = PrimaryHand + 1,
-	Head = Body + 1,
-	Neck = Head + 1,
-	Hands = Neck + 1,
-	Feet = Hands + 1,
-	Count = Feet + 1,
+	Weapon = 0,
+	Armor = Weapon + 1,
+	Spell1 = Armor + 1,
+	Spell2 = Spell1 + 1,
+	Ring = Spell2 + 1,
+	Amulet = Ring + 1,
+	Count = Amulet + 1,
+};
+
+const std::array<std::string, (size_t)Slot::Count> slot_names = {
+	"Weapon", "Armor", "Spell", "Spell", "Ring", "Amulet",
 };
 
 template <typename T> using SlotList = std::array<T, static_cast<size_t>(Slot::Count)>;
 
 struct Inventory {
-	std::map<std::string, Entity> inventory;
+	static constexpr size_t inventory_size = 12;
+	std::array<Entity, inventory_size> inventory;
 	SlotList<Entity> equipped;
-	Inventory(): equipped() { equipped.fill(entt::null); }
+	Inventory()
+		: inventory()
+		, equipped()
+	{
+		inventory.fill(entt::null);
+		equipped.fill(entt::null);
+	}
+
+	static Entity get(Entity entity, Slot slot);
 };
 
 struct Item {
@@ -533,9 +569,13 @@ struct UIRenderRequest {
 	Alignment alignment_x;
 	Alignment alignment_y;
 
-	bool visible = true;
-
-	UIRenderRequest(TEXTURE_ASSET_ID used_texture, EFFECT_ASSET_ID used_effect, GEOMETRY_BUFFER_ID used_geometry, vec2 size, float angle, Alignment alignment_x, Alignment alignment_y, bool visible)
+	UIRenderRequest(TEXTURE_ASSET_ID used_texture,
+					EFFECT_ASSET_ID used_effect,
+					GEOMETRY_BUFFER_ID used_geometry,
+					vec2 size,
+					float angle,
+					Alignment alignment_x,
+					Alignment alignment_y)
 		: used_texture(used_texture)
 		, used_effect(used_effect)
 		, used_geometry(used_geometry)
@@ -543,7 +583,6 @@ struct UIRenderRequest {
 		, angle(angle)
 		, alignment_x(alignment_x)
 		, alignment_y(alignment_y)
-		, visible(visible)
 	{
 	}
 
@@ -558,6 +597,49 @@ struct UIRenderRequest {
 			used_geometry = GEOMETRY_BUFFER_ID::LINE;
 		}
 	}
+};
+
+struct UIElement {
+	Entity group;
+	Entity next = entt::null;
+	bool visible = true;
+	UIElement(Entity group, bool visible)
+		: group(group)
+		, visible(visible)
+	{
+	}
+};
+
+struct UIGroup {
+	bool visible = false;
+	Entity first_element = entt::null;
+
+	static void add(Entity group, Entity element, UIElement& ui_element);
+};
+
+struct UIItem {
+	Entity actual_item;
+};
+
+struct UISlot {
+	Entity owner = entt::null;
+	Entity contents = entt::null;
+};
+
+struct InventorySlot {
+	size_t slot;
+};
+
+struct EquipSlot {
+	Slot slot;
+};
+
+struct Draggable {
+	Entity container;
+};
+
+struct InteractArea {
+	vec2 size;
 };
 
 struct Line {

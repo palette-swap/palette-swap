@@ -13,9 +13,9 @@
 // Very, VERY simple OBJ loader from https://github.com/opengl-tutorials/ogl tutorial 7
 // (modified to also read vertex color and omit uv and normals)
 bool Mesh::load_from_obj_file(const std::string& obj_path,
-						   std::vector<ColoredVertex>& out_vertices,
-						   std::vector<uint16_t>& out_vertex_indices,
-						   vec2& out_size)
+							  std::vector<ColoredVertex>& out_vertices,
+							  std::vector<uint16_t>& out_vertex_indices,
+							  vec2& out_size)
 {
 	// disable warnings about fscanf and fopen on Windows
 #ifdef _MSC_VER
@@ -45,8 +45,14 @@ bool Mesh::load_from_obj_file(const std::string& obj_path,
 
 		if (strcmp((char*)line_header.data(), "v") == 0) {
 			ColoredVertex vertex;
-			fscanf(file, "%f %f %f %f %f %f\n", &vertex.position.x, &vertex.position.y, &vertex.position.z,
-				   &vertex.color.x, &vertex.color.y, &vertex.color.z);
+			fscanf(file,
+				   "%f %f %f %f %f %f\n",
+				   &vertex.position.x,
+				   &vertex.position.y,
+				   &vertex.position.z,
+				   &vertex.color.x,
+				   &vertex.color.y,
+				   &vertex.color.z);
 			out_vertices.push_back(vertex);
 		} else if (strcmp((char*)line_header.data(), "vt") == 0) {
 			glm::vec2 uv;
@@ -64,8 +70,14 @@ bool Mesh::load_from_obj_file(const std::string& obj_path,
 			// int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertex_index[0], &uvIndex[0],
 			// &normal_index[0], &vertex_index[1], &uvIndex[1], &normal_index[1], &vertex_index[2], &uvIndex[2],
 			// &normal_index[2]);
-			int matches = fscanf(file, "%d//%d %d//%d %d//%d\n", &vertex_index[0], &normal_index[0], &vertex_index[1],
-								 &normal_index[1], &vertex_index[2], &normal_index[2]);
+			int matches = fscanf(file,
+								 "%d//%d %d//%d %d//%d\n",
+								 &vertex_index[0],
+								 &normal_index[0],
+								 &vertex_index[1],
+								 &normal_index[1],
+								 &vertex_index[2],
+								 &normal_index[2]);
 			if (matches != 6) {
 				printf("File can't be read by our simple parser :-( Try exporting with other options\n");
 				fclose(file);
@@ -109,8 +121,10 @@ bool Mesh::load_from_obj_file(const std::string& obj_path,
 	return true;
 }
 
-static const rapidjson::Value * get_and_assert_value_from_json(const std::string& prefix, const rapidjson::Document& json) {
-	const auto * value = rapidjson::GetValueByPointer(json, rapidjson::Pointer(prefix.c_str()));
+static const rapidjson::Value* get_and_assert_value_from_json(const std::string& prefix,
+															  const rapidjson::Document& json)
+{
+	const auto* value = rapidjson::GetValueByPointer(json, rapidjson::Pointer(prefix.c_str()));
 	assert(value);
 	return value;
 }
@@ -121,7 +135,8 @@ void MapPosition::serialize(const std::string& prefix, rapidjson::Document& json
 	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/position/y").c_str()), position.y);
 }
 
-void MapPosition::deserialize(const std::string& prefix, const rapidjson::Document& json) {
+void MapPosition::deserialize(const std::string& prefix, const rapidjson::Document& json)
+{
 	const auto* position_x = get_and_assert_value_from_json(prefix + "/position/x", json);
 	position.x = position_x->GetInt();
 	const auto* position_y = get_and_assert_value_from_json(prefix + "/position/y", json);
@@ -167,11 +182,14 @@ void Attack::serialize(const std::string& prefix, rapidjson::Document& json) con
 	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/to_hit_max").c_str()), to_hit_max);
 	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/damage_min").c_str()), damage_min);
 	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/damage_max").c_str()), damage_max);
-	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/damage_type").c_str()), static_cast<int>(damage_type));
-	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/targeting_type").c_str()), static_cast<int>(targeting_type));
+	rapidjson::SetValueByPointer(
+		json, rapidjson::Pointer((prefix + "/damage_type").c_str()), static_cast<int>(damage_type));
+	rapidjson::SetValueByPointer(
+		json, rapidjson::Pointer((prefix + "/targeting_type").c_str()), static_cast<int>(targeting_type));
 }
 
-void Attack::deserialize(const std::string& prefix, const rapidjson::Document& json) {
+void Attack::deserialize(const std::string& prefix, const rapidjson::Document& json)
+{
 	const auto* name_value = get_and_assert_value_from_json(prefix + "/name", json);
 	name = name_value->GetString();
 	const auto* to_hit_min_value = get_and_assert_value_from_json(prefix + "/to_hit_min", json);
@@ -188,7 +206,8 @@ void Attack::deserialize(const std::string& prefix, const rapidjson::Document& j
 	targeting_type = static_cast<TargetingType>(targeting_type_value->GetInt());
 }
 
-void Stats::serialize(const std::string& prefix, rapidjson::Document& json) const {
+void Stats::serialize(const std::string& prefix, rapidjson::Document& json) const
+{
 	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/health").c_str()), health);
 	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/health_max").c_str()), health_max);
 	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/mana").c_str()), mana);
@@ -201,7 +220,8 @@ void Stats::serialize(const std::string& prefix, rapidjson::Document& json) cons
 	// damage_modifiers don't seem to be needed here?
 }
 
-void Stats::deserialize(const std::string& prefix, const rapidjson::Document& json) {
+void Stats::deserialize(const std::string& prefix, const rapidjson::Document& json)
+{
 	const auto* health_value = get_and_assert_value_from_json(prefix + "/health", json);
 	health = health_value->GetInt();
 	const auto* health_max_value = get_and_assert_value_from_json(prefix + "/health_max", json);
@@ -219,10 +239,7 @@ void Stats::deserialize(const std::string& prefix, const rapidjson::Document& js
 	base_attack.deserialize(prefix + "/attack", json);
 }
 
-
-bool operator==(const Text& t1, const Text& t2) {
-	return t1.text == t2.text && t1.font_size == t2.font_size;
-}
+bool operator==(const Text& t1, const Text& t2) { return t1.text == t2.text && t1.font_size == t2.font_size; }
 
 void Collision::add(Entity parent, Entity child)
 {
@@ -236,3 +253,12 @@ void Collision::add(Entity parent, Entity child)
 		collision->children = new_collision;
 	}
 }
+
+void UIGroup::add(Entity group, Entity element, UIElement& ui_element)
+{
+	UIGroup& g = registry.get<UIGroup>(group);
+	ui_element.next = g.first_element;
+	g.first_element = element;
+}
+
+Entity Inventory::get(Entity entity, Slot slot) { return registry.get<Inventory>(entity).equipped.at((size_t)slot); }

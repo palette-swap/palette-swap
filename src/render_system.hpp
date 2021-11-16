@@ -49,18 +49,15 @@ class RenderSystem {
 			textures_path("cannon_ball.png"),
 			textures_path("tile_set.png"),
 			textures_path("help.png"),
-			textures_path("End Screen.png")};
+			textures_path("End Screen.png") };
 
 	std::array<GLuint, effect_count> effects = {};
 	// Make sure these paths remain in sync with the associated enumerators.
-	const std::array<std::string, effect_count> effect_paths = { shader_path("line"),
-																 shader_path("enemy"), 
-																 shader_path("player"),
-																 shader_path("health_bar"),
-																 shader_path("fancy_bar"),
-																 shader_path("textured"),
-																 shader_path("water"),
-																 shader_path("tilemap") };
+	const std::array<std::string, effect_count> effect_paths = {
+		shader_path("line"),	 shader_path("rectangle"),	shader_path("enemy"),
+		shader_path("player"),	 shader_path("health_bar"), shader_path("fancy_bar"),
+		shader_path("textured"), shader_path("water"),		shader_path("tilemap"),
+	};
 
 	// TODO: move these constants into animation system most likely, need to finalize
 	// hierachy between animation and render system
@@ -112,6 +109,8 @@ public:
 	void scale_on_scroll(float offset);
 	void on_resize(int width, int height);
 
+	vec2 get_screen_size() { return screen_size; }
+
 private:
 	////////////////////////////////////////////////////////
 	// Init helper functions
@@ -129,6 +128,8 @@ private:
 	// General helper functions
 	// Get world position of top left and bottom right of screen
 	std::pair<vec2, vec2> get_window_bounds();
+	// Get UI scale based on difference between current window size and default
+	float get_ui_scale_factor();
 	// Helper to get position transform
 	Transform get_transform(Entity entity);
 
@@ -144,6 +145,7 @@ private:
 	void draw_textured_mesh(Entity entity, const RenderRequest& render_request, const mat3& projection);
 	void draw_ui_element(Entity entity, const UIRenderRequest& ui_render_request, const mat3& projection);
 	void draw_healthbar(Transform transform, const Stats& stats, const mat3& projection, bool fancy, float ratio);
+	void draw_rectangle(Entity entity, Transform transform, vec2 scale, const mat3& projection);
 	void draw_text(Entity entity, const Text& text, const mat3& projection);
 	void draw_line(Entity entity, const Line& line, const mat3& projection);
 	void draw_map(const mat3& projection);

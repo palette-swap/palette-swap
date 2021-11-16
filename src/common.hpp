@@ -55,11 +55,16 @@ bool gl_has_errors();
 // Window sizes
 static constexpr int window_width_px = 1920;
 static constexpr int window_height_px = 1080;
+static constexpr ivec2 window_default_size = vec2(window_width_px, window_height_px);
 static constexpr float window_default_scale = 0.5;
 
 namespace AnimationUtility {
+// Defines default colors for enemies of red/blue while active
 static constexpr vec3 default_enemy_red = { 4, 1, 1 };
 static constexpr vec3 default_enemy_blue = { 1, 1, 4 };
+
+// Used to test out various inactive enemy displays
+static constexpr vec4 inactive_invisible = { 1, 1, 1, 0 };
 } // namespace AnimationUtility
 
 namespace MapUtility {
