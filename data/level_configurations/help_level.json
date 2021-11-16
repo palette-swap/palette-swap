@@ -13,7 +13,7 @@
     {
       "team": 3,
       "type": 10,
-      "state": 5,
+      "state": 0,
       "radius": 10,
       "speed": 0,
       "attack_range": 10,

@@ -258,19 +258,22 @@ const std::array<EnemyBehaviour, (size_t)EnemyType::EnemyCount> enemy_type_to_be
 	EnemyBehaviour::Summoner,
 };
 
+// Small Enemy Behaviours (State Machines) uses the following states.
+// Basic:		Idle, Active.
+// Cowardly:	Idle, Active, Flinched.
+// Defensive:	Idle, Active, Immortal.
+// Aggressive:	Idle, Active, Powerup.
+// 
+// Boss Enemy Behaviours (Behaviour Trees) uses the following states.
+// Summoner:	Idle, Active, Charging.
 enum class EnemyState {
-	// Small Enemy Behaviours (State Machines) uses the following states.
-	// Basic:		Idle, Active.
-	// Cowardly:	Idle, Active, Flinched.
-	// Defensive:	Idle, Active, Immortal.
-	// Aggressive:	Idle, Active, Powerup.
 	Idle = 0,
 	Active = Idle + 1,
 	Flinched = Active + 1,
 	Powerup = Flinched + 1,
 	Immortal = Powerup + 1,
-	// Boss Enemy Behaviours (Behaviour Trees) uses EnemyStateCount as the default state since they're not applicable.
-	EnemyStateCount = Immortal + 1,
+	Charging = Immortal + 1,
+	EnemyStateCount = Charging + 1,
 };
 
 // Structure to store enemy information.
@@ -333,6 +336,7 @@ const std::array<int, (size_t)EnemyState::EnemyStateCount> enemy_state_to_animat
 	2, // Flinched
 	2, // Powerup
 	2, // Immortal
+	2, // Charging
 };
 
 struct RenderRequest {

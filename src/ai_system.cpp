@@ -271,8 +271,8 @@ bool AISystem::remove_dead_entity(const Entity& entity)
 {
 	// TODO: Animate death.
 	if (registry.any_of<Stats>(entity) && registry.get<Stats>(entity).health <= 0) {
-		// If entity is a boss, remove its behaviour tree. Please note bosses always use EnemyStateCount as the default state.
-		if (registry.get<Enemy>(entity).state == EnemyState::EnemyStateCount) {
+		// If entity is a boss, remove its behaviour tree.
+		if (bosses.find(entity) != bosses.end()) {
 			bosses.erase(entity);
 		}
 		registry.destroy(entity);
@@ -285,7 +285,7 @@ void AISystem::switch_enemy_state(const Entity& enemy_entity, EnemyState new_sta
 {
 	Enemy& enemy = registry.get<Enemy>(enemy_entity);
 	enemy.state = new_state;
-	int new_state_id = enemy_state_to_animation_state.at((uint) enemy.state);
+	int new_state_id = enemy_state_to_animation_state.at(static_cast<size_t>(new_state));
 	animations->set_enemy_state(enemy_entity, new_state_id);
 }
 

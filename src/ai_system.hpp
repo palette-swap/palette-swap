@@ -151,7 +151,7 @@ private:
 			ai->summon_enemies(e, m_type, m_num);
 
 			// TODO (Evan): active(1) + temp-summon.
-			// ai->animations->set_enemy_state(e, 1);
+			ai->switch_enemy_state(e, EnemyState::Active);
 			// ai->animations->summon_animation(e);
 
 			return handle_process_result(BTState::Success);
@@ -201,7 +201,7 @@ private:
 				}
 
 				// TODO (Evan): charge(2).
-				// ai->animations->set_enemy_state(e, 2);
+				ai->switch_enemy_state(e, EnemyState::Charging);
 				// Need animation to visualize m_aiming_area, like the debug below.
 
 				return handle_process_result(BTState::Running);
@@ -210,7 +210,7 @@ private:
 				ai->aoe_attack(e, m_aiming_area);
 
 				// TODO (Evan): active(1) + temp-aoe.
-				// ai->animations->set_enemy_state(e, 1);
+				ai->switch_enemy_state(e, EnemyState::Active);
 				// ai->animations->aoe_animation(e, m_aiming_area);
 
 				return handle_process_result(BTState::Success);
@@ -234,7 +234,7 @@ private:
 			ai->attack_player(e);
 
 			// TODO (Evan): active(1) + temp-attack.
-			// ai->animations->set_enemy_state(e, 1);
+			ai->switch_enemy_state(e, EnemyState::Active);
 			// No need for temp-attack here since it will be handled in combat system.
 
 			return handle_process_result(BTState::Success);
@@ -255,10 +255,7 @@ private:
 		{
 			printf("Debug: RecoverHealth.process\n");
 			ai->recover_health(e, m_ratio);
-
-			// TODO (Evan): idle(0).
-			// ai->animations->set_enemy_state(e, 0);
-
+			ai->switch_enemy_state(e, EnemyState::Idle);
 			return handle_process_result(BTState::Success);
 		}
 
@@ -271,13 +268,10 @@ private:
 	public:
 		void init(Entity e) override { printf("Debug: DoNothing.init\n"); }
 
-		BTState process(Entity /*e*/, AISystem* ai) override
+		BTState process(Entity e, AISystem* ai) override
 		{
 			printf("Debug: DoNothing.process\n");
-
-			// TODO (Evan): idle(0).
-			// ai->animations->set_enemy_state(e, 0);
-
+			ai->switch_enemy_state(e, EnemyState::Idle);
 			return handle_process_result(BTState::Success);
 		}
 	};
