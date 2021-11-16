@@ -109,6 +109,8 @@ public:
 	void scale_on_scroll(float offset);
 	void on_resize(int width, int height);
 
+	vec2 get_screen_size() { return screen_size; }
+
 private:
 	////////////////////////////////////////////////////////
 	// Init helper functions
@@ -126,6 +128,8 @@ private:
 	// General helper functions
 	// Get world position of top left and bottom right of screen
 	std::pair<vec2, vec2> get_window_bounds();
+	// Get UI scale based on difference between current window size and default
+	float get_ui_scale_factor();
 	// Helper to get position transform
 	Transform get_transform(Entity entity);
 

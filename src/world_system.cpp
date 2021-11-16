@@ -373,7 +373,7 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 		arrow_velocity.angle = atan2(eucl_diff.x, -eucl_diff.y);
 	}
 
-	ui->on_mouse_move(mouse_position / vec2(window_default_size));
+	ui->on_mouse_move(mouse_position / renderer->get_screen_size());
 }
 
 void WorldSystem::move_player(Direction direction)
@@ -480,7 +480,7 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 		// Get screen position of mouse
 		dvec2 mouse_screen_pos = {};
 		glfwGetCursorPos(window, &mouse_screen_pos.x, &mouse_screen_pos.y);
-		ui->on_left_click(action, mouse_screen_pos / dvec2(window_default_size));
+		ui->on_left_click(action, mouse_screen_pos / dvec2(renderer->get_screen_size()));
 
 		if (action == GLFW_PRESS) {
 			if (turns->get_active_team() != player || !ui->has_current_attack()) {
