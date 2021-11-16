@@ -127,6 +127,8 @@ void UISystem::on_mouse_move(vec2 mouse_screen_pos)
 	}
 }
 
+bool UISystem::player_can_act() { return registry.get<UIGroup>(hud_group).visible; }
+
 bool UISystem::has_current_attack() const {
 	if (current_attack_slot == Slot::Count) {
 		return false;

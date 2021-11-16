@@ -10,6 +10,8 @@ public:
 	void on_left_click(int action, dvec2 mouse_screen_pos);
 	void on_mouse_move(vec2 mouse_screen_pos);
 
+	bool player_can_act();
+
 	bool has_current_attack() const;
 	Attack& get_current_attack();
 
