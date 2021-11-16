@@ -1,5 +1,5 @@
-#include "ui_system.hpp"
 #include "ui_init.hpp"
+#include "ui_system.hpp"
 
 void UISystem::restart_game()
 {

@@ -22,6 +22,6 @@ Entity create_equip_slot(Entity ui_group,
 Entity create_ui_item(Entity ui_group, Entity slot, Entity item);
 Entity create_ui_text(Entity ui_group,
 					  vec2 screen_position,
-					  const std::string& text,
+					  const std::string_view& text,
 					  Alignment alignment_x = Alignment::Center,
 					  Alignment alignment_y = Alignment::Center);

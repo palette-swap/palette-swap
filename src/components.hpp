@@ -678,6 +678,14 @@ struct Text {
 	Alignment alignment_x;
 	Alignment alignment_y;
 
+	Text(std::string_view text, uint16 font_size, Alignment alignment_x, Alignment alignment_y)
+		: text(text)
+		, font_size(font_size)
+		, alignment_x(alignment_x)
+		, alignment_y(alignment_y)
+	{
+	}
+
 	Text(std::string text, uint16 font_size, Alignment alignment_x, Alignment alignment_y)
 		: text(std::move(text))
 		, font_size(font_size)
