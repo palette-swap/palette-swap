@@ -3,6 +3,9 @@
 
 void UISystem::restart_game()
 {
+	auto ui_group_view = registry.view<UIGroup>();
+	registry.destroy(ui_group_view.begin(), ui_group_view.end());
+
 	Entity player = registry.view<Player>().front();
 
 	hud_group = create_ui_group(true);
