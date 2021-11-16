@@ -17,13 +17,12 @@ using namespace MapUtility;
 MapGeneratorSystem::MapGeneratorSystem()
 	: level_snap_shots(num_predefined_levels)
 {
-	load_rooms_from_csv();
-	load_levels_from_csv();
+	load_predefined_rooms();
+	load_predefined_levels();
 	load_level_configurations();
+	load_level_generation_confs();
+	load_generated_levels();
 	current_level = -1;
-
-    // TODO: remove hard-coded level
-	map_generator.generate_level(0);
 }
 
 ////////////////////////////////////
@@ -74,12 +73,32 @@ void MapGeneratorSystem::create_picture()
 		help_picture, TEXTURE_ASSET_ID::HELP_PIC, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE, true);
 }
 
-const Grid& MapGeneratorSystem::get_level_layout(int level) const {
+const Grid& MapGeneratorSystem::get_level_layout(int level) const
+{
 	assert(level != -1 && (static_cast<unsigned int>(level) < (num_predefined_levels + map_generator.get_num_generated_levels())));
 	if (static_cast<uint8_t>(level) >= num_predefined_levels) {
 		return map_generator.get_generated_level_layout(level - num_predefined_levels);
 	} else {
 		return predefined_levels.at(level);
+	}
+}
+
+const std::string & MapGeneratorSystem::get_level_snap_shot(int level) const
+{
+	assert(level != -1 && (static_cast<unsigned int>(level) < (num_predefined_levels + map_generator.get_num_generated_levels())));
+	if (static_cast<uint8_t>(level) >= num_predefined_levels) {
+		return map_generator.get_level_snap_shots().at(level - num_predefined_levels);
+	} else {
+		return level_snap_shots.at(level);
+	}
+}
+
+void MapGeneratorSystem::set_level_snap_shot(int level, const std::string & snapshot)
+{
+	if (static_cast<uint8_t>(level) >= num_predefined_levels) {
+		map_generator.set_level_snap_shot(level, snapshot);
+	} else {
+		level_snap_shots.at(level) = snapshot;
 	}
 }
 
@@ -227,10 +246,10 @@ std::vector<uvec2> MapGeneratorSystem::bfs(uvec2 start_pos, uvec2 target) const
 TileID MapGeneratorSystem::get_tile_id_from_map_pos(uvec2 pos) const
 {
 	RoomID room_index = current_map().at(pos.y / room_size).at(pos.x / room_size);
-	return get_tile_id_from_room(room_index, pos.y % room_size, pos.x % room_size);
+	return get_tile_id_from_room(current_level, room_index, pos.y % room_size, pos.x % room_size);
 }
 
-void MapGeneratorSystem::load_rooms_from_csv()
+void MapGeneratorSystem::load_predefined_rooms()
 {
 	for (size_t i = 0; i < predefined_room_paths.size(); i++) {
 		auto & room_mapping = predefined_rooms.at(i);
@@ -249,12 +268,12 @@ void MapGeneratorSystem::load_rooms_from_csv()
 	}
 }
 
-TileID MapGeneratorSystem::get_tile_id_from_room(RoomID room_id, uint8_t row, uint8_t col) const
+TileID MapGeneratorSystem::get_tile_id_from_room(int level, RoomID room_id, uint8_t row, uint8_t col) const
 {
-	return static_cast<TileID>(get_room_layout(room_id).at(static_cast<size_t>(row) * room_size + col));
+	return static_cast<TileID>(get_room_layout(level, room_id).at(static_cast<size_t>(row) * room_size + col));
 }
 
-void MapGeneratorSystem::load_levels_from_csv()
+void MapGeneratorSystem::load_predefined_levels()
 {
 	for (size_t i = 0; i < predefined_level_paths.size(); i++) {
 		Grid& level_mapping = predefined_levels.at(i);
@@ -289,6 +308,38 @@ void MapGeneratorSystem::load_level_configurations()
 	}
 }
 
+void MapGeneratorSystem::load_level_generation_confs()
+{
+	auto & level_generation_confs = map_generator.get_level_generation_confs();
+	int level_counter = 0;
+	while (true) {
+		std::ifstream config(level_generation_conf_path(std::to_string(level_counter) + ".json"));
+		if (!config.is_open()) {
+			return;
+		}
+
+		std::stringstream buffer;
+		buffer << config.rdbuf();
+		rapidjson::Document json_doc;
+		json_doc.Parse(buffer.str().c_str());
+
+		MapGenerator::LevelGenConf level_gen_conf;
+		level_gen_conf.deserialize("/generation_conf", json_doc);
+		level_generation_confs.resize(level_counter + 1);
+		level_generation_confs.at(level_counter) = level_gen_conf;
+		
+		level_counter ++;
+	}
+}
+
+void MapGeneratorSystem::load_generated_levels()
+{
+	auto & level_generation_confs = map_generator.get_level_generation_confs();
+	for (int i = 0; i < level_generation_confs.size(); i ++) {
+		map_generator.generate_level(i);
+	}
+}
+
 bool MapGeneratorSystem::is_next_level_tile(uvec2 pos) const
 {
 	return get_tile_id_from_map_pos(pos) == tile_next_level;
@@ -307,7 +358,7 @@ bool MapGeneratorSystem::is_last_level() const
 void MapGeneratorSystem::snapshot_level()
 {
 	rapidjson::Document level_snapshot;
-	level_snapshot.Parse(level_snap_shots.at(current_level).c_str());
+	level_snapshot.Parse(get_level_snap_shot(current_level).c_str());
 	rapidjson::CreateValueByPointer(level_snapshot, rapidjson::Pointer("/enemies/0"));
 
 	// Serialize enemies
@@ -322,7 +373,7 @@ void MapGeneratorSystem::snapshot_level()
 	rapidjson::StringBuffer buffer;
 	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 	level_snapshot.Accept(writer);
-	level_snap_shots.at(current_level) = buffer.GetString();
+	set_level_snap_shot(current_level, buffer.GetString());
 }
 
 void MapGeneratorSystem::load_level(int level)
@@ -408,7 +459,7 @@ void MapGeneratorSystem::load_initial_level()
 }
 
 // Creates a room entity, with room type referencing to the predefined room
-void MapGeneratorSystem::create_room(vec2 position, MapUtility::RoomID room_id) const
+void MapGeneratorSystem::create_room(vec2 position, MapUtility::RoomID room_id, int level) const
 {
 	auto entity = registry.create();
 
@@ -417,6 +468,7 @@ void MapGeneratorSystem::create_room(vec2 position, MapUtility::RoomID room_id) 
 
 	Room& room = registry.emplace<Room>(entity);
 	room.room_id = room_id;
+	room.level = level;
 }
 
 void MapGeneratorSystem::create_map(int level) const
@@ -430,7 +482,7 @@ void MapGeneratorSystem::create_map(int level) const
 		for (size_t col = 0; col < mapping[0].size(); col++) {
 			vec2 position = top_left_corner_pos + vec2(tile_size * room_size / 2)
 				+ vec2(col, row) * tile_size * static_cast<float>(room_size);
-			create_room(position, mapping.at(row).at(col));
+			create_room(position, mapping.at(row).at(col), level);
 		}
 	}
 }
@@ -438,7 +490,8 @@ void MapGeneratorSystem::create_map(int level) const
 uvec2 MapGeneratorSystem::get_player_start_position() const
 {
 	rapidjson::Document json_doc;
-	json_doc.Parse(level_snap_shots.at(current_level).c_str());
+	auto curren_level_conf = get_level_snap_shot(current_level);
+	json_doc.Parse(get_level_snap_shot(current_level).c_str());
 
 	const auto* x = rapidjson::GetValueByPointer(json_doc, rapidjson::Pointer("/player/start_position/x"));
 	const auto* y = rapidjson::GetValueByPointer(json_doc, rapidjson::Pointer("/player/start_position/y"));
@@ -449,7 +502,7 @@ uvec2 MapGeneratorSystem::get_player_start_position() const
 uvec2 MapGeneratorSystem::get_player_end_position() const
 {
 	rapidjson::Document json_doc;
-	json_doc.Parse(level_snap_shots.at(current_level).c_str());
+	json_doc.Parse(get_level_snap_shot(current_level).c_str());
 
 	const auto* x = rapidjson::GetValueByPointer(json_doc, rapidjson::Pointer("/player/end_position/x"));
 	const auto* y = rapidjson::GetValueByPointer(json_doc, rapidjson::Pointer("/player/end_position/y"));
@@ -458,10 +511,10 @@ uvec2 MapGeneratorSystem::get_player_end_position() const
 }
 
 const std::array<uint32_t, MapUtility::map_size * MapUtility::map_size>&
-MapGeneratorSystem::get_room_layout(MapUtility::RoomID room_id) const
+MapGeneratorSystem::get_room_layout(int level, MapUtility::RoomID room_id) const
 {
-	if (static_cast<uint8_t>(room_id) >= num_predefined_rooms) {
-		return map_generator.get_generated_room_layout(room_id - num_predefined_rooms);
+	if (level >= num_predefined_levels) {
+		return map_generator.get_generated_room_layout(current_level - num_predefined_levels, room_id);
 	}
 	return predefined_rooms.at(room_id);
 }
@@ -481,32 +534,91 @@ const std::set<uint8_t>& MapUtility::wall_tiles()
 
 /////////////////////
 // Map editor
+void MapGeneratorSystem::start_editing_level()
+{
+	clear_level();
+	// edit from current level or first available generated level if we
+	// are currently on a predefined level
+	if (current_level < num_predefined_levels) {
+		current_level = num_predefined_levels;
+	}
+	static const std::string map_editor_instruction = R"(
+In map editing mode.
+OPTIONS
+	n, load the next level
+	b, load previous level
+		)";
+	std::cout << map_editor_instruction << std::endl;
+
+	std::cout << "current level(excluding predefined levels): " << current_level - num_predefined_levels << std::endl; 
+	map_generator.generate_level(current_level - num_predefined_levels, true);
+	load_level(current_level);
+}
+void MapGeneratorSystem::edit_next_level()
+{
+	clear_level();
+	current_level ++;
+
+	std::cout << "current level(excluding predefined levels): " << current_level - num_predefined_levels << std::endl; 
+	map_generator.generate_level(current_level - num_predefined_levels, true);
+	load_level(current_level);
+}
+void MapGeneratorSystem::edit_previous_level()
+{
+	if (current_level == num_predefined_levels) {
+		std::cerr << "Cannot edit predefined levels!" << std::endl;
+		return;
+	}
+	clear_level();
+	current_level --;
+
+	std::cout << "current level(excluding predefined levels): " << current_level - num_predefined_levels << std::endl; 
+	map_generator.generate_level(current_level - num_predefined_levels, true);
+	load_level(current_level);
+}
+void MapGeneratorSystem::save_level_generation_confs()
+{
+	auto & level_generation_confs = map_generator.get_level_generation_confs();
+	for (size_t i = 0; i < level_generation_confs.size(); i++) {
+		rapidjson::Document json_doc;
+		level_generation_confs.at(i).serialize("/generation_conf", json_doc);
+
+		// convert to json
+		rapidjson::StringBuffer buffer;
+		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+		json_doc.Accept(writer);
+
+		// write to file
+		std::ofstream config(level_generation_conf_path(std::to_string(i) + ".json"), std::ofstream::trunc);
+		config << buffer.GetString();
+		config.close();
+	}
+	std::cout << "Saved generation configurations!" << std::endl;
+}
 void MapGeneratorSystem::regenerate_map()
 {
-	// TODO: remove hard-coded value
 	clear_level();
-	map_generator.generate_level(0);
-	current_level = num_predefined_levels;
+	map_generator.generate_level(current_level - num_predefined_levels, true);
 	load_level(current_level);
 }
 void MapGeneratorSystem::increment_seed()
 {
 	auto & curr_conf = map_generator.get_level_generation_confs().at(current_level - num_predefined_levels);
-	if (curr_conf.generation_seed == UINT_MAX) {
+	if (curr_conf.seed == UINT_MAX) {
 		return;
 	}
-	curr_conf.generation_seed++;
-	std::cout << "current seed: " << curr_conf.generation_seed << std::endl;
+	curr_conf.seed++;
+	std::cout << "current seed: " << curr_conf.seed << std::endl;
 	regenerate_map();
 }
 void MapGeneratorSystem::decrement_seed()
 {
 	auto& curr_conf = map_generator.get_level_generation_confs().at(current_level - num_predefined_levels);
-	if (curr_conf.generation_seed == 0) {
+	if (curr_conf.seed == 0) {
 		return;
 	}
-	curr_conf.generation_seed--;
-	std::cout << "current seed: " << curr_conf.generation_seed << std::endl;
+	curr_conf.seed--;
+	std::cout << "current seed: " << curr_conf.seed << std::endl;
 	regenerate_map();
 }
 void MapGeneratorSystem::increment_path_length() {
@@ -589,5 +701,25 @@ void MapGeneratorSystem::decrease_room_path_complexity()
 	}
 	curr_conf.room_path_complexity -= 0.1;
 	std::cout << "Current room path complexity: " << curr_conf.room_path_complexity << std::endl;
+	regenerate_map();
+}
+void MapGeneratorSystem::increase_room_traps_density()
+{
+	auto& curr_conf = map_generator.get_level_generation_confs().at(current_level - num_predefined_levels);
+	if (curr_conf.room_traps_density >= 0.95) {
+		return;
+	}
+	curr_conf.room_traps_density += 0.1;
+	std::cout << "Current room traps density: " << curr_conf.room_traps_density << std::endl;
+	regenerate_map();
+}
+void MapGeneratorSystem::decrease_room_traps_density()
+{
+	auto& curr_conf = map_generator.get_level_generation_confs().at(current_level - num_predefined_levels);
+	if (curr_conf.room_traps_density <= 0.05) {
+		return;
+	}
+	curr_conf.room_traps_density -= 0.1;
+	std::cout << "Current room traps density: " << curr_conf.room_traps_density << std::endl;
 	regenerate_map();
 }

@@ -1,12 +1,12 @@
 {
   "player": {
     "start_position": {
-      "x": 35,
-      "y": 46
+      "x": 55,
+      "y": 55
     },
     "end_position": {
-      "x": 54,
-      "y": 54
+      "x": 55,
+      "y": 55
     }
   },
   "enemies": []

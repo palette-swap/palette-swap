@@ -7,40 +7,46 @@
 #include <random>
 #include <set>
 
+#include "rapidjson/document.h"
+
 // Helper class to MapGeneratorSystem
 class MapGenerator {
-private:
-	// room_layouts that contains generated rooms,
-	// each element is a 10*10 array that defines each tile textures in the 10*10 room
-	using RoomLayout = std::array<uint32_t, MapUtility::room_size * MapUtility::room_size>;
-	std::vector<RoomLayout> room_layouts;
-
-	// generated levels
-	std::vector<MapUtility::Grid> generated_levels;
-
-	std::vector<std::string> level_snap_shots;
-
-    // Per-Level generation configuation, used as the metadata for generating a level,
+public:
+	// Per-Level generation configuation, used as the metadata for generating a level,
 	// this is meant to be editable and serializable,
 	struct LevelGenConf {
 		// The seed for generating pseudo random numbers, this is a constant so we generate the
 		// same map every time.
-		unsigned int generation_seed = 10;
+		unsigned int seed = 10;
 		// The number of rooms from start to end on a certain level
 		unsigned int level_path_length = 6;
 		
 		// room-specific properties 
-		// determines how uniformly the rooms are influenced by the following properties
-		float room_differences = 1.0f;
-		// decides how many wall tiles are spawned in a room
+		// decides how many solid tiles are spawned in a room
 		double room_density = 0.2;
 		// how many side rooms we have, 1 indicates there a side room next to each room
 		double side_room_percentage = 0.2;
 		// how complex the path in a room is
 		double room_path_complexity = 0.5;
 		// how dense traps are spawned
-		double room_trap_density = 0.1;
+		double room_traps_density = 0.1;
+
+		void serialize(const std::string& prefix, rapidjson::Document& json) const;
+		void deserialize(const std::string& prefix, const rapidjson::Document& json);
 	};
+private:
+	// room_layouts that contains generated rooms,
+	// each element is a 10*10 array that defines each tile textures in the 10*10 room
+	using RoomLayout = std::array<uint32_t, MapUtility::room_size * MapUtility::room_size>;
+
+	// per-level room layouts
+	std::vector<std::vector<RoomLayout>> room_layouts;
+
+	// generated levels
+	std::vector<MapUtility::Grid> generated_levels;
+
+	std::vector<std::string> level_snap_shots;
+
 	// the generation configuration for each level
 	std::vector<LevelGenConf> level_generation_confs;
 	
@@ -59,11 +65,11 @@ private:
 
 	// generate a room that has paths to all open sides, tile layout will be influenced by the level generation conf
 	// the open sides will be gauranteed to have at least 2 walkable tiles at the middle(row 4,5 or col 4,5)
-    void generate_room(const std::set<Direction> & path_directions, unsigned int level, RoomType room_type);
+    void generate_room(const std::set<Direction> & path_directions, unsigned int level, RoomType room_type, bool is_editing_map);
 
 public:
 	const std::array<uint32_t, MapUtility::map_size * MapUtility::map_size>&
-	get_generated_room_layout(MapUtility::RoomID room_id) const;
+	get_generated_room_layout(int level, MapUtility::RoomID room_id) const;
 
 	const MapUtility::Grid& get_generated_level_layout(unsigned int level) const;
 
@@ -72,14 +78,13 @@ public:
 	std::vector<LevelGenConf> & get_level_generation_confs();
 
 	const std::vector<std::string>& get_level_snap_shots() const;
+	void set_level_snap_shot(int level, const std::string & snapshot); 
 
     // get number of generated levels
 	unsigned int get_num_generated_levels() const;
-	// get number of generated rooms
-	unsigned int get_num_generated_rooms() const; 
 
 	// Generates the levels, should be called at the beginning of the game,
 	// might want to pass in a seed in the future
-	void generate_level(int level);
+	void generate_level(int level, bool is_editing_map = false);
 
 };

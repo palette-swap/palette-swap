@@ -195,6 +195,7 @@ struct Room {
 	// use 0xff to indicate uninitialized value
 	// this can have potential bug if we have up to 255 rooms, but we probably won't...
 	MapUtility::RoomID room_id = 0xff;
+	int level = -1;
 };
 
 // For TileMap vertex buffers, we need a separate tile_texture float because we want

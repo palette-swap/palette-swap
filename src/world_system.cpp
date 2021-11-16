@@ -382,7 +382,6 @@ void WorldSystem::check_debug_keys(int key, int action, int mod)
 	if (is_editing_map) {
 		if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_M) {
 			is_editing_map = false;
-			debugging.in_debug_mode = false;
 			std::cout << "Stopping editing map" << std::endl;
 		}
 
@@ -406,15 +405,23 @@ void WorldSystem::check_debug_keys(int key, int action, int mod)
 			map_generator->increase_room_path_complexity();
 		} else if (key == GLFW_KEY_F && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
 			map_generator->decrease_room_path_complexity();
+		} else if (key == GLFW_KEY_C && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->increase_room_traps_density();
+		} else if (key == GLFW_KEY_V && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->decrease_room_traps_density();
+		} else if (key == GLFW_KEY_P && (mod & GLFW_MOD_CONTROL) != 0 && action == GLFW_RELEASE) {
+			map_generator->save_level_generation_confs();
+		} else if (key == GLFW_KEY_N && (action == GLFW_RELEASE)) {
+			map_generator->edit_next_level();
+		} else if (key == GLFW_KEY_B && (action == GLFW_RELEASE)) {
+			map_generator->edit_previous_level();
 		}
 	}
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_M) {
 		is_editing_map = true;
-		debugging.in_debug_mode = true;
 		// move player to center to center camera
 		registry.get<MapPosition>(player).position = uvec2(55, 55);
-		map_generator->regenerate_map();
-		std::cout << "editing map" << std::endl;
+		map_generator->start_editing_level();
 	}
 }
 

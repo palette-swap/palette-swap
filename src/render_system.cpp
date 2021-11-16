@@ -351,14 +351,13 @@ void RenderSystem::draw_map(const mat3& projection)
 		Transform transform = get_transform(entity);
 		transform.scale(scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::TILE_SET)));
 
-		MapUtility::RoomID room_id = room.room_id;
 		glActiveTexture(GL_TEXTURE0);
 		gl_has_errors();
 		GLuint texture_id = texture_gl_handles.at((GLuint)TEXTURE_ASSET_ID::TILE_SET);
 		glBindTexture(GL_TEXTURE_2D, texture_id);
 		gl_has_errors();
 
-		const auto& room_layout = map_generator->get_room_layout(room_id);
+		const auto& room_layout = map_generator->get_room_layout(room.level, room.room_id);
 		GLint room_layout_loc = glGetUniformLocation(program, "room_layout");
 		glUniform1uiv(room_layout_loc, (GLsizei) room_layout.size(), room_layout.data());
 

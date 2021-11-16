@@ -34,6 +34,10 @@ private:
 	{
 		return data_path() + "/level_configurations/" + std::string(name);
 	}
+	static std::string level_generation_conf_path(const std::string& name)
+	{
+		return data_path() + "/level_generation_conf/" + std::string(name);
+	}
 
 	////////////////////////////////
 	/// Actual file paths
@@ -58,18 +62,18 @@ private:
 		predefined_rooms_path("room_horizontal.csv"), // 17
 	};
 	const std::array<std::string, MapUtility::num_predefined_levels> predefined_level_paths
-		= { levels_path("help_level.csv"), levels_path("level_one.csv"), levels_path("level_two.csv") };
+		= { levels_path("help_level.csv") };
 	const std::array<std::string, MapUtility::num_predefined_levels> level_configuration_paths = {
-		level_configurations_path("help_level.json"),
-		level_configurations_path("level_one.json"),
-		level_configurations_path("level_two.json"),
+		level_configurations_path("help_level.json")
 	};
 	
 	/////////////////////////////////////
 	// Loaders
-	void load_rooms_from_csv(); 
-	void load_levels_from_csv(); // load both level and rooms rotations
+	void load_predefined_rooms(); 
+	void load_predefined_levels();
 	void load_level_configurations();
+	// Note: the number of generation files won't be fixed, so we use the level number as each file name
+	void load_level_generation_confs();
 
 	///////////////////////////////////////////////////////////
 	// Data structures that saves the information loaded
@@ -94,6 +98,9 @@ private:
 	// each cell in the grid is a room.
 	const MapUtility::Grid & get_level_layout(int level) const;
 
+	const std::string & get_level_snap_shot(int level) const;
+	void set_level_snap_shot(int level, const std::string & snapshot);
+
 	// get the tile texture id, of the position on a map
 	MapUtility::TileID get_tile_id_from_map_pos(uvec2 pos) const;
 
@@ -105,14 +112,13 @@ private:
 	// Clear current level
 	void clear_level() const;
 
-	// Load level specified, if snap shot exists, load from it,
-	// Otherwise load from statically defined files(TODO: use procedural generation instead)
+	// Load level specified
 	void load_level(int level);
 
 	// Create the current map
 	void create_map(int level) const;
 	// Create a room
-	void create_room(vec2 position, MapUtility::RoomID room_id) const;
+	void create_room(vec2 position, MapUtility::RoomID room_id, int level) const;
 
 	// map generator
 	MapGenerator map_generator;
@@ -120,6 +126,9 @@ private:
 	// Entity for the help picture
 	Entity help_picture = entt::null;
 	void create_picture();
+
+	// map editor
+	int current_editing_level = -1;
 
 public:
 	MapGeneratorSystem();
@@ -144,7 +153,7 @@ public:
 	std::vector<uvec2> shortest_path(uvec2 start, uvec2 target, bool use_a_star = true) const;
 
 	MapUtility::TileID
-	get_tile_id_from_room(MapUtility::RoomID room_id, uint8_t row, uint8_t col) const;
+	get_tile_id_from_room(int level, MapUtility::RoomID room_id, uint8_t row, uint8_t col) const;
 
 	bool is_next_level_tile(uvec2 pos) const;
 	bool is_last_level_tile(uvec2 pos) const;
@@ -168,10 +177,16 @@ public:
 
 	// Get the 10*10 layout array for a room, mainly used by rendering
 	const std::array<uint32_t, MapUtility::map_size * MapUtility::map_size>&
-	get_room_layout(MapUtility::RoomID room_id) const;
+	get_room_layout(int level, MapUtility::RoomID room_id) const;
+
+	// load the generated levels, using the generation configurations
+	void load_generated_levels();
 
 	/////////////////////////////////////////////////
 	// Map Editor
+	void start_editing_level();
+	void edit_next_level();
+	void edit_previous_level();
 	void regenerate_map();
 	void increment_seed();
 	void decrement_seed();
@@ -183,4 +198,7 @@ public:
 	void decrease_side_rooms();
 	void increase_room_path_complexity();
 	void decrease_room_path_complexity();
+	void increase_room_traps_density();
+	void decrease_room_traps_density();
+	void save_level_generation_confs();
 };
