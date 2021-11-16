@@ -102,6 +102,9 @@ public:
 	// Draw all entities
 	void draw();
 
+	// Draw UI entities over top
+	void draw_ui(const mat3& projection);
+
 	mat3 create_projection_matrix();
 	vec2 screen_position_to_world_position(vec2 screen_pos);
 

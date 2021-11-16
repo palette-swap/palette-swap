@@ -592,39 +592,7 @@ void RenderSystem::draw()
 		registry.view<Stats, Enemy>().each(health_group_lambda);
 	}
 
-	for (auto [entity, group] : registry.view<UIGroup>().each()) {
-		if (group.visible) {
-			Entity curr = group.first_element;
-			while (curr != entt::null) {
-				UIElement& element = registry.get<UIElement>(curr);
-				if (element.visible) {
-					if (UIRenderRequest* ui_render_request = registry.try_get<UIRenderRequest>(curr)) {
-						draw_ui_element(curr, *ui_render_request, projection_2d);
-					} else if (Line* line = registry.try_get<Line>(curr)) {
-						draw_line(entity, *line, projection_2d);
-					}
-				}
-				curr = element.next;
-			}
-		}
-	}
-
-	for (auto [entity, group] : registry.view<UIGroup>().each()) {
-		if (group.visible) {
-			Entity curr = group.first_text;
-			while (curr != entt::null) {
-				UIElement& element = registry.get<UIElement>(curr);
-				if (element.visible) {
-					draw_text(curr, registry.get<Text>(curr), projection_2d);
-				}
-				curr = element.next;
-			}
-		}
-	}
-
-	for (auto [entity, line] : registry.view<Line>(entt::exclude<UIElement>).each()) {
-		draw_line(entity, line, projection_2d);
-	}
+	draw_ui(projection_2d);
 
 	// Truely render to the screen
 	draw_to_screen();
@@ -632,6 +600,48 @@ void RenderSystem::draw()
 	// flicker-free display with a double buffer
 	glfwSwapBuffers(window);
 	gl_has_errors();
+}
+
+void RenderSystem::draw_ui(const mat3& projection)
+{
+	// First, draw rectangles, lines, etc.
+	for (auto [entity, group] : registry.view<UIGroup>().each()) {
+		if (!group.visible) {
+			continue;
+		}
+		Entity curr = group.first_element;
+		while (curr != entt::null) {
+			UIElement& element = registry.get<UIElement>(curr);
+			if (element.visible) {
+				if (UIRenderRequest* ui_render_request = registry.try_get<UIRenderRequest>(curr)) {
+					draw_ui_element(curr, *ui_render_request, projection);
+				} else if (Line* line = registry.try_get<Line>(curr)) {
+					draw_line(entity, *line, projection);
+				}
+			}
+			curr = element.next;
+		}
+	}
+
+	// Then, draw text over top
+	for (auto [entity, group] : registry.view<UIGroup>().each()) {
+		if (!group.visible) {
+			continue;
+		}
+		Entity curr = group.first_text;
+		while (curr != entt::null) {
+			UIElement& element = registry.get<UIElement>(curr);
+			if (element.visible) {
+				draw_text(curr, registry.get<Text>(curr), projection);
+			}
+			curr = element.next;
+		}
+	}
+
+	// Finally, draw debug lines over absolutely everything
+	for (auto [entity, line] : registry.view<Line>(entt::exclude<UIElement>).each()) {
+		draw_line(entity, line, projection);
+	}
 }
 
 // projection matrix based on position of camera entity
