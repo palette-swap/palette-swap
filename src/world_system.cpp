@@ -214,12 +214,12 @@ void WorldSystem::restart_game()
 	// Debugging for memory/component leaks
 	std::cout << "Alive: " << registry.alive() << std::endl;
 
-	map_generator->load_initial_level();
-
-	// a random starting position... probably need to update this
-	uvec2 player_starting_point = map_generator->get_player_start_position();
 	// Create a new Player instance and shift player onto a tile
-	player = create_player(player_starting_point);
+	// player position will be updated as the level load
+	player = create_player({0, 0});
+	map_generator->load_initial_level();
+	uvec2 player_starting_point = registry.get<MapPosition>(player).position;
+
 	// TODO: Should move into create_player (under world init) afterwards
 	animations->set_player_animation(player);
 
@@ -382,7 +382,8 @@ void WorldSystem::check_debug_keys(int key, int action, int mod)
 	if (is_editing_map) {
 		if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_M) {
 			is_editing_map = false;
-			std::cout << "Stopping editing map" << std::endl;
+			map_generator->stop_editing_level();
+			return;
 		}
 
 		if (key == GLFW_KEY_Q && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
@@ -419,8 +420,6 @@ void WorldSystem::check_debug_keys(int key, int action, int mod)
 	}
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_M) {
 		is_editing_map = true;
-		// move player to center to center camera
-		registry.get<MapPosition>(player).position = uvec2(55, 55);
 		map_generator->start_editing_level();
 	}
 }
@@ -502,10 +501,8 @@ void WorldSystem::move_player(Direction direction)
 		}
 
 		map_generator->load_next_level();
-		registry.get<MapPosition>(player).position = map_generator->get_player_start_position();
 	} else if (map_generator->is_last_level_tile(new_pos)) {
 		map_generator->load_last_level();
-		registry.get<MapPosition>(player).position = map_generator->get_player_end_position();
 	}
 }
 

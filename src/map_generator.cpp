@@ -8,38 +8,6 @@
 
 using namespace MapUtility;
 
-const std::array<uint32_t, MapUtility::map_size * MapUtility::map_size>&
-	MapGenerator::get_generated_room_layout(int level, RoomID room_id) const 
-{
-	return room_layouts.at(level).at(static_cast<size_t>(room_id));
-}
-
-const MapUtility::Grid& MapGenerator::get_generated_level_layout(unsigned int level) const
-{
-	return generated_levels.at(level);
-}
-
-// get the level generation configuration vector
-std::vector<MapGenerator::LevelGenConf> & MapGenerator::get_level_generation_confs()
-{
-	return level_generation_confs;
-}
-
-unsigned int MapGenerator::get_num_generated_levels() const
-{
-	return static_cast<unsigned int>(generated_levels.size());
-}
-
-const std::vector<std::string>& MapGenerator::get_level_snap_shots() const
-{
-	return level_snap_shots;
-}
-
-void MapGenerator::set_level_snap_shot(int level, const std::string & snapshot)
-{
-	level_snap_shots.at(level) = snapshot;
-}
-
 ////////////////////////////////////
 // Helpers for procedural generation
 const static std::map<Direction, std::array<int, 2>> direction_vec = {
@@ -73,10 +41,26 @@ static bool is_straight_room(const std::set<Direction> & open_sides) {
 	return (opposite_direction(*(open_sides.begin())) == *(open_sides.end()));
 }
 
-void MapGenerator::generate_room(const std::set<Direction> & path_directions, unsigned int level, RoomType room_type, bool is_editing_map)
+RoomLayout MapGenerator::generate_room(const std::set<Direction> & open_directions,
+									   RoomType room_type,
+									   MapUtility::LevelGenConf level_gen_conf,
+									   RoomGenerationEngines random_engs,
+									   bool is_debugging)
 {
-	std::set<Direction> open_sides = path_directions;
+    // Contants
+	const static uint8_t solid_block_tile = 12;
+	const static uint8_t void_tile = 10;
+	const static std::array<uint8_t, 2> trap_tiles = { 30, 38 };
+	// the entrance size on each open side
+	const static int room_entrance_size = 2;
+	// the start and end position of the entrance
+	const static int room_entrance_start = (room_size - room_entrance_size) / 2;
+	const static int room_entrance_end = (room_size + room_entrance_size) / 2 - 1;
+	// max generation values
+	const static double max_side_path_probability = 0.9;
+	const static double max_traps_density = 0.3;
 
+	// Room templates
 	const static std::map<RoomType, RoomLayout> room_templates = {
 		{ RoomType::Start,
 		{
@@ -106,30 +90,19 @@ void MapGenerator::generate_room(const std::set<Direction> & path_directions, un
 		}},
 	};
 
-    // Contants
-	const static uint8_t solid_block_tile = 12;
-	const static uint8_t void_tile = 10;
-	const static std::array<uint8_t, 2> trap_tiles = { 30, 38 };
-	// the entrance size on each open side
-	const static int room_entrance_size = 2;
-	// the start and end position of the entrance
-	const static int room_entrance_start = (room_size - room_entrance_size) / 2;
-	const static int room_entrance_end = (room_size + room_entrance_size) / 2 - 1;
-	const static double max_side_path_probability = 0.9;
-	const static double max_traps_density = 0.3;
-
-	const LevelGenConf& level_gen_conf = level_generation_confs.at(level);
-
-	// get a random direction when generating path
+	// get a random direction when generating path within a room.
+	// When generating, direction that is opposite to the starting direction will be preferred,
+	// the likelihood of choosing a direction that's vertical to the starting direction can be
+	// increase by increasing room path complexity
 	auto get_next_direction = [&](Direction starting_direction) {
 		std::bernoulli_distribution side_path_dist(max_side_path_probability * level_gen_conf.room_path_complexity);
-		if (!side_path_dist(room_random_eng)) {
+		if (!side_path_dist(random_engs.general_eng)) {
 			return opposite_direction(starting_direction);
 		}
 
 		// randomly choose a side to side step
 		std::bernoulli_distribution side_dist(0.5);
-		bool left_side = side_dist(room_random_eng);
+		bool left_side = side_dist(random_engs.general_eng);
 
 		if (starting_direction == Direction::Left || starting_direction == Direction::Right) {
 			return left_side ? Direction::Up : Direction::Down;
@@ -141,6 +114,7 @@ void MapGenerator::generate_room(const std::set<Direction> & path_directions, un
 		return Direction::Undefined;
 	};
 
+	// add a straight path within a room from starting location to end location
 	auto add_straight_path = [](std::set<int> & current_path, int from_position, int to_position) {
 		int from_row = from_position / 10;
 		int from_col = from_position % 10;
@@ -157,46 +131,44 @@ void MapGenerator::generate_room(const std::set<Direction> & path_directions, un
 		}
 	};
 
-    // based on room orientation, decide if the room is a corridar
+    // based on room open directions, decide if the room is a corridar
 	auto is_corridar_room = [&]() {
-		return (path_directions.size() == 2 &&
-			path_directions.find(opposite_direction(*(path_directions.begin()))) != path_directions.end());
+		return (open_directions.size() == 2 && room_type == RoomType::Critical &&
+			open_directions.find(opposite_direction(*(open_directions.begin()))) != open_directions.end());
 	};
 
-	// // We could change this to a random value as well, but constant corridar width seems fine, note the width includes boundaries
-	// const static int corridar_width = 4;
 	std::uniform_int_distribution<int> corridar_width_dist(4, 8);
-	int corridar_width = corridar_width_dist(room_random_eng);
+	int corridar_width = corridar_width_dist(random_engs.general_eng);
 
 	int first_row = 0;
 	int last_row = room_size - 1;
 	int first_col = 0;
 	int last_col = room_size - 1;
 	if (is_corridar_room()) {
-		if (path_directions.find(Direction::Up) != path_directions.end())
+		if (open_directions.find(Direction::Up) != open_directions.end())
 		{
 			first_col = (room_size - corridar_width) / 2;
 			last_col = (room_size + corridar_width) / 2 - 1;
 		}
-		if (path_directions.find(Direction::Left) != path_directions.end())
+		if (open_directions.find(Direction::Left) != open_directions.end())
 		{
 			first_row = (room_size - corridar_width) / 2;
 			last_row = (room_size + corridar_width) / 2 - 1;
 		}
 	}
 
-	// checks if a tile is on the entrance path
+	// checks if a tile is on the room entrance path, the entrance path is the middle tiles at the open sides of a room
 	auto is_on_entrance_path = [&](int room_tile_position) {
 		int room_tile_row = room_tile_position / 10;
 		int room_tile_col = room_tile_position % 10;
 		return (
-			(path_directions.find(Direction::Up) != path_directions.end() &&
+			(open_directions.find(Direction::Up) != open_directions.end() &&
 			(room_tile_row == first_row && (room_entrance_start <= room_tile_col && room_tile_col <= room_entrance_end))) ||
-			(path_directions.find(Direction::Left) != path_directions.end() &&
+			(open_directions.find(Direction::Left) != open_directions.end() &&
 			(room_tile_col == first_col && (room_entrance_start <= room_tile_row && room_tile_row <= room_entrance_end))) ||
-			(path_directions.find(Direction::Down) != path_directions.end() &&
+			(open_directions.find(Direction::Down) != open_directions.end() &&
 			(room_tile_row == last_row && (room_entrance_start <= room_tile_col && room_tile_col <= room_entrance_end))) ||
-			(path_directions.find(Direction::Right) != path_directions.end() &&
+			(open_directions.find(Direction::Right) != open_directions.end() &&
 			(room_tile_col == last_col && (room_entrance_start <= room_tile_row && room_tile_row <= room_entrance_end))));
 	};
 	
@@ -220,7 +192,7 @@ void MapGenerator::generate_room(const std::set<Direction> & path_directions, un
 	// get an arbitary starting poistion given the starting direction
 	auto get_starting_position = [&](Direction starting_direction) {
 		std::uniform_int_distribution<int> starting_pos_dist(room_entrance_start, room_entrance_end);
-		int starting_pos = starting_pos_dist(room_random_eng);
+		int starting_pos = starting_pos_dist(random_engs.general_eng);
 		if (starting_direction == Direction::Left) {
 			return room_size * starting_pos + first_col;
 		}
@@ -237,24 +209,27 @@ void MapGenerator::generate_room(const std::set<Direction> & path_directions, un
 		return -1;
 	};
 
+	// start generating path that connects all open sides
+	std::set<Direction> sides_to_connect = open_directions;
+
+    // a set is sufficient to save the path as we only need to make sure we don't generate a cycle, and is more efficient
 	std::set<int> critical_locations;
-	Direction starting_direction = *(open_sides.begin());
+	Direction starting_direction = *(sides_to_connect.begin());
+	// we use previous room position to obtain the next room position
 	int previous_room_position = get_starting_position(starting_direction);
 
 	RoomLayout room_layout {};
 
 	if (room_type == RoomType::Critical) {
-		// start walking -- we explore any directions except for starting direction,
-		// the opposite direction of starting direction has bigger chance to be explored,
-		// the verticle directions are less likely to be explored, depending on room path complexity.
-		
-		while (!open_sides.empty()) {
+		while (!sides_to_connect.empty()) {
 			Direction next_direction = get_next_direction(starting_direction);
 			int next_room_position =
 				(critical_locations.empty())
 				? previous_room_position
 				: previous_room_position + room_size * direction_vec.at(static_cast<Direction>(next_direction)).at(1)
 					+ direction_vec.at(static_cast<Direction>(next_direction)).at(0);
+
+			// make sure we are within the room boundary and we are not re-generating an existing tile
 			if (next_room_position < 0 || next_room_position >= room_size * room_size || is_boundary_tile(next_room_position)
 				|| critical_locations.find(next_room_position) != critical_locations.end()) {
 				continue;
@@ -265,23 +240,23 @@ void MapGenerator::generate_room(const std::set<Direction> & path_directions, un
 
 			// check if current position is aligned with any opening sides, we directly go straight towards it
 			if (next_row >= room_entrance_start && next_row <= room_entrance_end) {
-				if (open_sides.find(Direction::Left) != open_sides.end()) {
+				if (sides_to_connect.find(Direction::Left) != sides_to_connect.end()) {
 					add_straight_path(critical_locations, next_room_position, next_row * room_size + first_col);
-					open_sides.erase(Direction::Left);
+					sides_to_connect.erase(Direction::Left);
 				}
-				if (open_sides.find(Direction::Right) != open_sides.end()) {
+				if (sides_to_connect.find(Direction::Right) != sides_to_connect.end()) {
 					add_straight_path(critical_locations, next_room_position, next_row * room_size + last_col);
-					open_sides.erase(Direction::Right);
+					sides_to_connect.erase(Direction::Right);
 				}
 			}
 			if (next_col >= room_entrance_start && next_col <= room_entrance_end) {
-				if (open_sides.find(Direction::Up) != open_sides.end()) {
+				if (sides_to_connect.find(Direction::Up) != sides_to_connect.end()) {
 					add_straight_path(critical_locations, next_room_position, first_row * room_size + next_col);
-					open_sides.erase(Direction::Up);
+					sides_to_connect.erase(Direction::Up);
 				}
-				if (open_sides.find(Direction::Down) != open_sides.end()) {
+				if (sides_to_connect.find(Direction::Down) != sides_to_connect.end()) {
 					add_straight_path(critical_locations, next_room_position, last_row * room_size + next_col);
-					open_sides.erase(Direction::Down);
+					sides_to_connect.erase(Direction::Down);
 				}
 			}
 
@@ -289,7 +264,9 @@ void MapGenerator::generate_room(const std::set<Direction> & path_directions, un
 			critical_locations.emplace(next_room_position);
 			previous_room_position = next_room_position;
 		}
-	} else if (room_type != RoomType::Side) {
+	} else if (room_type == RoomType::Side) {
+		/* Might be okay to not do anything for side rooms, or we could have some templates */
+	} else {
 		room_layout = room_templates.at(room_type);
 	}
 
@@ -310,9 +287,9 @@ void MapGenerator::generate_room(const std::set<Direction> & path_directions, un
 				room_layout.at(room_index) = solid_block_tile;
 			} else {
 				// spin the random generator every time to keep random blocks independent to traps
-				bool will_try_spawn_block = blocks_dist(room_random_eng);
-				if (spawn_traps_dist(room_traps_random_eng)) {
-					room_layout.at(room_index) = trap_tiles.at(traps_dist(room_traps_random_eng));
+				bool will_try_spawn_block = blocks_dist(random_engs.general_eng);
+				if (spawn_traps_dist(random_engs.traps_eng)) {
+					room_layout.at(room_index) = trap_tiles.at(traps_dist(random_engs.traps_eng));
 				} else if ((room_type == RoomType::Critical)
 					&& (critical_locations.find(room_index) == critical_locations.end())
 					&& will_try_spawn_block) {
@@ -321,61 +298,46 @@ void MapGenerator::generate_room(const std::set<Direction> & path_directions, un
 			}
 		}
 	}
-	if (is_editing_map) {
+	if (is_debugging) {
 		for (int room_loc : critical_locations) {
 			room_layout.at(room_loc) = 10;
 		}
 	}
 
-	room_layouts.at(level).emplace_back(room_layout);
+	return room_layout;
 }
 
-void MapGenerator::generate_level(int level, bool is_editing_map)
+LevelConfiguration MapGenerator::generate_level(LevelGenConf level_gen_conf, bool is_debugging)
 {
-	// make sure we have allocated space for the levels
-	if (level_generation_confs.size() <= level) {
-		level_generation_confs.resize(level + 1);
-	}
-	if (generated_levels.size() <= level) {
-		generated_levels.resize(level + 1);
-	}
-	if (level_snap_shots.size() <= level) {
-		level_snap_shots.resize(level + 1);
-	}
-	if (room_layouts.size() <= level) {
-		room_layouts.resize(level + 1);
-	}
-	room_layouts.at(level).clear();
-
-    // Start procedural generation by choose a random position to place the first room
-	const LevelGenConf& level_gen_conf = level_generation_confs.at(level);
+	LevelConfiguration level_conf;
+	// prepare the random engines
+	std::default_random_engine random_eng;
 	random_eng.seed(level_gen_conf.seed);
-
-	std::uniform_int_distribution<int> random_number_distribution(0, 9);
-	int start_row = random_number_distribution(random_eng);
-	int start_col = random_number_distribution(random_eng);
-
-	Grid& level_mapping = generated_levels.at(level);
 
     // initialize all rooms to be void first
 	RoomLayout void_room;
 	void_room.fill(10);
-	room_layouts.at(level).emplace_back(void_room);
+	level_conf.room_layouts.emplace_back(void_room);
 	for (int row = 0; row < map_size; row++) {
 		for (int col = 0; col < map_size; col++) {
-			level_mapping.at(row).at(col) = room_layouts.at(level).size() - 1;
+			level_conf.map_layout.at(row).at(col) = 0;
 		}
 	}
 
-    // 1. Initialize path with starting cell, each element in path represents a room position,
-	// calculated by row*10+col
-	std::vector<int> path = {start_row * 10 + start_col};
+	// 1. Start procedural generation by choose a random position to place the first room
+	std::uniform_int_distribution<int> random_number_distribution(0, map_size - 1);
+	int start_row = random_number_distribution(random_eng);
+	int start_col = random_number_distribution(random_eng);
+
+	// use an array to keep the path, each element is calculated by 10 * row + col
+	std::vector<int> path = {start_row * map_size + start_col};
 	// Keeps a direction_tried set for each room, so we could backtrack
 	std::vector<std::set<Direction>> directions_tried(1);
 	int current_row = start_row;
 	int current_col = start_col;
 	int current_length = 1;
 
+    // randomly choose one of the four directions
 	std::uniform_int_distribution<int> direction_rand(0, 3);
 
 	while (current_length < level_gen_conf.level_path_length)
@@ -395,17 +357,18 @@ void MapGenerator::generate_level(int level, bool is_editing_map)
 			int next_row = current_row + direction_vec.at(direction).at(1);
 			int next_col = current_col + direction_vec.at(direction).at(0);
 			// make sure we are not out of bounds
-			if (next_row >= room_size || next_row < 0 || next_col >= room_size || next_col < 0) {
+			if (next_row >= map_size || next_row < 0 || next_col >= map_size || next_col < 0) {
 				continue;
 			}
 
 			// make sure the room has not been added to path
-			if (std::find(path.begin(), path.end(), (next_row * 10 + next_col )) != path.end()) {
+			if (std::find(path.begin(), path.end(), (next_row * map_size + next_col )) != path.end()) {
 				continue;
 			}
 			
-			path.emplace_back(next_row * 10 + next_col);
-			directions_tried.emplace_back(std::set<Direction>());
+			path.emplace_back(next_row * map_size + next_col);
+			// the direction tried for the generated room will be the opposite of currently chosen direction
+			directions_tried.emplace_back(std::set<Direction>({opposite_direction(direction)}));
 			current_row = next_row;
 			current_col = next_col;
 			current_length ++;
@@ -428,7 +391,7 @@ void MapGenerator::generate_level(int level, bool is_editing_map)
 		}
 	}
 
-    // get the open direction of the room given the from room to 
+    // get the open direction of the room given the start room to end room, note the two rooms are expect to be neighbour
 	auto get_open_direction = [](int from_room_index, int to_room_index) {
 		int from_row = from_room_index / 10;
 		int from_col = from_room_index % 10;
@@ -442,7 +405,7 @@ void MapGenerator::generate_level(int level, bool is_editing_map)
 		return Direction::Undefined;
 	};
 
-	// check if the tile to specified direction will exceed the room boundaries
+	// check if the room to specified direction will exceed the map boundaries
 	auto will_exceed_boundary = [](int room_position, Direction direction) {
 		return ((room_position / room_size == 0 && direction == Direction::Up)
 			|| (room_position / room_size == room_size - 1 && direction == Direction::Down)
@@ -450,16 +413,14 @@ void MapGenerator::generate_level(int level, bool is_editing_map)
 			|| (room_position % room_size == room_size - 1 && direction == Direction::Right));
 	};
 
-	// generate room layouts
-	std::bernoulli_distribution side_room_dist(level_gen_conf.side_room_percentage);
-	// refresh random engine
-	random_eng.seed(level_gen_conf.seed);
-	room_random_eng.seed(level_gen_conf.seed);
-	room_traps_random_eng.seed(level_gen_conf.seed);
-	// load level snapshot
+	// Construct room generation engines
+	RoomGenerationEngines room_rand_engines(level_gen_conf.seed);
+	// prepare level snapshot
 	rapidjson::Document level_snap_shot;
 	rapidjson::CreateValueByPointer(level_snap_shot, rapidjson::Pointer("/enemies/0"));
-	// json_doc.Parse(level_snap_shots.at(level).c_str());
+
+	// side room distribution based on side room percentage
+	std::bernoulli_distribution side_room_dist(level_gen_conf.side_room_percentage);
 
 	for (int i = 0; i < path.size(); i++) {
 		std::set<Direction> open_directions;
@@ -481,8 +442,10 @@ void MapGenerator::generate_level(int level, bool is_editing_map)
 				}
 				int target_position = room_position + 10 * direction_vec.at(static_cast<Direction>(d)).at(1) + direction_vec.at(static_cast<Direction>(d)).at(0);  
 				if (target_position >= 0 && target_position < room_size * room_size && std::find(path.begin(), path.end(), target_position) == path.end()) {
-					generate_room({get_open_direction(target_position, room_position)}, level, RoomType::Side, is_editing_map);
-					level_mapping.at(target_position / 10).at(target_position % 10) = static_cast<RoomID>(room_layouts.at(level).size() - 1);
+					level_conf.room_layouts.emplace_back(
+						generate_room({get_open_direction(target_position, room_position)}, RoomType::Side, level_gen_conf, room_rand_engines, is_debugging)
+					);
+					level_conf.map_layout.at(target_position / 10).at(target_position % 10) = static_cast<RoomID>(level_conf.room_layouts.size() - 1);
 
 					// add side room direction to open directions
 					open_directions.emplace(get_open_direction(room_position, target_position));
@@ -491,59 +454,28 @@ void MapGenerator::generate_level(int level, bool is_editing_map)
 			}
 		}
 
+		RoomLayout room_layout;
 		if (i == 0) {
 			// generating start room
-			generate_room(open_directions, level, RoomType::Start, is_editing_map);
+			room_layout = generate_room(open_directions, RoomType::Start, level_gen_conf, room_rand_engines, is_debugging);
 			// 4 and 5 are being hard-coded here, this relates to the room templates defined in generate_room, we would
 			// want to handle this more appropriately when we have more room templates
-			rapidjson::SetValueByPointer(level_snap_shot, rapidjson::Pointer("/player/start_position/x"), col * room_size + 5);
-			rapidjson::SetValueByPointer(level_snap_shot, rapidjson::Pointer("/player/start_position/y"), row * room_size + 5);
-		} else if (i == path.size() - 1) {
-			// generating end room
-			generate_room(open_directions, level, RoomType::End, is_editing_map);
-			rapidjson::SetValueByPointer(level_snap_shot, rapidjson::Pointer("/player/end_position/x"), col * room_size + 4);
-			rapidjson::SetValueByPointer(level_snap_shot, rapidjson::Pointer("/player/end_position/y"), row * room_size + 4);
+			rapidjson::SetValueByPointer(level_snap_shot, rapidjson::Pointer("/player/position/x"), col * room_size + 5);
+			rapidjson::SetValueByPointer(level_snap_shot, rapidjson::Pointer("/player/position/y"), row * room_size + 5);
 		} else {
 			// generate a room on the critical path
-			generate_room(open_directions, level, RoomType::Critical, is_editing_map);
+			room_layout = generate_room(open_directions, (i == path.size() - 1) ? RoomType::End : RoomType::Critical, level_gen_conf, room_rand_engines, is_debugging);
 		}
 
-		level_mapping.at(row).at(col) = static_cast<RoomID>(room_layouts.at(level).size() - 1);
+		level_conf.room_layouts.emplace_back(room_layout);
+		level_conf.map_layout.at(row).at(col) = static_cast<RoomID>(level_conf.room_layouts.size() - 1);
 	}
 
 	// update level snap shots
 	rapidjson::StringBuffer buffer;
 	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 	level_snap_shot.Accept(writer);
-	level_snap_shots.at(level) = buffer.GetString();
-}
+	level_conf.level_snap_shot = buffer.GetString();
 
-static const rapidjson::Value * get_and_assert_value_from_json(const std::string& prefix, const rapidjson::Document& json) {
-	const auto * value = rapidjson::GetValueByPointer(json, rapidjson::Pointer(prefix.c_str()));
-	assert(value);
-	return value;
-}
-
-void MapGenerator::LevelGenConf::serialize(const std::string& prefix, rapidjson::Document& json) const {
-	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/seed").c_str()), seed);
-	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/level_path_length").c_str()), level_path_length);
-	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/room_density").c_str()), room_density);
-	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/side_room_percentage").c_str()), side_room_percentage);
-	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/room_path_complexity").c_str()), room_path_complexity);
-	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/room_traps_density").c_str()), room_traps_density);
-}
-
-void MapGenerator::LevelGenConf::deserialize(const std::string& prefix, const rapidjson::Document& json) {
-	const auto* seed_value = get_and_assert_value_from_json(prefix + "/seed", json);
-	seed = seed_value->GetUint();
-	const auto* level_path_length_value = get_and_assert_value_from_json(prefix + "/level_path_length", json);
-	level_path_length = level_path_length_value->GetUint();
-	const auto* room_density_value = get_and_assert_value_from_json(prefix + "/room_density", json);
-	room_density = room_density_value->GetDouble();
-	const auto* side_room_percentage_value = get_and_assert_value_from_json(prefix + "/side_room_percentage", json);
-	side_room_percentage = side_room_percentage_value->GetDouble();
-	const auto* room_path_complexity_value = get_and_assert_value_from_json(prefix + "/room_path_complexity", json);
-	room_path_complexity = room_path_complexity_value->GetDouble();
-	const auto* room_traps_density_value = get_and_assert_value_from_json(prefix + "/room_traps_density", json);
-	room_traps_density = room_traps_density_value->GetDouble();
+	return level_conf;
 }

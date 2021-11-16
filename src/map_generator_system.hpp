@@ -67,41 +67,32 @@ private:
 		level_configurations_path("help_level.json")
 	};
 	
-	/////////////////////////////////////
-	// Loaders
-	void load_predefined_rooms(); 
-	void load_predefined_levels();
-	void load_level_configurations();
+	// Load predefined levels, including predefined rooms and level configurations,
+	// Note: this is expected to be called before precedural generation, as it resize the 
+	// level configuration vector to number of predefined levels
+	void load_predefined_level_configurations();
+	// load generated levels to level configurations, so it's ready to be used
+	void load_generated_level_configurations();
+
 	// Note: the number of generation files won't be fixed, so we use the level number as each file name
+	// e.g. conf for first generated level will be 0.json, second will be 1.json...
 	void load_level_generation_confs();
 
-	///////////////////////////////////////////////////////////
-	// Data structures that saves the information loaded
-	//
-	// saves predefined rooms layout
-	// 
-	// Note: we are saving uint32_t for tile ids, but tile_id is actually 8 bit, this is because opengl
-	// shaders only have 32 bit ints. However, number of tile textures are restricted in 8 bit integer(
-	// since the walkable/wall tiles set are uint8_t and our tile atlas only support 64 tiles),
-	// so it should always be safe to convert from uint32_t to uin8_t
-	// Predefined room ids: 0 -- void room
-	std::array<std::array<uint32_t, MapUtility::room_size * MapUtility::room_size>, MapUtility::num_predefined_rooms> predefined_rooms;
-	// the predefined levels, each level contains a full map(max 10*10 rooms),
-	// index of the vector will be the map id
-	std::array<MapUtility::Grid, MapUtility::num_predefined_levels> predefined_levels;
-	// Involving all dynamic components on a map, stored in json format
-	std::vector<std::string> level_snap_shots;
+	// saves configurations for each level
+	std::vector<MapUtility::LevelConfiguration> level_configurations;
 
-	int current_level = -1;
+	// generation configurations for each procedurally generated levels, indexed by level
+	// the actual level is calculated as index + num_predefined_levels
+	std::vector<MapUtility::LevelGenConf> level_generation_confs;
 
-    // get the map layout of given level, return a 10*10 grid,
-	// each cell in the grid is a room.
-	const MapUtility::Grid & get_level_layout(int level) const;
-
+    // Getters for each specific level configurations
+	const MapUtility::MapLayout & get_level_layout(int level) const;
 	const std::string & get_level_snap_shot(int level) const;
-	void set_level_snap_shot(int level, const std::string & snapshot);
+	const std::vector<MapUtility::RoomLayout> & get_level_room_layouts(int level) const;
 
-	// get the tile texture id, of the position on a map
+	int current_level;
+
+	// get the tile texture id, of the position on the current level
 	MapUtility::TileID get_tile_id_from_map_pos(uvec2 pos) const;
 
 	std::vector<uvec2> bfs(uvec2 start_pos, uvec2 target) const;
@@ -120,21 +111,21 @@ private:
 	// Create a room
 	void create_room(vec2 position, MapUtility::RoomID room_id, int level) const;
 
-	// map generator
-	MapGenerator map_generator;
-
 	// Entity for the help picture
 	Entity help_picture = entt::null;
 	void create_picture();
 
-	// map editor
-	int current_editing_level = -1;
+    // these two backups are for recovering from map editing mode, can also be potentially
+	// used for save and load
+	std::vector<MapUtility::LevelConfiguration> level_configurations_backup;
+	int current_level_backup;
 
 public:
 	MapGeneratorSystem();
+	void init();
 
 	// Get the current level mapping
-	const MapUtility::Grid& current_map() const;
+	const MapUtility::MapLayout& current_map() const;
 
 	// Check if a position is within the bounds of the current level
 	bool is_on_map(uvec2 pos) const;
@@ -169,22 +160,14 @@ public:
 	// Load the first level
 	void load_initial_level();
 
-	// Get player initial position on current level
-	uvec2 get_player_start_position() const;
-
-	// Get player last position on current level
-	uvec2 get_player_end_position() const;
-
 	// Get the 10*10 layout array for a room, mainly used by rendering
 	const std::array<uint32_t, MapUtility::map_size * MapUtility::map_size>&
 	get_room_layout(int level, MapUtility::RoomID room_id) const;
 
-	// load the generated levels, using the generation configurations
-	void load_generated_levels();
-
 	/////////////////////////////////////////////////
 	// Map Editor
 	void start_editing_level();
+	void stop_editing_level();
 	void edit_next_level();
 	void edit_previous_level();
 	void regenerate_map();

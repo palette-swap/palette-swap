@@ -1,10 +1,6 @@
 {
   "player": {
-    "start_position": {
-      "x": 55,
-      "y": 55
-    },
-    "end_position": {
+    "position": {
       "x": 55,
       "y": 55
     }
