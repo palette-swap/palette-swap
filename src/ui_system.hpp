@@ -35,8 +35,14 @@ private:
 	size_t current_attack = 0;
 
 	Entity attack_display = entt::null;
-	Entity menus_background = entt::null;
-	Entity inventory_group = entt::null;
-	Entity hud_group = entt::null;
+
+	enum class Groups {
+		HUD,
+		Inventory,
+		MainMenu,
+		Count,
+	};
+
+	std::array<Entity, (size_t)Groups::Count> groups;
 	Entity held_under_mouse = entt::null;
 };

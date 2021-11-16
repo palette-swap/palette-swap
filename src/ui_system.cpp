@@ -5,14 +5,14 @@
 void UISystem::on_key(int key, int action, int /*mod*/)
 {
 	if (action == GLFW_PRESS && key == GLFW_KEY_I) {
-		UIGroup& group = registry.get<UIGroup>(inventory_group);
+		UIGroup& group = registry.get<UIGroup>(groups[(size_t)Groups::Inventory]);
 		group.visible = !group.visible;
-		registry.get<UIGroup>(hud_group).visible = !group.visible;
+		registry.get<UIGroup>(groups[(size_t)Groups::HUD]).visible = !group.visible;
 	}
 	if (action == GLFW_PRESS && key == GLFW_KEY_ESCAPE) {
-		UIGroup& group = registry.get<UIGroup>(inventory_group);
+		UIGroup& group = registry.get<UIGroup>(groups[(size_t)Groups::Inventory]);
 		group.visible = false;
-		registry.get<UIGroup>(hud_group).visible = true;
+		registry.get<UIGroup>(groups[(size_t)Groups::HUD]).visible = true;
 	}
 
 	// Change attack
@@ -127,7 +127,7 @@ void UISystem::on_mouse_move(vec2 mouse_screen_pos)
 	}
 }
 
-bool UISystem::player_can_act() { return registry.get<UIGroup>(hud_group).visible; }
+bool UISystem::player_can_act() { return registry.get<UIGroup>(groups[(size_t)Groups::HUD]).visible; }
 
 bool UISystem::has_current_attack() const {
 	if (current_attack_slot == Slot::Count) {
