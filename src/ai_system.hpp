@@ -152,9 +152,9 @@ private:
 
 			// TODO (Evan): active(1) + temp-summon.
 			ai->switch_enemy_state(e, EnemyState::Idle);
-			// TODO Change to not be hardcoded, currently aware that 4 is the specific boss's 
+			// TODO Change to not be hardcoded, currently aware that 2 is the specific boss's 
 			// summoning state
-			ai->animations->boss_event_animation(e, 4);
+			ai->animations->boss_event_animation(e, 2);
 
 			return handle_process_result(BTState::Success);
 		}
