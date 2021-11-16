@@ -44,15 +44,15 @@ void UISystem::restart_game()
 	}
 
 	// Menu background
-	vec4 menu_background_color = vec4(.1, .1, .1, 1);
-	create_background(groups[(size_t)Groups::MainMenu], vec2(.5, .5), vec2(1, 1), 1.f, menu_background_color);
+	create_background(groups[(size_t)Groups::MainMenu], vec2(.25, .5), vec2(.5, 1), 1.f, vec4(.6, .1, .1, 1));
+	create_background(groups[(size_t)Groups::MainMenu], vec2(.75, .5), vec2(.5, 1), 1.f, vec4(.1, .1, .6, 1));
 
 	// Menu
-	create_ui_text(groups[(size_t)Groups::MainMenu], vec2(.5, .1), "PALETTE SWAP", Alignment::Center, Alignment::Start, 120);
+	create_ui_text(groups[(size_t)Groups::MainMenu], vec2(.5, .1), "PALETTE SWAP", Alignment::Center, Alignment::Start, 180);
 	create_button(groups[(size_t)Groups::MainMenu],
 				  vec2(.5, .5),
 				  vec2(.1, .1),
-				  menu_background_color,
+				  vec4(.1, .1, .1, 1),
 				  ButtonAction::SwitchToGroup,
 				  groups[(size_t)Groups::HUD],
 				  "Start");
@@ -175,6 +175,7 @@ Entity create_background(Entity ui_group, vec2 pos, vec2 size, float opacity, ve
 	Entity entity = create_ui_rectangle(entt::null, pos, size);
 	registry.get<UIElement>(entity).group = ui_group;
 	registry.emplace<Background>(entity);
+	registry.get<Color>(entity).color = fill_color;
 	registry.emplace<UIRectangle>(entity, opacity, fill_color);
 	return entity;
 }
