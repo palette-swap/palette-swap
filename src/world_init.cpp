@@ -137,7 +137,7 @@ Entity create_arrow(vec2 position)
 	spell_animation.max_frames = 8;
 	spell_animation.color = ColorState::None;
 	spell_animation.state = 0;
-	spell_animation.speed_adjustment = 1.5;
+	spell_animation.speed_adjustment = 1;
 	registry.emplace<Color>(entity, vec3(1, 1, 1));
 	return entity;
 }
