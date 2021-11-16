@@ -79,6 +79,8 @@ void MapGeneratorSystem::create_picture()
 
 	registry.emplace<RenderRequest>(
 		help_picture, TEXTURE_ASSET_ID::HELP_PIC, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE, true);
+
+	registry.emplace<Background>(help_picture, true);
 }
 
 // TODO: we want this eventually be procedural generated

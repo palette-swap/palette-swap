@@ -132,7 +132,7 @@ private:
 	// Get world position of top left and bottom right of screen
 	std::pair<vec2, vec2> get_window_bounds();
 	// Get UI scale based on difference between current window size and default
-	float get_ui_scale_factor();
+	float get_ui_scale_factor() const;
 	// Helper to get position transform
 	Transform get_transform(Entity entity);
 

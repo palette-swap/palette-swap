@@ -562,6 +562,13 @@ void RenderSystem::draw()
 
 	draw_map(projection_2d);
 
+	// Draw any backgrounds
+	for (auto [entity, background, request] : registry.view<Background, RenderRequest>().each()) {
+		if (background.visible) {
+			draw_textured_mesh(entity, request, projection_2d);
+		}
+	}
+
 	// Grabs player's perception of which colour is "inactive"
 	Entity player = registry.view<Player>().front();
 	PlayerInactivePerception& player_perception = registry.get<PlayerInactivePerception>(player);
@@ -582,10 +589,10 @@ void RenderSystem::draw()
 
 	// Renders entities + healthbars depending on which state we are in
 	if (inactive_color == ColorState::Red) {
-		registry.view<RenderRequest>(entt::exclude<RedExclusive>).each(render_requests_lambda);
+		registry.view<RenderRequest>(entt::exclude<Background, RedExclusive>).each(render_requests_lambda);
 		registry.view<Stats, Enemy>(entt::exclude<RedExclusive>).each(health_group_lambda);
 	} else if (inactive_color == ColorState::Blue) {
-		registry.view<RenderRequest>(entt::exclude<BlueExclusive>).each(render_requests_lambda);
+		registry.view<RenderRequest>(entt::exclude<Background, BlueExclusive>).each(render_requests_lambda);
 		registry.view<Stats, Enemy>(entt::exclude<BlueExclusive>).each(health_group_lambda);
 	} else {
 		registry.view<RenderRequest>().each(render_requests_lambda);
@@ -604,7 +611,14 @@ void RenderSystem::draw()
 
 void RenderSystem::draw_ui(const mat3& projection)
 {
-	// First, draw rectangles, lines, etc.
+	// Draw any UI backgrounds
+	for (auto [entity, background, request] : registry.view<Background, UIRenderRequest>().each()) {
+		if (background.visible) {
+			draw_ui_element(entity, request, projection);
+		}
+	}
+
+	// Draw rectangles, lines, etc.
 	for (auto [entity, group] : registry.view<UIGroup>().each()) {
 		if (!group.visible) {
 			continue;
@@ -623,7 +637,7 @@ void RenderSystem::draw_ui(const mat3& projection)
 		}
 	}
 
-	// Then, draw text over top
+	// Draw text over top
 	for (auto [entity, group] : registry.view<UIGroup>().each()) {
 		if (!group.visible) {
 			continue;
@@ -681,9 +695,10 @@ std::pair<vec2, vec2> RenderSystem::get_window_bounds()
 	return { camera_world_pos.position - window_size / 2.f, camera_world_pos.position + window_size / 2.f };
 }
 
-float RenderSystem::get_ui_scale_factor()
+float RenderSystem::get_ui_scale_factor() const
 {
-	return min(1.f * screen_size.x / window_width_px, 1.f * screen_size.y / window_height_px);
+	vec2 ratios = vec2(screen_size) / vec2(window_default_size);
+	return min(ratios.x, ratios.y);
 }
 
 vec2 RenderSystem::screen_position_to_world_position(vec2 screen_pos)
