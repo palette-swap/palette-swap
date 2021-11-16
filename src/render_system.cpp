@@ -600,11 +600,22 @@ void RenderSystem::draw()
 				if (element.visible) {
 					if (UIRenderRequest* ui_render_request = registry.try_get<UIRenderRequest>(curr)) {
 						draw_ui_element(curr, *ui_render_request, projection_2d);
-					} else if (Text* text = registry.try_get<Text>(curr)) {
-						draw_text(curr, *text, projection_2d);
 					} else if (Line* line = registry.try_get<Line>(curr)) {
 						draw_line(entity, *line, projection_2d);
 					}
+				}
+				curr = element.next;
+			}
+		}
+	}
+
+	for (auto [entity, group] : registry.view<UIGroup>().each()) {
+		if (group.visible) {
+			Entity curr = group.first_text;
+			while (curr != entt::null) {
+				UIElement& element = registry.get<UIElement>(curr);
+				if (element.visible) {
+					draw_text(curr, registry.get<Text>(curr), projection_2d);
 				}
 				curr = element.next;
 			}

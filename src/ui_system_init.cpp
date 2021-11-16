@@ -22,7 +22,7 @@ void UISystem::restart_game()
 						   Alignment::Start,
 						   Alignment::End);
 	registry.emplace<Color>(attack_display, vec3(1, 1, 1));
-	UIGroup::add(hud_group, attack_display, registry.emplace<UIElement>(attack_display, hud_group, true));
+	UIGroup::add_element(hud_group, attack_display, registry.emplace<UIElement>(attack_display, hud_group, true));
 
 	// Inventory
 	inventory_group = create_ui_group(false);

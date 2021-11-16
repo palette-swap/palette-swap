@@ -620,8 +620,10 @@ struct UIElement {
 struct UIGroup {
 	bool visible = false;
 	Entity first_element = entt::null;
+	Entity first_text = entt::null;
 
-	static void add(Entity group, Entity element, UIElement& ui_element);
+	static void add_element(Entity group, Entity element, UIElement& ui_element);
+	static void add_text(Entity group, Entity text, UIElement& ui_element);
 };
 
 struct UIItem {

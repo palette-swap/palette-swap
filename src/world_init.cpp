@@ -237,7 +237,7 @@ Entity create_fancy_healthbar(Entity ui_group)
 									  0.f,
 									  Alignment::Start,
 									  Alignment::Start);
-	UIGroup::add(ui_group, entity, registry.emplace<UIElement>(entity, ui_group, true));
+	UIGroup::add_element(ui_group, entity, registry.emplace<UIElement>(entity, ui_group, true));
 	return entity;
 }
 
@@ -254,7 +254,7 @@ Entity create_ui_rectangle(Entity ui_group, vec2 pos, vec2 size)
 									  0.f,
 									  Alignment::Center,
 									  Alignment::Center);
-	UIGroup::add(ui_group, entity, registry.emplace<UIElement>(entity, ui_group, true));
+	UIGroup::add_element(ui_group, entity, registry.emplace<UIElement>(entity, ui_group, true));
 	return entity;
 }
 
@@ -321,6 +321,6 @@ Entity create_ui_text(Entity ui_group, vec2 screen_position, const std::string& 
 	registry.emplace<ScreenPosition>(entity, screen_position);
 	registry.emplace<Color>(entity, vec3(1.f));
 	registry.emplace<Text>(entity, text, (uint16)48, alignment_x, alignment_y);
-	UIGroup::add(ui_group, entity, registry.emplace<UIElement>(entity, ui_group, true));
+	UIGroup::add_text(ui_group, entity, registry.emplace<UIElement>(entity, ui_group, true));
 	return entity;
 }
