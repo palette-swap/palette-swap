@@ -3,6 +3,7 @@
 #include "common.hpp"
 #include "components.hpp"
 #include "map_utility.hpp"
+class TurnSystem;
 
 #include <array>
 #include <set>
@@ -22,6 +23,7 @@ public:
 	// This mapping can be used for both map and room, as they have same size(10)
 	using Mapping = std::array<std::array<MapUtility::RoomType, MapUtility::room_size>, MapUtility::room_size>;
 private:
+	std::shared_ptr<TurnSystem> turns;
 	/////////////////////////////////////////////
 	// Helper functions to retrieve file paths
 	static std::string rooms_layout_path(const std::string& name)
@@ -135,7 +137,7 @@ private:
 	void create_room(vec2 position, MapUtility::RoomType roomType, float angle) const;
 
 public:
-	MapGeneratorSystem();
+	MapGeneratorSystem(std::shared_ptr<TurnSystem> turns);
 
 	// Generates the levels, should be called at the beginning of the game,
 	// might want to pass in a seed in the future
@@ -154,7 +156,7 @@ public:
 	bool walkable(uvec2 pos) const;
 
 	// Check if a position on the map is walkable for the player and there's currently no entity in it
-	bool walkable_and_free(uvec2 pos) const;
+	bool walkable_and_free(uvec2 pos, bool check_active_color = true) const;
 
 	// Check if a position on the map is a wall
 	bool is_wall(uvec2 pos) const;
