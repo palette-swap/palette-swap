@@ -152,8 +152,7 @@ private:
 
 			// TODO (Evan): active(1) + temp-summon.
 			ai->switch_enemy_state(e, EnemyState::Idle);
-			// TODO Change to not be hardcoded, currently aware that 2 is the specific boss's 
-			// summoning animation
+			// TODO (Evan): Change to not be hardcoded, currently aware that 2 is the specific boss's summoning state
 			ai->animations->boss_event_animation(e, 2);
 
 			return handle_process_result(BTState::Success);
@@ -205,14 +204,14 @@ private:
 				registry.emplace<AOEAttackActive>(e, aoe_attack);
 				// TODO (Evan): charge(2).
 				ai->switch_enemy_state(e, EnemyState::Charging);
-				// Need animation to visualize m_aiming_area, like the debug below.
+				// Need animation to visualize m_aiming_area, like the Debug above.
 
 				return handle_process_result(BTState::Running);
 			} else {
 				// AOE attack.
 				ai->aoe_attack(e, m_aiming_area);
 
-				// TODO (Evan): active(1) + temp-aoe.
+				// TODO (Evan): active(1) + temp-aoeAttacks.
 				ai->switch_enemy_state(e, EnemyState::Idle);
 				ai->animations->boss_event_animation(e, 4);
 				// ai->animations->aoe_animation(e, m_aiming_area);
@@ -239,7 +238,6 @@ private:
 
 			// TODO (Evan): active(1) + temp-attack.
 			ai->switch_enemy_state(e, EnemyState::Idle);
-			// No need for temp-attack here since it will be handled in combat system.
 
 			return handle_process_result(BTState::Success);
 		}
