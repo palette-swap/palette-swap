@@ -65,12 +65,11 @@ private:
 	};
 	const std::array<std::string, MapUtility::num_predefined_levels> predefined_level_paths
 		= { levels_path("help_level.csv") };
-	const std::array<std::string, MapUtility::num_predefined_levels> level_configuration_paths = {
-		level_configurations_path("help_level.json")
-	};
-	
+	const std::array<std::string, MapUtility::num_predefined_levels> level_configuration_paths
+		= { level_configurations_path("help_level.json") };
+
 	// Load predefined levels, including predefined rooms and level configurations,
-	// Note: this is expected to be called before precedural generation, as it resize the 
+	// Note: this is expected to be called before precedural generation, as it resize the
 	// level configuration vector to number of predefined levels
 	void load_predefined_level_configurations();
 	// load generated levels to level configurations, so it's ready to be used
@@ -87,10 +86,10 @@ private:
 	// the actual level is calculated as index + num_predefined_levels
 	std::vector<MapUtility::LevelGenConf> level_generation_confs;
 
-    // Getters for each specific level configurations
-	const MapUtility::MapLayout & get_level_layout(int level) const;
-	const std::string & get_level_snap_shot(int level) const;
-	const std::vector<MapUtility::RoomLayout> & get_level_room_layouts(int level) const;
+	// Getters for each specific level configurations
+	const MapUtility::MapLayout& get_level_layout(int level) const;
+	const std::string& get_level_snap_shot(int level) const;
+	const std::vector<MapUtility::RoomLayout>& get_level_room_layouts(int level) const;
 
 	int current_level;
 
@@ -117,7 +116,7 @@ private:
 	Entity help_picture = entt::null;
 	void create_picture();
 
-    // these two backups are for recovering from map editing mode, can also be potentially
+	// these two backups are for recovering from map editing mode, can also be potentially
 	// used for save and load
 	std::vector<MapUtility::LevelConfiguration> level_configurations_backup;
 	int current_level_backup;
@@ -145,8 +144,7 @@ public:
 	// Returns the path, or an empty vector if no path was found
 	std::vector<uvec2> shortest_path(uvec2 start, uvec2 target, bool use_a_star = true) const;
 
-	MapUtility::TileID
-	get_tile_id_from_room(int level, MapUtility::RoomID room_id, uint8_t row, uint8_t col) const;
+	MapUtility::TileID get_tile_id_from_room(int level, MapUtility::RoomID room_id, uint8_t row, uint8_t col) const;
 
 	bool is_next_level_tile(uvec2 pos) const;
 	bool is_last_level_tile(uvec2 pos) const;
