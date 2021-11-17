@@ -660,6 +660,15 @@ struct UIRenderRequest {
 	}
 };
 
+enum class BarTarget {
+	Health,
+	Mana,
+};
+
+struct TargettedBar {
+	BarTarget target = BarTarget::Health;
+};
+
 struct UIElement {
 	Entity group;
 	Entity next = entt::null;

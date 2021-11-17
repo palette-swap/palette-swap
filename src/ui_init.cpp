@@ -6,12 +6,15 @@ void UISystem::restart_game()
 	auto ui_group_view = registry.view<UIGroup>();
 	registry.destroy(ui_group_view.begin(), ui_group_view.end());
 
-	groups = {create_ui_group(false),  create_ui_group(false), create_ui_group(true)};
+	groups = { create_ui_group(false), create_ui_group(false), create_ui_group(true) };
 
 	Entity player = registry.view<Player>().front();
 
-	// Player Health Bar
+	// Player Health & Mana Bars
 	create_fancy_healthbar(groups[(size_t)Groups::HUD]);
+	Entity mana
+		= create_fancy_healthbar(groups[(size_t)Groups::HUD], vec2(.025f, .09f), vec2(.15f, .03f), BarTarget::Mana);
+	registry.get<Color>(mana).color = vec3(.1, .1, .8);
 
 	// Attack Display
 	Inventory& inventory = registry.get<Inventory>(player);
@@ -61,18 +64,20 @@ Entity create_ui_group(bool visible)
 	return entity;
 }
 
-Entity create_fancy_healthbar(Entity ui_group)
+Entity create_fancy_healthbar(Entity ui_group, vec2 pos, vec2 size, BarTarget target)
 {
 	Entity entity = registry.create();
-	registry.emplace<ScreenPosition>(entity, vec2(.02f, .02f));
+	registry.emplace<ScreenPosition>(entity, pos);
 	registry.emplace<UIRenderRequest>(entity,
 									  TEXTURE_ASSET_ID::TEXTURE_COUNT,
 									  EFFECT_ASSET_ID::FANCY_HEALTH,
 									  GEOMETRY_BUFFER_ID::FANCY_HEALTH,
-									  vec2(.25f, .0625f),
+									  size,
 									  0.f,
 									  Alignment::Start,
 									  Alignment::Start);
+	registry.emplace<Color>(entity, vec3(.8, .1, .1));
+	registry.emplace<TargettedBar>(entity, target);
 	UIGroup::add_element(ui_group, entity, registry.emplace<UIElement>(entity, ui_group, true));
 	return entity;
 }

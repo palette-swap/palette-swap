@@ -4,7 +4,10 @@
 #include "geometry.hpp"
 
 Entity create_ui_group(bool visible);
-Entity create_fancy_healthbar(Entity ui_group);
+Entity create_fancy_healthbar(Entity ui_group,
+							  vec2 pos = vec2(.02f),
+							  vec2 size = vec2(.25f, .0625f),
+							  BarTarget target = BarTarget::Health);
 Entity create_ui_rectangle(Entity ui_group, vec2 pos, vec2 size);
 Entity create_grid_rectangle(Entity ui_group, size_t slot, float width, float height, const Geometry::Rectangle& area);
 Entity create_inventory_slot(Entity ui_group,

@@ -5,6 +5,9 @@ in vec2 out_local_pos;
 in vec3 vcolor;
 uniform float xy_ratio;
 
+// Application data
+uniform vec3 fcolor;
+
 // Output color
 layout(location = 0) out vec4 color;
 
@@ -21,5 +24,5 @@ void main()
 			discard;
 		}
 	}
-	color = vec4(vcolor, 1.0);
+	color = vec4(fcolor * vcolor, 1.0);
 }

@@ -227,7 +227,7 @@ void RenderSystem::draw_ui_element(Entity entity, const UIRenderRequest& ui_rend
 }
 
 void RenderSystem::draw_healthbar(
-	Transform transform, const Stats& stats, const mat3& projection, bool fancy, float ratio = 1.f)
+	Transform transform, const Stats& stats, const mat3& projection, bool fancy, float ratio = 1.f, Entity entity = entt::null)
 {
 	const auto program = (fancy) ? (GLuint)effects.at((uint8)EFFECT_ASSET_ID::FANCY_HEALTH)
 								 : (GLuint)effects.at((uint8)EFFECT_ASSET_ID::HEALTH);
@@ -265,11 +265,25 @@ void RenderSystem::draw_healthbar(
 	gl_has_errors();
 
 	GLint health_loc = glGetUniformLocation(program, "health");
-	glUniform1f(health_loc, max(static_cast<float>(stats.health), 0.f) / static_cast<float>(stats.health_max));
+	float percentage = 1.f;
+	if (fancy && registry.get<TargettedBar>(entity).target == BarTarget::Mana) {
+		percentage = max(static_cast<float>(stats.mana), 0.f) / static_cast<float>(stats.mana_max);
+	} else {
+		percentage = max(static_cast<float>(stats.health), 0.f) / static_cast<float>(stats.health_max);
+	}
+	glUniform1f(health_loc, percentage);
 
 	if (fancy) {
 		GLint xy_ratio_loc = glGetUniformLocation(program, "xy_ratio");
 		glUniform1f(xy_ratio_loc, ratio);
+
+		// Setup coloring
+		if (registry.any_of<Color>(entity)) {
+			GLint color_uloc = glGetUniformLocation(program, "fcolor");
+			const vec3 color = registry.get<Color>(entity).color;
+			glUniform3fv(color_uloc, 1, glm::value_ptr(color));
+			gl_has_errors();
+		}
 	}
 
 	draw_triangles(transform, projection);
