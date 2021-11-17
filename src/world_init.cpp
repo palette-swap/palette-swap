@@ -71,6 +71,7 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 
 	enemy.team = team;
 	enemy.type = type;
+	enemy.behaviour = enemy_type_to_behaviour.at(static_cast<int>(enemy.type));
 	enemy.state = EnemyState::Idle;
 	enemy.nest_map_pos = map_pos;
 
@@ -105,6 +106,12 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 		enemy.attack_range = 1;
 		break;
 
+	case EnemyType::Mushroom:
+		enemy.radius = 10;
+		enemy.speed = 1;
+		enemy.attack_range = 1;
+		break;
+
 	default:
 		throw std::runtime_error("Invalid enemy type.");
 	}
@@ -122,6 +129,13 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 	Animation& enemy_animation = registry.emplace<Animation>(entity);
 	enemy_animation.max_frames = 4;
 
+	return entity;
+}
+
+Entity create_aoe_target_squares()
+{ 
+	auto entity = registry.create(); 
+	
 	return entity;
 }
 

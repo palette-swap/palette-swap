@@ -28,6 +28,9 @@ static constexpr float player_melee_speed = 3.f;
 static constexpr float player_heavy_melee_speed = 1.f;
 static constexpr float player_running_speed = 3;
 static constexpr float player_blue_red_switch_speed = 1;
+
+// Used for boss action speeds
+static constexpr float boss_action_speed = 0.5f;
 // Value denoting the animation states for the player
 // KEEP ALIGNED WITH STATES REPRESENTED IN PLAYER SPRITESHEET
 enum class PlayerAnimationStates {
@@ -70,6 +73,7 @@ public:
 	void damage_animation(const Entity& entity);
 	// Triggers an attack animation, chooses the correct one depending on which entity (player/enemy)
 	void attack_animation(const Entity& entity);
+
 	// Sets an enemy entity to have the correct render texture, and color state
 	void set_enemy_animation(const Entity& enemy, TEXTURE_ASSET_ID enemy_type, ColorState color);
 	// Changes an enemy's animation state
@@ -99,6 +103,10 @@ public:
 	// Returns a boolean denoting whether or not all "irregular animations" such as attack
 	// or damage calculations have been completed
 	bool animation_events_completed();
+
+	// Initiates boss temporary animation state, to be returned to original state after completion of animation
+
+	void boss_event_animation(const Entity& boss, int event_state);
 
 private:
 	// helper function, checks event animation components to see if they should be removed, and animation states should
