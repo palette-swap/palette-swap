@@ -41,22 +41,22 @@ void AISystem::step(float /*elapsed_ms*/)
 			ColorState active_world_color = turns->get_active_color();
 			if (((uint8_t)active_world_color & (uint8_t)enemy.team) > 0) {
 
-				switch (enemy.type) {
-				case EnemyType::Slime:
-					execute_slime(enemy_entity);
+				switch (enemy.behaviour) {
+
+				case EnemyBehaviour::Basic:
+					execute_basic_sm(enemy_entity);
 					break;
 
-				case EnemyType::Raven:
-				case EnemyType::Wraith:
-					execute_raven(enemy_entity);
+				case EnemyBehaviour::Cowardly:
+					execute_cowardly_sm(enemy_entity);
 					break;
 
-				case EnemyType::Armor:
-					execute_armor(enemy_entity);
+				case EnemyBehaviour::Defensive:
+					execute_defensive_sm(enemy_entity);
 					break;
 
-				case EnemyType::TreeAnt:
-					execute_treeant(enemy_entity);
+				case EnemyBehaviour::Aggressive:
+					execute_aggressive_sm(enemy_entity);
 					break;
 
 				default:
@@ -85,45 +85,45 @@ void AISystem::do_attack_callback(const Entity& attacker, const Entity& target)
 	}
 }
 
-void AISystem::execute_slime(const Entity& slime)
+void AISystem::execute_cowardly_sm(const Entity& entity)
 {
-	Enemy& enemy = registry.get<Enemy>(slime);
+	Enemy& enemy = registry.get<Enemy>(entity);
 
 	switch (enemy.state) {
 
 	case EnemyState::Idle:
-		if (is_player_spotted(slime, enemy.radius)) {
-			switch_enemy_state(slime, EnemyState::Active);
-			execute_slime(slime);
+		if (is_player_spotted(entity, enemy.radius)) {
+			switch_enemy_state(entity, EnemyState::Active);
+			execute_cowardly_sm(entity);
 			return;
 		}
 		break;
 
 	case EnemyState::Active:
-		if (is_player_spotted(slime, enemy.radius * 2)) {
-			if (is_player_in_attack_range(slime, enemy.attack_range)) {
-				attack_player(slime);
+		if (is_player_spotted(entity, enemy.radius * 2)) {
+			if (is_player_in_attack_range(entity, enemy.attack_range)) {
+				attack_player(entity);
 			} else {
-				approach_player(slime, enemy.speed);
+				approach_player(entity, enemy.speed);
 			}
 
-			if (is_health_below(slime, 0.25f)) {
-				switch_enemy_state(slime, EnemyState::Flinched);
+			if (is_health_below(entity, 0.25f)) {
+				switch_enemy_state(entity, EnemyState::Flinched);
 			}
 		} else {
-			switch_enemy_state(slime, EnemyState::Idle);
+			switch_enemy_state(entity, EnemyState::Idle);
 		}
 		break;
 
 	case EnemyState::Flinched:
-		if (is_at_nest(slime)) {
+		if (is_at_nest(entity)) {
 			enemy.radius = 3;
-			if (!is_player_spotted(slime, enemy.radius * 2)) {
-				recover_health(slime, 1.f);
-				switch_enemy_state(slime, EnemyState::Idle);
+			if (!is_player_spotted(entity, enemy.radius * 2)) {
+				recover_health(entity, 1.f);
+				switch_enemy_state(entity, EnemyState::Idle);
 			}
 		} else {
-			approach_nest(slime, enemy.speed);
+			approach_nest(entity, enemy.speed);
 		}
 		break;
 
@@ -132,29 +132,29 @@ void AISystem::execute_slime(const Entity& slime)
 	}
 }
 
-void AISystem::execute_raven(const Entity& raven)
+void AISystem::execute_basic_sm(const Entity& entity)
 {
-	const Enemy& enemy = registry.get<Enemy>(raven);
+	const Enemy& enemy = registry.get<Enemy>(entity);
 
 	switch (enemy.state) {
 
 	case EnemyState::Idle:
-		if (is_player_spotted(raven, enemy.radius)) {
-			switch_enemy_state(raven, EnemyState::Active);
-			execute_raven(raven);
+		if (is_player_spotted(entity, enemy.radius)) {
+			switch_enemy_state(entity, EnemyState::Active);
+			execute_basic_sm(entity);
 			return;
 		}
 		break;
 
 	case EnemyState::Active:
-		if (is_player_spotted(raven, enemy.radius * 2)) {
-			if (is_player_in_attack_range(raven, enemy.attack_range)) {
-				attack_player(raven);
+		if (is_player_spotted(entity, enemy.radius * 2)) {
+			if (is_player_in_attack_range(entity, enemy.attack_range)) {
+				attack_player(entity);
 			} else {
-				approach_player(raven, enemy.speed);
+				approach_player(entity, enemy.speed);
 			}
 		} else {
-			switch_enemy_state(raven, EnemyState::Idle);
+			switch_enemy_state(entity, EnemyState::Idle);
 		}
 		break;
 
@@ -163,40 +163,40 @@ void AISystem::execute_raven(const Entity& raven)
 	}
 }
 
-void AISystem::execute_armor(const Entity& living_armor)
+void AISystem::execute_defensive_sm(const Entity& entity)
 {
-	const Enemy& enemy = registry.get<Enemy>(living_armor);
+	const Enemy& enemy = registry.get<Enemy>(entity);
 
 	switch (enemy.state) {
 
 	case EnemyState::Idle:
-		if (is_player_spotted(living_armor, enemy.radius)) {
-			switch_enemy_state(living_armor, EnemyState::Active);
-			execute_armor(living_armor);
+		if (is_player_spotted(entity, enemy.radius)) {
+			switch_enemy_state(entity, EnemyState::Active);
+			execute_defensive_sm(entity);
 			return;
 		}
 		break;
 
 	case EnemyState::Active:
-		if (is_player_spotted(living_armor, enemy.radius * 2)) {
-			if (is_player_in_attack_range(living_armor, enemy.attack_range)) {
-				attack_player(living_armor);
+		if (is_player_spotted(entity, enemy.radius * 2)) {
+			if (is_player_in_attack_range(entity, enemy.attack_range)) {
+				attack_player(entity);
 			} else {
-				approach_player(living_armor, enemy.speed);
+				approach_player(entity, enemy.speed);
 			}
 
 			if (uniform_dist(rng) < 0.20f) {
-				become_immortal(living_armor, true);
-				switch_enemy_state(living_armor, EnemyState::Immortal);
+				become_immortal(entity, true);
+				switch_enemy_state(entity, EnemyState::Immortal);
 			}
 		} else {
-			switch_enemy_state(living_armor, EnemyState::Idle);
+			switch_enemy_state(entity, EnemyState::Idle);
 		}
 		break;
 
 	case EnemyState::Immortal:
-		become_immortal(living_armor, false);
-		switch_enemy_state(living_armor, EnemyState::Active);
+		become_immortal(entity, false);
+		switch_enemy_state(entity, EnemyState::Active);
 		break;
 
 	default:
@@ -204,46 +204,46 @@ void AISystem::execute_armor(const Entity& living_armor)
 	}
 }
 
-void AISystem::execute_treeant(const Entity& tree_ant)
+void AISystem::execute_aggressive_sm(const Entity& entity)
 {
-	const Enemy& enemy = registry.get<Enemy>(tree_ant);
+	const Enemy& enemy = registry.get<Enemy>(entity);
 
 	switch (enemy.state) {
 
 	case EnemyState::Idle:
-		if (is_player_spotted(tree_ant, enemy.radius)) {
-			switch_enemy_state(tree_ant, EnemyState::Active);
-			execute_treeant(tree_ant);
+		if (is_player_spotted(entity, enemy.radius)) {
+			switch_enemy_state(entity, EnemyState::Active);
+			execute_aggressive_sm(entity);
 			return;
 		}
 		break;
 
 	case EnemyState::Active:
-		if (is_player_spotted(tree_ant, enemy.radius * 2)) {
-			if (is_player_in_attack_range(tree_ant, enemy.attack_range)) {
-				attack_player(tree_ant);
+		if (is_player_spotted(entity, enemy.radius * 2)) {
+			if (is_player_in_attack_range(entity, enemy.attack_range)) {
+				attack_player(entity);
 			} else {
-				approach_player(tree_ant, enemy.speed);
+				approach_player(entity, enemy.speed);
 			}
 
-			if (is_health_below(tree_ant, 0.20f)) {
-				become_powerup(tree_ant, true);
-				switch_enemy_state(tree_ant, EnemyState::Powerup);
+			if (is_health_below(entity, 0.20f)) {
+				become_powerup(entity, true);
+				switch_enemy_state(entity, EnemyState::Powerup);
 			}
 		} else {
-			switch_enemy_state(tree_ant, EnemyState::Idle);
+			switch_enemy_state(entity, EnemyState::Idle);
 		}
 		break;
 
 	case EnemyState::Powerup:
-		if (is_player_spotted(tree_ant, enemy.radius * 2)) {
-			if (is_player_in_attack_range(tree_ant, enemy.attack_range * 2)) {
-				attack_player(tree_ant);
+		if (is_player_spotted(entity, enemy.radius * 2)) {
+			if (is_player_in_attack_range(entity, enemy.attack_range * 2)) {
+				attack_player(entity);
 			}
 			// TreeAnt can't move when it's powered up.
 		} else {
-			become_powerup(tree_ant, false);
-			switch_enemy_state(tree_ant, EnemyState::Active);
+			become_powerup(entity, false);
+			switch_enemy_state(entity, EnemyState::Active);
 		}
 		break;
 

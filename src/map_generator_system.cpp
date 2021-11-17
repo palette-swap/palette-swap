@@ -1,4 +1,5 @@
 #include "map_generator_system.hpp"
+#include "turn_system.hpp"
 
 #include <queue>
 #include <sstream>
@@ -14,7 +15,7 @@
 
 using namespace MapUtility;
 
-MapGeneratorSystem::MapGeneratorSystem()
+MapGeneratorSystem::MapGeneratorSystem() : turns(std::move(turns))
 {
 	init();
 }
@@ -128,6 +129,8 @@ static void load_enemy(unsigned int enemy_index, const rapidjson::Document& json
 	std::string enemy_prefix = "/enemies/" + std::to_string(enemy_index);
 	Enemy& enemy_component = registry.emplace<Enemy>(entity);
 	enemy_component.deserialize(enemy_prefix, json_doc);
+	// Loads enemy behaviour based on pre-designated enemy type
+	enemy_component.behaviour = enemy_type_to_behaviour.at(static_cast<int>(enemy_component.type));
 
 	MapPosition& map_position_component = registry.emplace<MapPosition>(entity, uvec2(0, 0));
 	map_position_component.deserialize(enemy_prefix, json_doc);
@@ -140,18 +143,22 @@ static void load_enemy(unsigned int enemy_index, const rapidjson::Document& json
 
 	Animation& enemy_animation = registry.emplace<Animation>(entity);
 	enemy_animation.max_frames = 4;
-
+	enemy_animation.state = enemy_state_to_animation_state.at(static_cast<int>(enemy_component.state));
 	registry.emplace<RenderRequest>(entity,
 									enemy_type_textures.at(static_cast<int>(enemy_component.type)),
-									  EFFECT_ASSET_ID::ENEMY,
-									GEOMETRY_BUFFER_ID::ENEMY,
+									EFFECT_ASSET_ID::ENEMY,
+									GEOMETRY_BUFFER_ID::SMALL_SPRITE,
 									true);
 	if (enemy_component.team == ColorState::Red) {
 		enemy_animation.color = ColorState::Red;
+		enemy_animation.display_color = {AnimationUtility::default_enemy_red,1};
 		registry.emplace<Color>(entity, AnimationUtility::default_enemy_red);
+		registry.emplace<RedExclusive>(entity);
 	} else if (enemy_component.team == ColorState::Blue) {
 		registry.emplace<Color>(entity, AnimationUtility::default_enemy_blue);
 		enemy_animation.color = ColorState::Blue;
+		enemy_animation.display_color = { AnimationUtility::default_enemy_blue, 1 };
+		registry.emplace<BlueExclusive>(entity);
 	} else {
 		registry.emplace<Color>(entity, vec3(1, 1, 1));
 	}
@@ -205,14 +212,23 @@ bool MapGeneratorSystem::walkable(uvec2 pos) const
 	return walkable_tiles().find(get_tile_id_from_map_pos(pos)) != walkable_tiles().end();
 }
 
-bool MapGeneratorSystem::walkable_and_free(uvec2 pos) const
+bool MapGeneratorSystem::walkable_and_free(uvec2 pos, bool check_active_color) const
 {
 	if (!walkable(pos)) {
 		return false;
 	}
-	return !std::any_of(registry.view<MapPosition>().begin(),
-						registry.view<MapPosition>().end(),
-						[pos](const Entity e) { return registry.get<MapPosition>(e).position == pos; });
+	ColorState active_color = turns->get_active_color();
+	if ((active_color == ColorState::Red) != check_active_color) {
+		return !std::any_of(registry.view<MapPosition>(entt::exclude<Player, RedExclusive>).begin(),
+							registry.view<MapPosition>(entt::exclude<Player, RedExclusive>).end(),
+							[pos](const Entity e) { return registry.get<MapPosition>(e).position == pos; });
+	} else {
+		return !std::any_of(registry.view<MapPosition>(entt::exclude<Player, BlueExclusive>).begin(),
+							registry.view<MapPosition>(entt::exclude<Player, BlueExclusive>).end(),
+							[pos](const Entity e) { return registry.get<MapPosition>(e).position == pos; });
+	}
+
+	
 }
 
 bool MapGeneratorSystem::is_wall(uvec2 pos) const

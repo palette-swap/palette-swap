@@ -4,6 +4,7 @@
 #include "components.hpp"
 #include "map_generator.hpp"
 #include "map_utility.hpp"
+class TurnSystem;
 
 #include <array>
 #include <set>
@@ -20,6 +21,7 @@ const uint8_t tile_last_level = 20;
 // Manages and store the generated maps
 class MapGeneratorSystem {
 private:
+	std::shared_ptr<TurnSystem> turns;
 	/////////////////////////////////////////////
 	// Helper functions to retrieve file paths
 	static std::string predefined_rooms_path(const std::string& name)
@@ -121,7 +123,7 @@ private:
 	int current_level_backup;
 
 public:
-	MapGeneratorSystem();
+	MapGeneratorSystem(std::shared_ptr<TurnSystem> turns);
 	void init();
 
 	// Get the current level mapping
@@ -134,7 +136,7 @@ public:
 	bool walkable(uvec2 pos) const;
 
 	// Check if a position on the map is walkable for the player and there's currently no entity in it
-	bool walkable_and_free(uvec2 pos) const;
+	bool walkable_and_free(uvec2 pos, bool check_active_color = true) const;
 
 	// Check if a position on the map is a wall
 	bool is_wall(uvec2 pos) const;

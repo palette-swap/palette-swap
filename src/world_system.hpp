@@ -19,6 +19,7 @@
 #include "map_generator_system.hpp"
 #include "render_system.hpp"
 #include "turn_system.hpp"
+#include "ui_system.hpp"
 
 // Container for all our entities and game logic. Individual rendering / update is
 // deferred to the relative update() methods
@@ -29,6 +30,7 @@ public:
 				std::shared_ptr<MapGeneratorSystem> map,
 				std::shared_ptr<TurnSystem> turns,
 				std::shared_ptr<AnimationSystem> animations,
+				std::shared_ptr<UISystem> ui,
 				std::shared_ptr<SoLoud::Soloud> so_loud);
 
 	// Creates a window
@@ -78,13 +80,6 @@ private:
 	// if the tile is blocked by a wall, player won't move
 	void move_player(Direction direction);
 
-	// Equip the next weapon in alphabetical order
-	void equip_next_weapon();
-
-	// Currently mouse-controlled attack
-	Entity current_weapon;
-	size_t current_attack = 0;
-
 	// Flips color state.
 	void change_color();
 
@@ -103,10 +98,10 @@ private:
 	RenderSystem* renderer = nullptr;
 	float current_speed = 0;
 	bool end_of_game = false;
+	
 	Entity player = registry.create();
 	Entity camera = registry.create();
 	Entity player_arrow = registry.create();
-	Entity attack_display = registry.create();
 	Debug& debugging;
 
 	// music references
@@ -130,4 +125,5 @@ private:
 	std::shared_ptr<TurnSystem> turns;
 
 	bool is_editing_map = false;
+	std::shared_ptr<UISystem> ui;
 };

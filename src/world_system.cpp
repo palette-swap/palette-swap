@@ -23,10 +23,10 @@ WorldSystem::WorldSystem(Debug& debugging,
 						 std::shared_ptr<MapGeneratorSystem> map,
 						 std::shared_ptr<TurnSystem> turns,
 						 std::shared_ptr<AnimationSystem> animations,
+						 std::shared_ptr<UISystem> ui,
 						 std::shared_ptr<SoLoud::Soloud> so_loud)
 
-	: current_weapon(entt::null) 
-	, points(0)
+	: points(0)
 	, debugging(debugging)
 	, so_loud(std::move(so_loud))
 	, bgm_red()
@@ -36,6 +36,7 @@ WorldSystem::WorldSystem(Debug& debugging,
 	, combat(std::move(combat))
 	, map_generator(std::move(map))
 	, turns(std::move(turns))
+	, ui(std::move(ui))
 {
 	this->combat->init(rng, this->animations);
 }
@@ -128,6 +129,7 @@ GLFWwindow* WorldSystem::create_window(int width, int height)
 void WorldSystem::init(RenderSystem* renderer_arg)
 {
 	this->renderer = renderer_arg;
+
 	// Playing background music indefinitely
 	bgm_red = so_loud->play(bgm_red_wav);
 	bgm_blue = so_loud->play(bgm_blue_wav, 0.f);
@@ -142,18 +144,13 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 {
 	// Get the screen dimensions
 
-	// Updating window title with points
-	std::stringstream title_ss;
-	title_ss << "Points: " << points;
-	glfwSetWindowTitle(window, title_ss.str().c_str());
-
 	// Remove debug info from the last step
 	auto debug_view = registry.view<DebugComponent>();
 	registry.destroy(debug_view.begin(), debug_view.end());
 
 	// Processing the player state
 	assert(registry.size<ScreenState>() <= 1);
-	// ScreenState& screen = registry.screen_states.components[0];
+
 	if ((registry.get<Stats>(player).health <= 0) && turns->ready_to_act(player)) {
 		restart_game();
 		return true;
@@ -223,28 +220,20 @@ void WorldSystem::restart_game()
 	// TODO: Should move into create_player (under world init) afterwards
 	animations->set_player_animation(player);
 
+	// Initializes the perception of the player for what is inactive
+	PlayerInactivePerception& inactive_perception = registry.get<PlayerInactivePerception>(player);
+	inactive_perception.inactive = turns->get_inactive_color();
+
 	turns->add_team_to_queue(player);
-	// Reset current weapon & attack
-	Inventory& inventory = registry.get<Inventory>(player);
-	current_weapon = inventory.equipped[static_cast<uint8>(Slot::PrimaryHand)];
-	current_attack = 0;
-	attack_display = registry.create();
-	registry.emplace<ScreenPosition>(attack_display, vec2(0, 1));
-	registry.emplace<Text>(attack_display,
-						   combat->make_attack_list(current_weapon, current_attack),
-						   (uint16)48,
-						   Alignment::Start,
-						   Alignment::End);
-	registry.emplace<Color>(attack_display, vec3(1, 1, 1));
 	// create camera instance
 	camera = create_camera(player_starting_point);
 
 	// Create a new player arrow instance
 	vec2 player_location = MapUtility::map_position_to_world_position(player_starting_point);
 	player_arrow = create_arrow(player_location);
-	registry.get<RenderRequest>(player_arrow).visible
-		= registry.get<Weapon>(current_weapon).given_attacks.at(current_attack).targeting_type
-		== TargetingType::Projectile;
+
+	// Restart the UISystem
+	ui->restart_game();
 }
 
 // Compute collisions between entities
@@ -264,9 +253,8 @@ void WorldSystem::handle_collisions()
 			if (registry.all_of<Hittable, Stats, Enemy>(entity_other)) {
 				Enemy& enemy = registry.get<Enemy>(entity_other);
 				ColorState enemy_color = enemy.team;
-				if (enemy_color != turns->get_inactive_color()) {
-					combat->do_attack(
-						player, registry.get<Weapon>(current_weapon).given_attacks[current_attack], entity_other);
+				if (enemy_color != turns->get_inactive_color() && ui->has_current_attack()) {
+					combat->do_attack(player, ui->get_current_attack(), entity_other);
 				}
 			}
 			Entity temp = child_entity;
@@ -296,6 +284,7 @@ void WorldSystem::return_arrow_to_player()
 // On key callback
 void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 {
+	ui->on_key(key, action, mod);
 	if (turns && action != GLFW_RELEASE) {
 
 		if (key == GLFW_KEY_D) {
@@ -310,35 +299,14 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		if (key == GLFW_KEY_S) {
 			move_player(Direction::Down);
 		}
-
-		// Change weapon
-		if (key == GLFW_KEY_E) {
-			equip_next_weapon();
-		}
-
-		// Change attack
-		// TODO: Generalize for many attacks, check out of bounds
-		// Key Codes for 1-9
-		if (49 <= key && key <= 57) {
-			const std::vector<Attack>& attacks = registry.get<Weapon>(current_weapon).given_attacks;
-			if (key - 49 < (int) attacks.size()) {
-				current_attack = ((size_t) key) - 49;
-				const Attack& attack = attacks[current_attack];
-				printf("%s Attack: %i-%i attack, %i-%i dmg, %s \n",
-					   attack.name.c_str(),
-					   attack.to_hit_min,
-					   attack.to_hit_max,
-					   attack.damage_min,
-					   attack.damage_max,
-					   attack.targeting_type == TargetingType::Projectile ? "projectile" : "adjacent");
-				registry.get<RenderRequest>(player_arrow).visible = attack.targeting_type == TargetingType::Projectile;
-				registry.get<Text>(attack_display).text = combat->make_attack_list(current_weapon, current_attack);
-			}
-		}
 	}
 
 	if (action == GLFW_RELEASE && key == GLFW_KEY_SPACE) {
 		change_color();
+		
+	}
+	if (action == GLFW_RELEASE && key == GLFW_KEY_K) {
+		
 	}
 
 	check_debug_keys(key, action, mod);
@@ -449,6 +417,8 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 		// Calculates arrow angle based on position of mouse
 		arrow_velocity.angle = atan2(eucl_diff.x, -eucl_diff.y);
 	}
+
+	ui->on_mouse_move(mouse_position / renderer->get_screen_size());
 }
 
 void WorldSystem::move_player(Direction direction)
@@ -463,28 +433,27 @@ void WorldSystem::move_player(Direction direction)
 
 	if (direction == Direction::Left && map_pos.position.x > 0) {
 		new_pos = uvec2(map_pos.position.x - 1, map_pos.position.y);
-
 		animations->set_sprite_direction(player, Sprite_Direction::SPRITE_LEFT);
-		animations->player_running_animation(player);
+		
 	} else if (direction == Direction::Up && map_pos.position.y > 0) {
 		new_pos = uvec2(map_pos.position.x, map_pos.position.y - 1);
-		animations->player_running_animation(player);
 	} else if (direction == Direction::Right
 			   && (float)map_pos.position.x < MapUtility::room_size * MapUtility::tile_size - 1) {
 		new_pos = uvec2(map_pos.position.x + 1, map_pos.position.y);
 
 		animations->set_sprite_direction(player, Sprite_Direction::SPRITE_RIGHT);
-		animations->player_running_animation(player);
 	} else if (direction == Direction::Down
 			   && (float)map_pos.position.y < MapUtility::room_size * MapUtility::tile_size - 1) {
 		new_pos = uvec2(map_pos.position.x, map_pos.position.y + 1);
-		animations->player_running_animation(player);
 	}
 
 	if (map_pos.position == new_pos || !map_generator->walkable_and_free(new_pos)
 		|| !turns->execute_team_action(player)) {
 		return;
 	}
+
+	// Allows player to run if all checks have been passed
+	animations->player_running_animation(player);
 
 	// Temp update for arrow position
 	if (!player_arrow_fired) {
@@ -501,43 +470,10 @@ void WorldSystem::move_player(Direction direction)
 		}
 
 		map_generator->load_next_level();
+		animations->set_all_inactive_colours(turns->get_inactive_color());
 	} else if (map_generator->is_last_level_tile(new_pos)) {
 		map_generator->load_last_level();
-	}
-}
-
-void WorldSystem::equip_next_weapon()
-{
-	if (turns->get_active_team() != player) {
-		return;
-	}
-	Inventory& inventory = registry.get<Inventory>(player);
-	Entity& curr = inventory.equipped[static_cast<uint8>(Slot::PrimaryHand)];
-	auto next = inventory.inventory.upper_bound(registry.get<Item>(curr).name);
-	if (next == inventory.inventory.end()) {
-		next = inventory.inventory.begin();
-	}
-	while (next->second != curr) {
-		if (registry.get<Item>(next->second).allowed_slots[static_cast<uint8>(Slot::PrimaryHand)]) {
-			break;
-		}
-		if (next == inventory.inventory.end()) {
-			next = inventory.inventory.begin();
-		} else {
-			next++;
-		}
-	};
-	if (curr != next->second && turns->execute_team_action(player)) {
-		curr = next->second;
-		current_weapon = curr;
-		current_attack = 0;
-		registry.get<RenderRequest>(player_arrow).visible
-			= registry.get<Weapon>(current_weapon).given_attacks.at(current_attack).targeting_type
-			== TargetingType::Projectile;
-		registry.get<Text>(attack_display).text = combat->make_attack_list(current_weapon, current_attack);
-		printf("Switched weapon to %s\n", registry.get<Item>(curr).name.c_str());
-		animations->player_toggle_weapon(player);
-		turns->complete_team_action(player);
+		animations->set_all_inactive_colours(turns->get_inactive_color());
 	}
 }
 
@@ -546,49 +482,40 @@ void WorldSystem::change_color()
 	if (!turns->ready_to_act(player)) {
 		return;
 	}
-	ColorState active_color = turns->get_active_color();
-	switch (active_color) {
-	case ColorState::Red:
-		turns->set_active_color(ColorState::Blue);
-		so_loud->fadeVolume(bgm_blue, -1, .25);
-		so_loud->fadeVolume(bgm_red, 0, .25);
-		animations->player_red_blue_animation(player, ColorState::Blue);
-		break;
-	case ColorState::Blue:
-		turns->set_active_color(ColorState::Red);
-		so_loud->fadeVolume(bgm_red, -1, .25);
-		so_loud->fadeVolume(bgm_blue, 0, .25);
-		animations->player_red_blue_animation(player, ColorState::Red);
-		break;
-	default:
-		turns->set_active_color(ColorState::Red);
-		break;
+	MapPosition player_pos = registry.get<MapPosition>(player); 
+
+	if (map_generator->walkable_and_free(player_pos.position, false)) { 
+		ColorState inactive_color = turns->get_inactive_color();
+		turns->set_active_color(inactive_color);
+
+		so_loud->fadeVolume((inactive_color == ColorState::Red ? bgm_red : bgm_blue), -1, .25);
+		so_loud->fadeVolume((inactive_color == ColorState::Red ? bgm_blue : bgm_red), 0, .25);
+		animations->player_red_blue_animation(player, inactive_color);
 	}
 
-	// ColorState active_color = turns->get_active_color();
-	// for (long long i = registry.enemies.entities.size() - 1; i >= 0; i--) {
-	//	const Entity& enemy_entity = registry.enemies.entities[i];
-	//	if (((uint8_t)registry.get<Enemy>(enemy_entity).team & (uint8_t)active_color) == 0) {
-	//		registry.get<RenderRequest>(enemy_entity).visible = false;
-	//	} else {
-	//		registry.get<RenderRequest>(enemy_entity).visible = true;
-	//	}
-	//}
+	animations->set_all_inactive_colours(turns->get_inactive_color());
 }
 
 // Fires arrow at a preset speed if it has not been fired already
 // TODO: Integrate into turn state to only enable if player's turn is on
 void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 {
-	if (turns->get_active_team() != player) {
-		return;
-	}
-	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-		Attack& attack = registry.get<Weapon>(current_weapon).given_attacks[current_attack];
-		if (attack.targeting_type == TargetingType::Projectile) {
-			try_fire_projectile();
-		} else if (attack.targeting_type == TargetingType::Adjacent) {
-			try_adjacent_attack(attack);
+	if (button == GLFW_MOUSE_BUTTON_LEFT) {
+		// Get screen position of mouse
+		dvec2 mouse_screen_pos = {};
+		glfwGetCursorPos(window, &mouse_screen_pos.x, &mouse_screen_pos.y);
+		ui->on_left_click(action, mouse_screen_pos / dvec2(renderer->get_screen_size()));
+
+		if (action == GLFW_PRESS) {
+			if (turns->get_active_team() != player || !ui->has_current_attack()) {
+				return;
+			}
+			Attack& attack = ui->get_current_attack();
+			if (attack.targeting_type == TargetingType::Projectile) {
+				try_fire_projectile();
+			} else if (attack.targeting_type == TargetingType::Adjacent) {
+				try_adjacent_attack(attack);
+			}
 		}
 	}
 }
