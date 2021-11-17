@@ -188,8 +188,8 @@ void CombatSystem::drop_loot(uvec2 position)
 
 	// This is tempered by increasing the floor by the number of consecutive misses
 	bool all_dropped = looted >= loot_list.size();
-	std::uniform_int_distribution<int> drop_chance(1 + loot_misses, 9);
-	int result = drop_chance(*rng);
+	std::uniform_int_distribution<size_t> drop_chance(1 + loot_misses, 9);
+	size_t result = drop_chance(*rng);
 	if (result <= 3 || (all_dropped && result <= 6)) {
 		loot_misses++;
 		return;
@@ -325,8 +325,10 @@ void CombatSystem::try_shove(Entity attacker, EffectEntry& effect, Entity target
 			return false;
 		};
 		// If we have more y movement left, try to move along y first
-		if (abs(shift.x) < abs(shift.y) && !try_y() && !try_x()) {
-			break;
+		if (abs(shift.x) < abs(shift.y)) {
+			if (!try_y() && !try_x()) {
+				break;
+			}
 		}
 		// Otherwise, try to move along x first
 		else if (!try_x() && !try_y()) {

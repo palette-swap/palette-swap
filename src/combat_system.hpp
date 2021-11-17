@@ -5,6 +5,7 @@
 
 #include "animation_system.hpp"
 #include "map_generator_system.hpp"
+
 #include "common.hpp"
 #include "components.hpp"
 

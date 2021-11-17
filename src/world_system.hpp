@@ -86,9 +86,6 @@ private:
 	// OpenGL window handle
 	GLFWwindow* window = nullptr;
 
-	// Number of fish eaten by the salmon, displayed in the window title
-	unsigned int points;
-
 	// Game configuration
 	bool player_arrow_fired = false;
 	// TODO: Track why my projectile speed had slowed throughout

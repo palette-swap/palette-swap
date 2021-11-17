@@ -19,6 +19,8 @@ public:
 	void update_potion_count();
 
 private:
+	void try_settle_held();
+
 	bool can_insert_into_slot(Entity item, Entity container);
 	void insert_into_slot(Entity item, Entity container);
 	bool swap_or_move_item(ScreenPosition& container_pos,

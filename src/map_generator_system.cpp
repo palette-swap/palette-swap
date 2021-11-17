@@ -16,9 +16,9 @@ using namespace MapUtility;
 
 MapGeneratorSystem::MapGeneratorSystem(std::shared_ptr<TurnSystem> turns)
 	: room_layouts()
+	, turns(std::move(turns))
 	, levels(num_levels)
 	, level_room_rotations(num_levels)
-	, turns(std::move(turns))
 	, level_snap_shots(num_levels)
 {
 	load_rooms_from_csv();

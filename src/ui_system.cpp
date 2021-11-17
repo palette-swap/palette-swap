@@ -8,11 +8,13 @@ void UISystem::on_key(int key, int action, int /*mod*/)
 {
 	if (!registry.get<UIGroup>(groups[(size_t)Groups::MainMenu]).visible) {
 		if (action == GLFW_PRESS && key == GLFW_KEY_I) {
+			try_settle_held();
 			UIGroup& group = registry.get<UIGroup>(groups[(size_t)Groups::Inventory]);
 			group.visible = !group.visible;
 			registry.get<UIGroup>(groups[(size_t)Groups::HUD]).visible = !group.visible;
 		}
 		if (action == GLFW_PRESS && key == GLFW_KEY_ESCAPE) {
+			try_settle_held();
 			UIGroup& group = registry.get<UIGroup>(groups[(size_t)Groups::Inventory]);
 			group.visible = false;
 			registry.get<UIGroup>(groups[(size_t)Groups::HUD]).visible = true;
@@ -25,7 +27,7 @@ void UISystem::on_key(int key, int action, int /*mod*/)
 	if (49 <= key && key <= 57) {
 		if (key - 49 < 4) {
 			size_t index = ((size_t)key) - 49;
-			for (Slot slot: attacks_slots) {
+			for (Slot slot : attacks_slots) {
 				Entity weapon_entity = Inventory::get(registry.view<Player>().front(), slot);
 				if (weapon_entity != entt::null) {
 					Weapon& weapon = registry.get<Weapon>(weapon_entity);
@@ -38,6 +40,30 @@ void UISystem::on_key(int key, int action, int /*mod*/)
 			}
 		}
 	}
+}
+
+void UISystem::try_settle_held()
+{
+	Draggable& draggable = registry.get<Draggable>(held_under_mouse);
+	ScreenPosition& container_pos = registry.get<ScreenPosition>(draggable.container);
+	ScreenPosition& held_pos = registry.get<ScreenPosition>(held_under_mouse);
+	bool found_new_target = false;
+	Geometry::Rectangle target
+		= Geometry::Rectangle(held_pos.position, registry.get<InteractArea>(held_under_mouse).size);
+	for (auto [new_slot_entity, new_slot, new_pos, area] :
+		 registry.view<UISlot, ScreenPosition, InteractArea>().each()) {
+		if (Geometry::Rectangle(new_pos.position, area.size).intersects(target)) {
+			if (!swap_or_move_item(container_pos, held_pos, new_pos, draggable, new_slot_entity, new_slot)) {
+				continue;
+			}
+			found_new_target = true;
+			break;
+		}
+	}
+	if (!found_new_target) {
+		held_pos.position = container_pos.position;
+	}
+	held_under_mouse = entt::null;
 }
 
 bool UISystem::can_insert_into_slot(Entity item, Entity container)
@@ -121,32 +147,14 @@ void UISystem::on_left_click(int action, dvec2 mouse_screen_pos)
 			Geometry::Rectangle button_rect = Geometry::Rectangle(
 				pos.position + vec2((float)request.alignment_x, (float)request.alignment_y) * request.size * .5f,
 				request.size);
-			if (element.visible && registry.get<UIGroup>(element.group).visible && button_rect.contains(vec2(mouse_screen_pos))) {
+			if (element.visible && registry.get<UIGroup>(element.group).visible
+				&& button_rect.contains(vec2(mouse_screen_pos))) {
 				do_action(button);
 				return;
 			}
 		}
 	} else if (action == GLFW_RELEASE && held_under_mouse != entt::null) {
-		Draggable& draggable = registry.get<Draggable>(held_under_mouse);
-		ScreenPosition& container_pos = registry.get<ScreenPosition>(draggable.container);
-		ScreenPosition& held_pos = registry.get<ScreenPosition>(held_under_mouse);
-		bool found_new_target = false;
-		Geometry::Rectangle target
-			= Geometry::Rectangle(held_pos.position, registry.get<InteractArea>(held_under_mouse).size);
-		for (auto [new_slot_entity, new_slot, new_pos, area] :
-			 registry.view<UISlot, ScreenPosition, InteractArea>().each()) {
-			if (Geometry::Rectangle(new_pos.position, area.size).intersects(target)) {
-				if (!swap_or_move_item(container_pos, held_pos, new_pos, draggable, new_slot_entity, new_slot)) {
-					continue;
-				}
-				found_new_target = true;
-				break;
-			}
-		}
-		if (!found_new_target) {
-			held_pos.position = container_pos.position;
-		}
-		held_under_mouse = entt::null;
+		try_settle_held();
 	}
 }
 
@@ -159,7 +167,8 @@ void UISystem::on_mouse_move(vec2 mouse_screen_pos)
 
 bool UISystem::player_can_act() { return registry.get<UIGroup>(groups[(size_t)Groups::HUD]).visible; }
 
-bool UISystem::has_current_attack() const {
+bool UISystem::has_current_attack() const
+{
 	if (current_attack_slot == Slot::Count) {
 		return false;
 	}
@@ -173,25 +182,27 @@ bool UISystem::has_current_attack() const {
 
 Attack& UISystem::get_current_attack()
 {
-	return registry.get<Weapon>(Inventory::get(registry.view<Player>().front(), current_attack_slot)).get_attack(current_attack);
+	return registry.get<Weapon>(Inventory::get(registry.view<Player>().front(), current_attack_slot))
+		.get_attack(current_attack);
 }
 
-void UISystem::add_to_inventory(Entity item, size_t slot) {
-		if (item == entt::null) {
-			return;
-		}
-		if (slot == MAXSIZE_T) {
-			update_potion_count();
-			return;
-		}
-		auto view = registry.view<InventorySlot>();
-		auto matching_slot = std::find_if(view.begin(), view.end(), [&view, slot](Entity entity) {
-			return view.get<InventorySlot>(entity).slot == slot;
-		});
-		if (matching_slot == view.end()) {
-			return;
-		}
-		create_ui_item(groups[(size_t)Groups::Inventory], (*matching_slot), item);
+void UISystem::add_to_inventory(Entity item, size_t slot)
+{
+	if (item == entt::null) {
+		return;
+	}
+	if (slot == MAXSIZE_T) {
+		update_potion_count();
+		return;
+	}
+	auto view = registry.view<InventorySlot>();
+	auto matching_slot = std::find_if(view.begin(), view.end(), [&view, slot](Entity entity) {
+		return view.get<InventorySlot>(entity).slot == slot;
+	});
+	if (matching_slot == view.end()) {
+		return;
+	}
+	create_ui_item(groups[(size_t)Groups::Inventory], (*matching_slot), item);
 }
 
 void UISystem::update_potion_count()

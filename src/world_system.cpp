@@ -25,8 +25,7 @@ WorldSystem::WorldSystem(Debug& debugging,
 						 std::shared_ptr<UISystem> ui,
 						 std::shared_ptr<SoLoud::Soloud> so_loud)
 
-	: points(0)
-	, debugging(debugging)
+	: debugging(debugging)
 	, so_loud(std::move(so_loud))
 	, bgm_red()
 	, bgm_blue()
@@ -288,42 +287,42 @@ void WorldSystem::return_arrow_to_player()
 void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 {
 	ui->on_key(key, action, mod);
-	if (ui->player_can_act()) {
-		if (turns && action != GLFW_RELEASE) {
-
-			if (key == GLFW_KEY_D) {
-				move_player(Direction::Right);
-			}
-			if (key == GLFW_KEY_A) {
-				move_player(Direction::Left);
-			}
-			if (key == GLFW_KEY_W) {
-				move_player(Direction::Up);
-			}
-			if (key == GLFW_KEY_S) {
-				move_player(Direction::Down);
-			}
+	check_debug_keys(key, action, mod);
+	if (!ui->player_can_act()) {
+		return;
+	}
+	if (action != GLFW_RELEASE) {
+		if (key == GLFW_KEY_D) {
+			move_player(Direction::Right);
 		}
-
-		if (action == GLFW_RELEASE && key == GLFW_KEY_SPACE) {
+		if (key == GLFW_KEY_A) {
+			move_player(Direction::Left);
+		}
+		if (key == GLFW_KEY_W) {
+			move_player(Direction::Up);
+		}
+		if (key == GLFW_KEY_S) {
+			move_player(Direction::Down);
+		}
+	} else {
+		switch (key) {
+		case GLFW_KEY_SPACE:
 			change_color();
-		}
-
-		if (action == GLFW_PRESS && key == GLFW_KEY_LEFT_SHIFT) {
+			break;
+		case GLFW_KEY_LEFT_SHIFT:
 			if (turns->ready_to_act(player) && combat->try_pickup_items(player)) {
 				turns->skip_team_action(player);
 			}
-		}
-
-		if (action == GLFW_PRESS && key == GLFW_KEY_H) {
+			break;
+		case GLFW_KEY_H:
 			if (turns->ready_to_act(player) && combat->try_drink_potion(player)) {
 				ui->update_potion_count();
 				turns->skip_team_action(player);
 			}
+		default:
+			break;
 		}
 	}
-
-	check_debug_keys(key, action, mod);
 }
 
 void WorldSystem::check_debug_keys(int key, int action, int mod)

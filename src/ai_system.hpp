@@ -29,10 +29,10 @@ public:
 
 private:
 	// Execute state machine of particular type of enemy
-	void execute_cowardly_sm(const Entity& enemy);
-	void execute_basic_sm(const Entity& enemy);
-	void execute_defensive_sm(const Entity& enemy);
-	void execute_aggressive_sm(const Entity& enemy);
+	void execute_cowardly_sm(const Entity& entity);
+	void execute_basic_sm(const Entity& entity);
+	void execute_defensive_sm(const Entity& entity);
+	void execute_aggressive_sm(const Entity& entity);
 
 	// Switch enemy state.
 	void switch_enemy_state(const Entity& enemy_entity, EnemyState new_state);
