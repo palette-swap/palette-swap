@@ -305,6 +305,12 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		if (action == GLFW_RELEASE && key == GLFW_KEY_SPACE) {
 			change_color();
 		}
+
+		if (action == GLFW_PRESS && key == GLFW_KEY_LEFT_SHIFT) {
+			if (turns->ready_to_act(player) && combat->try_pickup_items(player)) {
+				turns->skip_team_action(player);
+			}
+		}
 	}
 
 	check_debug_keys(key, action, mod);
@@ -327,6 +333,12 @@ void WorldSystem::check_debug_keys(int key, int action, int mod)
 		stats.evasion = 100000;
 		stats.to_hit_bonus = 100000;
 		stats.damage_bonus = 100000;
+	}
+
+	// Drop loot on your current location
+	if (action == GLFW_RELEASE && (mod & GLFW_MOD_ALT) != 0 && key == GLFW_KEY_L) {
+		uvec2 pos = registry.get<MapPosition>(player).position;
+		combat->drop_loot(pos);
 	}
 
 	// Debugging

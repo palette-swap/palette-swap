@@ -11,6 +11,73 @@ void CombatSystem::init(std::shared_ptr<std::default_random_engine> global_rng, 
 
 	load_items();
 }
+
+void CombatSystem::restart_game()
+{
+	looted = 0;
+	loot_misses = 0;
+	loot_list.clear();
+
+	std::vector<size_t> used;
+
+	for (auto& list : loot_table) {
+		used.push_back(0);
+		std::shuffle(list.begin(), list.end(), *rng);
+	}
+
+	for (int i = 0; i < loot_count; i++) {
+		bool filled = false;
+		for (size_t j = 0; j < loot_table.size(); j++) {
+			std::uniform_int_distribution<size_t> draw_from_list(0, loot_table.at(j).size() - used.at(j));
+			if (draw_from_list(*rng) > 0) {
+				loot_list.push_back(loot_table.at(j).at(used.at(j)++));
+				filled = true;
+				break;
+			}
+		}
+		if (!filled) {
+			for (size_t j = 0; j < loot_table.size(); j++) {
+				if (used.at(j) < loot_table.at(j).size()) {
+					loot_list.push_back(loot_table.at(j).at(used.at(j)++));
+					break;
+				}
+			}
+		}
+	}
+}
+
+bool CombatSystem::try_pickup_items(Entity player)
+{
+	MapPosition& player_pos = registry.get<MapPosition>(player);
+	for (auto [entity, pos] : registry.view<HealthPotion, MapPosition>().each()) {
+		if (player_pos.position == pos.position) {
+			registry.get<Inventory>(player).health_potions++;
+			registry.destroy(entity);
+
+			for (const auto& callback : pickup_callbacks) {
+				callback(entity, MAXSIZE_T);
+			}
+			return true;
+		}
+	}
+	for (auto [entity, item, pos] : registry.view<Item, MapPosition>().each()) {
+		if (player_pos.position == pos.position) {
+			Inventory& inventory = registry.get<Inventory>(player);
+			for (size_t i = 0; i < Inventory::inventory_size; i++) {
+				if (inventory.inventory.at(i) == entt::null) {
+					inventory.inventory.at(i) = item.item_template;
+					registry.destroy(entity);
+
+					for (const auto& callback : pickup_callbacks) {
+						callback(inventory.inventory.at(i), i);
+					}
+					return true;
+				}
+			}
+		}
+	}
+	return false;
+}
 }
 
 bool CombatSystem::do_attack(Entity attacker_entity, Attack& attack, Entity target_entity)
@@ -21,7 +88,7 @@ bool CombatSystem::do_attack(Entity attacker_entity, Attack& attack, Entity targ
 	}
 	MapPosition& attacker_position = registry.get<MapPosition>(attacker_entity);
 	MapPosition& target_position = registry.get<MapPosition>(target_entity);
-	// Changes attacker's direction based on the location of the target relative to 
+	// Changes attacker's direction based on the location of the target relative to
 	// the target entity
 	if (target_position.position.x < attacker_position.position.x) {
 		animations->set_sprite_direction(attacker_entity, Sprite_Direction::SPRITE_LEFT);
@@ -32,7 +99,6 @@ bool CombatSystem::do_attack(Entity attacker_entity, Attack& attack, Entity targ
 	// Triggers attack based on player/enemy attack prescence
 	animations->attack_animation(attacker_entity);
 	animations->damage_animation(target_entity);
-	
 
 	Stats& attacker = registry.get<Stats>(attacker_entity);
 	Stats& target = registry.get<Stats>(target_entity);
@@ -56,17 +122,54 @@ bool CombatSystem::do_attack(Entity attacker_entity, Attack& attack, Entity targ
 	}
 
 	if (target.health <= 0) {
-		kill(target_entity);
+		kill(attacker_entity, target_entity);
 	}
 
 	return success;
 }
 
-void CombatSystem::kill(Entity entity)
+void CombatSystem::drop_loot(uvec2 position)
 {
+	// Initial Drop rates are as follows
+	// 1-3: Nothing
+	// 4-5: Health Potion
+	// 6-9: Item Drop
+	// If all items have dropped, only drop health potions as follows:
+	// 1-6: Nothing
+	// 7-9: Health Potion
+
+	// This is tempered by increasing the floor by the number of consecutive misses
+	bool all_dropped = looted >= loot_list.size();
+	std::uniform_int_distribution<int> drop_chance(1 + loot_misses, 9);
+	int result = drop_chance(*rng);
+	if (result <= 3 || (all_dropped && result <= 6)) {
+		loot_misses++;
+		return;
+	}
+	loot_misses = 0;
+	if (result <= 5 || all_dropped) {
+		// Health Potion
+		return;
+	}
+	Entity template_entity = loot_list.at(looted++ % loot_list.size());
+	Entity loot = registry.create();
+	registry.emplace<Item>(loot, template_entity);
+	registry.emplace<MapPosition>(loot, position);
+	registry.emplace<RenderRequest>(
+		loot, TEXTURE_ASSET_ID::CANNONBALL, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE, true);
+	registry.emplace<Color>(loot, vec3(.8314f, .6863f, .2157f) * 1.1f);
+}
+
+void CombatSystem::kill(Entity attacker_entity, Entity target_entity)
+{
+	Stats& stats = registry.get<Stats>(attacker_entity);
+	// Regen 25% of total mana with a successful kill
+	stats.mana = min(stats.mana_max, stats.mana + stats.mana_max / 4);
+
+	drop_loot(registry.get<MapPosition>(target_entity).position);
 
 	// TODO: Animate death
-	registry.destroy(entity);
+	registry.destroy(target_entity);
 }
 
 void CombatSystem::on_attack(

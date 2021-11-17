@@ -11,9 +11,12 @@ class CombatSystem {
 public:
 	void init(std::shared_ptr<std::default_random_engine> global_rng, std::shared_ptr<AnimationSystem> animation_system);
 
+	void restart_game();
+
+	bool try_pickup_items(Entity player);
 	bool do_attack(Entity attacker, Attack& attack, Entity target);
 
-	void kill(Entity entity);
+	void drop_loot(uvec2 position);
 
 	// Observer Pattern: attach a callback of do_attack().
 	void on_attack(const std::function<void(const Entity& attacker, const Entity& target)>& do_attack_callback);
@@ -22,6 +25,9 @@ public:
 	std::string make_attack_list(Entity entity, size_t current_attack) const;
 
 private:
+
+	// Private attack helpers
+	void kill(Entity attacker_entity, Entity entity);
 
 	void load_items();
 
@@ -36,4 +42,7 @@ private:
 
 	size_t loot_count = 0;
 	std::vector<std::vector<Entity>> loot_table;
+	size_t looted = 0;
+	size_t loot_misses = 0;
+	std::vector<Entity> loot_list;
 };
