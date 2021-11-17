@@ -67,7 +67,7 @@ private:
 	void check_debug_keys(int key, int action, int mod);
 
 	// Mouse Click helpers
-	void try_fire_projectile();
+	void try_fire_projectile(Attack& attack);
 	void try_adjacent_attack(Attack& attack);
 
 	// restart level

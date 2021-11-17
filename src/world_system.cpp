@@ -483,7 +483,7 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 			}
 			Attack& attack = ui->get_current_attack();
 			if (attack.targeting_type == TargetingType::Projectile) {
-				try_fire_projectile();
+				try_fire_projectile(attack);
 			} else if (attack.targeting_type == TargetingType::Adjacent) {
 				try_adjacent_attack(attack);
 			}
@@ -502,11 +502,13 @@ void WorldSystem::on_mouse_scroll(float offset)
 // TODO: update to scale the scene as not changed when window is resized
 void WorldSystem::on_resize(int width, int height) { renderer->on_resize(width, height); }
 
-void WorldSystem::try_fire_projectile()
+void WorldSystem::try_fire_projectile(Attack& attack)
 {
-	if (player_arrow_fired || !turns->execute_team_action(player)) {
+	if (player_arrow_fired || registry.get<Stats>(player).mana < attack.mana_cost
+		|| !turns->execute_team_action(player)) {
 		return;
 	}
+	registry.get<Stats>(player).mana -= attack.mana_cost;
 	player_arrow_fired = true;
 	// Arrow becomes a projectile the moment it leaves the player, not while it's direction is being selected
 	ActiveProjectile& arrow_projectile = registry.emplace<ActiveProjectile>(player_arrow, player);
