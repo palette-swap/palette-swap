@@ -48,8 +48,16 @@ static void load_enemy(unsigned int enemy_index, const rapidjson::Document& json
 	registry.emplace<Hittable>(entity);
 
 	Animation& enemy_animation = registry.emplace<Animation>(entity);
-	enemy_animation.max_frames = 4;
-	enemy_animation.state = enemy_state_to_animation_state.at(static_cast<int>(enemy_component.state));
+
+	// Need to replace with a different component denoting a boss enemy
+	if (enemy_component.type == EnemyType::KingMush) {
+		enemy_animation.max_frames = 8;
+		enemy_animation.speed_adjustment = 0.6;
+	} else {
+		enemy_animation.max_frames = 4;
+	}
+
+	enemy_animation.state = enemy_state_to_animation_state.at(static_cast<size_t>(enemy_component.state));
 	registry.emplace<RenderRequest>(entity,
 									enemy_type_textures.at(static_cast<int>(enemy_component.type)),
 									EFFECT_ASSET_ID::ENEMY,

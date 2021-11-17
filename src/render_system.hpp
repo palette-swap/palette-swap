@@ -35,7 +35,7 @@ class RenderSystem {
 	// and then uses path to grab sprites, stats, and behaviour
 	// Make sure these paths remain in sync with the associated enumerators.
 	const std::array<std::string, texture_count> texture_paths = {
-			textures_path("./01/Player Spritesheet.png"),
+			textures_path("./01-Player/Player Spritesheet.png"),
 			textures_path("./TrainingDummy/Dummy Spritesheet.png"),
 			textures_path("./Slime/Slime Spritesheet.png"),
 			textures_path("./Living Armor/Living Armor Spritesheet.png"),
@@ -46,6 +46,7 @@ class RenderSystem {
 			textures_path("./Mushroom/Mushroom Spritesheet.png"),
 			textures_path("./Spider/Spider Spritesheet.png"),
 			textures_path("./Clone/Clone Spritesheet.png"),
+			textures_path("./02-Bosses/King Mush/King Mush Spritesheet.png"),
 			textures_path("cannon_ball.png"),
 			textures_path("tile_set.png"),
 			textures_path("help.png"),

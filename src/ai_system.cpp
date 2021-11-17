@@ -17,6 +17,8 @@ AISystem::AISystem(const Debug& debugging,
 	, turns(std::move(turns))
 	, so_loud(std::move(so_loud))
 	, enemy_team(registry.create())
+	, rng(std::random_device()())
+	, uniform_dist(0.00f, 1.00f)
 {
 	registry.emplace<DebugComponent>(enemy_team);
 
@@ -43,6 +45,7 @@ void AISystem::step(float /*elapsed_ms*/)
 
 				switch (enemy.behaviour) {
 
+				// Small Enemy Behaviours (State Machines)
 				case EnemyBehaviour::Basic:
 					execute_basic_sm(enemy_entity);
 					break;
@@ -59,8 +62,21 @@ void AISystem::step(float /*elapsed_ms*/)
 					execute_aggressive_sm(enemy_entity);
 					break;
 
+				// Boss Enemy Behaviours (Behaviour Trees)
+				case EnemyBehaviour::Summoner: {
+					if ((bosses.find(enemy_entity) == bosses.end())) {
+						// A boss entity occurs for the 1st time, create its corresponding behaviour tree & initialize.
+						bosses[enemy_entity] = SummonerTree::summoner_tree_factory(this);
+						bosses[enemy_entity]->init(enemy_entity);
+					}
+					if (bosses[enemy_entity]->process(enemy_entity, this) != BTState::Running) {
+						bosses[enemy_entity]->init(enemy_entity);
+					}
+					break;
+				}
+
 				default:
-					throw std::runtime_error("Invalid enemy type.");
+					throw std::runtime_error("Invalid enemy behaviour.");
 				}
 			}
 		}
@@ -78,10 +94,40 @@ void AISystem::do_attack_callback(const Entity& attacker, const Entity& target)
 {
 	if (registry.any_of<Player>(attacker)) {
 		Enemy& enemy = registry.get<Enemy>(target);
-		if ((enemy.state == EnemyState::Idle && !is_player_spotted(target, enemy.radius))
-			|| (enemy.state != EnemyState::Idle && !is_player_spotted(target, enemy.radius * 2))) {
+		if (!is_player_spotted(target)) {
 			enemy.radius = MapUtility::room_size * MapUtility::map_size;
 		}
+	}
+}
+
+void AISystem::execute_basic_sm(const Entity& entity)
+{
+	const Enemy& enemy = registry.get<Enemy>(entity);
+
+	switch (enemy.state) {
+
+	case EnemyState::Idle:
+		if (is_player_spotted(entity)) {
+			switch_enemy_state(entity, EnemyState::Active);
+			execute_basic_sm(entity);
+			return;
+		}
+		break;
+
+	case EnemyState::Active:
+		if (is_player_spotted(entity)) {
+			if (is_player_in_attack_range(entity)) {
+				attack_player(entity);
+			} else {
+				approach_player(entity, enemy.speed);
+			}
+		} else {
+			switch_enemy_state(entity, EnemyState::Idle);
+		}
+		break;
+
+	default:
+		throw std::runtime_error("Invalid enemy state for enemy behaviour Basic.");
 	}
 }
 
@@ -92,7 +138,7 @@ void AISystem::execute_cowardly_sm(const Entity& entity)
 	switch (enemy.state) {
 
 	case EnemyState::Idle:
-		if (is_player_spotted(entity, enemy.radius)) {
+		if (is_player_spotted(entity)) {
 			switch_enemy_state(entity, EnemyState::Active);
 			execute_cowardly_sm(entity);
 			return;
@@ -100,8 +146,8 @@ void AISystem::execute_cowardly_sm(const Entity& entity)
 		break;
 
 	case EnemyState::Active:
-		if (is_player_spotted(entity, enemy.radius * 2)) {
-			if (is_player_in_attack_range(entity, enemy.attack_range)) {
+		if (is_player_spotted(entity)) {
+			if (is_player_in_attack_range(entity)) {
 				attack_player(entity);
 			} else {
 				approach_player(entity, enemy.speed);
@@ -118,7 +164,7 @@ void AISystem::execute_cowardly_sm(const Entity& entity)
 	case EnemyState::Flinched:
 		if (is_at_nest(entity)) {
 			enemy.radius = 3;
-			if (!is_player_spotted(entity, enemy.radius * 2)) {
+			if (!is_player_spotted(entity)) {
 				recover_health(entity, 1.f);
 				switch_enemy_state(entity, EnemyState::Idle);
 			}
@@ -128,38 +174,7 @@ void AISystem::execute_cowardly_sm(const Entity& entity)
 		break;
 
 	default:
-		throw std::runtime_error("Invalid enemy state of Slime.");
-	}
-}
-
-void AISystem::execute_basic_sm(const Entity& entity)
-{
-	const Enemy& enemy = registry.get<Enemy>(entity);
-
-	switch (enemy.state) {
-
-	case EnemyState::Idle:
-		if (is_player_spotted(entity, enemy.radius)) {
-			switch_enemy_state(entity, EnemyState::Active);
-			execute_basic_sm(entity);
-			return;
-		}
-		break;
-
-	case EnemyState::Active:
-		if (is_player_spotted(entity, enemy.radius * 2)) {
-			if (is_player_in_attack_range(entity, enemy.attack_range)) {
-				attack_player(entity);
-			} else {
-				approach_player(entity, enemy.speed);
-			}
-		} else {
-			switch_enemy_state(entity, EnemyState::Idle);
-		}
-		break;
-
-	default:
-		throw std::runtime_error("Invalid enemy state of Raven.");
+		throw std::runtime_error("Invalid enemy state for enemy behaviour Cowardly.");
 	}
 }
 
@@ -170,7 +185,7 @@ void AISystem::execute_defensive_sm(const Entity& entity)
 	switch (enemy.state) {
 
 	case EnemyState::Idle:
-		if (is_player_spotted(entity, enemy.radius)) {
+		if (is_player_spotted(entity)) {
 			switch_enemy_state(entity, EnemyState::Active);
 			execute_defensive_sm(entity);
 			return;
@@ -178,14 +193,14 @@ void AISystem::execute_defensive_sm(const Entity& entity)
 		break;
 
 	case EnemyState::Active:
-		if (is_player_spotted(entity, enemy.radius * 2)) {
-			if (is_player_in_attack_range(entity, enemy.attack_range)) {
+		if (is_player_spotted(entity)) {
+			if (is_player_in_attack_range(entity)) {
 				attack_player(entity);
 			} else {
 				approach_player(entity, enemy.speed);
 			}
 
-			if (uniform_dist(rng) < 0.20f) {
+			if (chance_to_happen(0.2f)) {
 				become_immortal(entity, true);
 				switch_enemy_state(entity, EnemyState::Immortal);
 			}
@@ -200,7 +215,7 @@ void AISystem::execute_defensive_sm(const Entity& entity)
 		break;
 
 	default:
-		throw std::runtime_error("Invalid enemy state of Armor.");
+		throw std::runtime_error("Invalid enemy state for enemy behaviour Defensive.");
 	}
 }
 
@@ -211,7 +226,7 @@ void AISystem::execute_aggressive_sm(const Entity& entity)
 	switch (enemy.state) {
 
 	case EnemyState::Idle:
-		if (is_player_spotted(entity, enemy.radius)) {
+		if (is_player_spotted(entity)) {
 			switch_enemy_state(entity, EnemyState::Active);
 			execute_aggressive_sm(entity);
 			return;
@@ -219,8 +234,8 @@ void AISystem::execute_aggressive_sm(const Entity& entity)
 		break;
 
 	case EnemyState::Active:
-		if (is_player_spotted(entity, enemy.radius * 2)) {
-			if (is_player_in_attack_range(entity, enemy.attack_range)) {
+		if (is_player_spotted(entity)) {
+			if (is_player_in_attack_range(entity)) {
 				attack_player(entity);
 			} else {
 				approach_player(entity, enemy.speed);
@@ -236,8 +251,8 @@ void AISystem::execute_aggressive_sm(const Entity& entity)
 		break;
 
 	case EnemyState::Powerup:
-		if (is_player_spotted(entity, enemy.radius * 2)) {
-			if (is_player_in_attack_range(entity, enemy.attack_range * 2)) {
+		if (is_player_spotted(entity)) {
+			if (is_player_in_attack_range(entity)) {
 				attack_player(entity);
 			}
 			// TreeAnt can't move when it's powered up.
@@ -248,7 +263,7 @@ void AISystem::execute_aggressive_sm(const Entity& entity)
 		break;
 
 	default:
-		throw std::runtime_error("Invalid enemy state of Armor.");
+		throw std::runtime_error("Invalid enemy state for enemy behaviour Aggressive.");
 	}
 }
 
@@ -256,6 +271,10 @@ bool AISystem::remove_dead_entity(const Entity& entity)
 {
 	// TODO: Animate death.
 	if (registry.any_of<Stats>(entity) && registry.get<Stats>(entity).health <= 0) {
+		// If entity is a boss, remove its behaviour tree.
+		if (bosses.find(entity) != bosses.end()) {
+			bosses.erase(entity);
+		}
 		registry.destroy(entity);
 		return true;
 	}
@@ -266,12 +285,14 @@ void AISystem::switch_enemy_state(const Entity& enemy_entity, EnemyState new_sta
 {
 	Enemy& enemy = registry.get<Enemy>(enemy_entity);
 	enemy.state = new_state;
-	int new_state_id = enemy_state_to_animation_state.at((uint) enemy.state);
+	int new_state_id = enemy_state_to_animation_state.at(static_cast<size_t>(new_state));
 	animations->set_enemy_state(enemy_entity, new_state_id);
 }
 
-bool AISystem::is_player_spotted(const Entity& entity, const uint radius)
+bool AISystem::is_player_spotted(const Entity& entity)
 {
+	const uint radius = registry.get<Enemy>(entity).radius;
+
 	uvec2 player_map_pos = registry.get<MapPosition>(registry.view<Player>().front()).position;
 	uvec2 entity_map_pos = registry.get<MapPosition>(entity).position;
 
@@ -279,9 +300,15 @@ bool AISystem::is_player_spotted(const Entity& entity, const uint radius)
 	return uint(abs(distance.x)) <= radius && uint(abs(distance.y)) <= radius;
 }
 
-bool AISystem::is_player_in_attack_range(const Entity& entity, const uint attack_range)
+bool AISystem::is_player_in_attack_range(const Entity& entity)
 {
-	return is_player_spotted(entity, attack_range);
+	const uint attack_range = registry.get<Enemy>(entity).attack_range;
+
+	uvec2 player_map_pos = registry.get<MapPosition>(registry.view<Player>().front()).position;
+	uvec2 entity_map_pos = registry.get<MapPosition>(entity).position;
+
+	ivec2 distance = entity_map_pos - player_map_pos;
+	return uint(abs(distance.x)) <= attack_range && uint(abs(distance.y)) <= attack_range;
 }
 
 bool AISystem::is_at_nest(const Entity& entity)
@@ -296,11 +323,6 @@ void AISystem::attack_player(const Entity& entity)
 {
 	Entity player = registry.view<Player>().front();
 	combat->do_attack(entity, registry.get<Stats>(entity).base_attack, player);
-
-	// TODO: temporarily for debugging in console, remove it later.
-	const char* enemy_type = enemy_type_to_string.at((uint) registry.get<Enemy>(entity).type);
-	printf("%s_%u attacks player!\n", enemy_type, (uint)entity);
-
 	so_loud->play(enemy_attack1_wav);
 }
 
@@ -363,6 +385,12 @@ bool AISystem::is_health_below(const Entity& entity, float ratio)
 	return static_cast<float>(stats.health) < static_cast<float>(stats.health_max) * ratio;
 }
 
+bool AISystem::chance_to_happen(float percent) {
+	float chance = uniform_dist(rng);
+	bool result = chance < percent;
+	return result;
+}
+
 void AISystem::become_immortal(const Entity& entity, bool flag)
 {
 	Stats& stats = registry.get<Stats>(entity);
@@ -373,6 +401,10 @@ void AISystem::become_immortal(const Entity& entity, bool flag)
 
 void AISystem::become_powerup(const Entity& entity, bool flag)
 {
+	Enemy& enemy = registry.get<Enemy>(entity);
+	enemy.radius *= 2;
+	enemy.attack_range *= 2;
+
 	Stats& stats = registry.get<Stats>(entity);
 	if (flag) {
 		stats.to_hit_bonus *= 2;
@@ -391,6 +423,30 @@ void AISystem::become_powerup(const Entity& entity, bool flag)
 	}
 }
 
+void AISystem::summon_enemies(const Entity& entity, EnemyType enemy_type, int num)
+{
+	Enemy& enemy = registry.get<Enemy>(entity);
+	MapPosition& map_pos = registry.get<MapPosition>(entity);
+
+	for (size_t i = 0; i < num; ++i) {
+		uvec2 new_map_pos = { map_pos.position.x - 2 - i, map_pos.position.y};
+		if (map_generator->walkable_and_free(new_map_pos)) {
+			create_enemy(enemy.team, enemy_type, new_map_pos);
+		}
+	}
+}
+
+void AISystem::aoe_attack(const Entity& entity, const std::vector<uvec2>& area)
+{
+	Entity player = registry.view<Player>().front();
+	const uvec2& player_map_pos = registry.get<MapPosition>(player).position;
+	for (const auto& map_pos : area) {
+		if (map_pos == player_map_pos) {
+			attack_player(entity);
+		}
+	}
+}
+
 void AISystem::draw_pathing_debug()
 {
 	for (auto [enemy_entity, enemy, entity_map_position] : registry.view<Enemy, MapPosition>().each()) {
@@ -406,7 +462,7 @@ void AISystem::draw_pathing_debug()
 				for (const uvec2& path_point : shortest_path) {
 					create_path_point(MapUtility::map_position_to_world_position(path_point));
 				}
-			} else if (enemy.state != EnemyState::Idle && is_player_spotted(enemy_entity, enemy.radius * 2)) {
+			} else if (enemy.state == EnemyState::Active && is_player_spotted(enemy_entity)) {
 				Entity player = registry.view<Player>().front();
 				std::vector<uvec2> shortest_path
 					= map_generator->shortest_path(entity_map_pos, registry.get<MapPosition>(player).position);
