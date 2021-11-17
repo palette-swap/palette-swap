@@ -342,6 +342,10 @@ const std::array<TEXTURE_ASSET_ID, static_cast<int>(EnemyType::EnemyCount)> enem
 	TEXTURE_ASSET_ID::CLONE,
 };
 
+// Render behind other elements in its grouping
+struct Background {
+};
+
 struct RenderRequest {
 	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
 	EFFECT_ASSET_ID used_effect = EFFECT_ASSET_ID::EFFECT_COUNT;
@@ -475,7 +479,7 @@ enum class Slot {
 	Count = Amulet + 1,
 };
 
-const std::array<std::string, (size_t)Slot::Count> slot_names = {
+const std::array<std::string_view, (size_t)Slot::Count> slot_names = {
 	"Weapon", "Armor", "Spell", "Spell", "Ring", "Amulet",
 };
 
@@ -566,6 +570,11 @@ enum class Alignment {
 	End = -1,
 };
 
+struct UIRectangle {
+	float opacity;
+	vec4 fill_color;
+};
+
 struct UIRenderRequest {
 	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
 	EFFECT_ASSET_ID used_effect = EFFECT_ASSET_ID::EFFECT_COUNT;
@@ -620,8 +629,10 @@ struct UIElement {
 struct UIGroup {
 	bool visible = false;
 	Entity first_element = entt::null;
+	Entity first_text = entt::null;
 
-	static void add(Entity group, Entity element, UIElement& ui_element);
+	static void add_element(Entity group, Entity element, UIElement& ui_element);
+	static void add_text(Entity group, Entity text, UIElement& ui_element);
 };
 
 struct UIItem {
@@ -666,6 +677,14 @@ struct Text {
 	Alignment alignment_x;
 	Alignment alignment_y;
 
+	Text(std::string_view text, uint16 font_size, Alignment alignment_x, Alignment alignment_y)
+		: text(text)
+		, font_size(font_size)
+		, alignment_x(alignment_x)
+		, alignment_y(alignment_y)
+	{
+	}
+
 	Text(std::string text, uint16 font_size, Alignment alignment_x, Alignment alignment_y)
 		: text(std::move(text))
 		, font_size(font_size)
@@ -685,4 +704,14 @@ template <> struct std::hash<Text> {
 		// Combination as per boost https://www.boost.org/doc/libs/1_35_0/doc/html/boost/hash_combine_id241013.html
 		return text_hash ^ (size_hash + 0x9e3779b9 + (text_hash << 6) + (text_hash >> 2));
 	}
+};
+
+enum class ButtonAction {
+	SwitchToGroup,
+};
+
+struct Button {
+	Entity label;
+	ButtonAction action;
+	Entity action_target;
 };

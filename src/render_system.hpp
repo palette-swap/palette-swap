@@ -102,6 +102,9 @@ public:
 	// Draw all entities
 	void draw();
 
+	// Draw UI entities over top
+	void draw_ui(const mat3& projection);
+
 	mat3 create_projection_matrix();
 	vec2 screen_position_to_world_position(vec2 screen_pos);
 
@@ -129,7 +132,7 @@ private:
 	// Get world position of top left and bottom right of screen
 	std::pair<vec2, vec2> get_window_bounds();
 	// Get UI scale based on difference between current window size and default
-	float get_ui_scale_factor();
+	float get_ui_scale_factor() const;
 	// Helper to get position transform
 	Transform get_transform(Entity entity);
 

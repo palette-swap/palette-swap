@@ -254,11 +254,24 @@ void Collision::add(Entity parent, Entity child)
 	}
 }
 
-void UIGroup::add(Entity group, Entity element, UIElement& ui_element)
+void UIGroup::add_element(Entity group, Entity element, UIElement& ui_element)
 {
+	if (group == entt::null) {
+		return;
+	}
 	UIGroup& g = registry.get<UIGroup>(group);
 	ui_element.next = g.first_element;
 	g.first_element = element;
+}
+
+void UIGroup::add_text(Entity group, Entity text, UIElement& ui_element)
+{
+	if (group == entt::null) {
+		return;
+	}
+	UIGroup& g = registry.get<UIGroup>(group);
+	ui_element.next = g.first_text;
+	g.first_text = text;
 }
 
 Entity Inventory::get(Entity entity, Slot slot) { return registry.get<Inventory>(entity).equipped.at((size_t)slot); }
