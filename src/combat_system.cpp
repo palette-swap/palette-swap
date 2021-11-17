@@ -237,6 +237,11 @@ void CombatSystem::on_pickup(const std::function<void(const Entity& item, size_t
 	pickup_callbacks.push_back(on_pickup_callback);
 }
 
+void CombatSystem::on_death(const std::function<void(const Entity& entity)>& on_death_callback)
+{
+	death_callbacks.push_back(on_death_callback);
+}
+
 std::string CombatSystem::make_attack_list(const Entity entity, size_t current_attack) const
 {
 	Weapon& weapon = registry.get<Weapon>(entity);
