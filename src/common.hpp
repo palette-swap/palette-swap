@@ -4,6 +4,7 @@
 #include <array>
 #include <fstream> // stdout, stderr..
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <vector>
 

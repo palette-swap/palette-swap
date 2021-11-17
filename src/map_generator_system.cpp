@@ -18,8 +18,8 @@ MapGeneratorSystem::MapGeneratorSystem(std::shared_ptr<TurnSystem> turns)
 	: room_layouts()
 	, levels(num_levels)
 	, level_room_rotations(num_levels)
-	, level_snap_shots(num_levels)
 	, turns(std::move(turns))
+	, level_snap_shots(num_levels)
 {
 	load_rooms_from_csv();
 	load_levels_from_csv();
@@ -48,8 +48,16 @@ static void load_enemy(unsigned int enemy_index, const rapidjson::Document& json
 	registry.emplace<Hittable>(entity);
 
 	Animation& enemy_animation = registry.emplace<Animation>(entity);
-	enemy_animation.max_frames = 4;
-	enemy_animation.state = enemy_state_to_animation_state.at(static_cast<int>(enemy_component.state));
+
+	// Need to replace with a different component denoting a boss enemy
+	if (enemy_component.type == EnemyType::KingMush) {
+		enemy_animation.max_frames = 8;
+		enemy_animation.speed_adjustment = 0.6;
+	} else {
+		enemy_animation.max_frames = 4;
+	}
+
+	enemy_animation.state = enemy_state_to_animation_state.at(static_cast<size_t>(enemy_component.state));
 	registry.emplace<RenderRequest>(entity,
 									enemy_type_textures.at(static_cast<int>(enemy_component.type)),
 									EFFECT_ASSET_ID::ENEMY,
@@ -79,6 +87,8 @@ void MapGeneratorSystem::create_picture()
 
 	registry.emplace<RenderRequest>(
 		help_picture, TEXTURE_ASSET_ID::HELP_PIC, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE, true);
+
+	registry.emplace<Background>(help_picture);
 }
 
 // TODO: we want this eventually be procedural generated
@@ -117,13 +127,11 @@ bool MapGeneratorSystem::walkable_and_free(uvec2 pos, bool check_active_color) c
 		return !std::any_of(registry.view<MapPosition>(entt::exclude<Player, RedExclusive>).begin(),
 							registry.view<MapPosition>(entt::exclude<Player, RedExclusive>).end(),
 							[pos](const Entity e) { return registry.get<MapPosition>(e).position == pos; });
-	} else {
-		return !std::any_of(registry.view<MapPosition>(entt::exclude<Player, BlueExclusive>).begin(),
-							registry.view<MapPosition>(entt::exclude<Player, BlueExclusive>).end(),
-							[pos](const Entity e) { return registry.get<MapPosition>(e).position == pos; });
 	}
 
-	
+	return !std::any_of(registry.view<MapPosition>(entt::exclude<Player, BlueExclusive>).begin(),
+						registry.view<MapPosition>(entt::exclude<Player, BlueExclusive>).end(),
+						[pos](const Entity e) { return registry.get<MapPosition>(e).position == pos; });
 }
 
 bool MapGeneratorSystem::is_wall(uvec2 pos) const
