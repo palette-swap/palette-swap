@@ -109,7 +109,7 @@ public:
 	void scale_on_scroll(float offset);
 	void on_resize(int width, int height);
 
-	vec2 get_screen_size() { return screen_size; }
+	vec2 get_screen_size() { return RenderUtility::screen_size; }
 
 private:
 	////////////////////////////////////////////////////////
@@ -166,10 +166,6 @@ private:
 	GLuint off_screen_render_buffer_depth = 0;
 
 	Entity screen_state_entity = registry.create();
-	ivec2 screen_size = { window_width_px, window_height_px };
-	ivec2 screen_size_capped = { window_width_px, window_height_px };
-	float screen_scale = 1; // Screen to pixel coordinates scale factor (for apple
-							// retina display?)
 };
 
 bool load_effect_from_file(const std::string& vs_path, const std::string& fs_path, GLuint& out_program);

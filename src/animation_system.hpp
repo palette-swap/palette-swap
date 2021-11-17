@@ -106,6 +106,8 @@ private:
 	void resolve_event_animations();
 	// helper function for setting animation events
 	void animation_event_setup(Animation& animation, EventAnimation& EventAnimation, vec4& color);
+	// helper function for updating camera
+	void camera_update_position();
 };
 
 

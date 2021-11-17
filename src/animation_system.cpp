@@ -281,3 +281,13 @@ void AnimationSystem::animation_event_setup(Animation& animation, EventAnimation
 	EventAnimation.restore_state = animation.state;
 	EventAnimation.restore_color = color;
 }
+
+void AnimationSystem::camera_update_position() {
+	/*Entity camera = registry.view<Camera>().front();
+	WorldPosition& camera_world_pos = registry.get<WorldPosition>(camera);
+
+	vec2 buffer_top_left, buffer_down_right;
+
+	std::tie(buffer_top_left, buffer_down_right)
+		= CameraUtility::get_buffer_positions(camera_world_pos.position, window_size.x, window_size.y);*/
+}
