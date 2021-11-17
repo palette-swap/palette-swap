@@ -6,15 +6,17 @@
 
 void UISystem::on_key(int key, int action, int /*mod*/)
 {
-	if (action == GLFW_PRESS && key == GLFW_KEY_I) {
-		UIGroup& group = registry.get<UIGroup>(groups[(size_t)Groups::Inventory]);
-		group.visible = !group.visible;
-		registry.get<UIGroup>(groups[(size_t)Groups::HUD]).visible = !group.visible;
-	}
-	if (action == GLFW_PRESS && key == GLFW_KEY_ESCAPE) {
-		UIGroup& group = registry.get<UIGroup>(groups[(size_t)Groups::Inventory]);
-		group.visible = false;
-		registry.get<UIGroup>(groups[(size_t)Groups::HUD]).visible = true;
+	if (!registry.get<UIGroup>(groups[(size_t)Groups::MainMenu]).visible) {
+		if (action == GLFW_PRESS && key == GLFW_KEY_I) {
+			UIGroup& group = registry.get<UIGroup>(groups[(size_t)Groups::Inventory]);
+			group.visible = !group.visible;
+			registry.get<UIGroup>(groups[(size_t)Groups::HUD]).visible = !group.visible;
+		}
+		if (action == GLFW_PRESS && key == GLFW_KEY_ESCAPE) {
+			UIGroup& group = registry.get<UIGroup>(groups[(size_t)Groups::Inventory]);
+			group.visible = false;
+			registry.get<UIGroup>(groups[(size_t)Groups::HUD]).visible = true;
+		}
 	}
 
 	// Change attack
@@ -106,9 +108,10 @@ void UISystem::do_action(Button& button)
 void UISystem::on_left_click(int action, dvec2 mouse_screen_pos)
 {
 	if (action == GLFW_PRESS) {
-		for (auto [entity, draggable, screen_pos, interact_area] :
-			 registry.view<Draggable, ScreenPosition, InteractArea>().each()) {
-			if (Geometry::Rectangle(screen_pos.position, interact_area.size).contains(vec2(mouse_screen_pos))) {
+		for (auto [entity, draggable, element, screen_pos, interact_area] :
+			 registry.view<Draggable, UIElement, ScreenPosition, InteractArea>().each()) {
+			if (element.visible && registry.get<UIGroup>(element.group).visible
+				&& Geometry::Rectangle(screen_pos.position, interact_area.size).contains(vec2(mouse_screen_pos))) {
 				held_under_mouse = entity;
 				return;
 			}
@@ -118,7 +121,7 @@ void UISystem::on_left_click(int action, dvec2 mouse_screen_pos)
 			Geometry::Rectangle button_rect = Geometry::Rectangle(
 				pos.position + vec2((float)request.alignment_x, (float)request.alignment_y) * request.size * .5f,
 				request.size);
-			if (registry.get<UIGroup>(element.group).visible && button_rect.contains(vec2(mouse_screen_pos))) {
+			if (element.visible && registry.get<UIGroup>(element.group).visible && button_rect.contains(vec2(mouse_screen_pos))) {
 				do_action(button);
 				return;
 			}
