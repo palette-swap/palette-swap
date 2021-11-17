@@ -14,8 +14,6 @@
 bool RenderSystem::init(
 	int width, int height, GLFWwindow* window_arg, std::shared_ptr<MapGeneratorSystem> map)
 {
-	/*screen_size = { width, height };
-	screen_size_capped = { width, height };*/
 	map_generator = std::move(map);
 	this->window = window_arg;
 
@@ -34,7 +32,7 @@ bool RenderSystem::init(
 
 	// For some high DPI displays (ex. Retina Display on Macbooks)
 	// https://stackoverflow.com/questions/36672935/why-retina-screen-coordinate-value-is-twice-the-value-of-pixel-value
-	RenderUtility::screen_scale = static_cast<float>(window_width_px) / static_cast<float>(width) * window_default_scale;
+	screen_scale = static_cast<float>(window_width_px) / static_cast<float>(width) * window_default_scale;
 
 	// ASK(Camilo): Setup error callback. This can not be done in mac os, so do not enable
 	// it unless you are on Linux or Windows. You will need to change the window creation

@@ -109,7 +109,7 @@ public:
 	void scale_on_scroll(float offset);
 	void on_resize(int width, int height);
 
-	vec2 get_screen_size() { return RenderUtility::screen_size; }
+	vec2 get_screen_size() { return screen_size; }
 
 private:
 	////////////////////////////////////////////////////////

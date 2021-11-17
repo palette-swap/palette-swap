@@ -108,6 +108,9 @@ private:
 	void animation_event_setup(Animation& animation, EventAnimation& EventAnimation, vec4& color);
 	// helper function for updating camera
 	void camera_update_position();
+	
+	// helper function for update the camera to track the buffer
+	void camera_track_buffer();
 };
 
 

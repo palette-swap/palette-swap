@@ -58,13 +58,8 @@ static constexpr int window_height_px = 1080;
 static constexpr ivec2 window_default_size = vec2(window_width_px, window_height_px);
 static constexpr float window_default_scale = 0.5;
 
-namespace RenderUtility { 
-	static int window_width = window_width_px;
-	static int window_height = window_height_px;
-	static ivec2 screen_size = { window_width, window_height };
-	static float screen_scale = 1.0;
-	static ivec2 screen_size_capped = screen_size;
-}
+extern vec2 screen_size;
+extern float screen_scale;
 
 namespace AnimationUtility {
 // Defines default colors for enemies of red/blue while active

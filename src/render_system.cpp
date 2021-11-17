@@ -22,7 +22,7 @@ Transform RenderSystem::get_transform(Entity entity)
 		}
 	} else {
 		transform.translate(
-			screen_position_to_world_position(registry.get<ScreenPosition>(entity).position * vec2(RenderUtility::screen_size)));
+			screen_position_to_world_position(registry.get<ScreenPosition>(entity).position * vec2(screen_size)));
 	}
 	return transform;
 }
@@ -77,7 +77,7 @@ RenderSystem::TextData RenderSystem::generate_text(const Text& text)
 
 	// Render the text using SDL
 	SDL_Surface* surface
-		= TTF_RenderText_Blended_Wrapped(font, text.text.c_str(), SDL_Color({ 255, 255, 255, 0 }), RenderUtility::screen_size.x);
+		= TTF_RenderText_Blended_Wrapped(font, text.text.c_str(), SDL_Color({ 255, 255, 255, 0 }), screen_size.x);
 	SDL_LockSurface(surface);
 	text_data.texture_width = surface->w;
 	text_data.texture_height = surface->h;
@@ -211,7 +211,7 @@ void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest& render
 void RenderSystem::draw_ui_element(Entity entity, const UIRenderRequest& ui_render_request, const mat3& projection)
 {
 	Transform transform = get_transform(entity);
-	transform.scale(ui_render_request.size * RenderUtility::screen_scale * vec2(window_width_px, window_height_px)
+	transform.scale(ui_render_request.size * screen_scale * vec2(window_width_px, window_height_px)
 					* get_ui_scale_factor());
 	transform.translate(vec2((float)ui_render_request.alignment_x * .5, (float)ui_render_request.alignment_y * .5));
 	if (ui_render_request.used_effect == EFFECT_ASSET_ID::FANCY_HEALTH) {
@@ -350,7 +350,7 @@ void RenderSystem::draw_text(Entity entity, const Text& text, const mat3& projec
 	}
 
 	// Scale to expected pixel size, apply screen scale so not affected by zoom
-	transform.scale(vec2(text_data->second.texture_width, text_data->second.texture_height) * RenderUtility::screen_scale
+	transform.scale(vec2(text_data->second.texture_width, text_data->second.texture_height) * screen_scale
 					* get_ui_scale_factor());
 
 	// Shift according to desired alignment using fancy enum wizardry
@@ -496,7 +496,7 @@ void RenderSystem::draw_to_screen()
 	gl_has_errors();
 	// Clearing backbuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, RenderUtility::screen_size.x, RenderUtility::screen_size.y);
+	glViewport(0, 0, screen_size.x, screen_size.y);
 	glDepthRange(0, 10);
 	glClearColor(1.f, 0, 0, 1.0);
 	glClearDepth(1.f);
@@ -547,7 +547,8 @@ void RenderSystem::draw()
 	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
 	gl_has_errors();
 	// Clearing backbuffer
-	glViewport(0, 0, RenderUtility::screen_size_capped.x, RenderUtility::screen_size_capped.y);
+	//glViewport(0, 0, screen_size_capped.x, RenderUtility::screen_size_capped.y);
+	glViewport(0, 0, screen_size.x, screen_size.y);
 	glDepthRange(0.00001, 10);
 	glClearColor(0.5, 0.5, 0.5, 1.0);
 	glClearDepth(1.f);
@@ -631,7 +632,7 @@ mat3 RenderSystem::create_projection_matrix()
 	vec2 top_left, bottom_right;
 	std::tie(top_left, bottom_right) = get_window_bounds();
 
-	vec2 scaled_screen = vec2(RenderUtility::screen_size) * RenderUtility::screen_scale;
+	vec2 scaled_screen = vec2(screen_size) * screen_scale;
 
 	float sx = 2.f / (scaled_screen.x);
 	float sy = -2.f / (scaled_screen.y);
@@ -642,7 +643,7 @@ mat3 RenderSystem::create_projection_matrix()
 
 std::pair<vec2, vec2> RenderSystem::get_window_bounds()
 {
-	vec2 window_size = vec2(RenderUtility::screen_size) * RenderUtility::screen_scale;
+	vec2 window_size = vec2(screen_size) * screen_scale;
 
 	Entity player = registry.view<Player>().front();
 	vec2 player_pos = MapUtility::map_position_to_world_position(registry.get<MapPosition>(player).position);
@@ -650,24 +651,17 @@ std::pair<vec2, vec2> RenderSystem::get_window_bounds()
 	Entity camera = registry.view<Camera>().front();
 	WorldPosition& camera_world_pos = registry.get<WorldPosition>(camera);
 
-	vec2 buffer_top_left, buffer_down_right;
-
-	std::tie(buffer_top_left, buffer_down_right)
-		= CameraUtility::get_buffer_positions(camera_world_pos.position, window_size.x, window_size.y);
-
-	update_camera_position(camera_world_pos, player_pos, buffer_top_left, buffer_down_right);
-
 	return { camera_world_pos.position - window_size / 2.f, camera_world_pos.position + window_size / 2.f };
 }
 
 float RenderSystem::get_ui_scale_factor()
 {
-	return min(1.f * RenderUtility::screen_size.x / window_width_px, 1.f * RenderUtility::screen_size.y / window_height_px);
+	return min(1.f * screen_size.x / window_width_px, 1.f * screen_size.y / window_height_px);
 }
 
 vec2 RenderSystem::screen_position_to_world_position(vec2 screen_pos)
 {
-	return screen_pos * RenderUtility::screen_scale + get_window_bounds().first;
+	return screen_pos * screen_scale + get_window_bounds().first;
 }
 
 void RenderSystem::scale_on_scroll(float offset)
@@ -677,19 +671,19 @@ void RenderSystem::scale_on_scroll(float offset)
 	// scrolling backward -> zoom out
 	// max: 1.0, min: 0.2
 	float zoom = offset / 10;
-	if (RenderUtility::screen_scale - zoom > 0.1 && RenderUtility::screen_scale - zoom <= 1.0) {
-		RenderUtility::screen_scale -= zoom;
+	if (screen_scale - zoom > 0.1 && screen_scale - zoom <= 1.0) {
+		screen_scale -= zoom;
 	}
 }
 
 void RenderSystem::on_resize(int width, int height)
 {
-	RenderUtility::screen_size = { width, height };
-	RenderUtility::screen_size_capped = { min(width, window_width_px), min(height, window_height_px) };
+	screen_size = { width, height };
+	vec2 screen_size_capped = { min(width, window_width_px), min(height, window_height_px) };
 
 	glBindTexture(GL_TEXTURE_2D, off_screen_render_buffer_color);
 	glTexImage2D(
-		GL_TEXTURE_2D, 0, GL_RGBA, RenderUtility::screen_size_capped.x, RenderUtility::screen_size_capped.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+		GL_TEXTURE_2D, 0, GL_RGBA, screen_size_capped.x, screen_size_capped.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 	gl_has_errors();
 }
 
