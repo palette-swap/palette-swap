@@ -37,6 +37,13 @@ void AISystem::step(float /*elapsed_ms*/)
 			ColorState active_world_color = turns->get_active_color();
 			if (((uint8_t)active_world_color & (uint8_t)enemy.team) > 0) {
 
+				if (Stunned* stunned = registry.try_get<Stunned>(enemy_entity)) {
+					if (--(stunned->rounds) <= 0) {
+						registry.erase<Stunned>(enemy_entity);
+					}
+					continue;
+				}
+
 				switch (enemy.behaviour) {
 
 				case EnemyBehaviour::Basic:

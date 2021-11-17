@@ -475,6 +475,9 @@ struct EffectEntry {
 	float chance;
 	int magnitude;
 };
+
+struct Stunned {
+	int rounds = 1;
 };
 
 struct Stats {

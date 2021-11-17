@@ -150,6 +150,7 @@ bool CombatSystem::do_attack(Entity attacker_entity, Attack& attack, Entity targ
 		target.health -= max(damage_roller(*rng) + attacker.damage_bonus
 								 + target.damage_modifiers[static_cast<int>(attack.damage_type)],
 							 0);
+		do_attack_effects(attacker_entity, attack, target_entity);
 	}
 
 	for (const auto& callback : attack_callbacks) {
@@ -250,6 +251,70 @@ bool CombatSystem::can_reach(Entity attacker, Attack& attack, uvec2 target)
 		}
 	}
 	return true;
+}
+
+void CombatSystem::do_attack_effects(Entity attacker, Attack& attack, Entity target)
+{
+	static std::uniform_real_distribution<float> effect_roller(0, 1);
+	Entity effect_entity = attack.effects;
+	while (effect_entity != entt::null) {
+		EffectEntry effect = registry.get<EffectEntry>(effect_entity);
+		if (effect_roller(*rng) <= effect.chance) {
+			switch (effect.effect) {
+			case Effect::Shove: {
+				try_shove(attacker, effect, target);
+				break;
+			}
+			case Effect::Stun: {
+				Stunned& stunned = registry.get_or_emplace<Stunned>(target, effect.magnitude);
+				stunned.rounds = max(stunned.rounds, effect.magnitude);
+				break;
+			}
+			default:
+				break;
+			}
+		}
+		effect_entity = effect.next_effect;
+	}
+}
+
+void CombatSystem::try_shove(Entity attacker, EffectEntry& effect, Entity target)
+{
+	MapPosition& a_pos = registry.get<MapPosition>(attacker);
+	MapPosition& t_pos = registry.get<MapPosition>(target);
+	vec2 distance = glm::normalize(vec2(t_pos.position) - vec2(a_pos.position)) * static_cast<float>(effect.magnitude);
+	// The amount we need to move
+	ivec2 shift = ivec2(roundf(distance.x), roundf(distance.y));
+	// The sign of movement in each direction, used for incremental movement
+	ivec2 shift_sign = ivec2((shift.x >= 0) ? 1 : -1, (shift.y >= 0) ? 1 : -1);
+	while (shift.x != 0 || shift.y != 0) {
+		// Each of these helpers moves the player 1 unit along its respective axis if the map allows it
+		// and returns whether or not it worked
+		auto try_x = [&]() -> bool {
+			if (abs(shift.x) > 0 && map->walkable_and_free(uvec2(t_pos.position.x + shift_sign.x, t_pos.position.y))) {
+				t_pos.position.x += shift_sign.x;
+				shift.x -= shift_sign.x;
+				return true;
+			}
+			return false;
+		};
+		auto try_y = [&]() -> bool {
+			if (abs(shift.y) > 0 && map->walkable_and_free(uvec2(t_pos.position.x, t_pos.position.y + shift_sign.y))) {
+				t_pos.position.y += shift_sign.y;
+				shift.y -= shift_sign.y;
+				return true;
+			}
+			return false;
+		};
+		// If we have more y movement left, try to move along y first
+		if (abs(shift.x) < abs(shift.y) && !try_y() && !try_x()) {
+			break;
+		}
+		// Otherwise, try to move along x first
+		else if (!try_x() && !try_y()) {
+			break;
+		}
+	}
 }
 
 void CombatSystem::load_items()

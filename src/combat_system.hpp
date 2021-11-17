@@ -36,6 +36,10 @@ private:
 	bool can_reach(Entity attacker, Attack& attack, uvec2 target);
 	void kill(Entity attacker_entity, Entity entity);
 
+	// Attack Effects e.g. Shove, Stun
+	void do_attack_effects(Entity attacker, Attack& attack, Entity target);
+	void try_shove(Entity attacker, EffectEntry& effect, Entity target);
+
 	void load_items();
 
 	// Observer Pattern: callbacks of do_attack().
