@@ -132,7 +132,7 @@ RoomLayout MapGenerator::generate_room(const std::set<Direction> & open_directio
 	};
 
     // based on room open directions, decide if the room is a corridar
-	auto is_corridar_room = [&]() {
+	auto is_corridor_room = [&]() {
 		return (open_directions.size() == 2 && room_type == RoomType::Critical &&
 			open_directions.find(opposite_direction(*(open_directions.begin()))) != open_directions.end());
 	};
@@ -144,7 +144,7 @@ RoomLayout MapGenerator::generate_room(const std::set<Direction> & open_directio
 	int last_row = room_size - 1;
 	int first_col = 0;
 	int last_col = room_size - 1;
-	if (is_corridar_room()) {
+	if (is_corridor_room()) {
 		if (open_directions.find(Direction::Up) != open_directions.end())
 		{
 			first_col = (room_size - corridar_width) / 2;
@@ -458,6 +458,7 @@ LevelConfiguration MapGenerator::generate_level(LevelGenConf level_gen_conf, boo
 		if (i == 0) {
 			// generating start room
 			room_layout = generate_room(open_directions, RoomType::Start, level_gen_conf, room_rand_engines, is_debugging);
+			// TODO: replace after issue#110 is resolved
 			// 4 and 5 are being hard-coded here, this relates to the room templates defined in generate_room, we would
 			// want to handle this more appropriately when we have more room templates
 			rapidjson::SetValueByPointer(level_snap_shot, rapidjson::Pointer("/player/position/x"), col * room_size + 5);

@@ -523,6 +523,8 @@ void MapGeneratorSystem::start_editing_level()
 	if (current_level < num_predefined_levels) {
 		current_level = num_predefined_levels;
 	}
+
+	// TODO: Remove once issue#111 is resolved
 	static const std::string map_editor_instruction = R"(
 In map editing mode.
 OPTIONS
