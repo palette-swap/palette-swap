@@ -206,6 +206,55 @@ void Attack::deserialize(const std::string& prefix, const rapidjson::Document& j
 	targeting_type = static_cast<TargetingType>(targeting_type_value->GetInt());
 }
 
+void Attack::deserialize(const rapidjson::GenericObject<false, rapidjson::Value>& attack_json)
+{
+	name = attack_json["name"].GetString();
+	targeting_type = (strcmp(attack_json["targeting_type"].GetString(), "Adjacent") == 0) ? TargetingType::Adjacent
+																						  : TargetingType::Projectile;
+	if (attack_json.HasMember("mana_cost")) {
+		mana_cost = attack_json["mana_cost"].GetInt();
+	}
+	if (attack_json.HasMember("range")) {
+		range = attack_json["range"].GetInt();
+	}
+	if (attack_json.HasMember("pattern")) {
+		pattern = (strcmp(attack_json["pattern"].GetString(), "Rectangle") == 0) ? AttackPattern::Rectangle
+																						: AttackPattern::Circle;
+	}
+	if (attack_json.HasMember("parallel_size")) {
+		parallel_size = attack_json["parallel_size"].GetInt();
+	}
+	if (attack_json.HasMember("perpendicular_size")) {
+		perpendicular_size = attack_json["perpendicular_size"].GetInt();
+	}
+	to_hit_min = attack_json["to_hit"][0].GetInt();
+	to_hit_max = attack_json["to_hit"][1].GetInt();
+	damage_min = attack_json["damage"][0].GetInt();
+	damage_max = attack_json["damage"][1].GetInt();
+	auto damage_type_json
+		= std::find(damage_type_names.begin(), damage_type_names.end(), attack_json["damage_type"].GetString());
+	if (damage_type_json != damage_type_names.end()) {
+		damage_type = (DamageType)(damage_type_json - damage_type_names.begin());
+	}
+	if (attack_json.HasMember("effects")) {
+		for (rapidjson::SizeType i = 0; i < attack_json["effects"].Size(); i++) {
+			auto effect_json = attack_json["effects"][i].GetObj();
+			Entity effect_entity = registry.create();
+			EffectEntry& effect_entry = registry.emplace<EffectEntry>(effect_entity);
+			effect_entry.next_effect = effects;
+			effects = effect_entity;
+			const char* json_effect_name = effect_json["effect"].GetString();
+			for (size_t k = 0; k < effect_names.size(); k++) {
+				const auto& effect_name = effect_names.at(k);
+				if (effect_name.compare(json_effect_name) == 0) {
+					effect_entry.effect = (Effect)k;
+				}
+			}
+			effect_entry.chance = effect_json["chance"].GetFloat();
+			effect_entry.magnitude = effect_json["magnitude"].GetInt();
+		}
+	}
+}
 void Stats::serialize(const std::string& prefix, rapidjson::Document& json) const
 {
 	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/health").c_str()), health);
@@ -275,3 +324,62 @@ void UIGroup::add_text(Entity group, Entity text, UIElement& ui_element)
 }
 
 Entity Inventory::get(Entity entity, Slot slot) { return registry.get<Inventory>(entity).equipped.at((size_t)slot); }
+
+void ItemTemplate::deserialize(Entity entity, const rapidjson::GenericObject<false, rapidjson::Value>& item)
+{
+	name = item["name"].GetString();
+	tier = item["tier"].GetInt();
+
+	// Slots
+	for (rapidjson::SizeType j = 0; j < item["slots"].Size(); j++) {
+		const char* json_slot_name = item["slots"][j].GetString();
+		for (int k = 0; k < slot_names.size(); k++) {
+			const auto& slot_name = slot_names.at(k);
+			if (slot_name.compare(json_slot_name) == 0) {
+				allowed_slots[k] = true;
+			}
+		}
+	}
+
+	// Attacks
+	if (item.HasMember("attacks")) {
+		Weapon& weapon = registry.emplace<Weapon>(entity);
+		for (rapidjson::SizeType j = 0; j < item["attacks"].Size(); j++) {
+			Entity attack_entity = registry.create();
+			Attack& attack = registry.emplace<Attack>(attack_entity, "");
+			attack.deserialize(item["attacks"][j].GetObj());
+			weapon.given_attacks.emplace_back(attack_entity);
+		}
+	}
+
+	if (item.HasMember("stat_boosts")) {
+		StatBoosts& stat_boosts = registry.emplace<StatBoosts>(entity);
+		stat_boosts.deserialize(item["stat_boosts"].GetObj());
+	}
+}
+
+void StatBoosts::deserialize(const rapidjson::GenericObject<false, rapidjson::Value>& boosts) {
+	if (boosts.HasMember("health")) {
+		health = boosts["health"].GetInt();
+	}
+	if (boosts.HasMember("mana")) {
+		mana = boosts["mana"].GetInt();
+	}
+	if (boosts.HasMember("to_hit")) {
+		to_hit_bonus = boosts["to_hit"].GetInt();
+	}
+	if (boosts.HasMember("damage")) {
+		damage_bonus = boosts["damage"].GetInt();
+	}
+	if (boosts.HasMember("evasion")) {
+		evasion = boosts["evasion"].GetInt();
+	}
+	if (boosts.HasMember("damage_mods")) {
+		auto damage_mods_json = boosts["damage_mods"].GetObj();
+		for (size_t i = 0; i < damage_type_names.size(); i++) {
+			if (damage_mods_json.HasMember(damage_type_names.at(i).data())) {
+				damage_modifiers.at(i) = damage_mods_json[damage_type_names.at(i).data()].GetInt();
+			}
+		}
+	}
+}

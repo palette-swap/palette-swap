@@ -403,21 +403,32 @@ struct Effects {
 enum class DamageType {
 	Physical = 0,
 	Fire = Physical + 1,
-	Magical = Fire + 1,
-	Count = Magical + 1,
+	Cold = Fire + 1,
+	Earth = Cold + 1,
+	Wind = Earth + 1,
+	Count = Wind + 1,
 };
 
+const std::array<std::string_view, (size_t)DamageType::Count> damage_type_names = {
+	"Physical", "Fire", "Cold", "Earth", "Wind",
+};
 
 enum class TargetingType {
 	Adjacent = 0,
-	Projectile = 1,
+	Projectile = Adjacent + 1,
 	Count = Projectile + 1,
 };
 
 template <typename T> using DamageTypeList = std::array<T, static_cast<size_t>(DamageType::Count)>;
 
+enum class AttackPattern {
+	Rectangle,
+	Circle,
+};
+
 struct Attack {
 	std::string name;
+
 	// Each time an attack is made, a random number is chosen uniformly from [to_hit_min, to_hit_max]
 	// This is added to the attack total
 	int to_hit_min = 1;
@@ -431,9 +442,39 @@ struct Attack {
 	// This is used when calculating damage to work out if any of the target's damage_modifiers should apply
 	DamageType damage_type = DamageType::Physical;
 	TargetingType targeting_type = TargetingType::Projectile;
+	int range = 1;
+	AttackPattern pattern = AttackPattern::Circle;
+	int parallel_size = 1;
+	int perpendicular_size = 1;
+
+	Entity effects = entt::null;
+
+	int mana_cost = 0;
+
+	bool is_in_range(uvec2 source, uvec2 target, uvec2 pos) const;
 
 	void serialize(const std::string& prefix, rapidjson::Document& json) const;
 	void deserialize(const std::string& prefix, const rapidjson::Document& json);
+	void deserialize(const rapidjson::GenericObject<false, rapidjson::Value>& attack_json);
+};
+
+enum class Effect {
+	Shove = 0,
+	Stun = Shove + 1,
+	Count = Stun + 1,
+};
+
+const std::array<std::string_view, (size_t)Effect::Count> effect_names = {
+	"Shove",
+	"Stun",
+};
+
+struct EffectEntry {
+	Entity next_effect;
+	Effect effect;
+	float chance;
+	int magnitude;
+};
 };
 
 struct Stats {
@@ -454,7 +495,7 @@ struct Stats {
 
 	// This number is compared to an attack total to see if it hits.
 	// It hits if attack_total >= evasion
-	int evasion = 16;
+	int evasion = 12;
 
 	// The default attack associated with this entity
 	// TODO: Consider removing when multiple attacks are more readily supported
@@ -506,15 +547,15 @@ struct Item {
 
 struct ItemTemplate {
 	std::string name;
-	float weight = 0.f;
-	int value = 0;
+	int tier = 0;
 	SlotList<bool> allowed_slots = { false };
+	void deserialize(Entity entity, const rapidjson::GenericObject<false, rapidjson::Value>& item);
 };
 
 struct Weapon {
 	// TODO: Potentially replace with intelligent direct/indirect container
 	std::vector<Entity> given_attacks;
-	Attack& get_attack(int i) { return registry.get<Attack>(given_attacks.at(i)); }
+	Attack& get_attack(size_t i) { return registry.get<Attack>(given_attacks.at(i)); }
 };
 
 //---------------------------------------------------------------------------

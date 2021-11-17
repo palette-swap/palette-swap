@@ -22,6 +22,9 @@ public:
 	std::string make_attack_list(Entity entity, size_t current_attack) const;
 
 private:
+
+	void load_items();
+
 	// Observer Pattern: callbacks of do_attack().
 	std::vector<std::function<void(const Entity& attacker, const Entity& target)>> attack_callbacks;
 	// Callbacks of try_pickup_items
@@ -30,4 +33,7 @@ private:
 	std::shared_ptr<std::default_random_engine> rng;
 
 	std::shared_ptr<AnimationSystem> animations;
+
+	size_t loot_count = 0;
+	std::vector<std::vector<Entity>> loot_table;
 };

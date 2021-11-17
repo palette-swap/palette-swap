@@ -1,11 +1,16 @@
 #include "combat_system.hpp"
 
+#include <algorithm>
+#include <filesystem>
 #include <sstream>
 
 void CombatSystem::init(std::shared_ptr<std::default_random_engine> global_rng, std::shared_ptr<AnimationSystem> animation_system)
 {
 	this->rng = std::move(global_rng);
 	this->animations = std::move(animation_system);
+
+	load_items();
+}
 }
 
 bool CombatSystem::do_attack(Entity attacker_entity, Attack& attack, Entity target_entity)
@@ -107,4 +112,37 @@ std::string CombatSystem::make_attack_list(const Entity entity, size_t current_a
 				<< ((attack.targeting_type == TargetingType::Projectile) ? "Projectile)" : "Melee)");*/
 	}
 	return attacks.str();
+}
+
+void CombatSystem::load_items()
+{
+	std::ifstream file = std::ifstream(json_schema_path("items_schema.json"));
+	rapidjson::IStreamWrapper schema_wrapper(file);
+	rapidjson::Document schema_doc;
+	schema_doc.ParseStream(schema_wrapper);
+	rapidjson::SchemaDocument schema(schema_doc);
+	for (const auto& entry : std::filesystem::recursive_directory_iterator(data_path() + "/items/")) {
+		file = std::ifstream(entry.path());
+		rapidjson::IStreamWrapper wrapper(file);
+		rapidjson::Document json_doc;
+		rapidjson::SchemaValidatingReader<rapidjson::kParseDefaultFlags, rapidjson::IStreamWrapper, rapidjson::UTF8<>>
+			reader(wrapper, schema);
+		json_doc.Populate(reader);
+
+		assert(reader.GetParseResult());
+
+		assert(json_doc.IsArray());
+
+		for (rapidjson::SizeType i = 0; i < json_doc.Size(); i++) {
+			Entity item_entity = registry.create();
+			ItemTemplate& item_component = registry.emplace<ItemTemplate>(item_entity, "");
+			item_component.deserialize(item_entity, json_doc[i].GetObj());
+			while (loot_table.size() <= item_component.tier) {
+				loot_table.emplace_back();
+			}
+			loot_table.at(item_component.tier).push_back(item_entity);
+		}
+
+		loot_count += json_doc.Size();
+	}
 }
