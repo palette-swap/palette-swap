@@ -212,7 +212,8 @@ void RenderSystem::draw_ui_element(Entity entity, const UIRenderRequest& ui_rend
 {
 	Transform transform = get_transform(entity);
 	transform.scale(ui_render_request.size * screen_scale * vec2(window_width_px, window_height_px)
-					* get_ui_scale_factor());
+					* ((registry.any_of<Background>(entity)) ? vec2(screen_size) / vec2(window_default_size)
+															 : vec2(get_ui_scale_factor())));
 	transform.translate(vec2((float)ui_render_request.alignment_x * .5, (float)ui_render_request.alignment_y * .5));
 	if (ui_render_request.used_effect == EFFECT_ASSET_ID::FANCY_HEALTH) {
 		transform.translate(vec2(-.5f, 0));
@@ -220,7 +221,8 @@ void RenderSystem::draw_ui_element(Entity entity, const UIRenderRequest& ui_rend
 					   registry.get<Stats>(registry.view<Player>().front()),
 					   projection,
 					   true,
-					   ui_render_request.size.x / ui_render_request.size.y * 2.f);
+					   ui_render_request.size.x / ui_render_request.size.y * 2.f,
+					   entity);
 	} else if (ui_render_request.used_effect == EFFECT_ASSET_ID::RECTANGLE) {
 		draw_rectangle(entity, transform, ui_render_request.size * vec2(window_width_px, window_height_px), projection);
 	}
