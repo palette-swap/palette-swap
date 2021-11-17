@@ -85,6 +85,18 @@ bool CombatSystem::try_pickup_items(Entity player)
 	return false;
 }
 
+bool CombatSystem::try_drink_potion(Entity player)
+{
+	Inventory& inventory = registry.get<Inventory>(player);
+	if (inventory.health_potions == 0) {
+		return false;
+	}
+	inventory.health_potions--;
+	Stats& stats = registry.get<Stats>(player);
+	stats.health = stats.health_max;
+	return true;
+}
+
 bool CombatSystem::is_valid_attack(Entity attacker, Attack& attack, uvec2 target)
 {
 	if (!can_reach(attacker, attack, target) || registry.get<Stats>(attacker).mana < attack.mana_cost) {
@@ -185,6 +197,12 @@ void CombatSystem::drop_loot(uvec2 position)
 	loot_misses = 0;
 	if (result <= 5 || all_dropped) {
 		// Health Potion
+		Entity potion = registry.create();
+		registry.emplace<HealthPotion>(potion);
+		registry.emplace<MapPosition>(potion, position);
+		registry.emplace<RenderRequest>(
+			potion, TEXTURE_ASSET_ID::CANNONBALL, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE, true);
+		registry.emplace<Color>(potion, vec3(1, .1, .1));
 		return;
 	}
 	Entity template_entity = loot_list.at(looted++ % loot_list.size());

@@ -17,6 +17,7 @@ public:
 	void restart_game();
 
 	bool try_pickup_items(Entity player);
+	bool try_drink_potion(Entity player);
 
 	bool is_valid_attack(Entity attacker, Attack& attack, uvec2 target);
 	bool do_attack(Entity attacker, Attack& attack, uvec2 target);

@@ -314,6 +314,13 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 				turns->skip_team_action(player);
 			}
 		}
+
+		if (action == GLFW_PRESS && key == GLFW_KEY_H) {
+			if (turns->ready_to_act(player) && combat->try_drink_potion(player)) {
+				ui->update_potion_count();
+				turns->skip_team_action(player);
+			}
+		}
 	}
 
 	check_debug_keys(key, action, mod);

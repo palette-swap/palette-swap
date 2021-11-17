@@ -16,6 +16,11 @@ void UISystem::restart_game()
 		= create_fancy_healthbar(groups[(size_t)Groups::HUD], vec2(.025f, .09f), vec2(.15f, .03f), BarTarget::Mana);
 	registry.get<Color>(mana).color = vec3(.1, .1, .8);
 
+	// Health Potion counter
+	health_potion_display
+		= create_ui_text(groups[(size_t)Groups::HUD], vec2(.28f, .05125f), "0", Alignment::Start, Alignment::Center, 64u);
+
+
 	// Attack Display
 	Inventory& inventory = registry.get<Inventory>(player);
 	attack_display = create_ui_text(

@@ -545,6 +545,7 @@ struct Inventory {
 	static constexpr size_t inventory_size = 12;
 	std::array<Entity, inventory_size> inventory;
 	SlotList<Entity> equipped;
+	size_t health_potions = 0;
 	Inventory()
 		: inventory()
 		, equipped()
@@ -554,6 +555,9 @@ struct Inventory {
 	}
 
 	static Entity get(Entity entity, Slot slot);
+};
+
+struct HealthPotion {
 };
 
 struct Item {
