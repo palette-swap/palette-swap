@@ -18,6 +18,7 @@
 // The glm library provides vector and matrix operations as in GLSL
 #include <glm/ext/vector_int2.hpp> // ivec2
 #include <glm/gtc/constants.hpp>
+#include <glm/gtx/norm.hpp>
 #include <glm/mat3x3.hpp> // mat3
 #include <glm/vec2.hpp> // vec2
 #include <glm/vec3.hpp> // vec3

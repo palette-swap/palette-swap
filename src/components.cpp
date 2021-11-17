@@ -8,6 +8,8 @@
 #include <iostream>
 #include <sstream>
 
+#include <glm/gtx/rotate_vector.hpp>
+
 #include "rapidjson/pointer.h"
 
 // Very, VERY simple OBJ loader from https://github.com/opengl-tutorials/ogl tutorial 7
@@ -173,6 +175,22 @@ void Enemy::deserialize(const std::string& prefix, const rapidjson::Document& js
 	nest_map_pos.x = nest_pos_x->GetInt();
 	const auto* nest_pos_y = get_and_assert_value_from_json(prefix + "/nest_position/y", json);
 	nest_map_pos.y = nest_pos_y->GetInt();
+}
+
+bool Attack::is_in_range(uvec2 source, uvec2 target, uvec2 pos) const
+{
+	dvec2 distance = dvec2(target) - dvec2(pos);
+	dvec2 attack_direction = dvec2(target) - dvec2(source);
+	double attack_angle = atan2(attack_direction.y, attack_direction.x);
+	dvec2 aligned_distance = glm::rotate(distance, -attack_angle);
+	if (pattern == AttackPattern::Rectangle) {
+		return aligned_distance.x <= static_cast<double>(parallel_size)
+			&& aligned_distance.y <= static_cast<double>(perpendicular_size);
+	}
+	if (pattern == AttackPattern::Circle) {
+		return pow(aligned_distance.x / parallel_size, 2) + pow(aligned_distance.y / perpendicular_size, 2) <= 1;
+	}
+	return true;
 }
 
 void Attack::serialize(const std::string& prefix, rapidjson::Document& json) const

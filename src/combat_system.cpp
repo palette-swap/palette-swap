@@ -4,10 +4,16 @@
 #include <filesystem>
 #include <sstream>
 
-void CombatSystem::init(std::shared_ptr<std::default_random_engine> global_rng, std::shared_ptr<AnimationSystem> animation_system)
+#include <rapidjson/istreamwrapper.h>
+#include <rapidjson/schema.h>
+
+void CombatSystem::init(std::shared_ptr<std::default_random_engine> global_rng,
+						std::shared_ptr<AnimationSystem> animation_system,
+						std::shared_ptr<MapGeneratorSystem> map_generator_system)
 {
 	this->rng = std::move(global_rng);
 	this->animations = std::move(animation_system);
+	this->map = std::move(map_generator_system);
 
 	load_items();
 }
@@ -78,6 +84,35 @@ bool CombatSystem::try_pickup_items(Entity player)
 	}
 	return false;
 }
+
+bool CombatSystem::is_valid_attack(Entity attacker, Attack& attack, uvec2 target)
+{
+	if (!can_reach(attacker, attack, target) || registry.get<Stats>(attacker).mana < attack.mana_cost) {
+		return false;
+	}
+	uvec2 attacker_pos = registry.get<MapPosition>(attacker).position;
+	for (const auto& target_entity : registry.view<Enemy, Stats>()) {
+		if (attack.is_in_range(attacker_pos, target, registry.get<MapPosition>(target_entity).position)) {
+
+			return true;
+		}
+	}
+	return false;
+}
+
+bool CombatSystem::do_attack(Entity attacker, Attack& attack, uvec2 target)
+{
+	if (!can_reach(attacker, attack, target) || registry.get<Stats>(attacker).mana < attack.mana_cost) {
+		return false;
+	}
+	registry.get<Stats>(attacker).mana -= attack.mana_cost;
+	bool success = false;
+	for (const auto& target_entity : registry.view<Enemy, Stats>()) {
+		if (registry.get<MapPosition>(target_entity).position == target) {
+			success |= do_attack(attacker, attack, target_entity);
+		}
+	}
+	return success;
 }
 
 bool CombatSystem::do_attack(Entity attacker_entity, Attack& attack, Entity target_entity)
@@ -183,20 +218,8 @@ void CombatSystem::on_pickup(const std::function<void(const Entity& item, size_t
 	pickup_callbacks.push_back(on_pickup_callback);
 }
 
-std::string get_name(DamageType d)
+std::string CombatSystem::make_attack_list(const Entity entity, size_t current_attack) const
 {
-	switch (d) {
-	case DamageType::Magical:
-		return "magic";
-	case DamageType::Fire:
-		return "fire";
-	default:
-	case DamageType::Physical:
-		return "physical";
-	}
-}
-
-std::string CombatSystem::make_attack_list(const Entity entity, size_t current_attack) const {
 	Weapon& weapon = registry.get<Weapon>(entity);
 	std::ostringstream attacks;
 	for (size_t i = 0; i < weapon.given_attacks.size(); i++) {
@@ -215,6 +238,18 @@ std::string CombatSystem::make_attack_list(const Entity entity, size_t current_a
 				<< ((attack.targeting_type == TargetingType::Projectile) ? "Projectile)" : "Melee)");*/
 	}
 	return attacks.str();
+}
+
+bool CombatSystem::can_reach(Entity attacker, Attack& attack, uvec2 target)
+{
+	if (attack.targeting_type == TargetingType::Adjacent) {
+		ivec2 distance_vec = abs(ivec2(target - registry.get<MapPosition>(attacker).position));
+		int distance = abs(distance_vec.x - distance_vec.y) + min(distance_vec.x, distance_vec.y) * 3 / 2;
+		if (distance > attack.range || distance == 0) {
+			return false;
+		}
+	}
+	return true;
 }
 
 void CombatSystem::load_items()

@@ -4,16 +4,22 @@
 #include <random>
 
 #include "animation_system.hpp"
+#include "map_generator_system.hpp"
 #include "common.hpp"
 #include "components.hpp"
 
 class CombatSystem {
 public:
-	void init(std::shared_ptr<std::default_random_engine> global_rng, std::shared_ptr<AnimationSystem> animation_system);
+	void init(std::shared_ptr<std::default_random_engine> global_rng,
+			  std::shared_ptr<AnimationSystem> animation_system,
+			  std::shared_ptr<MapGeneratorSystem> map_generator_system);
 
 	void restart_game();
 
 	bool try_pickup_items(Entity player);
+
+	bool is_valid_attack(Entity attacker, Attack& attack, uvec2 target);
+	bool do_attack(Entity attacker, Attack& attack, uvec2 target);
 	bool do_attack(Entity attacker, Attack& attack, Entity target);
 
 	void drop_loot(uvec2 position);
@@ -27,6 +33,7 @@ public:
 private:
 
 	// Private attack helpers
+	bool can_reach(Entity attacker, Attack& attack, uvec2 target);
 	void kill(Entity attacker_entity, Entity entity);
 
 	void load_items();
@@ -39,6 +46,7 @@ private:
 	std::shared_ptr<std::default_random_engine> rng;
 
 	std::shared_ptr<AnimationSystem> animations;
+	std::shared_ptr<MapGeneratorSystem> map;
 
 	size_t loot_count = 0;
 	std::vector<std::vector<Entity>> loot_table;
