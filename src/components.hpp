@@ -726,3 +726,9 @@ struct Button {
 	ButtonAction action;
 	Entity action_target;
 };
+
+//CutScene
+struct CutScene {
+	float radius;
+	Entity cutscene_ui;
+};
