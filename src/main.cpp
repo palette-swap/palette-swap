@@ -29,11 +29,11 @@ int main()
 	// Combat System
 	std::shared_ptr<CombatSystem> combat = std::make_shared<CombatSystem>();
 
-	// Map system
-	std::shared_ptr<MapGeneratorSystem> map = std::make_shared<MapGeneratorSystem>();
-
 	// Turn System
 	std::shared_ptr<TurnSystem> turns = std::make_shared<TurnSystem>();
+
+	// Map system
+	std::shared_ptr<MapGeneratorSystem> map = std::make_shared<MapGeneratorSystem>(turns);
 
 	// Animation System
 	std::shared_ptr<AnimationSystem> animations = std::make_shared<AnimationSystem>();

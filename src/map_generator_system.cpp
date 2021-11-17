@@ -1,4 +1,5 @@
 #include "map_generator_system.hpp"
+#include "turn_system.hpp"
 
 #include <queue>
 #include <sstream>
@@ -13,11 +14,12 @@
 
 using namespace MapUtility;
 
-MapGeneratorSystem::MapGeneratorSystem()
+MapGeneratorSystem::MapGeneratorSystem(std::shared_ptr<TurnSystem> turns)
 	: room_layouts()
 	, levels(num_levels)
 	, level_room_rotations(num_levels)
 	, level_snap_shots(num_levels)
+	, turns(std::move(turns))
 {
 	load_rooms_from_csv();
 	load_levels_from_csv();
@@ -113,14 +115,23 @@ bool MapGeneratorSystem::walkable(uvec2 pos) const
 	return walkable_tiles().find(get_tile_id_from_map_pos(pos)) != walkable_tiles().end();
 }
 
-bool MapGeneratorSystem::walkable_and_free(uvec2 pos) const
+bool MapGeneratorSystem::walkable_and_free(uvec2 pos, bool check_active_color) const
 {
 	if (!walkable(pos)) {
 		return false;
 	}
-	return !std::any_of(registry.view<MapPosition>().begin(),
-						registry.view<MapPosition>().end(),
-						[pos](const Entity e) { return registry.get<MapPosition>(e).position == pos; });
+	ColorState active_color = turns->get_active_color();
+	if ((active_color == ColorState::Red) != check_active_color) {
+		return !std::any_of(registry.view<MapPosition>(entt::exclude<Player, RedExclusive>).begin(),
+							registry.view<MapPosition>(entt::exclude<Player, RedExclusive>).end(),
+							[pos](const Entity e) { return registry.get<MapPosition>(e).position == pos; });
+	} else {
+		return !std::any_of(registry.view<MapPosition>(entt::exclude<Player, BlueExclusive>).begin(),
+							registry.view<MapPosition>(entt::exclude<Player, BlueExclusive>).end(),
+							[pos](const Entity e) { return registry.get<MapPosition>(e).position == pos; });
+	}
+
+	
 }
 
 bool MapGeneratorSystem::is_wall(uvec2 pos) const
