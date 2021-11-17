@@ -273,6 +273,26 @@ void Attack::deserialize(const rapidjson::GenericObject<false, rapidjson::Value>
 		}
 	}
 }
+
+void Stats::apply(Entity item, bool applying) {
+	if (item == entt::null) {
+		return;
+	}
+	StatBoosts* stat_boosts = registry.try_get<StatBoosts>(item);
+	if (stat_boosts == nullptr) {
+		return;
+	}
+	int applying_mult = (applying) ? 1 : -1;
+	health_max += stat_boosts->health * applying_mult;
+	mana_max += stat_boosts->mana * applying_mult;
+	to_hit_bonus += stat_boosts->to_hit_bonus * applying_mult;
+	damage_bonus += stat_boosts->damage_bonus * applying_mult;
+	evasion += stat_boosts->evasion * applying_mult;
+	for (size_t i = 0; i < damage_modifiers.size(); i++) {
+		damage_modifiers.at(i) += stat_boosts->damage_modifiers.at(i) * applying_mult;
+	}
+}
+
 void Stats::serialize(const std::string& prefix, rapidjson::Document& json) const
 {
 	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/health").c_str()), health);

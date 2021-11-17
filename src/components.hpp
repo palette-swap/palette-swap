@@ -509,8 +509,20 @@ struct Stats {
 	// A negative modifeir is a resistance, like an iron golem being resistant to sword cuts
 	DamageTypeList<int> damage_modifiers = { 0 };
 
+	void apply(Entity item, bool applying);
+
 	void serialize(const std::string& prefix, rapidjson::Document& json) const;
 	void deserialize(const std::string& prefix, const rapidjson::Document& json);
+};
+
+struct StatBoosts {
+	int health = 0;
+	int mana = 0;
+	int to_hit_bonus = 0;
+	int damage_bonus = 0;
+	int evasion = 0;
+	DamageTypeList<int> damage_modifiers = { 0 };
+	void deserialize(const rapidjson::GenericObject<false, rapidjson::Value>& boosts);
 };
 
 enum class Slot {

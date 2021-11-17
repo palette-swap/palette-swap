@@ -49,7 +49,8 @@ bool UISystem::can_insert_into_slot(Entity item, Entity container)
 
 void UISystem::insert_into_slot(Entity item, Entity container)
 {
-	Inventory& inventory = registry.get<Inventory>(registry.view<Player>().front());
+	Entity player = registry.view<Player>().front();
+	Inventory& inventory = registry.get<Inventory>(player);
 	Entity actual_item = (item == entt::null) ? entt::null : registry.get<Item>(item).item_template;
 	if (current_attack_slot != Slot::Count && inventory.equipped.at((size_t)current_attack_slot) == actual_item) {
 		set_current_attack(Slot::Count, 0);
@@ -57,7 +58,11 @@ void UISystem::insert_into_slot(Entity item, Entity container)
 	if (InventorySlot* inv_slot = registry.try_get<InventorySlot>(container)) {
 		inventory.inventory.at(inv_slot->slot) = actual_item;
 	} else if (EquipSlot* equip_slot = registry.try_get<EquipSlot>(container)) {
+		// Apply any item bonuses
+		// Not sure if there's a better place to put this?
+		registry.get<Stats>(player).apply(inventory.equipped.at((size_t)equip_slot->slot), false);
 		inventory.equipped.at((size_t)equip_slot->slot) = actual_item;
+		registry.get<Stats>(player).apply(inventory.equipped.at((size_t)equip_slot->slot), true);
 	}
 }
 
