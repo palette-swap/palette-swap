@@ -44,6 +44,9 @@ void UISystem::on_key(int key, int action, int /*mod*/)
 
 void UISystem::try_settle_held()
 {
+	if (held_under_mouse == entt::null) {
+		return;
+	}
 	Draggable& draggable = registry.get<Draggable>(held_under_mouse);
 	ScreenPosition& container_pos = registry.get<ScreenPosition>(draggable.container);
 	ScreenPosition& held_pos = registry.get<ScreenPosition>(held_under_mouse);
