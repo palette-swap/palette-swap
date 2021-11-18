@@ -274,11 +274,11 @@ void Attack::deserialize(const rapidjson::GenericObject<false, rapidjson::Value>
 	}
 }
 
-void Stats::apply(Entity item, bool applying) {
-	if (item == entt::null) {
+void Stats::apply(Entity entity, bool applying) {
+	if (entity == entt::null) {
 		return;
 	}
-	StatBoosts* stat_boosts = registry.try_get<StatBoosts>(item);
+	StatBoosts* stat_boosts = registry.try_get<StatBoosts>(entity);
 	if (stat_boosts == nullptr) {
 		return;
 	}
