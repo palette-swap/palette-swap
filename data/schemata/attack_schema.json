@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json.schemastore.org/global.json",
+  "title": "Attack",
+  "description": "A single attack",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "mana_cost": {
+      "type": "integer"
+    },
+    "range": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "targeting_type": {
+      "enum": [
+        "Adjacent",
+        "Projectile"
+      ]
+    },
+    "pattern": {
+      "enum": [
+        "Rectangle",
+        "Circle"
+      ]
+    },
+    "parallel_size": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "perpendicular_size": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "to_hit": {
+      "type": "array",
+      "prefixItems": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "integer"
+        }
+      ]
+    },
+    "damage": {
+      "type": "array",
+      "prefixItems": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "integer"
+        }
+      ]
+    },
+    "damage_type": {
+      "enum": [
+        "Physical",
+        "Fire",
+        "Cold",
+        "Earth",
+        "Wind"
+      ]
+    },
+    "effects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "effect": {
+            "enum": [
+              "Shove",
+              "Stun"
+            ]
+          },
+          "chance": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "magnitude": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false,
+        "minProperties": 3
+      }
+    }
+  },
+  "required": [
+    "name",
+    "targeting_type",
+    "to_hit",
+    "damage",
+    "damage_type"
+  ],
+  "additionalProperties": false
+}

@@ -12,16 +12,19 @@ Entity create_player(uvec2 pos)
 	Inventory& inventory = registry.emplace<Inventory>(entity);
 
 	// Setup Casting
-	Attack arcane_orb = { "Arcane Orb", 10, 10, 5, 10, DamageType::Magical, TargetingType::Projectile };
-	Attack fireball = { "Fireball", -3, 10, 10, 20, DamageType::Fire, TargetingType::Projectile };
+	Entity fireball_entity = registry.create();
+	Attack& fireball = registry.emplace<Attack>(fireball_entity, "Fireball", -3, 10, 10, 20, DamageType::Fire, TargetingType::Projectile, -1);
+	fireball.mana_cost = 25;
 	inventory.equipped.at(static_cast<uint8>(Slot::Spell1))
-		= create_spell("Fireball", std::vector<Attack>({ fireball }));
+		= create_spell("Fireball", std::vector<Entity>({ fireball_entity }));
 
 	// Setup Sword
-	Attack sword_light = { "Light", 4, 18, 12, 22, DamageType::Physical, TargetingType::Adjacent };
-	Attack sword_heavy = { "Heavy", 1, 14, 20, 30, DamageType::Physical, TargetingType::Adjacent };
+	Entity light_entity = registry.create();
+	registry.emplace<Attack>(light_entity, "Light", 4, 18, 12, 22, DamageType::Physical, TargetingType::Adjacent);
+	Entity heavy_entity = registry.create();
+	registry.emplace<Attack>(heavy_entity, "Heavy", 1, 14, 20, 30, DamageType::Physical, TargetingType::Adjacent);
 	inventory.equipped.at(static_cast<uint8>(Slot::Weapon))
-		= create_weapon("Sword", std::vector<Attack>({ sword_light, sword_heavy }));
+		= create_weapon("Sword", std::vector<Entity>({ light_entity, heavy_entity }));
 
 	registry.emplace<RenderRequest>(
 		entity, TEXTURE_ASSET_ID::PALADIN, EFFECT_ASSET_ID::PLAYER, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);
@@ -200,14 +203,14 @@ Entity create_team()
 	return entity;
 }
 
-Entity create_item(const std::string& name, const SlotList<bool>& allowed_slots)
+Entity create_item_template(const std::string& name, const SlotList<bool>& allowed_slots)
 {
 	Entity entity = registry.create();
-	registry.emplace<Item>(entity, name, 0.f, 0, allowed_slots);
+	registry.emplace<ItemTemplate>(entity, name, 0, allowed_slots);
 	return entity;
 }
 
-Entity create_spell(const std::string& name, std::vector<Attack> attacks)
+Entity create_spell(const std::string& name, std::vector<Entity> attacks)
 {
 	const SlotList<bool> spell_slots = [] {
 		SlotList<bool> slots = { false };
@@ -215,19 +218,19 @@ Entity create_spell(const std::string& name, std::vector<Attack> attacks)
 		slots[static_cast<uint8>(Slot::Spell2)] = true;
 		return slots;
 	}();
-	Entity entity = create_item(name, spell_slots);
-	registry.emplace<Weapon>(entity, std::move(attacks));
+	Entity entity = create_item_template(name, spell_slots);
+	registry.emplace<Weapon>(entity).given_attacks.swap(attacks);
 	return entity;
 }
 
-Entity create_weapon(const std::string& name, std::vector<Attack> attacks)
+Entity create_weapon(const std::string& name, std::vector<Entity> attacks)
 {
 	const SlotList<bool> weapon_slots = [] {
 		SlotList<bool> slots = { false };
 		slots[static_cast<uint8>(Slot::Weapon)] = true;
 		return slots;
 	}();
-	Entity entity = create_item(name, weapon_slots);
-	registry.emplace<Weapon>(entity, std::move(attacks));
+	Entity entity = create_item_template(name, weapon_slots);
+	registry.emplace<Weapon>(entity).given_attacks.swap(attacks);
 	return entity;
 }

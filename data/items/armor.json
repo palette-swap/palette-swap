@@ -1,0 +1,31 @@
+[
+    {
+        "name": "Leather Armor",
+        "tier": 0,
+        "slots": ["Armor"],
+        "stat_boosts": {
+            "evasion": 1
+        }
+    },
+    {
+        "name": "Scale Armor",
+        "tier": 1,
+        "slots": ["Armor"],
+        "stat_boosts": {
+            "evasion": 2
+        }
+    },
+    {
+        "name": "Full Plate",
+        "tier": 2,
+        "slots": ["Armor"],
+        "stat_boosts": {
+            "evasion": 3,
+            "damage_mods": {
+                "Physical": -3,
+                "Fire": 2,
+                "Cold": 2
+            }
+        }
+    }
+]

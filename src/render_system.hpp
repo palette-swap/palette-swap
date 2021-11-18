@@ -148,7 +148,8 @@ private:
 	// Internal drawing functions for each entity type
 	void draw_textured_mesh(Entity entity, const RenderRequest& render_request, const mat3& projection);
 	void draw_ui_element(Entity entity, const UIRenderRequest& ui_render_request, const mat3& projection);
-	void draw_healthbar(Transform transform, const Stats& stats, const mat3& projection, bool fancy, float ratio);
+	void draw_stat_bar(
+		Transform transform, const Stats& stats, const mat3& projection, bool fancy, float ratio, Entity entity);
 	void draw_rectangle(Entity entity, Transform transform, vec2 scale, const mat3& projection);
 	void draw_text(Entity entity, const Text& text, const mat3& projection);
 	void draw_line(Entity entity, const Line& line, const mat3& projection);

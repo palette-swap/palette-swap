@@ -414,21 +414,32 @@ struct Effects {
 enum class DamageType {
 	Physical = 0,
 	Fire = Physical + 1,
-	Magical = Fire + 1,
-	Count = Magical + 1,
+	Cold = Fire + 1,
+	Earth = Cold + 1,
+	Wind = Earth + 1,
+	Count = Wind + 1,
 };
 
+const std::array<std::string_view, (size_t)DamageType::Count> damage_type_names = {
+	"Physical", "Fire", "Cold", "Earth", "Wind",
+};
 
 enum class TargetingType {
 	Adjacent = 0,
-	Projectile = 1,
+	Projectile = Adjacent + 1,
 	Count = Projectile + 1,
 };
 
 template <typename T> using DamageTypeList = std::array<T, static_cast<size_t>(DamageType::Count)>;
 
+enum class AttackPattern {
+	Rectangle,
+	Circle,
+};
+
 struct Attack {
 	std::string name;
+
 	// Each time an attack is made, a random number is chosen uniformly from [to_hit_min, to_hit_max]
 	// This is added to the attack total
 	int to_hit_min = 1;
@@ -442,9 +453,42 @@ struct Attack {
 	// This is used when calculating damage to work out if any of the target's damage_modifiers should apply
 	DamageType damage_type = DamageType::Physical;
 	TargetingType targeting_type = TargetingType::Projectile;
+	int range = 1;
+	AttackPattern pattern = AttackPattern::Circle;
+	int parallel_size = 1;
+	int perpendicular_size = 1;
+
+	Entity effects = entt::null;
+
+	int mana_cost = 0;
+
+	bool is_in_range(uvec2 source, uvec2 target, uvec2 pos) const;
 
 	void serialize(const std::string& prefix, rapidjson::Document& json) const;
 	void deserialize(const std::string& prefix, const rapidjson::Document& json);
+	void deserialize(const rapidjson::GenericObject<false, rapidjson::Value>& attack_json);
+};
+
+enum class Effect {
+	Shove = 0,
+	Stun = Shove + 1,
+	Count = Stun + 1,
+};
+
+const std::array<std::string_view, (size_t)Effect::Count> effect_names = {
+	"Shove",
+	"Stun",
+};
+
+struct EffectEntry {
+	Entity next_effect;
+	Effect effect;
+	float chance;
+	int magnitude;
+};
+
+struct Stunned {
+	int rounds = 1;
 };
 
 struct Stats {
@@ -465,7 +509,7 @@ struct Stats {
 
 	// This number is compared to an attack total to see if it hits.
 	// It hits if attack_total >= evasion
-	int evasion = 16;
+	int evasion = 12;
 
 	// The default attack associated with this entity
 	// TODO: Consider removing when multiple attacks are more readily supported
@@ -476,8 +520,20 @@ struct Stats {
 	// A negative modifeir is a resistance, like an iron golem being resistant to sword cuts
 	DamageTypeList<int> damage_modifiers = { 0 };
 
+	void apply(Entity entity, bool applying);
+
 	void serialize(const std::string& prefix, rapidjson::Document& json) const;
 	void deserialize(const std::string& prefix, const rapidjson::Document& json);
+};
+
+struct StatBoosts {
+	int health = 0;
+	int mana = 0;
+	int to_hit_bonus = 0;
+	int damage_bonus = 0;
+	int evasion = 0;
+	DamageTypeList<int> damage_modifiers = { 0 };
+	void deserialize(const rapidjson::GenericObject<false, rapidjson::Value>& boosts);
 };
 
 enum class Slot {
@@ -500,6 +556,7 @@ struct Inventory {
 	static constexpr size_t inventory_size = 12;
 	std::array<Entity, inventory_size> inventory;
 	SlotList<Entity> equipped;
+	size_t health_potions = 0;
 	Inventory()
 		: inventory()
 		, equipped()
@@ -511,20 +568,24 @@ struct Inventory {
 	static Entity get(Entity entity, Slot slot);
 };
 
+struct HealthPotion {
+};
+
 struct Item {
+	Entity item_template;
+};
+
+struct ItemTemplate {
 	std::string name;
-	float weight = 0.f;
-	int value = 0;
+	int tier = 0;
 	SlotList<bool> allowed_slots = { false };
+	void deserialize(Entity entity, const rapidjson::GenericObject<false, rapidjson::Value>& item);
 };
 
 struct Weapon {
-	explicit Weapon(std::vector<Attack> given_attacks)
-		: given_attacks(std::move(given_attacks))
-	{
-	}
 	// TODO: Potentially replace with intelligent direct/indirect container
-	std::vector<Attack> given_attacks;
+	std::vector<Entity> given_attacks;
+	Attack& get_attack(size_t i) { return registry.get<Attack>(given_attacks.at(i)); }
 };
 
 //---------------------------------------------------------------------------
@@ -626,6 +687,15 @@ struct UIRenderRequest {
 	}
 };
 
+enum class BarType {
+	Health,
+	Mana,
+};
+
+struct TargettedBar {
+	BarType target = BarType::Health;
+};
+
 struct UIElement {
 	Entity group;
 	Entity next = entt::null;
@@ -644,10 +714,6 @@ struct UIGroup {
 
 	static void add_element(Entity group, Entity element, UIElement& ui_element);
 	static void add_text(Entity group, Entity text, UIElement& ui_element);
-};
-
-struct UIItem {
-	Entity actual_item;
 };
 
 struct UISlot {

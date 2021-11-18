@@ -16,9 +16,9 @@ using namespace MapUtility;
 
 MapGeneratorSystem::MapGeneratorSystem(std::shared_ptr<TurnSystem> turns)
 	: room_layouts()
+	, turns(std::move(turns))
 	, levels(num_levels)
 	, level_room_rotations(num_levels)
-	, turns(std::move(turns))
 	, level_snap_shots(num_levels)
 {
 	load_rooms_from_csv();
@@ -124,13 +124,13 @@ bool MapGeneratorSystem::walkable_and_free(uvec2 pos, bool check_active_color) c
 	}
 	ColorState active_color = turns->get_active_color();
 	if ((active_color == ColorState::Red) != check_active_color) {
-		return !std::any_of(registry.view<MapPosition>(entt::exclude<Player, RedExclusive>).begin(),
-							registry.view<MapPosition>(entt::exclude<Player, RedExclusive>).end(),
+		return !std::any_of(registry.view<MapPosition>(entt::exclude<Player, RedExclusive, Item, HealthPotion>).begin(),
+							registry.view<MapPosition>(entt::exclude<Player, RedExclusive, Item, HealthPotion>).end(),
 							[pos](const Entity e) { return registry.get<MapPosition>(e).position == pos; });
 	}
 
-	return !std::any_of(registry.view<MapPosition>(entt::exclude<Player, BlueExclusive>).begin(),
-						registry.view<MapPosition>(entt::exclude<Player, BlueExclusive>).end(),
+	return !std::any_of(registry.view<MapPosition>(entt::exclude<Player, BlueExclusive, Item, HealthPotion>).begin(),
+						registry.view<MapPosition>(entt::exclude<Player, BlueExclusive, Item, HealthPotion>).end(),
 						[pos](const Entity e) { return registry.get<MapPosition>(e).position == pos; });
 }
 
