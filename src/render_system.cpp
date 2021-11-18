@@ -425,12 +425,24 @@ void RenderSystem::draw_rectangle(Entity entity, Transform transform, vec2 scale
 	glUniform1f(thickness_loc, 6);
 
 	// Setup coloring
+	vec4 color = vec4(1);
+	vec4 fill_color = vec4(0);
 	if (registry.any_of<Color>(entity)) {
-		GLint color_uloc = glGetUniformLocation(program, "fcolor");
-		const vec3 color = registry.get<Color>(entity).color;
-		glUniform3fv(color_uloc, 1, glm::value_ptr(color));
-		gl_has_errors();
+		color = vec4(registry.get<Color>(entity).color, 1.f);
 	}
+	if (registry.any_of<UIRectangle>(entity)) {
+		UIRectangle& rect = registry.get<UIRectangle>(entity);
+		color = vec4(vec3(color), rect.opacity);
+		fill_color = rect.fill_color;
+	}
+
+	GLint fill_color_uloc = glGetUniformLocation(program, "fcolor_fill");
+	glUniform4fv(fill_color_uloc, 1, glm::value_ptr(fill_color));
+	gl_has_errors();
+
+	GLint color_uloc = glGetUniformLocation(program, "fcolor");
+	glUniform4fv(color_uloc, 1, glm::value_ptr(color));
+	gl_has_errors();
 
 	draw_triangles(transform, projection);
 }
@@ -669,6 +681,13 @@ void RenderSystem::draw()
 
 	draw_map(projection_2d);
 
+	// Draw any backgrounds
+	for (auto [entity, request] : registry.view<Background, RenderRequest>().each()) {
+		if (request.visible) {
+			draw_textured_mesh(entity, request, projection_2d);
+		}
+	}
+
 	// Grabs player's perception of which colour is "inactive"
 	Entity player = registry.view<Player>().front();
 	PlayerInactivePerception& player_perception = registry.get<PlayerInactivePerception>(player);
@@ -689,14 +708,33 @@ void RenderSystem::draw()
 
 	// Renders entities + healthbars depending on which state we are in
 	if (inactive_color == ColorState::Red) {
-		registry.view<RenderRequest>(entt::exclude<RedExclusive>).each(render_requests_lambda);
+		registry.view<RenderRequest>(entt::exclude<Background, RedExclusive>).each(render_requests_lambda);
 		registry.view<Stats, Enemy>(entt::exclude<RedExclusive>).each(health_group_lambda);
 	} else if (inactive_color == ColorState::Blue) {
-		registry.view<RenderRequest>(entt::exclude<BlueExclusive>).each(render_requests_lambda);
+		registry.view<RenderRequest>(entt::exclude<Background, BlueExclusive>).each(render_requests_lambda);
 		registry.view<Stats, Enemy>(entt::exclude<BlueExclusive>).each(health_group_lambda);
 	} else {
 		registry.view<RenderRequest>().each(render_requests_lambda);
 		registry.view<Stats, Enemy>().each(health_group_lambda);
+	}
+
+	draw_ui(projection_2d);
+
+	// Truely render to the screen
+	draw_to_screen();
+
+	// flicker-free display with a double buffer
+	glfwSwapBuffers(window);
+	gl_has_errors();
+}
+
+void RenderSystem::draw_ui(const mat3& projection)
+{
+	// Draw any UI backgrounds
+	for (auto [entity, element, request] : registry.view<Background, UIElement, UIRenderRequest>().each()) {
+		if (registry.get<UIGroup>(element.group).visible) {
+			draw_ui_element(entity, request, projection);
+		}
 	}
 
 	// Renders effects (ie spells), intended to be overlayed on top of regular render effects
@@ -708,36 +746,44 @@ void RenderSystem::draw()
 		}
 	}
 
-
+	// Draw rectangles, lines, etc.
 	for (auto [entity, group] : registry.view<UIGroup>().each()) {
-		if (group.visible) {
-			Entity curr = group.first_element;
-			while (curr != entt::null) {
-				UIElement& element = registry.get<UIElement>(curr);
-				if (element.visible) {
-					if (UIRenderRequest* ui_render_request = registry.try_get<UIRenderRequest>(curr)) {
-						draw_ui_element(curr, *ui_render_request, projection_2d);
-					} else if (Text* text = registry.try_get<Text>(curr)) {
-						draw_text(curr, *text, projection_2d);
-					} else if (Line* line = registry.try_get<Line>(curr)) {
-						draw_line(entity, *line, projection_2d);
-					}
+		if (!group.visible) {
+			continue;
+		}
+		Entity curr = group.first_element;
+		while (curr != entt::null) {
+			UIElement& element = registry.get<UIElement>(curr);
+			if (element.visible) {
+				if (UIRenderRequest* ui_render_request = registry.try_get<UIRenderRequest>(curr)) {
+					draw_ui_element(curr, *ui_render_request, projection);
+				} else if (Line* line = registry.try_get<Line>(curr)) {
+					draw_line(entity, *line, projection);
 				}
-				curr = element.next;
 			}
+			curr = element.next;
 		}
 	}
 
-	for (auto [entity, line] : registry.view<Line>(entt::exclude<UIElement>).each()) {
-		draw_line(entity, line, projection_2d);
+	// Draw text over top
+	for (auto [entity, group] : registry.view<UIGroup>().each()) {
+		if (!group.visible) {
+			continue;
+		}
+		Entity curr = group.first_text;
+		while (curr != entt::null) {
+			UIElement& element = registry.get<UIElement>(curr);
+			if (element.visible) {
+				draw_text(curr, registry.get<Text>(curr), projection);
+			}
+			curr = element.next;
+		}
 	}
 
-	// Truely render to the screen
-	draw_to_screen();
-
-	// flicker-free display with a double buffer
-	glfwSwapBuffers(window);
-	gl_has_errors();
+	// Finally, draw debug lines over absolutely everything
+	for (auto [entity, line] : registry.view<Line>(entt::exclude<UIElement>).each()) {
+		draw_line(entity, line, projection);
+	}
 }
 
 // projection matrix based on position of camera entity
@@ -777,9 +823,10 @@ std::pair<vec2, vec2> RenderSystem::get_window_bounds()
 	return { camera_world_pos.position - window_size / 2.f, camera_world_pos.position + window_size / 2.f };
 }
 
-float RenderSystem::get_ui_scale_factor()
+float RenderSystem::get_ui_scale_factor() const
 {
-	return min(1.f * screen_size.x / window_width_px, 1.f * screen_size.y / window_height_px);
+	vec2 ratios = vec2(screen_size) / vec2(window_default_size);
+	return min(ratios.x, ratios.y);
 }
 
 vec2 RenderSystem::screen_position_to_world_position(vec2 screen_pos)

@@ -284,21 +284,22 @@ void WorldSystem::return_arrow_to_player()
 void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 {
 	ui->on_key(key, action, mod);
-	if (turns && action != GLFW_RELEASE) {
+	if (ui->player_can_act()) {
+		if (turns && action != GLFW_RELEASE) {
 
-		if (key == GLFW_KEY_D) {
-			move_player(Direction::Right);
+			if (key == GLFW_KEY_D) {
+				move_player(Direction::Right);
+			}
+			if (key == GLFW_KEY_A) {
+				move_player(Direction::Left);
+			}
+			if (key == GLFW_KEY_W) {
+				move_player(Direction::Up);
+			}
+			if (key == GLFW_KEY_S) {
+				move_player(Direction::Down);
+			}
 		}
-		if (key == GLFW_KEY_A) {
-			move_player(Direction::Left);
-		}
-		if (key == GLFW_KEY_W) {
-			move_player(Direction::Up);
-		}
-		if (key == GLFW_KEY_S) {
-			move_player(Direction::Down);
-		}
-	}
 
 	// Change spell
 	if (action == GLFW_RELEASE && key == GLFW_KEY_K) {
@@ -355,7 +356,7 @@ void WorldSystem::check_debug_keys(int key, int action, int mod)
 // TODO: Integrate into turn state to only enable if player's turn is on
 void WorldSystem::on_mouse_move(vec2 mouse_position)
 {
-	if (!player_arrow_fired) {
+	if (ui->player_can_act() && !player_arrow_fired) {
 
 		vec2 mouse_world_position = renderer->screen_position_to_world_position(mouse_position);
 
@@ -392,7 +393,7 @@ void WorldSystem::move_player(Direction direction)
 	if (direction == Direction::Left && map_pos.position.x > 0) {
 		new_pos = uvec2(map_pos.position.x - 1, map_pos.position.y);
 		animations->set_sprite_direction(player, Sprite_Direction::SPRITE_LEFT);
-		
+
 	} else if (direction == Direction::Up && map_pos.position.y > 0) {
 		new_pos = uvec2(map_pos.position.x, map_pos.position.y - 1);
 	} else if (direction == Direction::Right
@@ -442,9 +443,9 @@ void WorldSystem::change_color()
 	if (!turns->ready_to_act(player)) {
 		return;
 	}
-	MapPosition player_pos = registry.get<MapPosition>(player); 
+	MapPosition player_pos = registry.get<MapPosition>(player);
 
-	if (map_generator->walkable_and_free(player_pos.position, false)) { 
+	if (map_generator->walkable_and_free(player_pos.position, false)) {
 		ColorState inactive_color = turns->get_inactive_color();
 		turns->set_active_color(inactive_color);
 
@@ -466,7 +467,7 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 		glfwGetCursorPos(window, &mouse_screen_pos.x, &mouse_screen_pos.y);
 		ui->on_left_click(action, mouse_screen_pos / dvec2(renderer->get_screen_size()));
 
-		if (action == GLFW_PRESS) {
+		if (ui->player_can_act() && action == GLFW_PRESS) {
 			if (turns->get_active_team() != player || !ui->has_current_attack()) {
 				return;
 			}
@@ -480,7 +481,12 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 	}
 }
 
-void WorldSystem::on_mouse_scroll(float offset) { this->renderer->scale_on_scroll(offset); }
+void WorldSystem::on_mouse_scroll(float offset)
+{
+	if (ui->player_can_act()) {
+		this->renderer->scale_on_scroll(offset);
+	}
+}
 
 // resize callback
 // TODO: update to scale the scene as not changed when window is resized

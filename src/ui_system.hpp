@@ -10,6 +10,8 @@ public:
 	void on_left_click(int action, dvec2 mouse_screen_pos);
 	void on_mouse_move(vec2 mouse_screen_pos);
 
+	bool player_can_act();
+
 	bool has_current_attack() const;
 	Attack& get_current_attack();
 
@@ -23,6 +25,8 @@ private:
 						   Entity new_slot_entity,
 						   UISlot& new_slot);
 
+	void do_action(Button& button);
+
 	void set_current_attack(Slot slot, size_t attack);
 
 	std::string make_attack_display_text();
@@ -33,7 +37,14 @@ private:
 	size_t current_attack = 0;
 
 	Entity attack_display = entt::null;
-	Entity inventory_group = entt::null;
-	Entity hud_group = entt::null;
+
+	enum class Groups {
+		HUD,
+		Inventory,
+		MainMenu,
+		Count,
+	};
+
+	std::array<Entity, (size_t)Groups::Count> groups;
 	Entity held_under_mouse = entt::null;
 };

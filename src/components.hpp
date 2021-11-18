@@ -101,6 +101,7 @@ struct SmallSpriteVertex {
 
 enum class TEXTURE_ASSET_ID : uint8_t {
 	PALADIN = 0,
+	// Small Enemies
 	DUMMY = PALADIN + 1,
 	SLIME = DUMMY + 1,
 	ARMOR = SLIME + 1,
@@ -111,6 +112,10 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 	MUSHROOM = DRAKE + 1,
 	SPIDER = MUSHROOM + 1,
 	CLONE = SPIDER + 1,
+	// Bosses
+	KING_MUSH = CLONE + 1,
+	// Misc Assets
+
 	CANNONBALL = CLONE + 1,
 	SPELLS = CANNONBALL + 1,
 	TILE_SET = SPELLS + 1,
@@ -134,6 +139,7 @@ static constexpr std::array<vec2, texture_count> scaling_factors = {
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size * 3, MapUtility::tile_size * 3),
 	vec2(MapUtility::tile_size * 0.5, MapUtility::tile_size * 0.5),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size* MapUtility::room_size, MapUtility::tile_size* MapUtility::room_size),
@@ -212,18 +218,16 @@ struct TileMapVertex {
 	vec2 texcoord = vec3(0);
 };
 
+
 enum class ColorState { None = 0, Red = 1, Blue = 2, All = Blue + 1 };
 
 //---------------------------------------------------------------------------
 //-------------------------           AI            -------------------------
 //---------------------------------------------------------------------------
 
-// Slime (cute coward): weak stats; run away when HP is low.
-// Raven (annoying bug): weak stats; large radius and fast speed.
-// Armor (Immortal Hulk): normal stats; nearsighted; a certain chance to become immortal for one turn.
-// TreeAnt (Super Saiyan): normal stats; long attack range; power up attack range and damage when HP is low.
-// Wraith (invisible ghost): weak stats; shortest radius; a variance of Raven but invisible until active.
+// Enemy List: https://docs.google.com/document/d/1HyGTf5afBIQPUthAuvrTZ-UZRlS8scZUTA4rekU3-kE/edit#heading=h.am6gzz477ssj
 enum class EnemyType {
+	// Small Enemy Types
 	TrainingDummy = 0,
 	Slime = TrainingDummy + 1,
 	Raven = Slime + 1,
@@ -234,50 +238,20 @@ enum class EnemyType {
 	Mushroom = Drake + 1,
 	Spider = Mushroom + 1,
 	Clone = Spider + 1,
-	EnemyCount = Clone + 1
+	// Boss Enemy Types
+	KingMush = Clone + 1,
+	EnemyCount = KingMush + 1,
 };
 
-enum class EnemyBehaviour { 
+enum class EnemyBehaviour {
+	// Small Enemy Behaviours (State Machines)
 	Basic = 0,
 	Cowardly = Basic + 1,
 	Defensive = Cowardly + 1,
 	Aggressive = Defensive + 1,
-	EnemyBehaviourCount = Aggressive + 1,
-};
-
-const std::array<const char*, (size_t)EnemyType::EnemyCount> enemy_type_to_string = {
-	"TrainingDummy",
-	"Slime",
-	"Raven",
-	"Armor",
-	"TreeAnt", 
-	"Wraith",
-	"Drake",
-	"Mushroom",
-	"Spider",
-	"Clone"
-};
-
-// Slime:		Idle, Active, Flinched.
-// Raven:		Idle, Actives.
-// Armor:		Idle, Active, Immortal.
-// TreeAnt:		Idle, Active, Powerup.
-// Wraith:		A variance of Raven.
-enum class EnemyState {
-	Idle = 0,
-	Active = Idle + 1,
-	Flinched = Active + 1,
-	Powerup = Flinched + 1,
-	Immortal = Powerup + 1,
-	EnemyStateCount = Immortal + 1
-};
-
-const std::array<int, (size_t)EnemyState::EnemyStateCount> enemy_state_to_animation_state = {
-	0, // Idle
-	1, // Active
-	2, // Flinched
-	2, // Powerup
-	2, // Immortal
+	// Boss Enemy Behaviours (Behaviour Trees)
+	Summoner = Aggressive + 1,
+	EnemyBehaviourCount = Summoner + 1,
 };
 
 const std::array<EnemyBehaviour, (size_t)EnemyType::EnemyCount> enemy_type_to_behaviour = {
@@ -290,7 +264,26 @@ const std::array<EnemyBehaviour, (size_t)EnemyType::EnemyCount> enemy_type_to_be
 	EnemyBehaviour::Basic, 
 	EnemyBehaviour::Cowardly,
 	EnemyBehaviour::Aggressive, 
-	EnemyBehaviour::Defensive
+	EnemyBehaviour::Defensive,
+	EnemyBehaviour::Summoner,
+};
+
+// Small Enemy Behaviours (State Machines) uses the following states.
+// Basic:		Idle, Active.
+// Cowardly:	Idle, Active, Flinched.
+// Defensive:	Idle, Active, Immortal.
+// Aggressive:	Idle, Active, Powerup.
+// 
+// Boss Enemy Behaviours (Behaviour Trees) uses the following states.
+// Summoner:	Idle, Active, Charging.
+enum class EnemyState {
+	Idle = 0,
+	Active = Idle + 1,
+	Flinched = Active + 1,
+	Powerup = Flinched + 1,
+	Immortal = Powerup + 1,
+	Charging = Immortal + 1,
+	EnemyStateCount = Charging + 1,
 };
 
 // Structure to store enemy information.
@@ -318,8 +311,16 @@ struct BlueExclusive {
 
 };
 
-struct InactiveEnemy {
+// Component denoting the AOE entity that is displaying a boss's attack
+struct AOEAttackActive {
+	Entity AOEAttack;
 };
+
+// Component denoting an AOE's vector of intended attack targets
+struct AOETargets {
+	
+};
+
 
 // Component that denotes what colour the player cannot see at the moment
 struct PlayerInactivePerception {
@@ -343,6 +344,21 @@ const std::array<TEXTURE_ASSET_ID, static_cast<int>(EnemyType::EnemyCount)> enem
 	TEXTURE_ASSET_ID::MUSHROOM,
 	TEXTURE_ASSET_ID::SPIDER,
 	TEXTURE_ASSET_ID::CLONE,
+	// TODO (Evan): temporarily used MUSHROOM to mock KINGMUSH for testing, please replace it when the texture is available.
+	TEXTURE_ASSET_ID::KING_MUSH,
+};
+
+const std::array<int, (size_t)EnemyState::EnemyStateCount> enemy_state_to_animation_state = {
+	0, // Idle
+	1, // Active
+	2, // Flinched
+	2, // Powerup
+	2, // Immortal
+	1, // Charging
+};
+
+// Render behind other elements in its grouping
+struct Background {
 };
 
 struct RenderRequest {
@@ -478,7 +494,7 @@ enum class Slot {
 	Count = Amulet + 1,
 };
 
-const std::array<std::string, (size_t)Slot::Count> slot_names = {
+const std::array<std::string_view, (size_t)Slot::Count> slot_names = {
 	"Weapon", "Armor", "Spell", "Spell", "Ring", "Amulet",
 };
 
@@ -569,6 +585,11 @@ enum class Alignment {
 	End = -1,
 };
 
+struct UIRectangle {
+	float opacity;
+	vec4 fill_color;
+};
+
 struct UIRenderRequest {
 	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
 	EFFECT_ASSET_ID used_effect = EFFECT_ASSET_ID::EFFECT_COUNT;
@@ -623,8 +644,10 @@ struct UIElement {
 struct UIGroup {
 	bool visible = false;
 	Entity first_element = entt::null;
+	Entity first_text = entt::null;
 
-	static void add(Entity group, Entity element, UIElement& ui_element);
+	static void add_element(Entity group, Entity element, UIElement& ui_element);
+	static void add_text(Entity group, Entity text, UIElement& ui_element);
 };
 
 struct UIItem {
@@ -669,6 +692,14 @@ struct Text {
 	Alignment alignment_x;
 	Alignment alignment_y;
 
+	Text(std::string_view text, uint16 font_size, Alignment alignment_x, Alignment alignment_y)
+		: text(text)
+		, font_size(font_size)
+		, alignment_x(alignment_x)
+		, alignment_y(alignment_y)
+	{
+	}
+
 	Text(std::string text, uint16 font_size, Alignment alignment_x, Alignment alignment_y)
 		: text(std::move(text))
 		, font_size(font_size)
@@ -688,4 +719,14 @@ template <> struct std::hash<Text> {
 		// Combination as per boost https://www.boost.org/doc/libs/1_35_0/doc/html/boost/hash_combine_id241013.html
 		return text_hash ^ (size_hash + 0x9e3779b9 + (text_hash << 6) + (text_hash >> 2));
 	}
+};
+
+enum class ButtonAction {
+	SwitchToGroup,
+};
+
+struct Button {
+	Entity label;
+	ButtonAction action;
+	Entity action_target;
 };

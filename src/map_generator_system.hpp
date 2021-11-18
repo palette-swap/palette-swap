@@ -137,7 +137,7 @@ private:
 	void create_room(vec2 position, MapUtility::RoomType roomType, float angle) const;
 
 public:
-	MapGeneratorSystem(std::shared_ptr<TurnSystem> turns);
+	explicit MapGeneratorSystem(std::shared_ptr<TurnSystem> turns);
 
 	// Generates the levels, should be called at the beginning of the game,
 	// might want to pass in a seed in the future
