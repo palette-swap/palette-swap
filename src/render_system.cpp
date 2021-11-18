@@ -742,7 +742,7 @@ void RenderSystem::draw_ui(const mat3& projection)
 		// Note, its not very efficient to access elements indirectly via the entity
 		// albeit iterating through all Sprites in sequence. A good point to optimize
 		if (effect_render_request.visible) {
-			draw_effect(entity, effect_render_request, projection_2d);
+			draw_effect(entity, effect_render_request, projection);
 		}
 	}
 

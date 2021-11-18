@@ -300,6 +300,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 				move_player(Direction::Down);
 			}
 		}
+	}
 
 	// Change spell
 	if (action == GLFW_RELEASE && key == GLFW_KEY_K) {
