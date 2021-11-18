@@ -13,7 +13,7 @@ void UISystem::restart_game()
 	// Player Health & Mana Bars
 	create_fancy_healthbar(groups[(size_t)Groups::HUD]);
 	Entity mana
-		= create_fancy_healthbar(groups[(size_t)Groups::HUD], vec2(.025f, .09f), vec2(.15f, .03f), BarTarget::Mana);
+		= create_fancy_healthbar(groups[(size_t)Groups::HUD], vec2(.025f, .09f), vec2(.15f, .03f), BarType::Mana);
 	registry.get<Color>(mana).color = vec3(.1, .1, .8);
 
 	// Health Potion counter
@@ -27,7 +27,7 @@ void UISystem::restart_game()
 		groups[(size_t)Groups::HUD], vec2(0, 1), make_attack_display_text(), Alignment::Start, Alignment::End);
 
 	// Inventory background
-	create_background(groups[(size_t)Groups::Inventory], vec2(.5, .5), vec2(1, 1), 1.f, vec4(0, 0, 0, .75));
+	create_background(groups[(size_t)Groups::Inventory], vec2(.5, .5), vec2(1, 1), 1.f, vec4(0, 0, 0, .8));
 
 	// Inventory
 	auto inventory_size = static_cast<float>(Inventory::inventory_size);
@@ -69,7 +69,7 @@ Entity create_ui_group(bool visible)
 	return entity;
 }
 
-Entity create_fancy_healthbar(Entity ui_group, vec2 pos, vec2 size, BarTarget target)
+Entity create_fancy_healthbar(Entity ui_group, vec2 pos, vec2 size, BarType target)
 {
 	Entity entity = registry.create();
 	registry.emplace<ScreenPosition>(entity, pos);

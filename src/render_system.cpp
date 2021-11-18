@@ -217,7 +217,7 @@ void RenderSystem::draw_ui_element(Entity entity, const UIRenderRequest& ui_rend
 	transform.translate(vec2((float)ui_render_request.alignment_x * .5, (float)ui_render_request.alignment_y * .5));
 	if (ui_render_request.used_effect == EFFECT_ASSET_ID::FANCY_HEALTH) {
 		transform.translate(vec2(-.5f, 0));
-		draw_healthbar(transform,
+		draw_stat_bar(transform,
 					   registry.get<Stats>(registry.view<Player>().front()),
 					   projection,
 					   true,
@@ -228,7 +228,7 @@ void RenderSystem::draw_ui_element(Entity entity, const UIRenderRequest& ui_rend
 	}
 }
 
-void RenderSystem::draw_healthbar(
+void RenderSystem::draw_stat_bar(
 	Transform transform, const Stats& stats, const mat3& projection, bool fancy, float ratio = 1.f, Entity entity = entt::null)
 {
 	const auto program = (fancy) ? (GLuint)effects.at((uint8)EFFECT_ASSET_ID::FANCY_HEALTH)
@@ -268,7 +268,7 @@ void RenderSystem::draw_healthbar(
 
 	GLint health_loc = glGetUniformLocation(program, "health");
 	float percentage = 1.f;
-	if (fancy && registry.get<TargettedBar>(entity).target == BarTarget::Mana) {
+	if (fancy && registry.get<TargettedBar>(entity).target == BarType::Mana) {
 		percentage = max(static_cast<float>(stats.mana), 0.f) / static_cast<float>(stats.mana_max);
 	} else {
 		percentage = max(static_cast<float>(stats.health), 0.f) / static_cast<float>(stats.health_max);
@@ -612,7 +612,7 @@ void RenderSystem::draw()
 		Transform transform = get_transform(entity);
 		transform.translate(vec2(2 - MapUtility::tile_size / 2, -MapUtility::tile_size / 2));
 		transform.scale(vec2(MapUtility::tile_size - 4, 3));
-		draw_healthbar(transform, stats, projection_2d, false);
+		draw_stat_bar(transform, stats, projection_2d, false);
 	};
 
 	// Renders entities + healthbars depending on which state we are in

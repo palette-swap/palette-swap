@@ -687,13 +687,13 @@ struct UIRenderRequest {
 	}
 };
 
-enum class BarTarget {
+enum class BarType {
 	Health,
 	Mana,
 };
 
 struct TargettedBar {
-	BarTarget target = BarTarget::Health;
+	BarType target = BarType::Health;
 };
 
 struct UIElement {
