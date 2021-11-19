@@ -6,7 +6,6 @@ static void move_camera_to(const vec2& dest)
 	Entity camera = registry.view<Camera>().front();
 	WorldPosition& camera_world_pos = registry.get<WorldPosition>(camera);
 	camera_world_pos.position = dest;
-	// printf("camera_world_pos: (%f, %f)\n", camera_world_pos.position.x, camera_world_pos.position.y);
 }
 
 static const vec2 get_camera_pos_from_buffer(const vec2& camera_pos,

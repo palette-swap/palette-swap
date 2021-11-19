@@ -23,7 +23,8 @@ WorldSystem::WorldSystem(Debug& debugging,
 						 std::shared_ptr<TurnSystem> turns,
 						 std::shared_ptr<AnimationSystem> animations,
 						 std::shared_ptr<UISystem> ui,
-						 std::shared_ptr<SoLoud::Soloud> so_loud)
+						 std::shared_ptr<SoLoud::Soloud> so_loud,
+						 std::shared_ptr<StorySystem> story)
 
 	: points(0)
 	, debugging(debugging)
@@ -36,6 +37,7 @@ WorldSystem::WorldSystem(Debug& debugging,
 	, map_generator(std::move(map))
 	, turns(std::move(turns))
 	, ui(std::move(ui))
+	, story(std::move(story))
 {
 	this->combat->init(rng, this->animations);
 }
@@ -179,6 +181,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		}
 	}
 
+	story->step();
+
 	return true;
 }
 
@@ -233,6 +237,10 @@ void WorldSystem::restart_game()
 
 	// Restart the UISystem
 	ui->restart_game();
+
+	// Restart the StorySystem
+	story->restart_game();
+	
 }
 
 // Compute collisions between entities
@@ -284,6 +292,12 @@ void WorldSystem::return_arrow_to_player()
 void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 {
 	ui->on_key(key, action, mod);
+	
+	if (story->in_cutscene()) {
+		story->on_key(key, action, mod);
+		return;
+	}
+
 	if (ui->player_can_act()) {
 		if (turns && action != GLFW_RELEASE) {
 

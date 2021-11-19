@@ -66,14 +66,12 @@ struct Mesh {
 	std::vector<uint16_t> vertex_indices;
 };
 
-
 // Test Texture Buffer element for enemies
 // TODO: change to animated vertices after bringing player into this 3D element group
 struct SmallSpriteVertex {
 	vec3 position;
 	vec2 texcoord;
 };
-
 
 /**
  * The following enumerators represent global identifiers refering to graphic
@@ -171,9 +169,8 @@ enum class GEOMETRY_BUFFER_ID : uint8_t {
 };
 const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 
-
 // Represents allowed directions for an animated sprite (e.g whether the sprite is facing left or right)
-enum class Sprite_Direction : uint8_t { SPRITE_LEFT, SPRITE_RIGHT};
+enum class Sprite_Direction : uint8_t { SPRITE_LEFT, SPRITE_RIGHT };
 
 // Represents the position on the map,
 // top left is (0,0) bottom right is (99,99)
@@ -214,14 +211,14 @@ struct TileMapVertex {
 	vec2 texcoord = vec3(0);
 };
 
-
 enum class ColorState { None = 0, Red = 1, Blue = 2, All = Blue + 1 };
 
 //---------------------------------------------------------------------------
 //-------------------------           AI            -------------------------
 //---------------------------------------------------------------------------
 
-// Enemy List: https://docs.google.com/document/d/1HyGTf5afBIQPUthAuvrTZ-UZRlS8scZUTA4rekU3-kE/edit#heading=h.am6gzz477ssj
+// Enemy List:
+// https://docs.google.com/document/d/1HyGTf5afBIQPUthAuvrTZ-UZRlS8scZUTA4rekU3-kE/edit#heading=h.am6gzz477ssj
 enum class EnemyType {
 	// Small Enemy Types
 	TrainingDummy = 0,
@@ -251,17 +248,9 @@ enum class EnemyBehaviour {
 };
 
 const std::array<EnemyBehaviour, (size_t)EnemyType::EnemyCount> enemy_type_to_behaviour = {
-	EnemyBehaviour::Basic, 
-	EnemyBehaviour::Cowardly,
-	EnemyBehaviour::Basic,
-	EnemyBehaviour::Defensive,
-	EnemyBehaviour::Aggressive, 
-	EnemyBehaviour::Basic,	   
-	EnemyBehaviour::Basic, 
-	EnemyBehaviour::Cowardly,
-	EnemyBehaviour::Aggressive, 
-	EnemyBehaviour::Defensive,
-	EnemyBehaviour::Summoner,
+	EnemyBehaviour::Basic,		EnemyBehaviour::Cowardly,  EnemyBehaviour::Basic,	EnemyBehaviour::Defensive,
+	EnemyBehaviour::Aggressive, EnemyBehaviour::Basic,	 EnemyBehaviour::Basic,	EnemyBehaviour::Cowardly,
+	EnemyBehaviour::Aggressive, EnemyBehaviour::Defensive, EnemyBehaviour::Summoner,
 };
 
 // Small Enemy Behaviours (State Machines) uses the following states.
@@ -269,7 +258,7 @@ const std::array<EnemyBehaviour, (size_t)EnemyType::EnemyCount> enemy_type_to_be
 // Cowardly:	Idle, Active, Flinched.
 // Defensive:	Idle, Active, Immortal.
 // Aggressive:	Idle, Active, Powerup.
-// 
+//
 // Boss Enemy Behaviours (Behaviour Trees) uses the following states.
 // Summoner:	Idle, Active, Charging.
 enum class EnemyState {
@@ -295,16 +284,14 @@ struct Enemy {
 	uint speed = 1;
 	uint attack_range = 1;
 
-	void serialize(const std::string & prefix, rapidjson::Document &json) const;
+	void serialize(const std::string& prefix, rapidjson::Document& json) const;
 	void deserialize(const std::string& prefix, const rapidjson::Document& json);
 };
 
 struct RedExclusive {
-
 };
 
 struct BlueExclusive {
-
 };
 
 // Component denoting the AOE entity that is displaying a boss's attack
@@ -314,9 +301,7 @@ struct AOEAttackActive {
 
 // Component denoting an AOE's vector of intended attack targets
 struct AOETargets {
-	
 };
-
 
 // Component that denotes what colour the player cannot see at the moment
 struct PlayerInactivePerception {
@@ -335,12 +320,13 @@ const std::array<TEXTURE_ASSET_ID, static_cast<int>(EnemyType::EnemyCount)> enem
 	TEXTURE_ASSET_ID::RAVEN,
 	TEXTURE_ASSET_ID::ARMOR,
 	TEXTURE_ASSET_ID::TREEANT,
-	TEXTURE_ASSET_ID::WRAITH, 
+	TEXTURE_ASSET_ID::WRAITH,
 	TEXTURE_ASSET_ID::DRAKE,
 	TEXTURE_ASSET_ID::MUSHROOM,
 	TEXTURE_ASSET_ID::SPIDER,
 	TEXTURE_ASSET_ID::CLONE,
-	// TODO (Evan): temporarily used MUSHROOM to mock KINGMUSH for testing, please replace it when the texture is available.
+	// TODO (Evan): temporarily used MUSHROOM to mock KINGMUSH for testing, please replace it when the texture is
+	// available.
 	TEXTURE_ASSET_ID::KING_MUSH,
 };
 
@@ -389,7 +375,7 @@ struct Animation {
 struct EventAnimation {
 	bool turn_trigger = false;
 	float speed_adjustment = 1;
-	vec4 restore_color = { 1, 1, 1, 1};
+	vec4 restore_color = { 1, 1, 1, 1 };
 
 	int restore_state = 0;
 	float restore_speed = 1;
@@ -417,7 +403,6 @@ enum class DamageType {
 	Magical = Fire + 1,
 	Count = Magical + 1,
 };
-
 
 enum class TargetingType {
 	Adjacent = 0,
@@ -727,8 +712,13 @@ struct Button {
 	Entity action_target;
 };
 
-//CutScene
+// CutScene
 struct CutScene {
 	float radius;
 	Entity cutscene_ui;
+	std::vector<std::string> texts;
+};
+
+struct CutSceneEvent {
+	std::string text;
 };
