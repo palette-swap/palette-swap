@@ -76,12 +76,13 @@ private:
 		level_configurations_path("level_one.json"),
 		level_configurations_path("level_two.json"),
 	};
-	
+
 	/////////////////////////////////////
 	// Loaders
 	void load_rooms_from_csv(); 
 	void load_levels_from_csv(); // load both level and rooms rotations
 	void load_level_configurations();
+	void load_enemies_from_file();
 
 	///////////////////////////////////////////////////////////
 	// Data structures thats saving the information loaded
