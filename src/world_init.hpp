@@ -1,6 +1,10 @@
 #pragma once
 
 #include "components.hpp"
+#include "common.hpp"
+
+#include <array>
+#include <string>
 
 // the player
 Entity create_player(uvec2 pos);
