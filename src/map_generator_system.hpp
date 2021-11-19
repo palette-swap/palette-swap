@@ -84,7 +84,6 @@ private:
 	void load_level_configurations();
 	void load_enemies_from_file();
 
-
 	///////////////////////////////////////////////////////////
 	// Data structures thats saving the information loaded
 	//
@@ -101,7 +100,6 @@ private:
 	std::vector<std::array<std::array<Direction, MapUtility::map_size>, MapUtility::map_size>> level_room_rotations;
 	// Involving all dynamic components on a map, stored in json format
 	std::vector<std::string> level_snap_shots;
-
 
 	// End of file loaders
 	/////////////////////////////

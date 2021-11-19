@@ -60,7 +60,7 @@ void MapGeneratorSystem::load_enemies_from_file()
 		json_doc.Parse(enemy_i.c_str());
 
 		Enemy enemy_template;
-		enemy_template.deserialize("", json_doc);
+		enemy_template.deserialize("", json_doc, false);
 		assert(enemy_template.type == (EnemyType)i);
 		enemy_type_array.at(i) = enemy_template;
 
