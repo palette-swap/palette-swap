@@ -69,8 +69,6 @@ private:
 	// e.g. conf for first generated level will be 0.json, second will be 1.json...
 	void load_level_generation_confs();
 
-	void load_enemies_from_file();
-
 	// saves configurations for each level
 	std::vector<MapUtility::LevelConfiguration> level_configurations;
 
@@ -138,7 +136,8 @@ public:
 
 	MapUtility::TileID get_tile_id_from_room(int level, MapUtility::RoomID room_id, uint8_t row, uint8_t col) const;
 
-	// TODO: probably shouldn't expose these, we should have public step_on_tile function, and do the processing internally 
+	// TODO: probably shouldn't expose these, we should have public step_on_tile function, and do the processing
+	// internally
 	bool is_next_level_tile(uvec2 pos) const;
 	bool is_last_level_tile(uvec2 pos) const;
 	bool is_trap_tile(uvec2 pos) const;
@@ -180,4 +179,6 @@ public:
 	void decrease_room_traps_density();
 	void increase_room_smoothness();
 	void decrease_room_smoothness();
+	void increase_enemy_density();
+	void decrease_enemy_density();
 };

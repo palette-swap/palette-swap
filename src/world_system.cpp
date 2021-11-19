@@ -13,7 +13,6 @@
 #include <cassert>
 #include <iostream>
 #include <sstream>
-#include <iostream>
 
 #include "physics_system.hpp"
 
@@ -213,7 +212,7 @@ void WorldSystem::restart_game()
 
 	// Create a new Player instance and shift player onto a tile
 	// player position will be updated as the level load
-	player = create_player({0, 0});
+	player = create_player({ 0, 0 });
 	map_generator->load_initial_level();
 	uvec2 player_starting_point = registry.get<MapPosition>(player).position;
 
@@ -415,6 +414,10 @@ void WorldSystem::check_debug_keys(int key, int action, int mod)
 			map_generator->increase_room_smoothness();
 		} else if (key == GLFW_KEY_Y && (action == GLFW_RELEASE)) {
 			map_generator->decrease_room_smoothness();
+		} else if (key == GLFW_KEY_G && (action == GLFW_RELEASE)) {
+			map_generator->increase_enemy_density();
+		} else if (key == GLFW_KEY_H && (action == GLFW_RELEASE)) {
+			map_generator->decrease_enemy_density();
 		}
 	}
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_M) {

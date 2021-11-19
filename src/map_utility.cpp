@@ -3,22 +3,29 @@
 #include "rapidjson/document.h"
 #include "rapidjson/pointer.h"
 
-static const rapidjson::Value * get_value_from_json(const std::string& prefix, const rapidjson::Document& json) {
-	const auto * value = rapidjson::GetValueByPointer(json, rapidjson::Pointer(prefix.c_str()));
+static const rapidjson::Value* get_value_from_json(const std::string& prefix, const rapidjson::Document& json)
+{
+	const auto* value = rapidjson::GetValueByPointer(json, rapidjson::Pointer(prefix.c_str()));
 	return value;
 }
 
-void MapUtility::LevelGenConf::serialize(const std::string& prefix, rapidjson::Document& json) const {
+void MapUtility::LevelGenConf::serialize(const std::string& prefix, rapidjson::Document& json) const
+{
 	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/seed").c_str()), seed);
 	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/level_path_length").c_str()), level_path_length);
 	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/room_density").c_str()), room_density);
-	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/side_room_percentage").c_str()), side_room_percentage);
-	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/room_path_complexity").c_str()), room_path_complexity);
-	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/room_traps_density").c_str()), room_traps_density);
+	rapidjson::SetValueByPointer(
+		json, rapidjson::Pointer((prefix + "/side_room_percentage").c_str()), side_room_percentage);
+	rapidjson::SetValueByPointer(
+		json, rapidjson::Pointer((prefix + "/room_path_complexity").c_str()), room_path_complexity);
+	rapidjson::SetValueByPointer(
+		json, rapidjson::Pointer((prefix + "/room_traps_density").c_str()), room_traps_density);
 	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/room_smoothness").c_str()), room_smoothness);
+	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/enemies_density").c_str()), enemies_density);
 }
 
-void MapUtility::LevelGenConf::deserialize(const std::string& prefix, const rapidjson::Document& json) {
+void MapUtility::LevelGenConf::deserialize(const std::string& prefix, const rapidjson::Document& json)
+{
 	if (const auto* seed_value = get_value_from_json(prefix + "/seed", json)) {
 		seed = seed_value->GetUint();
 	}
@@ -39,5 +46,8 @@ void MapUtility::LevelGenConf::deserialize(const std::string& prefix, const rapi
 	}
 	if (const auto* room_smoothness_value = get_value_from_json(prefix + "/room_smoothness", json)) {
 		room_smoothness = room_smoothness_value->GetUint();
+	}
+	if (const auto* enemies_density_value = get_value_from_json(prefix + "/enemies_density", json)) {
+		enemies_density = enemies_density_value->GetDouble();
 	}
 }

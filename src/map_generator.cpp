@@ -2,12 +2,72 @@
 #include "components.hpp"
 
 #include <set>
+#include <sstream>
 
 #include "rapidjson/pointer.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
 using namespace MapUtility;
+
+// Enemy templates
+static std::array<rapidjson::Document, (size_t)EnemyType::EnemyCount> enemy_templates_array;
+static bool enemy_templates_loaded = false;
+
+static std::string enemy_template_path(const std::string& name)
+{
+	return data_path() + "/enemies/" + std::string(name);
+};
+
+const static std::array<std::string, (size_t)EnemyType::EnemyCount> enemy_template_paths = {
+	enemy_template_path("TrainingDummy.json"), enemy_template_path("Slime.json"),	 enemy_template_path("Raven.json"),
+	enemy_template_path("Armor.json"),		   enemy_template_path("TreeAnt.json"),	 enemy_template_path("Wraith.json"),
+	enemy_template_path("Drake.json"),		   enemy_template_path("Mushroom.json"), enemy_template_path("Spider.json"),
+	enemy_template_path("Clone.json"),		   enemy_template_path("KingMush.json"),
+};
+
+static void load_enemies_from_file()
+{
+	for (size_t i = 0; i < enemy_template_paths.size(); i++) {
+		std::ifstream config(enemy_template_paths.at(i));
+		std::stringstream buffer;
+		buffer << config.rdbuf();
+		std::string enemy_i = buffer.str();
+
+		enemy_templates_array.at(i).Parse(enemy_i.c_str());
+	}
+}
+
+static void
+add_enemy_to_level_snapshot(rapidjson::Document& level_snap_shot, ColorState team, EnemyType type, uvec2 map_pos)
+{
+	if (!enemy_templates_loaded) {
+		load_enemies_from_file();
+		enemy_templates_loaded = true;
+	}
+
+	if (!level_snap_shot.HasMember("enemies")) {
+		rapidjson::Value enemy_array(rapidjson::kArrayType);
+		level_snap_shot.AddMember("enemies", enemy_array, level_snap_shot.GetAllocator());
+	}
+
+	Enemy enemy_type;
+	enemy_type.deserialize("", enemy_templates_array.at(static_cast<size_t>(type)), false);
+	enemy_type.team = team;
+	enemy_type.type = type;
+	enemy_type.nest_map_pos = map_pos;
+
+	Stats enemy_stats;
+	enemy_stats.deserialize("/stats", enemy_templates_array.at(static_cast<size_t>(type)));
+
+	MapPosition map_position(map_pos);
+
+	int enemy_index = level_snap_shot["enemies"].Size();
+	std::string enemy_prefix = "/enemies/" + std::to_string(enemy_index);
+	enemy_type.serialize(enemy_prefix, level_snap_shot);
+	enemy_stats.serialize(enemy_prefix + "/stats", level_snap_shot);
+	map_position.serialize(enemy_prefix, level_snap_shot);
+}
 
 ////////////////////////////////////
 // Helpers for procedural generation
@@ -378,34 +438,38 @@ void MapGenerator::generate_enemies(MapUtility::LevelGenConf level_gen_conf,
 									const MapUtility::RoomLayout& room_layout,
 									int room_position_on_map,
 									rapidjson::Document& level_snap_shot,
-									std::default_random_engine& enemies_random_eng,
-									std::default_random_engine& general_random_eng)
+									std::default_random_engine& enemies_random_eng_red,
+									std::default_random_engine& general_random_eng_blue)
 {
 
-	// enemy density per room, maxed at 10 / 100
 	const static double max_enemies_density = 0.1;
 	const static uint8_t floor_tile = 0;
 	// generate enemies
 	std::bernoulli_distribution enemies_dist(max_enemies_density * level_gen_conf.enemies_density);
-	bool will_spawn_enemy = enemies_dist(enemies_random_eng);
 
 	int room_map_row = room_position_on_map / 10;
 	int room_map_col = room_position_on_map % 10;
 
 	// We don't spawn clone enemies
-	std::uniform_int_distribution<int> enemy_types_dist(0, static_cast<int>(EnemyType::Clone) - 1);
+	std::uniform_int_distribution<int> enemy_types_dist(1, static_cast<int>(EnemyType::Clone));
 
 	for (int room_row = 0; room_row < room_size; room_row++) {
 		for (int room_col = 0; room_col < room_size; room_col++) {
 			int room_index = room_row * room_size + room_col;
-			if (will_spawn_enemy && room_layout.at(room_index) == floor_tile) {
-				// TODO: Replace after issue#101 is resolved
-				// add_enemy(level_snap_shot, room_map_col * room_size + room_col, room_map_row * room_size + room_row,
-				// enemy_types_dist(general_random_eng));
-				will_spawn_enemy = false;
+			if (enemies_dist(enemies_random_eng_red) && room_layout.at(room_index) == floor_tile) {
+				add_enemy_to_level_snapshot(
+					level_snap_shot,
+					ColorState::Red,
+					static_cast<EnemyType>(enemy_types_dist(enemies_random_eng_red)),
+					uvec2(room_map_col * room_size + room_col, room_map_row * room_size + room_row));
 			}
-			// spin the random engine every loop to keep the precentage updated
-			will_spawn_enemy |= enemies_dist(enemies_random_eng);
+			if (enemies_dist(general_random_eng_blue) && room_layout.at(room_index) == floor_tile) {
+				add_enemy_to_level_snapshot(
+					level_snap_shot,
+					ColorState::Blue,
+					static_cast<EnemyType>(enemy_types_dist(general_random_eng_blue)),
+					uvec2(room_map_col * room_size + room_col, room_map_row * room_size + room_row));
+			}
 		}
 	}
 }
@@ -527,10 +591,14 @@ LevelConfiguration MapGenerator::generate_level(LevelGenConf level_gen_conf, boo
 	// construct room generation engines
 	RoomGenerationEngines room_rand_engines(level_gen_conf.seed);
 	// construct enemy generation engine
-	std::default_random_engine enemy_random_eng;
-	enemy_random_eng.seed(level_gen_conf.seed);
+	std::default_random_engine enemy_random_eng_red;
+	enemy_random_eng_red.seed(level_gen_conf.seed);
+	std::default_random_engine enemy_random_eng_blue;
+	// use a different seed
+	enemy_random_eng_blue.seed(level_gen_conf.seed + 1);
 	// prepare level snapshot
 	rapidjson::Document level_snap_shot;
+	level_snap_shot.SetObject();
 	rapidjson::CreateValueByPointer(level_snap_shot, rapidjson::Pointer("/enemies/0"));
 
 	// side room distribution based on side room percentage
@@ -571,8 +639,13 @@ LevelConfiguration MapGenerator::generate_level(LevelGenConf level_gen_conf, boo
 					level_conf.map_layout.at(target_position / 10).at(target_position % 10)
 						= static_cast<RoomID>(level_conf.room_layouts.size() - 1);
 
-					// generate_enemies(level_gen_conf, room_layout, target_position, level_snap_shot, enemy_random_eng,
-					// room_rand_engines.general_eng); add side room direction to open directions
+					generate_enemies(level_gen_conf,
+									 room_layout_side,
+									 target_position,
+									 level_snap_shot,
+									 enemy_random_eng_red,
+									 enemy_random_eng_blue);
+					// add side room direction to open directions
 					open_directions.emplace(get_open_direction(room_position, target_position));
 					break;
 				}
@@ -603,8 +676,8 @@ LevelConfiguration MapGenerator::generate_level(LevelGenConf level_gen_conf, boo
 		level_conf.room_layouts.emplace_back(room_layout);
 		level_conf.map_layout.at(row).at(col) = static_cast<RoomID>(level_conf.room_layouts.size() - 1);
 
-		// generate_enemies(level_gen_conf, room_layout, room_position, level_snap_shot, enemy_random_eng,
-		// room_rand_engines.general_eng);
+		generate_enemies(
+			level_gen_conf, room_layout, room_position, level_snap_shot, enemy_random_eng_red, enemy_random_eng_blue);
 
 		room_rand_engines.general_eng.seed(level_gen_conf.seed);
 	}
