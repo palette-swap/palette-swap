@@ -136,8 +136,10 @@ public:
 
 	MapUtility::TileID get_tile_id_from_room(int level, MapUtility::RoomID room_id, uint8_t row, uint8_t col) const;
 
+	// TODO: probably shouldn't expose these, we should have public step_on_tile function, and do the processing internally 
 	bool is_next_level_tile(uvec2 pos) const;
 	bool is_last_level_tile(uvec2 pos) const;
+	bool is_trap_tile(uvec2 pos) const;
 
 	bool is_last_level() const;
 

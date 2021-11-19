@@ -1,1 +1,1 @@
-{"generation_conf":{"seed":15,"level_path_length":8,"room_density":0.4,"side_room_percentage":0.30000000000000004,"room_path_complexity":0.30000000000000004,"room_traps_density":0.10000000000000003}}
+{"generation_conf":{"seed":15,"level_path_length":8,"room_density":0.4,"side_room_percentage":0.4,"room_path_complexity":0.30000000000000004,"room_traps_density":0.10000000000000003,"room_smoothness":6}}

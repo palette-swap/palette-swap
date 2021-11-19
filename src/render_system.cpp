@@ -487,6 +487,12 @@ void RenderSystem::draw_map(const mat3& projection)
 		glVertexAttribIPointer(vertex_id_loc, 1, GL_INT, sizeof(int), nullptr);
 		gl_has_errors();
 
+		Animation& animation = registry.get<Animation>(entity);
+		assert(registry.any_of<Animation>(entity));
+
+		GLint frame_loc = glGetUniformLocation(program, "frame");
+		glUniform1i(frame_loc, animation.frame);
+
 		draw_triangles(transform, projection);
 	}
 }

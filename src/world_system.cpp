@@ -367,6 +367,13 @@ void WorldSystem::check_debug_keys(int key, int action, int mod)
 	}
 	current_speed = fmax(0.f, current_speed);
 
+	// for debugging levels
+	if (key == GLFW_KEY_N && (mod & GLFW_MOD_CONTROL) != 0 && action == GLFW_RELEASE) {
+		map_generator->load_next_level();
+	} else if (key == GLFW_KEY_B && (mod & GLFW_MOD_CONTROL) != 0 && action == GLFW_RELEASE) {
+		map_generator->load_last_level();
+	}
+
 	if (is_editing_map) {
 		if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_M) {
 			is_editing_map = false;
@@ -487,6 +494,7 @@ void WorldSystem::move_player(Direction direction)
 	map_pos.position = new_pos;
 	turns->complete_team_action(player);
 
+	// TODO: move the logics to map generator system
 	if (map_generator->is_next_level_tile(new_pos)) {
 		if (map_generator->is_last_level()) {
 			end_of_game = true;
@@ -498,6 +506,9 @@ void WorldSystem::move_player(Direction direction)
 	} else if (map_generator->is_last_level_tile(new_pos)) {
 		map_generator->load_last_level();
 		animations->set_all_inactive_colours(turns->get_inactive_color());
+	} else if (map_generator->is_trap_tile(new_pos)) {
+		// TODO: add different effects for trap tiles
+		registry.get<Stats>(player).health -= 10;
 	}
 }
 

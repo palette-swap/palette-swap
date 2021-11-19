@@ -206,6 +206,9 @@ struct Room {
 	// this can have potential bug if we have up to 255 rooms, but we probably won't...
 	MapUtility::RoomID room_id = 0xff;
 	int level = -1;
+
+	// inidicates which tile is currently being animated
+	int animating_tile = -1;
 };
 
 // For TileMap vertex buffers, we need a separate tile_texture float because we want

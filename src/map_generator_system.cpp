@@ -371,6 +371,12 @@ bool MapGeneratorSystem::is_last_level_tile(uvec2 pos) const
 	return get_tile_id_from_map_pos(pos) == tile_last_level;
 }
 
+bool MapGeneratorSystem::is_trap_tile(uvec2 pos) const
+{
+	const static std::set<uint8_t> trap_tiles({ 28, 36 });
+	return trap_tiles.find(get_tile_id_from_map_pos(pos)) != trap_tiles.end();
+}
+
 bool MapGeneratorSystem::is_last_level() const
 {
 	return (static_cast<size_t>(current_level) == level_configurations.size() - 1);
@@ -494,6 +500,11 @@ void MapGeneratorSystem::create_room(vec2 position, MapUtility::RoomID room_id, 
 	Room& room = registry.emplace<Room>(entity);
 	room.room_id = room_id;
 	room.level = level;
+
+	Animation& tile_animation = registry.emplace<Animation>(entity);
+	tile_animation.max_frames = 4;
+	tile_animation.state = 0;
+	tile_animation.speed_adjustment = 0.5;
 }
 
 void MapGeneratorSystem::create_map(int level) const
@@ -518,7 +529,7 @@ const RoomLayout& MapGeneratorSystem::get_room_layout(int level, MapUtility::Roo
 
 const std::set<uint8_t>& MapUtility::walkable_tiles()
 {
-	const static std::set<uint8_t> walkable_tiles({ 0, 14, 20, 30, 38 });
+	const static std::set<uint8_t> walkable_tiles({ 0, 14, 20, 28, 36 });
 	return walkable_tiles;
 }
 
