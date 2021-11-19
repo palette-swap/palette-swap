@@ -35,7 +35,7 @@ class RenderSystem {
 	// and then uses path to grab sprites, stats, and behaviour
 	// Make sure these paths remain in sync with the associated enumerators.
 	const std::array<std::string, texture_count> texture_paths = {
-			textures_path("./01/Player Spritesheet.png"),
+			textures_path("./01-Player/Player Spritesheet.png"),
 			textures_path("./TrainingDummy/Dummy Spritesheet.png"),
 			textures_path("./Slime/Slime Spritesheet.png"),
 			textures_path("./Living Armor/Living Armor Spritesheet.png"),
@@ -46,6 +46,7 @@ class RenderSystem {
 			textures_path("./Mushroom/Mushroom Spritesheet.png"),
 			textures_path("./Spider/Spider Spritesheet.png"),
 			textures_path("./Clone/Clone Spritesheet.png"),
+			textures_path("./02-Bosses/King Mush/King Mush Spritesheet.png"),
 			textures_path("cannon_ball.png"),
 			textures_path("tile_set.png"),
 			textures_path("help.png"),
@@ -101,6 +102,9 @@ public:
 	// Draw all entities
 	void draw();
 
+	// Draw UI entities over top
+	void draw_ui(const mat3& projection);
+
 	mat3 create_projection_matrix();
 	vec2 screen_position_to_world_position(vec2 screen_pos);
 
@@ -128,7 +132,7 @@ private:
 	// Get world position of top left and bottom right of screen
 	std::pair<vec2, vec2> get_window_bounds();
 	// Get UI scale based on difference between current window size and default
-	float get_ui_scale_factor();
+	float get_ui_scale_factor() const;
 	// Helper to get position transform
 	Transform get_transform(Entity entity);
 
@@ -143,7 +147,8 @@ private:
 	// Internal drawing functions for each entity type
 	void draw_textured_mesh(Entity entity, const RenderRequest& render_request, const mat3& projection);
 	void draw_ui_element(Entity entity, const UIRenderRequest& ui_render_request, const mat3& projection);
-	void draw_healthbar(Transform transform, const Stats& stats, const mat3& projection, bool fancy, float ratio);
+	void draw_stat_bar(
+		Transform transform, const Stats& stats, const mat3& projection, bool fancy, float ratio, Entity entity);
 	void draw_rectangle(Entity entity, Transform transform, vec2 scale, const mat3& projection);
 	void draw_text(Entity entity, const Text& text, const mat3& projection);
 	void draw_line(Entity entity, const Line& line, const mat3& projection);

@@ -212,22 +212,24 @@ void RenderSystem::draw_ui_element(Entity entity, const UIRenderRequest& ui_rend
 {
 	Transform transform = get_transform(entity);
 	transform.scale(ui_render_request.size * screen_scale * vec2(window_width_px, window_height_px)
-					* get_ui_scale_factor());
+					* ((registry.any_of<Background>(entity)) ? vec2(screen_size) / vec2(window_default_size)
+															 : vec2(get_ui_scale_factor())));
 	transform.translate(vec2((float)ui_render_request.alignment_x * .5, (float)ui_render_request.alignment_y * .5));
 	if (ui_render_request.used_effect == EFFECT_ASSET_ID::FANCY_HEALTH) {
 		transform.translate(vec2(-.5f, 0));
-		draw_healthbar(transform,
+		draw_stat_bar(transform,
 					   registry.get<Stats>(registry.view<Player>().front()),
 					   projection,
 					   true,
-					   ui_render_request.size.x / ui_render_request.size.y * 2.f);
+					   ui_render_request.size.x / ui_render_request.size.y * 2.f,
+					   entity);
 	} else if (ui_render_request.used_effect == EFFECT_ASSET_ID::RECTANGLE) {
 		draw_rectangle(entity, transform, ui_render_request.size * vec2(window_width_px, window_height_px), projection);
 	}
 }
 
-void RenderSystem::draw_healthbar(
-	Transform transform, const Stats& stats, const mat3& projection, bool fancy, float ratio = 1.f)
+void RenderSystem::draw_stat_bar(
+	Transform transform, const Stats& stats, const mat3& projection, bool fancy, float ratio = 1.f, Entity entity = entt::null)
 {
 	const auto program = (fancy) ? (GLuint)effects.at((uint8)EFFECT_ASSET_ID::FANCY_HEALTH)
 								 : (GLuint)effects.at((uint8)EFFECT_ASSET_ID::HEALTH);
@@ -265,11 +267,25 @@ void RenderSystem::draw_healthbar(
 	gl_has_errors();
 
 	GLint health_loc = glGetUniformLocation(program, "health");
-	glUniform1f(health_loc, max(static_cast<float>(stats.health), 0.f) / static_cast<float>(stats.health_max));
+	float percentage = 1.f;
+	if (fancy && registry.get<TargettedBar>(entity).target == BarType::Mana) {
+		percentage = max(static_cast<float>(stats.mana), 0.f) / static_cast<float>(stats.mana_max);
+	} else {
+		percentage = max(static_cast<float>(stats.health), 0.f) / static_cast<float>(stats.health_max);
+	}
+	glUniform1f(health_loc, percentage);
 
 	if (fancy) {
 		GLint xy_ratio_loc = glGetUniformLocation(program, "xy_ratio");
 		glUniform1f(xy_ratio_loc, ratio);
+
+		// Setup coloring
+		if (registry.any_of<Color>(entity)) {
+			GLint color_uloc = glGetUniformLocation(program, "fcolor");
+			const vec3 color = registry.get<Color>(entity).color;
+			glUniform3fv(color_uloc, 1, glm::value_ptr(color));
+			gl_has_errors();
+		}
 	}
 
 	draw_triangles(transform, projection);
@@ -318,12 +334,24 @@ void RenderSystem::draw_rectangle(Entity entity, Transform transform, vec2 scale
 	glUniform1f(thickness_loc, 6);
 
 	// Setup coloring
+	vec4 color = vec4(1);
+	vec4 fill_color = vec4(0);
 	if (registry.any_of<Color>(entity)) {
-		GLint color_uloc = glGetUniformLocation(program, "fcolor");
-		const vec3 color = registry.get<Color>(entity).color;
-		glUniform3fv(color_uloc, 1, glm::value_ptr(color));
-		gl_has_errors();
+		color = vec4(registry.get<Color>(entity).color, 1.f);
 	}
+	if (registry.any_of<UIRectangle>(entity)) {
+		UIRectangle& rect = registry.get<UIRectangle>(entity);
+		color = vec4(vec3(color), rect.opacity);
+		fill_color = rect.fill_color;
+	}
+
+	GLint fill_color_uloc = glGetUniformLocation(program, "fcolor_fill");
+	glUniform4fv(fill_color_uloc, 1, glm::value_ptr(fill_color));
+	gl_has_errors();
+
+	GLint color_uloc = glGetUniformLocation(program, "fcolor");
+	glUniform4fv(color_uloc, 1, glm::value_ptr(color));
+	gl_has_errors();
 
 	draw_triangles(transform, projection);
 }
@@ -561,6 +589,13 @@ void RenderSystem::draw()
 
 	draw_map(projection_2d);
 
+	// Draw any backgrounds
+	for (auto [entity, request] : registry.view<Background, RenderRequest>().each()) {
+		if (request.visible) {
+			draw_textured_mesh(entity, request, projection_2d);
+		}
+	}
+
 	// Grabs player's perception of which colour is "inactive"
 	Entity player = registry.view<Player>().front();
 	PlayerInactivePerception& player_perception = registry.get<PlayerInactivePerception>(player);
@@ -576,43 +611,22 @@ void RenderSystem::draw()
 		Transform transform = get_transform(entity);
 		transform.translate(vec2(2 - MapUtility::tile_size / 2, -MapUtility::tile_size / 2));
 		transform.scale(vec2(MapUtility::tile_size - 4, 3));
-		draw_healthbar(transform, stats, projection_2d, false);
+		draw_stat_bar(transform, stats, projection_2d, false);
 	};
 
 	// Renders entities + healthbars depending on which state we are in
 	if (inactive_color == ColorState::Red) {
-		registry.view<RenderRequest>(entt::exclude<RedExclusive>).each(render_requests_lambda);
+		registry.view<RenderRequest>(entt::exclude<Background, RedExclusive>).each(render_requests_lambda);
 		registry.view<Stats, Enemy>(entt::exclude<RedExclusive>).each(health_group_lambda);
 	} else if (inactive_color == ColorState::Blue) {
-		registry.view<RenderRequest>(entt::exclude<BlueExclusive>).each(render_requests_lambda);
+		registry.view<RenderRequest>(entt::exclude<Background, BlueExclusive>).each(render_requests_lambda);
 		registry.view<Stats, Enemy>(entt::exclude<BlueExclusive>).each(health_group_lambda);
 	} else {
 		registry.view<RenderRequest>().each(render_requests_lambda);
 		registry.view<Stats, Enemy>().each(health_group_lambda);
 	}
 
-	for (auto [entity, group] : registry.view<UIGroup>().each()) {
-		if (group.visible) {
-			Entity curr = group.first_element;
-			while (curr != entt::null) {
-				UIElement& element = registry.get<UIElement>(curr);
-				if (element.visible) {
-					if (UIRenderRequest* ui_render_request = registry.try_get<UIRenderRequest>(curr)) {
-						draw_ui_element(curr, *ui_render_request, projection_2d);
-					} else if (Text* text = registry.try_get<Text>(curr)) {
-						draw_text(curr, *text, projection_2d);
-					} else if (Line* line = registry.try_get<Line>(curr)) {
-						draw_line(entity, *line, projection_2d);
-					}
-				}
-				curr = element.next;
-			}
-		}
-	}
-
-	for (auto [entity, line] : registry.view<Line>(entt::exclude<UIElement>).each()) {
-		draw_line(entity, line, projection_2d);
-	}
+	draw_ui(projection_2d);
 
 	// Truely render to the screen
 	draw_to_screen();
@@ -620,6 +634,55 @@ void RenderSystem::draw()
 	// flicker-free display with a double buffer
 	glfwSwapBuffers(window);
 	gl_has_errors();
+}
+
+void RenderSystem::draw_ui(const mat3& projection)
+{
+	// Draw any UI backgrounds
+	for (auto [entity, element, request] : registry.view<Background, UIElement, UIRenderRequest>().each()) {
+		if (registry.get<UIGroup>(element.group).visible) {
+			draw_ui_element(entity, request, projection);
+		}
+	}
+
+	// Draw rectangles, lines, etc.
+	for (auto [entity, group] : registry.view<UIGroup>().each()) {
+		if (!group.visible) {
+			continue;
+		}
+		Entity curr = group.first_element;
+		while (curr != entt::null) {
+			UIElement& element = registry.get<UIElement>(curr);
+			if (element.visible) {
+				if (UIRenderRequest* ui_render_request = registry.try_get<UIRenderRequest>(curr)) {
+					draw_ui_element(curr, *ui_render_request, projection);
+				} else if (Line* line = registry.try_get<Line>(curr)) {
+					draw_line(entity, *line, projection);
+				}
+			}
+			curr = element.next;
+		}
+	}
+
+	// Draw text over top
+	for (auto [entity, group] : registry.view<UIGroup>().each()) {
+		if (!group.visible) {
+			continue;
+		}
+		Entity curr = group.first_text;
+		while (curr != entt::null) {
+			UIElement& element = registry.get<UIElement>(curr);
+			if (element.visible) {
+				draw_text(curr, registry.get<Text>(curr), projection);
+			}
+			curr = element.next;
+		}
+	}
+
+	// Finally, draw debug lines over absolutely everything
+	for (auto [entity, line] : registry.view<Line>(entt::exclude<UIElement>).each()) {
+		draw_line(entity, line, projection);
+	}
 }
 
 // projection matrix based on position of camera entity
@@ -659,9 +722,10 @@ std::pair<vec2, vec2> RenderSystem::get_window_bounds()
 	return { camera_world_pos.position - window_size / 2.f, camera_world_pos.position + window_size / 2.f };
 }
 
-float RenderSystem::get_ui_scale_factor()
+float RenderSystem::get_ui_scale_factor() const
 {
-	return min(1.f * screen_size.x / window_width_px, 1.f * screen_size.y / window_height_px);
+	vec2 ratios = vec2(screen_size) / vec2(window_default_size);
+	return min(ratios.x, ratios.y);
 }
 
 vec2 RenderSystem::screen_position_to_world_position(vec2 screen_pos)

@@ -112,7 +112,7 @@ private:
 	int current_level_backup;
 
 public:
-	MapGeneratorSystem(std::shared_ptr<TurnSystem> turns);
+	explicit MapGeneratorSystem(std::shared_ptr<TurnSystem> turns);
 	void init();
 
 	// Get the current level mapping

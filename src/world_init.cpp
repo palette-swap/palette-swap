@@ -12,16 +12,19 @@ Entity create_player(uvec2 pos)
 	Inventory& inventory = registry.emplace<Inventory>(entity);
 
 	// Setup Casting
-	Attack arcane_orb = { "Arcane Orb", 10, 10, 5, 10, DamageType::Magical, TargetingType::Projectile };
-	Attack fireball = { "Fireball", -3, 10, 10, 20, DamageType::Fire, TargetingType::Projectile };
+	Entity fireball_entity = registry.create();
+	Attack& fireball = registry.emplace<Attack>(fireball_entity, "Fireball", -3, 10, 10, 20, DamageType::Fire, TargetingType::Projectile, -1);
+	fireball.mana_cost = 25;
 	inventory.equipped.at(static_cast<uint8>(Slot::Spell1))
-		= create_spell("Fireball", std::vector<Attack>({ fireball }));
+		= create_spell("Fireball", std::vector<Entity>({ fireball_entity }));
 
 	// Setup Sword
-	Attack sword_light = { "Light", 4, 18, 12, 22, DamageType::Physical, TargetingType::Adjacent };
-	Attack sword_heavy = { "Heavy", 1, 14, 20, 30, DamageType::Physical, TargetingType::Adjacent };
+	Entity light_entity = registry.create();
+	registry.emplace<Attack>(light_entity, "Light", 4, 18, 12, 22, DamageType::Physical, TargetingType::Adjacent);
+	Entity heavy_entity = registry.create();
+	registry.emplace<Attack>(heavy_entity, "Heavy", 1, 14, 20, 30, DamageType::Physical, TargetingType::Adjacent);
 	inventory.equipped.at(static_cast<uint8>(Slot::Weapon))
-		= create_weapon("Sword", std::vector<Attack>({ sword_light, sword_heavy }));
+		= create_weapon("Sword", std::vector<Entity>({ light_entity, heavy_entity }));
 
 	registry.emplace<RenderRequest>(
 		entity, TEXTURE_ASSET_ID::PALADIN, EFFECT_ASSET_ID::PLAYER, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);
@@ -68,6 +71,7 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 
 	enemy.team = team;
 	enemy.type = type;
+	enemy.behaviour = enemy_type_to_behaviour.at(static_cast<int>(enemy.type));
 	enemy.state = EnemyState::Idle;
 	enemy.nest_map_pos = map_pos;
 
@@ -102,6 +106,12 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 		enemy.attack_range = 1;
 		break;
 
+	case EnemyType::Mushroom:
+		enemy.radius = 10;
+		enemy.speed = 1;
+		enemy.attack_range = 1;
+		break;
+
 	default:
 		throw std::runtime_error("Invalid enemy type.");
 	}
@@ -119,6 +129,13 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 	Animation& enemy_animation = registry.emplace<Animation>(entity);
 	enemy_animation.max_frames = 4;
 
+	return entity;
+}
+
+Entity create_aoe_target_squares()
+{ 
+	auto entity = registry.create(); 
+	
 	return entity;
 }
 
@@ -186,14 +203,14 @@ Entity create_team()
 	return entity;
 }
 
-Entity create_item(const std::string& name, const SlotList<bool>& allowed_slots)
+Entity create_item_template(const std::string& name, const SlotList<bool>& allowed_slots)
 {
 	Entity entity = registry.create();
-	registry.emplace<Item>(entity, name, 0.f, 0, allowed_slots);
+	registry.emplace<ItemTemplate>(entity, name, 0, allowed_slots);
 	return entity;
 }
 
-Entity create_spell(const std::string& name, std::vector<Attack> attacks)
+Entity create_spell(const std::string& name, std::vector<Entity> attacks)
 {
 	const SlotList<bool> spell_slots = [] {
 		SlotList<bool> slots = { false };
@@ -201,126 +218,19 @@ Entity create_spell(const std::string& name, std::vector<Attack> attacks)
 		slots[static_cast<uint8>(Slot::Spell2)] = true;
 		return slots;
 	}();
-	Entity entity = create_item(name, spell_slots);
-	registry.emplace<Weapon>(entity, std::move(attacks));
+	Entity entity = create_item_template(name, spell_slots);
+	registry.emplace<Weapon>(entity).given_attacks.swap(attacks);
 	return entity;
 }
 
-Entity create_weapon(const std::string& name, std::vector<Attack> attacks)
+Entity create_weapon(const std::string& name, std::vector<Entity> attacks)
 {
 	const SlotList<bool> weapon_slots = [] {
 		SlotList<bool> slots = { false };
 		slots[static_cast<uint8>(Slot::Weapon)] = true;
 		return slots;
 	}();
-	Entity entity = create_item(name, weapon_slots);
-	registry.emplace<Weapon>(entity, std::move(attacks));
-	return entity;
-}
-
-Entity create_ui_group(bool visible)
-{
-	Entity entity = registry.create();
-	registry.emplace<UIGroup>(entity, visible);
-	return entity;
-}
-
-Entity create_fancy_healthbar(Entity ui_group)
-{
-	Entity entity = registry.create();
-	registry.emplace<ScreenPosition>(entity, vec2(.02f, .02f));
-	registry.emplace<UIRenderRequest>(entity,
-									  TEXTURE_ASSET_ID::TEXTURE_COUNT,
-									  EFFECT_ASSET_ID::FANCY_HEALTH,
-									  GEOMETRY_BUFFER_ID::FANCY_HEALTH,
-									  vec2(.25f, .0625f),
-									  0.f,
-									  Alignment::Start,
-									  Alignment::Start);
-	UIGroup::add(ui_group, entity, registry.emplace<UIElement>(entity, ui_group, true));
-	return entity;
-}
-
-Entity create_ui_rectangle(Entity ui_group, vec2 pos, vec2 size)
-{
-	Entity entity = registry.create();
-	registry.emplace<ScreenPosition>(entity, pos);
-	registry.emplace<Color>(entity, vec3(1, 1, 1));
-	registry.emplace<UIRenderRequest>(entity,
-									  TEXTURE_ASSET_ID::TEXTURE_COUNT,
-									  EFFECT_ASSET_ID::RECTANGLE,
-									  GEOMETRY_BUFFER_ID::LINE,
-									  size,
-									  0.f,
-									  Alignment::Center,
-									  Alignment::Center);
-	UIGroup::add(ui_group, entity, registry.emplace<UIElement>(entity, ui_group, true));
-	return entity;
-}
-
-Entity create_grid_rectangle(Entity ui_group, size_t slot, float width, float height, const Geometry::Rectangle& area)
-{
-	static constexpr float padding = .75;
-	assert(width > 0 && height > 0);
-	vec2 pos = area.top_left()
-		+ vec2((static_cast<float>(slot % static_cast<size_t>(width)) + padding) / (width + (padding * 2.f) - 1.f),
-			   (floorf(static_cast<float>(slot) / width) + padding) / (height + (padding * 2.f) - 1.f))
-			* area.size;
-	Entity entity = create_ui_rectangle(
-		ui_group,
-		pos,
-		area.size * vec2(.75f / (width + (padding * 2.f) - 1.f), .75f / (height + (padding * 2.f) - 1.f)));
-	return entity;
-}
-
-Entity create_inventory_slot(
-	Entity ui_group, size_t slot, Entity inventory, float width, float height, const Geometry::Rectangle& area)
-{
-	Entity entity = create_grid_rectangle(ui_group, slot, width, height, area);
-	registry.emplace<InteractArea>(entity, registry.get<UIRenderRequest>(entity).size);
-	registry.emplace<UISlot>(entity, inventory);
-	registry.emplace<InventorySlot>(entity, slot);
-	return entity;
-}
-
-Entity create_equip_slot(
-	Entity ui_group, Slot slot, Entity inventory, float width, float height, const Geometry::Rectangle& area)
-{
-	Entity entity = create_grid_rectangle(ui_group, (size_t)slot, width, height, area);
-	UIRenderRequest& request = registry.get<UIRenderRequest>(entity);
-	registry.get<Color>(entity).color = vec3(.7, .7, 1);
-	registry.emplace<InteractArea>(entity, request.size);
-	registry.emplace<UISlot>(entity, inventory);
-	registry.emplace<EquipSlot>(entity, slot);
-
-	create_ui_text(ui_group,
-				   registry.get<ScreenPosition>(entity).position - request.size / 2.f,
-				   slot_names.at((size_t)slot),
-				   Alignment::Start,
-				   Alignment::End);
-
-	return entity;
-}
-
-Entity create_ui_item(Entity ui_group, Entity slot, Entity item)
-{
-	Entity ui_item
-		= create_ui_text(ui_group, registry.get<ScreenPosition>(slot).position, registry.get<Item>(item).name);
-	registry.emplace<Draggable>(ui_item, slot);
-	registry.emplace<InteractArea>(ui_item, vec2(.1f));
-	registry.emplace<UIItem>(ui_item, item);
-
-	registry.get<UISlot>(slot).contents = ui_item;
-
-	return ui_item;
-}
-
-Entity create_ui_text(Entity ui_group, vec2 screen_position, const std::string& text, Alignment alignment_x, Alignment alignment_y)
-{
-	Entity entity = registry.create();
-	registry.emplace<ScreenPosition>(entity, screen_position);
-	registry.emplace<Color>(entity, vec3(1.f));
-	registry.emplace<Text>(entity, text, (uint16)48, alignment_x, alignment_y);
-	UIGroup::add(ui_group, entity, registry.emplace<UIElement>(entity, ui_group, true));
+	Entity entity = create_item_template(name, weapon_slots);
+	registry.emplace<Weapon>(entity).given_attacks.swap(attacks);
 	return entity;
 }

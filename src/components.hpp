@@ -101,6 +101,7 @@ struct SmallSpriteVertex {
 
 enum class TEXTURE_ASSET_ID : uint8_t {
 	PALADIN = 0,
+	// Small Enemies
 	DUMMY = PALADIN + 1,
 	SLIME = DUMMY + 1,
 	ARMOR = SLIME + 1,
@@ -111,7 +112,10 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 	MUSHROOM = DRAKE + 1,
 	SPIDER = MUSHROOM + 1,
 	CLONE = SPIDER + 1,
-	CANNONBALL = CLONE + 1,
+	// Bosses
+	KING_MUSH = CLONE + 1,
+	// Misc Assets
+	CANNONBALL = KING_MUSH + 1,
 	TILE_SET = CANNONBALL + 1,
 	HELP_PIC = TILE_SET + 1,
 	END_PIC = HELP_PIC + 1,
@@ -133,6 +137,7 @@ static constexpr std::array<vec2, texture_count> scaling_factors = {
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size * 3, MapUtility::tile_size * 3),
 	vec2(MapUtility::tile_size * 0.5, MapUtility::tile_size * 0.5),
 	vec2(MapUtility::tile_size* MapUtility::room_size, MapUtility::tile_size* MapUtility::room_size),
 	vec2(MapUtility::tile_size* MapUtility::room_size * 3, MapUtility::tile_size* MapUtility::room_size * 2),
@@ -210,18 +215,16 @@ struct TileMapVertex {
 	vec2 texcoord = vec3(0);
 };
 
+
 enum class ColorState { None = 0, Red = 1, Blue = 2, All = Blue + 1 };
 
 //---------------------------------------------------------------------------
 //-------------------------           AI            -------------------------
 //---------------------------------------------------------------------------
 
-// Slime (cute coward): weak stats; run away when HP is low.
-// Raven (annoying bug): weak stats; large radius and fast speed.
-// Armor (Immortal Hulk): normal stats; nearsighted; a certain chance to become immortal for one turn.
-// TreeAnt (Super Saiyan): normal stats; long attack range; power up attack range and damage when HP is low.
-// Wraith (invisible ghost): weak stats; shortest radius; a variance of Raven but invisible until active.
+// Enemy List: https://docs.google.com/document/d/1HyGTf5afBIQPUthAuvrTZ-UZRlS8scZUTA4rekU3-kE/edit#heading=h.am6gzz477ssj
 enum class EnemyType {
+	// Small Enemy Types
 	TrainingDummy = 0,
 	Slime = TrainingDummy + 1,
 	Raven = Slime + 1,
@@ -232,50 +235,20 @@ enum class EnemyType {
 	Mushroom = Drake + 1,
 	Spider = Mushroom + 1,
 	Clone = Spider + 1,
-	EnemyCount = Clone + 1
+	// Boss Enemy Types
+	KingMush = Clone + 1,
+	EnemyCount = KingMush + 1,
 };
 
-enum class EnemyBehaviour { 
+enum class EnemyBehaviour {
+	// Small Enemy Behaviours (State Machines)
 	Basic = 0,
 	Cowardly = Basic + 1,
 	Defensive = Cowardly + 1,
 	Aggressive = Defensive + 1,
-	EnemyBehaviourCount = Aggressive + 1,
-};
-
-const std::array<const char*, (size_t)EnemyType::EnemyCount> enemy_type_to_string = {
-	"TrainingDummy",
-	"Slime",
-	"Raven",
-	"Armor",
-	"TreeAnt", 
-	"Wraith",
-	"Drake",
-	"Mushroom",
-	"Spider",
-	"Clone"
-};
-
-// Slime:		Idle, Active, Flinched.
-// Raven:		Idle, Actives.
-// Armor:		Idle, Active, Immortal.
-// TreeAnt:		Idle, Active, Powerup.
-// Wraith:		A variance of Raven.
-enum class EnemyState {
-	Idle = 0,
-	Active = Idle + 1,
-	Flinched = Active + 1,
-	Powerup = Flinched + 1,
-	Immortal = Powerup + 1,
-	EnemyStateCount = Immortal + 1
-};
-
-const std::array<int, (size_t)EnemyState::EnemyStateCount> enemy_state_to_animation_state = {
-	0, // Idle
-	1, // Active
-	2, // Flinched
-	2, // Powerup
-	2, // Immortal
+	// Boss Enemy Behaviours (Behaviour Trees)
+	Summoner = Aggressive + 1,
+	EnemyBehaviourCount = Summoner + 1,
 };
 
 const std::array<EnemyBehaviour, (size_t)EnemyType::EnemyCount> enemy_type_to_behaviour = {
@@ -288,7 +261,26 @@ const std::array<EnemyBehaviour, (size_t)EnemyType::EnemyCount> enemy_type_to_be
 	EnemyBehaviour::Basic, 
 	EnemyBehaviour::Cowardly,
 	EnemyBehaviour::Aggressive, 
-	EnemyBehaviour::Defensive
+	EnemyBehaviour::Defensive,
+	EnemyBehaviour::Summoner,
+};
+
+// Small Enemy Behaviours (State Machines) uses the following states.
+// Basic:		Idle, Active.
+// Cowardly:	Idle, Active, Flinched.
+// Defensive:	Idle, Active, Immortal.
+// Aggressive:	Idle, Active, Powerup.
+// 
+// Boss Enemy Behaviours (Behaviour Trees) uses the following states.
+// Summoner:	Idle, Active, Charging.
+enum class EnemyState {
+	Idle = 0,
+	Active = Idle + 1,
+	Flinched = Active + 1,
+	Powerup = Flinched + 1,
+	Immortal = Powerup + 1,
+	Charging = Immortal + 1,
+	EnemyStateCount = Charging + 1,
 };
 
 // Structure to store enemy information.
@@ -316,8 +308,16 @@ struct BlueExclusive {
 
 };
 
-struct InactiveEnemy {
+// Component denoting the AOE entity that is displaying a boss's attack
+struct AOEAttackActive {
+	Entity AOEAttack;
 };
+
+// Component denoting an AOE's vector of intended attack targets
+struct AOETargets {
+	
+};
+
 
 // Component that denotes what colour the player cannot see at the moment
 struct PlayerInactivePerception {
@@ -341,6 +341,21 @@ const std::array<TEXTURE_ASSET_ID, static_cast<int>(EnemyType::EnemyCount)> enem
 	TEXTURE_ASSET_ID::MUSHROOM,
 	TEXTURE_ASSET_ID::SPIDER,
 	TEXTURE_ASSET_ID::CLONE,
+	// TODO (Evan): temporarily used MUSHROOM to mock KINGMUSH for testing, please replace it when the texture is available.
+	TEXTURE_ASSET_ID::KING_MUSH,
+};
+
+const std::array<int, (size_t)EnemyState::EnemyStateCount> enemy_state_to_animation_state = {
+	0, // Idle
+	1, // Active
+	2, // Flinched
+	2, // Powerup
+	2, // Immortal
+	1, // Charging
+};
+
+// Render behind other elements in its grouping
+struct Background {
 };
 
 struct RenderRequest {
@@ -400,21 +415,32 @@ struct Effects {
 enum class DamageType {
 	Physical = 0,
 	Fire = Physical + 1,
-	Magical = Fire + 1,
-	Count = Magical + 1,
+	Cold = Fire + 1,
+	Earth = Cold + 1,
+	Wind = Earth + 1,
+	Count = Wind + 1,
 };
 
+const std::array<std::string_view, (size_t)DamageType::Count> damage_type_names = {
+	"Physical", "Fire", "Cold", "Earth", "Wind",
+};
 
 enum class TargetingType {
 	Adjacent = 0,
-	Projectile = 1,
+	Projectile = Adjacent + 1,
 	Count = Projectile + 1,
 };
 
 template <typename T> using DamageTypeList = std::array<T, static_cast<size_t>(DamageType::Count)>;
 
+enum class AttackPattern {
+	Rectangle,
+	Circle,
+};
+
 struct Attack {
 	std::string name;
+
 	// Each time an attack is made, a random number is chosen uniformly from [to_hit_min, to_hit_max]
 	// This is added to the attack total
 	int to_hit_min = 1;
@@ -428,9 +454,42 @@ struct Attack {
 	// This is used when calculating damage to work out if any of the target's damage_modifiers should apply
 	DamageType damage_type = DamageType::Physical;
 	TargetingType targeting_type = TargetingType::Projectile;
+	int range = 1;
+	AttackPattern pattern = AttackPattern::Circle;
+	int parallel_size = 1;
+	int perpendicular_size = 1;
+
+	Entity effects = entt::null;
+
+	int mana_cost = 0;
+
+	bool is_in_range(uvec2 source, uvec2 target, uvec2 pos) const;
 
 	void serialize(const std::string& prefix, rapidjson::Document& json) const;
 	void deserialize(const std::string& prefix, const rapidjson::Document& json);
+	void deserialize(const rapidjson::GenericObject<false, rapidjson::Value>& attack_json);
+};
+
+enum class Effect {
+	Shove = 0,
+	Stun = Shove + 1,
+	Count = Stun + 1,
+};
+
+const std::array<std::string_view, (size_t)Effect::Count> effect_names = {
+	"Shove",
+	"Stun",
+};
+
+struct EffectEntry {
+	Entity next_effect;
+	Effect effect;
+	float chance;
+	int magnitude;
+};
+
+struct Stunned {
+	int rounds = 1;
 };
 
 struct Stats {
@@ -451,7 +510,7 @@ struct Stats {
 
 	// This number is compared to an attack total to see if it hits.
 	// It hits if attack_total >= evasion
-	int evasion = 16;
+	int evasion = 12;
 
 	// The default attack associated with this entity
 	// TODO: Consider removing when multiple attacks are more readily supported
@@ -462,8 +521,20 @@ struct Stats {
 	// A negative modifeir is a resistance, like an iron golem being resistant to sword cuts
 	DamageTypeList<int> damage_modifiers = { 0 };
 
+	void apply(Entity entity, bool applying);
+
 	void serialize(const std::string& prefix, rapidjson::Document& json) const;
 	void deserialize(const std::string& prefix, const rapidjson::Document& json);
+};
+
+struct StatBoosts {
+	int health = 0;
+	int mana = 0;
+	int to_hit_bonus = 0;
+	int damage_bonus = 0;
+	int evasion = 0;
+	DamageTypeList<int> damage_modifiers = { 0 };
+	void deserialize(const rapidjson::GenericObject<false, rapidjson::Value>& boosts);
 };
 
 enum class Slot {
@@ -476,7 +547,7 @@ enum class Slot {
 	Count = Amulet + 1,
 };
 
-const std::array<std::string, (size_t)Slot::Count> slot_names = {
+const std::array<std::string_view, (size_t)Slot::Count> slot_names = {
 	"Weapon", "Armor", "Spell", "Spell", "Ring", "Amulet",
 };
 
@@ -486,6 +557,7 @@ struct Inventory {
 	static constexpr size_t inventory_size = 12;
 	std::array<Entity, inventory_size> inventory;
 	SlotList<Entity> equipped;
+	size_t health_potions = 0;
 	Inventory()
 		: inventory()
 		, equipped()
@@ -497,20 +569,24 @@ struct Inventory {
 	static Entity get(Entity entity, Slot slot);
 };
 
+struct HealthPotion {
+};
+
 struct Item {
+	Entity item_template;
+};
+
+struct ItemTemplate {
 	std::string name;
-	float weight = 0.f;
-	int value = 0;
+	int tier = 0;
 	SlotList<bool> allowed_slots = { false };
+	void deserialize(Entity entity, const rapidjson::GenericObject<false, rapidjson::Value>& item);
 };
 
 struct Weapon {
-	explicit Weapon(std::vector<Attack> given_attacks)
-		: given_attacks(std::move(given_attacks))
-	{
-	}
 	// TODO: Potentially replace with intelligent direct/indirect container
-	std::vector<Attack> given_attacks;
+	std::vector<Entity> given_attacks;
+	Attack& get_attack(size_t i) { return registry.get<Attack>(given_attacks.at(i)); }
 };
 
 //---------------------------------------------------------------------------
@@ -567,6 +643,11 @@ enum class Alignment {
 	End = -1,
 };
 
+struct UIRectangle {
+	float opacity;
+	vec4 fill_color;
+};
+
 struct UIRenderRequest {
 	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
 	EFFECT_ASSET_ID used_effect = EFFECT_ASSET_ID::EFFECT_COUNT;
@@ -607,6 +688,15 @@ struct UIRenderRequest {
 	}
 };
 
+enum class BarType {
+	Health,
+	Mana,
+};
+
+struct TargettedBar {
+	BarType target = BarType::Health;
+};
+
 struct UIElement {
 	Entity group;
 	Entity next = entt::null;
@@ -621,12 +711,10 @@ struct UIElement {
 struct UIGroup {
 	bool visible = false;
 	Entity first_element = entt::null;
+	Entity first_text = entt::null;
 
-	static void add(Entity group, Entity element, UIElement& ui_element);
-};
-
-struct UIItem {
-	Entity actual_item;
+	static void add_element(Entity group, Entity element, UIElement& ui_element);
+	static void add_text(Entity group, Entity text, UIElement& ui_element);
 };
 
 struct UISlot {
@@ -667,6 +755,14 @@ struct Text {
 	Alignment alignment_x;
 	Alignment alignment_y;
 
+	Text(std::string_view text, uint16 font_size, Alignment alignment_x, Alignment alignment_y)
+		: text(text)
+		, font_size(font_size)
+		, alignment_x(alignment_x)
+		, alignment_y(alignment_y)
+	{
+	}
+
 	Text(std::string text, uint16 font_size, Alignment alignment_x, Alignment alignment_y)
 		: text(std::move(text))
 		, font_size(font_size)
@@ -686,4 +782,14 @@ template <> struct std::hash<Text> {
 		// Combination as per boost https://www.boost.org/doc/libs/1_35_0/doc/html/boost/hash_combine_id241013.html
 		return text_hash ^ (size_hash + 0x9e3779b9 + (text_hash << 6) + (text_hash >> 2));
 	}
+};
+
+enum class ButtonAction {
+	SwitchToGroup,
+};
+
+struct Button {
+	Entity label;
+	ButtonAction action;
+	Entity action_target;
 };

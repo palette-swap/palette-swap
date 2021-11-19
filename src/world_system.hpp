@@ -67,7 +67,7 @@ private:
 	void check_debug_keys(int key, int action, int mod);
 
 	// Mouse Click helpers
-	void try_fire_projectile();
+	void try_fire_projectile(Attack& attack);
 	void try_adjacent_attack(Attack& attack);
 
 	// restart level
@@ -85,9 +85,6 @@ private:
 
 	// OpenGL window handle
 	GLFWwindow* window = nullptr;
-
-	// Number of fish eaten by the salmon, displayed in the window title
-	unsigned int points;
 
 	// Game configuration
 	bool player_arrow_fired = false;

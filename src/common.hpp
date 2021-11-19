@@ -4,6 +4,7 @@
 #include <array>
 #include <fstream> // stdout, stderr..
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <vector>
 
@@ -17,6 +18,7 @@
 // The glm library provides vector and matrix operations as in GLSL
 #include <glm/ext/vector_int2.hpp> // ivec2
 #include <glm/gtc/constants.hpp>
+#include <glm/gtx/norm.hpp>
 #include <glm/mat3x3.hpp> // mat3
 #include <glm/vec2.hpp> // vec2
 #include <glm/vec3.hpp> // vec3
@@ -39,6 +41,7 @@ inline std::string textures_path(const std::string& name) { return data_path() +
 inline std::string audio_path(const std::string& name) { return data_path() + "/audio/" + std::string(name); };
 inline std::string fonts_path(const std::string& name) { return data_path() + "/fonts/" + std::string(name); };
 inline std::string mesh_path(const std::string& name) { return data_path() + "/meshes/" + std::string(name); };
+inline std::string json_schema_path(const std::string& name) { return data_path() + "/schemata/" + std::string(name); };
 
 // The 'Transform' component handles transformations passed to the Vertex shader
 // (similar to the gl Immediate mode equivalent, e.g., glTranslate()...)
