@@ -157,8 +157,8 @@ void Enemy::serialize(const std::string& prefix, rapidjson::Document& json) cons
 
 void Enemy::deserialize(const std::string& prefix, const rapidjson::Document& json)
 {
-	//const auto* team_value = get_and_assert_value_from_json(prefix + "/team", json);
-	//team = static_cast<ColorState>(team_value->GetInt());
+	const auto* team_value = get_and_assert_value_from_json(prefix + "/team", json);
+	team = static_cast<ColorState>(team_value->GetInt());
 	const auto* type_value = get_and_assert_value_from_json(prefix + "/type", json);
 	type = static_cast<EnemyType>(type_value->GetInt());
 	const auto* state_value = get_and_assert_value_from_json(prefix + "/state", json);
@@ -169,10 +169,10 @@ void Enemy::deserialize(const std::string& prefix, const rapidjson::Document& js
 	speed = speed_value->GetInt();
 	const auto* attack_range_value = get_and_assert_value_from_json(prefix + "/attack_range", json);
 	attack_range = attack_range_value->GetInt();
-	//const auto* nest_pos_x = get_and_assert_value_from_json(prefix + "/nest_position/x", json);
-	//nest_map_pos.x = nest_pos_x->GetInt();
-	//const auto* nest_pos_y = get_and_assert_value_from_json(prefix + "/nest_position/y", json);
-	//nest_map_pos.y = nest_pos_y->GetInt();
+	const auto* nest_pos_x = get_and_assert_value_from_json(prefix + "/nest_position/x", json);
+	nest_map_pos.x = nest_pos_x->GetInt();
+	const auto* nest_pos_y = get_and_assert_value_from_json(prefix + "/nest_position/y", json);
+	nest_map_pos.y = nest_pos_y->GetInt();
 }
 
 void Attack::serialize(const std::string& prefix, rapidjson::Document& json) const
