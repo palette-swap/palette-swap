@@ -295,19 +295,6 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		if (key == GLFW_KEY_D) {
 			move_player(Direction::Right);
 		}
-<<<<<<< HEAD
-	}
-
-	// Change spell
-	if (action == GLFW_RELEASE && key == GLFW_KEY_K) {
-		animations->player_toggle_spell(player_arrow);
-	}
-
-
-	if (action == GLFW_RELEASE && key == GLFW_KEY_SPACE) {
-		change_color();
-		
-=======
 		if (key == GLFW_KEY_A) {
 			move_player(Direction::Left);
 		}
@@ -317,6 +304,17 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		if (key == GLFW_KEY_S) {
 			move_player(Direction::Down);
 		}
+	}
+
+
+	// Change spell
+	if (action == GLFW_RELEASE && key == GLFW_KEY_K) {
+		animations->player_toggle_spell(player_arrow);
+	}
+
+
+	if (action == GLFW_RELEASE && key == GLFW_KEY_SPACE) {
+		change_color();
 	} else {
 		switch (key) {
 		case GLFW_KEY_SPACE:
@@ -335,7 +333,6 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		default:
 			break;
 		}
->>>>>>> master
 	}
 }
 
