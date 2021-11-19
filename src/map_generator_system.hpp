@@ -69,6 +69,8 @@ private:
 	// e.g. conf for first generated level will be 0.json, second will be 1.json...
 	void load_level_generation_confs();
 
+	void load_enemies_from_file();
+
 	// saves configurations for each level
 	std::vector<MapUtility::LevelConfiguration> level_configurations;
 

@@ -25,6 +25,7 @@ void MapGeneratorSystem::init()
 {
 	load_predefined_level_configurations();
 	load_generated_level_configurations();
+	load_enemies_from_file();
 	current_level = -1;
 }
 
@@ -118,6 +119,96 @@ void MapGeneratorSystem::load_level_generation_confs()
 		level_generation_confs.emplace_back(level_gen_conf);
 
 		level_counter++;
+	}
+}
+
+// Enemy templates
+std::array<Enemy, (size_t)EnemyType::EnemyCount> enemy_type_array;
+std::array<Stats, (size_t)EnemyType::EnemyCount> enemy_stat_array;
+
+static std::string enemy_template_path(const std::string& name) { return data_path() + "/enemies/" + std::string(name); };
+
+const std::array<std::string, (size_t)EnemyType::EnemyCount> enemy_template_paths = {
+	enemy_template_path("TrainingDummy.json"), 
+	enemy_template_path("Slime.json"),
+	enemy_template_path("Raven.json"),
+	enemy_template_path("Armor.json"),
+	enemy_template_path("TreeAnt.json"),
+	enemy_template_path("Wraith.json"),
+	enemy_template_path("Drake.json"),
+	enemy_template_path("Mushroom.json"),
+	enemy_template_path("Spider.json"),
+	enemy_template_path("Clone.json"),
+	enemy_template_path("KingMush.json"),
+};
+
+void MapGeneratorSystem::load_enemies_from_file()
+{
+	for (size_t i = 0; i < enemy_template_paths.size(); i++) {
+		std::ifstream config(enemy_template_paths.at(i));
+		std::stringstream buffer;
+		buffer << config.rdbuf();
+		std::string enemy_i = buffer.str();
+
+		rapidjson::Document json_doc;
+		json_doc.Parse(enemy_i.c_str());
+
+		Enemy enemy_template;
+		enemy_template.deserialize("", json_doc, false);
+		assert(enemy_template.type == (EnemyType)i);
+		enemy_type_array.at(i) = enemy_template;
+
+		Stats enemy_stats;
+		enemy_stats.deserialize("/stats", json_doc);
+		enemy_stat_array.at(i) = enemy_stats;
+	}
+}
+
+static void load_enemy(ColorState team, EnemyType type, uvec2 map_pos) 
+{
+	auto entity = registry.create();
+	Enemy& enemy_component = registry.emplace<Enemy>(entity);
+	enemy_component = enemy_type_array.at((int)type);
+	enemy_component.team = team;
+	enemy_component.nest_map_pos = map_pos;
+	enemy_component.behaviour = enemy_type_to_behaviour.at((int)type);
+
+	registry.emplace<MapPosition>(entity, map_pos);
+
+	Stats& stats = registry.emplace<Stats>(entity);
+	stats = enemy_stat_array.at((int)type);
+
+	// Indicates enemy is hittable by objects
+	registry.emplace<Hittable>(entity);
+
+	Animation& enemy_animation = registry.emplace<Animation>(entity);
+
+	// Need to replace with a different component denoting a boss enemy
+	if (enemy_component.type == EnemyType::KingMush) {
+		enemy_animation.max_frames = 8;
+		enemy_animation.speed_adjustment = 0.6;
+	} else {
+		enemy_animation.max_frames = 4;
+	}
+
+	enemy_animation.state = enemy_state_to_animation_state.at(static_cast<size_t>(enemy_component.state));
+	registry.emplace<RenderRequest>(entity,
+									enemy_type_textures.at(static_cast<int>(enemy_component.type)),
+									EFFECT_ASSET_ID::ENEMY,
+									GEOMETRY_BUFFER_ID::SMALL_SPRITE,
+									true);
+	if (enemy_component.team == ColorState::Red) {
+		enemy_animation.color = ColorState::Red;
+		enemy_animation.display_color = { AnimationUtility::default_enemy_red, 1 };
+		registry.emplace<Color>(entity, AnimationUtility::default_enemy_red);
+		registry.emplace<RedExclusive>(entity);
+	} else if (enemy_component.team == ColorState::Blue) {
+		registry.emplace<Color>(entity, AnimationUtility::default_enemy_blue);
+		enemy_animation.color = ColorState::Blue;
+		enemy_animation.display_color = { AnimationUtility::default_enemy_blue, 1 };
+		registry.emplace<BlueExclusive>(entity);
+	} else {
+		registry.emplace<Color>(entity, vec3(1, 1, 1));
 	}
 }
 

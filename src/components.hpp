@@ -300,7 +300,7 @@ struct Enemy {
 	uint attack_range = 1;
 
 	void serialize(const std::string & prefix, rapidjson::Document &json) const;
-	void deserialize(const std::string& prefix, const rapidjson::Document& json);
+	void deserialize(const std::string& prefix, const rapidjson::Document& json, bool load_from_file = true);
 };
 
 struct RedExclusive {
