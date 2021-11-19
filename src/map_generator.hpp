@@ -34,15 +34,13 @@ private:
 		std::default_random_engine general_eng;
 		// traps generation
 		std::default_random_engine traps_eng;
-		// enemies generation
-		std::default_random_engine enemies_eng;
+
 		// currently using a single seed seems to be enough, if we want more
 		// variety, we could use multiple seeds
 		RoomGenerationEngines(unsigned int seed)
 		{
 			general_eng.seed(seed);
 			traps_eng.seed(seed);
-			enemies_eng.seed(seed);
 		}
 	};
 
@@ -54,6 +52,15 @@ private:
 												MapUtility::LevelGenConf level_gen_conf,
 												RoomGenerationEngines random_engs,
 												bool is_debugging);
+
+	// generate enemies in a room and store in the level snapshot, we need room position on map so we can obtain enemy's
+	// global map position
+	static void generate_enemies(MapUtility::LevelGenConf level_gen_conf,
+								 const MapUtility::RoomLayout& room_layout,
+								 int room_position_on_map,
+								 rapidjson::Document& level_snap_shot,
+								 std::default_random_engine& enemies_random_eng,
+								 std::default_random_engine& general_random_eng);
 
 public:
 	// Generate a level from given level generation conf, if is_debugging is set to true, generated level will contain

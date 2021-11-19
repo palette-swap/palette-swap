@@ -384,6 +384,10 @@ void WorldSystem::check_debug_keys(int key, int action, int mod)
 			map_generator->edit_next_level();
 		} else if (key == GLFW_KEY_B && (action == GLFW_RELEASE)) {
 			map_generator->edit_previous_level();
+		} else if (key == GLFW_KEY_T && (action == GLFW_RELEASE)) {
+			map_generator->increase_room_smoothness();
+		} else if (key == GLFW_KEY_Y && (action == GLFW_RELEASE)) {
+			map_generator->decrease_room_smoothness();
 		}
 	}
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_M) {

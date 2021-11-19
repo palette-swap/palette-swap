@@ -44,24 +44,14 @@ private:
 	////////////////////////////////
 	/// Actual file paths
 	const std::array<std::string, MapUtility::num_predefined_rooms> predefined_room_paths = {
-		predefined_rooms_path("room_full_opening.csv"), // 0
-		predefined_rooms_path("room_bottom_closing.csv"), // 1
-		predefined_rooms_path("room_left_closing.csv"), // 2
-		predefined_rooms_path("room_right_closing.csv"), // 3
-		predefined_rooms_path("room_top_closing.csv"), // 4
-		predefined_rooms_path("room_next_level.csv"), // 5
-		predefined_rooms_path("room_big_top_left.csv"), // 6
-		predefined_rooms_path("room_big_top_right.csv"), // 7
-		predefined_rooms_path("room_big_side_top.csv"), // 8
-		predefined_rooms_path("room_void.csv"), // 9
-		predefined_rooms_path("room_next_level_help.csv"), // 10
-		predefined_rooms_path("room_last_level.csv"), // 11
-		predefined_rooms_path("room_bot_opening.csv"), // 12
-		predefined_rooms_path("room_left_opening.csv"), // 13
-		predefined_rooms_path("room_right_opening.csv"), // 14
-		predefined_rooms_path("room_top_opening.csv"), // 15
-		predefined_rooms_path("room_vertical.csv"), // 16
-		predefined_rooms_path("room_horizontal.csv"), // 17
+		predefined_rooms_path("room_big_top_left.csv"), // 0
+		predefined_rooms_path("room_big_top_right.csv"), // 1
+		predefined_rooms_path("room_big_bot_left.csv"), // 2
+		predefined_rooms_path("room_big_bot_right.csv"), // 3
+		predefined_rooms_path("room_big_side_top.csv"), // 4
+		predefined_rooms_path("room_big_side_bot.csv"), // 5
+		predefined_rooms_path("room_void.csv"), // 6
+		predefined_rooms_path("room_big_side_bot_next_level.csv"), // 7
 	};
 	const std::array<std::string, MapUtility::num_predefined_levels> predefined_level_paths
 		= { levels_path("help_level.csv") };
@@ -168,6 +158,7 @@ public:
 	// Map Editor
 	void start_editing_level();
 	void stop_editing_level();
+	void save_level_generation_confs();
 	void edit_next_level();
 	void edit_previous_level();
 	void regenerate_map();
@@ -183,5 +174,6 @@ public:
 	void decrease_room_path_complexity();
 	void increase_room_traps_density();
 	void decrease_room_traps_density();
-	void save_level_generation_confs();
+	void increase_room_smoothness();
+	void decrease_room_smoothness();
 };

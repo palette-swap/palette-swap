@@ -730,3 +730,24 @@ void MapGeneratorSystem::decrease_room_traps_density()
 	std::cout << "Current room traps density: " << curr_conf.room_traps_density << std::endl;
 	regenerate_map();
 }
+void MapGeneratorSystem::increase_room_smoothness()
+{
+	const static unsigned int max_iteration = 10;
+	LevelGenConf& curr_conf = level_generation_confs.at(current_level - num_predefined_levels);
+	if (curr_conf.room_smoothness == max_iteration) {
+		return;
+	}
+	curr_conf.room_smoothness++;
+	std::cout << "Current room smoothness: " << curr_conf.room_smoothness << std::endl;
+	regenerate_map();
+}
+void MapGeneratorSystem::decrease_room_smoothness()
+{
+	LevelGenConf& curr_conf = level_generation_confs.at(current_level - num_predefined_levels);
+	if (curr_conf.room_smoothness == 0) {
+		return;
+	}
+	curr_conf.room_smoothness--;
+	std::cout << "Current room smoothness: " << curr_conf.room_smoothness << std::endl;
+	regenerate_map();
+}
