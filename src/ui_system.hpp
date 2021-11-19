@@ -15,7 +15,12 @@ public:
 	bool has_current_attack() const;
 	Attack& get_current_attack();
 
+	void add_to_inventory(Entity item, size_t slot);
+	void update_potion_count();
+
 private:
+	void try_settle_held();
+
 	bool can_insert_into_slot(Entity item, Entity container);
 	void insert_into_slot(Entity item, Entity container);
 	bool swap_or_move_item(ScreenPosition& container_pos,
@@ -36,6 +41,7 @@ private:
 	Slot current_attack_slot = Slot::Count;
 	size_t current_attack = 0;
 
+	Entity health_potion_display = entt::null;
 	Entity attack_display = entt::null;
 
 	enum class Groups {
@@ -45,6 +51,6 @@ private:
 		Count,
 	};
 
-	std::array<Entity, (size_t)Groups::Count> groups;
+	std::array<Entity, (size_t)Groups::Count> groups = { entt::null };
 	Entity held_under_mouse = entt::null;
 };

@@ -6,12 +6,20 @@ void UISystem::restart_game()
 	auto ui_group_view = registry.view<UIGroup>();
 	registry.destroy(ui_group_view.begin(), ui_group_view.end());
 
-	groups = {create_ui_group(false),  create_ui_group(false), create_ui_group(true)};
+	groups = { create_ui_group(false), create_ui_group(false), create_ui_group(true) };
 
 	Entity player = registry.view<Player>().front();
 
-	// Player Health Bar
+	// Player Health & Mana Bars
 	create_fancy_healthbar(groups[(size_t)Groups::HUD]);
+	Entity mana
+		= create_fancy_healthbar(groups[(size_t)Groups::HUD], vec2(.025f, .09f), vec2(.15f, .03f), BarType::Mana);
+	registry.get<Color>(mana).color = vec3(.1, .1, .8);
+
+	// Health Potion counter
+	health_potion_display
+		= create_ui_text(groups[(size_t)Groups::HUD], vec2(.28f, .05125f), "0", Alignment::Start, Alignment::Center, 64u);
+
 
 	// Attack Display
 	Inventory& inventory = registry.get<Inventory>(player);
@@ -19,19 +27,15 @@ void UISystem::restart_game()
 		groups[(size_t)Groups::HUD], vec2(0, 1), make_attack_display_text(), Alignment::Start, Alignment::End);
 
 	// Inventory background
-	create_background(groups[(size_t)Groups::Inventory], vec2(.5, .5), vec2(1, 1), 1.f, vec4(0, 0, 0, .75));
+	create_background(groups[(size_t)Groups::Inventory], vec2(.5, .5), vec2(1, 1), 1.f, vec4(0, 0, 0, .8));
 
 	// Inventory
 	auto inventory_size = static_cast<float>(Inventory::inventory_size);
 	float small_count = floorf(sqrtf(inventory_size));
 	float large_count = ceilf(inventory_size / small_count);
 	for (size_t i = 0; i < Inventory::inventory_size; i++) {
-		Entity slot = create_inventory_slot(groups[(size_t)Groups::Inventory], i, player, large_count, small_count);
-		Entity item = inventory.inventory.at(i);
-		if (item == entt::null) {
-			continue;
-		}
-		create_ui_item(groups[(size_t)Groups::Inventory], slot, item);
+		create_inventory_slot(groups[(size_t)Groups::Inventory], i, player, large_count, small_count);
+		add_to_inventory(inventory.inventory.at(i), i);
 	}
 	static const auto num_slots = (size_t)Slot::Count;
 	for (size_t i = 0; i < num_slots; i++) {
@@ -65,18 +69,20 @@ Entity create_ui_group(bool visible)
 	return entity;
 }
 
-Entity create_fancy_healthbar(Entity ui_group)
+Entity create_fancy_healthbar(Entity ui_group, vec2 pos, vec2 size, BarType target)
 {
 	Entity entity = registry.create();
-	registry.emplace<ScreenPosition>(entity, vec2(.02f, .02f));
+	registry.emplace<ScreenPosition>(entity, pos);
 	registry.emplace<UIRenderRequest>(entity,
 									  TEXTURE_ASSET_ID::TEXTURE_COUNT,
 									  EFFECT_ASSET_ID::FANCY_HEALTH,
 									  GEOMETRY_BUFFER_ID::FANCY_HEALTH,
-									  vec2(.25f, .0625f),
+									  size,
 									  0.f,
 									  Alignment::Start,
 									  Alignment::Start);
+	registry.emplace<Color>(entity, vec3(.8, .1, .1));
+	registry.emplace<TargettedBar>(entity, target);
 	UIGroup::add_element(ui_group, entity, registry.emplace<UIElement>(entity, ui_group, true));
 	return entity;
 }
@@ -145,10 +151,10 @@ Entity create_equip_slot(
 Entity create_ui_item(Entity ui_group, Entity slot, Entity item)
 {
 	Entity ui_item
-		= create_ui_text(ui_group, registry.get<ScreenPosition>(slot).position, registry.get<Item>(item).name);
+		= create_ui_text(ui_group, registry.get<ScreenPosition>(slot).position, registry.get<ItemTemplate>(item).name);
 	registry.emplace<Draggable>(ui_item, slot);
 	registry.emplace<InteractArea>(ui_item, vec2(.1f));
-	registry.emplace<UIItem>(ui_item, item);
+	registry.emplace<Item>(ui_item, item);
 
 	registry.get<UISlot>(slot).contents = ui_item;
 

@@ -27,8 +27,15 @@ AISystem::AISystem(const Debug& debugging,
 	enemy_attack1_wav.load(audio_path("enemy_attack1.wav").c_str());
 	std::vector<std::function<void(const Entity& attacker, const Entity& target)>> callbacks;
 
-	this->combat->attach_do_attack_callback(
+	this->combat->on_attack(
 		[this](const Entity& attacker, const Entity& target) { this->do_attack_callback(attacker, target); });
+
+	this->combat->on_death([this](const Entity& entity) {
+		// If entity is a boss, remove its behaviour tree.
+		if (bosses.find(entity) != bosses.end()) {
+			bosses.erase(entity);
+		}
+	});
 }
 
 void AISystem::step(float /*elapsed_ms*/)
@@ -36,12 +43,15 @@ void AISystem::step(float /*elapsed_ms*/)
 	if (turns->execute_team_action(enemy_team)) {
 		for (auto [enemy_entity, enemy] : registry.view<Enemy>().each()) {
 
-			if (remove_dead_entity(enemy_entity)) {
-				continue;
-			}
-
 			ColorState active_world_color = turns->get_active_color();
 			if (((uint8_t)active_world_color & (uint8_t)enemy.team) > 0) {
+
+				if (Stunned* stunned = registry.try_get<Stunned>(enemy_entity)) {
+					if (--(stunned->rounds) <= 0) {
+						registry.erase<Stunned>(enemy_entity);
+					}
+					continue;
+				}
 
 				switch (enemy.behaviour) {
 
@@ -265,20 +275,6 @@ void AISystem::execute_aggressive_sm(const Entity& entity)
 	default:
 		throw std::runtime_error("Invalid enemy state for enemy behaviour Aggressive.");
 	}
-}
-
-bool AISystem::remove_dead_entity(const Entity& entity)
-{
-	// TODO: Animate death.
-	if (registry.any_of<Stats>(entity) && registry.get<Stats>(entity).health <= 0) {
-		// If entity is a boss, remove its behaviour tree.
-		if (bosses.find(entity) != bosses.end()) {
-			bosses.erase(entity);
-		}
-		registry.destroy(entity);
-		return true;
-	}
-	return false;
 }
 
 void AISystem::switch_enemy_state(const Entity& enemy_entity, EnemyState new_state)

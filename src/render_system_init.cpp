@@ -187,15 +187,17 @@ void RenderSystem::initialize_gl_geometry_buffers()
 	std::vector<uint16_t> health_indices;
 
 	constexpr float depth = 0.8f;
+
+	constexpr vec3 white = { 1, 1, 1 };
 	constexpr vec3 red = { 0.8, 0.1, 0.1 };
 	constexpr vec3 black = { 0, 0, 0 };
 
 	// Corner points
 	health_vertices = {
-		{ { 0, -.5, depth }, red },
-		{ { 0, .5, depth }, red },
-		{ { 1, .5, depth }, red },
-		{ { 1, -.5, depth }, red },
+		{ { 0, -.5, depth }, white },
+		{ { 0, .5, depth }, white },
+		{ { 1, .5, depth }, white },
+		{ { 1, -.5, depth }, white },
 		{ { 0, -.5, depth }, black },
 		{ { 0, .5, depth }, black },
 		{ { 1, .5, depth }, black },
@@ -214,8 +216,6 @@ void RenderSystem::initialize_gl_geometry_buffers()
 	// Initialize regular line
 	std::vector<ColoredVertex> line_vertices;
 	std::vector<uint16_t> line_indices;
-
-	constexpr vec3 white = { 1, 1, 1 };
 
 	// Corner points
 	line_vertices = {
