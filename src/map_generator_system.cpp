@@ -536,9 +536,6 @@ void MapGeneratorSystem::load_level(int level)
 		}
 		registry.get<RenderRequest>(help_picture).visible = true;
 	}
-	// TESTING: REMOVE THIS LATER
-	uvec2 enemy_spawn_point = uvec2(36, 47);
-	load_enemy(ColorState::Red, EnemyType::KingMush, enemy_spawn_point);
 }
 
 void MapGeneratorSystem::clear_level() const
