@@ -169,7 +169,7 @@ bool CombatSystem::do_attack(Entity attacker_entity, Attack& attack, Entity targ
 		callback(attacker_entity, target_entity);
 	}
 
-	if (target.health <= 0) {
+	if (target.health <= 0 && !registry.any_of<Player>(target_entity)) {
 		kill(attacker_entity, target_entity);
 	}
 
