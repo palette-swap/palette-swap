@@ -734,6 +734,15 @@ void RenderSystem::draw()
 		registry.view<Stats, Enemy>().each(health_group_lambda);
 	}
 
+	// Renders effects (ie spells), intended to be overlayed on top of regular render effects
+	for (auto [entity, effect_render_request] : registry.view<EffectRenderRequest>().each()) {
+		// Note, its not very efficient to access elements indirectly via the entity
+		// albeit iterating through all Sprites in sequence. A good point to optimize
+		if (effect_render_request.visible) {
+			draw_effect(entity, effect_render_request, projection_2d);
+		}
+	}
+
 	draw_ui(projection_2d);
 
 	// Truely render to the screen
@@ -750,15 +759,6 @@ void RenderSystem::draw_ui(const mat3& projection)
 	for (auto [entity, element, request] : registry.view<Background, UIElement, UIRenderRequest>().each()) {
 		if (registry.get<UIGroup>(element.group).visible) {
 			draw_ui_element(entity, request, projection);
-		}
-	}
-
-	// Renders effects (ie spells), intended to be overlayed on top of regular render effects
-	for (auto [entity, effect_render_request] : registry.view<EffectRenderRequest>().each()) {
-		// Note, its not very efficient to access elements indirectly via the entity
-		// albeit iterating through all Sprites in sequence. A good point to optimize
-		if (effect_render_request.visible) {
-			draw_effect(entity, effect_render_request, projection);
 		}
 	}
 
