@@ -210,12 +210,12 @@ void WorldSystem::restart_game()
 	// Debugging for memory/component leaks
 	std::cout << "Alive: " << registry.alive() << std::endl;
 
-	map_generator->load_initial_level();
-
-	// a random starting position... probably need to update this
-	uvec2 player_starting_point = map_generator->get_player_start_position();
 	// Create a new Player instance and shift player onto a tile
-	player = create_player(player_starting_point);
+	// player position will be updated as the level load
+	player = create_player({ 0, 0 });
+	map_generator->load_initial_level();
+	uvec2 player_starting_point = registry.get<MapPosition>(player).position;
+
 	// TODO: Should move into create_player (under world init) afterwards
 	animations->set_player_animation(player);
 
@@ -392,6 +392,65 @@ void WorldSystem::check_debug_keys(int key, int action, int mod)
 		printf("Current speed = %f\n", current_speed);
 	}
 	current_speed = fmax(0.f, current_speed);
+
+	// for debugging levels
+	if (key == GLFW_KEY_N && (mod & GLFW_MOD_CONTROL) != 0 && action == GLFW_RELEASE) {
+		map_generator->load_next_level();
+	} else if (key == GLFW_KEY_B && (mod & GLFW_MOD_CONTROL) != 0 && action == GLFW_RELEASE) {
+		map_generator->load_last_level();
+	}
+
+	if (is_editing_map) {
+		if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_M) {
+			is_editing_map = false;
+			map_generator->stop_editing_level();
+			return;
+		}
+
+		if (key == GLFW_KEY_Q && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->increment_seed();
+		} else if (key == GLFW_KEY_W && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->decrement_seed();
+		} else if (key == GLFW_KEY_A && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->increment_path_length();
+		} else if (key == GLFW_KEY_S && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->decrement_path_length();
+		} else if (key == GLFW_KEY_Z && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->increase_room_density();
+		} else if (key == GLFW_KEY_X && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->decrease_room_density();
+		} else if (key == GLFW_KEY_E && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->increase_side_rooms();
+		} else if (key == GLFW_KEY_R && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->decrease_side_rooms();
+		} else if (key == GLFW_KEY_D && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->increase_room_path_complexity();
+		} else if (key == GLFW_KEY_F && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->decrease_room_path_complexity();
+		} else if (key == GLFW_KEY_C && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->increase_room_traps_density();
+		} else if (key == GLFW_KEY_V && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->decrease_room_traps_density();
+		} else if (key == GLFW_KEY_P && (mod & GLFW_MOD_CONTROL) != 0 && action == GLFW_RELEASE) {
+			map_generator->save_level_generation_confs();
+		} else if (key == GLFW_KEY_N && (action == GLFW_RELEASE)) {
+			map_generator->edit_next_level();
+		} else if (key == GLFW_KEY_B && (action == GLFW_RELEASE)) {
+			map_generator->edit_previous_level();
+		} else if (key == GLFW_KEY_T && (action == GLFW_RELEASE)) {
+			map_generator->increase_room_smoothness();
+		} else if (key == GLFW_KEY_Y && (action == GLFW_RELEASE)) {
+			map_generator->decrease_room_smoothness();
+		} else if (key == GLFW_KEY_G && (action == GLFW_RELEASE)) {
+			map_generator->increase_enemy_density();
+		} else if (key == GLFW_KEY_H && (action == GLFW_RELEASE)) {
+			map_generator->decrease_enemy_density();
+		}
+	}
+	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_M) {
+		is_editing_map = true;
+		map_generator->start_editing_level();
+	}
 }
 
 // Tracks position of cursor, points arrow at potential fire location
@@ -425,7 +484,7 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 
 void WorldSystem::move_player(Direction direction)
 {
-	if (turns->get_active_team() != player) {
+	if (turns->get_active_team() != player || is_editing_map) {
 		return;
 	}
 
@@ -465,6 +524,7 @@ void WorldSystem::move_player(Direction direction)
 	map_pos.position = new_pos;
 	turns->complete_team_action(player);
 
+	// TODO: move the logics to map generator system
 	if (map_generator->is_next_level_tile(new_pos)) {
 		if (map_generator->is_last_level()) {
 			end_of_game = true;
@@ -473,11 +533,12 @@ void WorldSystem::move_player(Direction direction)
 
 		map_generator->load_next_level();
 		animations->set_all_inactive_colours(turns->get_inactive_color());
-		registry.get<MapPosition>(player).position = map_generator->get_player_start_position();
 	} else if (map_generator->is_last_level_tile(new_pos)) {
 		map_generator->load_last_level();
 		animations->set_all_inactive_colours(turns->get_inactive_color());
-		registry.get<MapPosition>(player).position = map_generator->get_player_end_position();
+	} else if (map_generator->is_trap_tile(new_pos)) {
+		// TODO: add different effects for trap tiles
+		registry.get<Stats>(player).health -= 10;
 	}
 }
 
