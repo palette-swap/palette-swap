@@ -18,6 +18,7 @@ bool RenderSystem::init(
 	screen_size_capped = { width, height };
 	map_generator = std::move(map);
 	this->window = window_arg;
+	this->debugging = debugging;
 
 	glfwMakeContextCurrent(window);
 	glfwSwapInterval(1); // vsync
@@ -55,6 +56,9 @@ bool RenderSystem::init(
 
 	return true;
 }
+
+RenderSystem::RenderSystem(Debug& debugging)
+	: debugging(debugging) {};
 
 void RenderSystem::initialize_gl_textures()
 {

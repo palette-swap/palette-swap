@@ -550,14 +550,13 @@ void RenderSystem::draw_map(const mat3& projection)
 		Transform transform = get_transform(entity);
 		transform.scale(scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::TILE_SET)));
 
-		auto room_id = room.type;
 		glActiveTexture(GL_TEXTURE0);
 		gl_has_errors();
 		GLuint texture_id = texture_gl_handles.at((GLuint)TEXTURE_ASSET_ID::TILE_SET);
 		glBindTexture(GL_TEXTURE_2D, texture_id);
 		gl_has_errors();
 
-		const auto& room_layout = map_generator->get_room_layout(room_id);
+		const auto& room_layout = map_generator->get_room_layout(room.level, room.room_id);
 		GLint room_layout_loc = glGetUniformLocation(program, "room_layout");
 		glUniform1uiv(room_layout_loc, (GLsizei)room_layout.size(), room_layout.data());
 
@@ -565,6 +564,12 @@ void RenderSystem::draw_map(const mat3& projection)
 		glEnableVertexAttribArray(vertex_id_loc);
 		glVertexAttribIPointer(vertex_id_loc, 1, GL_INT, sizeof(int), nullptr);
 		gl_has_errors();
+
+		Animation& animation = registry.get<Animation>(entity);
+		assert(registry.any_of<Animation>(entity));
+
+		GLint frame_loc = glGetUniformLocation(program, "frame");
+		glUniform1i(frame_loc, animation.frame);
 
 		draw_triangles(transform, projection);
 	}
@@ -810,7 +815,7 @@ void RenderSystem::scale_on_scroll(float offset)
 	// scrolling backward -> zoom out
 	// max: 1.0, min: 0.2
 	float zoom = offset / 10;
-	if (this->screen_scale - zoom > 0.1 && this->screen_scale - zoom <= 1.0) {
+	if (debugging.in_debug_mode || (this->screen_scale - zoom > 0.1 && this->screen_scale - zoom <= 1.0)) {
 		this->screen_scale -= zoom;
 	}
 }

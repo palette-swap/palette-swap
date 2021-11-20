@@ -120,5 +120,7 @@ private:
 	std::shared_ptr<CombatSystem> combat;
 	std::shared_ptr<MapGeneratorSystem> map_generator;
 	std::shared_ptr<TurnSystem> turns;
+
+	bool is_editing_map = false;
 	std::shared_ptr<UISystem> ui;
 };

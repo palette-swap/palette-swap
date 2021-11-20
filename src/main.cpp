@@ -44,7 +44,7 @@ int main()
 	// Global systems
 	Debug debugging;
 	WorldSystem world(debugging, combat, map, turns, animations, ui, so_loud);
-	RenderSystem renderer;
+	RenderSystem renderer(debugging);
 	PhysicsSystem physics(debugging, map);
 	AISystem ai(debugging, combat, map, turns, animations, so_loud);
 
