@@ -41,6 +41,14 @@ AISystem::AISystem(const Debug& debugging,
 void AISystem::step(float /*elapsed_ms*/)
 {
 	if (turns->execute_team_action(enemy_team)) {
+
+		// Released AOE squares are destroyed.
+		for (auto [aoe_square_entity, aoe_square] : registry.view<AOESquare>().each()) {
+			if (aoe_square.isReleased) {
+				registry.destroy(aoe_square_entity);
+			}
+		}
+
 		for (auto [enemy_entity, enemy] : registry.view<Enemy>().each()) {
 
 			ColorState active_world_color = turns->get_active_color();
@@ -432,14 +440,19 @@ void AISystem::summon_enemies(const Entity& entity, EnemyType enemy_type, int nu
 	}
 }
 
-void AISystem::aoe_attack(const Entity& entity, const std::vector<uvec2>& area)
+void AISystem::release_aoe(const std::vector<Entity>& aoe)
 {
-	Entity player = registry.view<Player>().front();
-	const uvec2& player_map_pos = registry.get<MapPosition>(player).position;
-	for (const auto& map_pos : area) {
-		if (map_pos == player_map_pos) {
-			attack_player(entity);
+	for (const Entity& aoe_square : aoe) {
+		const vec2& aoe_square_world_pos = registry.get<WorldPosition>(aoe_square).position;
+		const uvec2& aoe_square_map_pos = MapUtility::world_position_to_map_position(aoe_square_world_pos);
+		Entity player = registry.view<Player>().front();
+		const uvec2& player_map_pos = registry.get<MapPosition>(player).position;
+		if (aoe_square_map_pos == player_map_pos) {
+			attack_player(aoe_square);
 		}
+
+		// Released AOE squares will be destroyed in the next turn.
+		registry.get<AOESquare>(aoe_square).isReleased = true;
 	}
 }
 

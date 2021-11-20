@@ -132,11 +132,28 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 	return entity;
 }
 
-Entity create_aoe_target_squares()
-{ 
-	auto entity = registry.create(); 
-	
-	return entity;
+std::vector<Entity> create_aoe(const std::vector<uvec2>& aoe_area, const Stats& stats)
+{
+	std::vector<Entity> aoe;
+
+	for (const uvec2& map_pos : aoe_area) {
+		Entity aoe_square = registry.create();
+
+		registry.emplace<AOESquare>(aoe_square);
+
+		registry.emplace<WorldPosition>(aoe_square, MapUtility::map_position_to_world_position(map_pos));
+
+		registry.emplace<Stats>(aoe_square, stats);
+
+		// TODO (Evan): Replace CANNONBALL with a suitable texture for a basic AOE.
+		registry.emplace<RenderRequest>(
+			aoe_square, TEXTURE_ASSET_ID::CANNONBALL, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE, true);
+		registry.emplace<Color>(aoe_square, vec3(1, 0, 0));
+
+		aoe.push_back(aoe_square);
+	}
+
+	return aoe;
 }
 
 Entity create_arrow(vec2 position)

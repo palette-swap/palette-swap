@@ -300,6 +300,11 @@ struct Enemy {
 	void deserialize(const std::string& prefix, const rapidjson::Document& json, bool load_from_file = true);
 };
 
+struct AOESquare {
+	// Released AOE square will be destroyed in the next turn.
+	bool isReleased = false;
+};
+
 struct RedExclusive {
 
 };
@@ -308,21 +313,11 @@ struct BlueExclusive {
 
 };
 
-// Component denoting the AOE entity that is displaying a boss's attack
-struct AOEAttackActive {
-	Entity AOEAttack;
-};
-
-// Component denoting an AOE's vector of intended attack targets
-struct AOETargets {
-	
-};
-
-
 // Component that denotes what colour the player cannot see at the moment
 struct PlayerInactivePerception {
 	ColorState inactive = ColorState::Red;
 };
+
 //---------------------------------------------------------------------------
 //-------------------------		  ANIMATIONS        -------------------------
 //---------------------------------------------------------------------------
@@ -341,7 +336,6 @@ const std::array<TEXTURE_ASSET_ID, static_cast<int>(EnemyType::EnemyCount)> enem
 	TEXTURE_ASSET_ID::MUSHROOM,
 	TEXTURE_ASSET_ID::SPIDER,
 	TEXTURE_ASSET_ID::CLONE,
-	// TODO (Evan): temporarily used MUSHROOM to mock KINGMUSH for testing, please replace it when the texture is available.
 	TEXTURE_ASSET_ID::KING_MUSH,
 };
 
