@@ -266,9 +266,9 @@ void AnimationSystem::player_spell_impact_animation(const Entity& enemy, DamageT
 	registry.emplace<EffectRenderRequest>(
 		spell_impact_entity, TEXTURE_ASSET_ID::SPELLS, EFFECT_ASSET_ID::SPELL, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);
 	Animation& spell_impact_animation = registry.emplace<Animation>(spell_impact_entity);
-	spell_impact_animation.max_frames = 8;
+	spell_impact_animation.max_frames = spell_impact_total_frames;
 	spell_impact_animation.state = damage_type_to_spell_impact.at((int)spelltype);
-	spell_impact_animation.speed_adjustment = 1;
+	spell_impact_animation.speed_adjustment = player_spell_animation_speed;
 	
 }
 

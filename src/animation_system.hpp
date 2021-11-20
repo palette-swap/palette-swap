@@ -35,6 +35,8 @@ static constexpr float boss_action_speed = 0.5f;
 // Used for spell animation details
 static constexpr float player_spell_animation_speed = 3.f;
 static constexpr int player_spell_states = 4;
+static constexpr float player_spell_impact_speed = 1.f;
+static constexpr int spell_impact_total_frames;
 
 // Value denoting the animation states for the player
 // KEEP ALIGNED WITH STATES REPRESENTED IN PLAYER SPRITESHEET
