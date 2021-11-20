@@ -142,7 +142,8 @@ void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest& render
 		assert(registry.any_of<RenderRequest>(entity));
 		prepare_for_textured(texture_gl_handles.at((GLuint)registry.get<RenderRequest>(entity).used_texture));
 	} else if (render_request.used_effect == EFFECT_ASSET_ID::ENEMY
-			   || render_request.used_effect == EFFECT_ASSET_ID::PLAYER) {
+			   || render_request.used_effect == EFFECT_ASSET_ID::PLAYER
+				|| render_request.used_effect == EFFECT_ASSET_ID::BOSS_INTRO_SHADER) {
 
 		GLint in_position_loc = glGetAttribLocation(program, "in_position");
 		GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");

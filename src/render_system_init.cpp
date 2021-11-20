@@ -162,8 +162,6 @@ void RenderSystem::initialize_gl_geometry_buffers()
 	}
 
 	//////////////////////////
-	// TODO: Consolidate all animated sprites (quads) into a single type
-	// Initialize ENEMY sprites
 	// The position corresponds to the center of the texture.
 	std::vector<SmallSpriteVertex> enemy_vertices(4);
 	enemy_vertices[0].position = { -1.f / 2, +1.f / 2, 0.f };
@@ -178,6 +176,22 @@ void RenderSystem::initialize_gl_geometry_buffers()
 	// Counterclockwise as it's the default opengl front winding direction.
 	const std::vector<uint16_t> enemy_indices = { 0, 3, 1, 1, 3, 2 };
 	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::SMALL_SPRITE, enemy_vertices, enemy_indices);
+	
+	//////////////////////////
+	// The position corresponds to the center of the texture.
+	std::vector<TexturedVertex> entry_vertices(4);
+	entry_vertices[0].position = { -1.f / 2, +1.f / 2, 0.f };
+	entry_vertices[1].position = { +1.f / 2, +1.f / 2, 0.f };
+	entry_vertices[2].position = { +1.f / 2, -1.f / 2, 0.f };
+	entry_vertices[3].position = { -1.f / 2, -1.f / 2, 0.f };
+	entry_vertices[0].texcoord = { 0, sprite_size/entry_animation_height };
+	entry_vertices[1].texcoord = { sprite_size / entry_animation_width, sprite_size / entry_animation_height };
+	entry_vertices[2].texcoord = { sprite_size / entry_animation_width, 0 };
+	entry_vertices[3].texcoord = { 0, 0 };
+
+	// Counterclockwise as it's the default opengl front winding direction.
+	const std::vector<uint16_t> entry_indices = { 0, 3, 1, 1, 3, 2 };
+	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::ENTRY_ANIMATION_STRIP, entry_vertices, entry_indices);
 
 	//////////////////////////////////
 	// Initialize health bars

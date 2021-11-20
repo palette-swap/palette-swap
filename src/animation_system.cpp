@@ -266,6 +266,23 @@ void AnimationSystem::player_red_blue_animation(const Entity& player, ColorState
 	}
 }
 
+Entity AnimationSystem::create_boss_entry_entity(EnemyType boss_type, uvec2 map_position) {
+
+	auto boss_entry_entity = registry.create();
+
+	registry.emplace<RenderRequest>(boss_entry_entity, boss_type_entry_animation_map.at(boss_type), 
+									EFFECT_ASSET_ID::BOSS_INTRO_SHADER, 
+									GEOMETRY_BUFFER_ID::ENTRY_ANIMATION_STRIP, true);
+
+	registry.emplace<MapPosition>(boss_entry_entity, map_position);
+	Animation& entry_animation = registry.emplace<Animation>(boss_entry_entity);
+	entry_animation.max_frames = 8;
+	entry_animation.state = 0;
+	entry_animation.speed_adjustment = 0.5;
+
+	return boss_entry_entity;
+}
+
 void AnimationSystem::boss_event_animation(const Entity& boss, int event_state) {
 	Animation& enemy_animation = registry.get<Animation>(boss);
 

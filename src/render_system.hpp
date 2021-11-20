@@ -56,9 +56,16 @@ class RenderSystem {
 	std::array<GLuint, effect_count> effects = {};
 	// Make sure these paths remain in sync with the associated enumerators.
 	const std::array<std::string, effect_count> effect_paths = {
-		shader_path("line"),	 shader_path("rectangle"),	shader_path("enemy"),
-		shader_path("player"),	 shader_path("health_bar"), shader_path("fancy_bar"),
-		shader_path("textured"), shader_path("water"),		shader_path("tilemap"),
+		shader_path("line"),	 
+		shader_path("rectangle"),	
+		shader_path("enemy"),
+		shader_path("player"),
+		shader_path("boss_intro"),
+		shader_path("health_bar"),
+		shader_path("fancy_bar"),
+		shader_path("textured"), 
+		shader_path("water"),		
+		shader_path("tilemap"),
 	};
 
 	// TODO: move these constants into animation system most likely, need to finalize
@@ -71,6 +78,10 @@ class RenderSystem {
 	static constexpr float sprite_size = 1.f;
 	static constexpr float player_spritesheet_width = 8.f;
 	static constexpr float player_spritesheet_height = 4.f;
+	
+
+	static constexpr float entry_animation_height = 1.f;
+	static constexpr float entry_animation_width = 64.f;
 
 	// Static buffers
 	std::array<GLuint, geometry_count> vertex_buffers = {};

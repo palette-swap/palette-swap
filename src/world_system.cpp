@@ -235,6 +235,7 @@ void WorldSystem::restart_game()
 	vec2 player_location = MapUtility::map_position_to_world_position(player_starting_point);
 	player_arrow = create_arrow(player_location);
 
+	animations->create_boss_entry_entity(EnemyType::KingMush, player_starting_point);
 	// Restart the UISystem
 	ui->restart_game();
 

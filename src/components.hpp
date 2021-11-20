@@ -148,7 +148,8 @@ enum class EFFECT_ASSET_ID {
 	RECTANGLE = LINE + 1,
 	ENEMY = RECTANGLE + 1,
 	PLAYER = ENEMY + 1,
-	HEALTH = PLAYER + 1,
+	BOSS_INTRO_SHADER = PLAYER + 1,
+	HEALTH = BOSS_INTRO_SHADER + 1,
 	FANCY_HEALTH = HEALTH + 1,
 	TEXTURED = FANCY_HEALTH + 1,
 	WATER = TEXTURED + 1,
@@ -161,7 +162,8 @@ enum class GEOMETRY_BUFFER_ID : uint8_t {
 	SALMON = 0,
 	SPRITE = SALMON + 1,
 	SMALL_SPRITE = SPRITE + 1,
-	HEALTH = SMALL_SPRITE + 1,
+	ENTRY_ANIMATION_STRIP = SMALL_SPRITE + 1,
+	HEALTH = ENTRY_ANIMATION_STRIP + 1,
 	FANCY_HEALTH = HEALTH + 1,
 	LINE = FANCY_HEALTH + 1,
 	DEBUG_LINE = LINE + 1,
@@ -327,9 +329,12 @@ const std::array<TEXTURE_ASSET_ID, static_cast<int>(EnemyType::EnemyCount)> enem
 	TEXTURE_ASSET_ID::MUSHROOM,
 	TEXTURE_ASSET_ID::SPIDER,
 	TEXTURE_ASSET_ID::CLONE,
-	// TODO (Evan): temporarily used MUSHROOM to mock KINGMUSH for testing, please replace it when the texture is
-	// available.
 	TEXTURE_ASSET_ID::KING_MUSH,
+};
+
+// Maps enemy type to a specific entry animation
+const std::map<EnemyType, TEXTURE_ASSET_ID> boss_type_entry_animation_map { 
+	{EnemyType::KingMush, TEXTURE_ASSET_ID::KING_MUSH_ENTRY},
 };
 
 const std::array<int, (size_t)EnemyState::EnemyStateCount> enemy_state_to_animation_state = {
@@ -395,6 +400,8 @@ struct EffectRenderRequest {
 
 struct Effects {
 };
+
+
 //---------------------------------------------------------------------------
 //-------------------------         COMBAT          -------------------------
 //---------------------------------------------------------------------------

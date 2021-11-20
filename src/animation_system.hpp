@@ -57,7 +57,8 @@ static constexpr vec4 default_enemy_blue = { 1, 1, 2, 1 };
 
 static constexpr vec4 damage_color = { 5, 5, 5, 1 };
 
-static constexpr int max_inactive_colors = 3;
+
+
 
 class AnimationSystem {
 
@@ -105,8 +106,11 @@ public:
 	// or damage calculations have been completed
 	bool animation_events_completed();
 
-	// Initiates boss temporary animation state, to be returned to original state after completion of animation
+	// Generates the boss enemy entry animation 
+	// DOES NOT CREATE AN ACTUAL BOSS ENTITY, JUST CREATES THE ENTRY ANIMATION ENTITY AT THE LOCATION GIVEN
+	Entity create_boss_entry_entity(EnemyType boss_type, uvec2 position);
 
+	// Initiates boss temporary animation state, to be returned to original state after completion of animation
 	void boss_event_animation(const Entity& boss, int event_state);
 
 private:
