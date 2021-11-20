@@ -334,9 +334,6 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		change_color();
 	} else {
 		switch (key) {
-		case GLFW_KEY_SPACE:
-			change_color();
-			break;
 		case GLFW_KEY_LEFT_SHIFT:
 			if (turns->ready_to_act(player) && combat->try_pickup_items(player)) {
 				turns->skip_team_action(player);
