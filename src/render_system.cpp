@@ -740,8 +740,8 @@ void RenderSystem::scale_on_scroll(float offset)
 	// scrolling backward -> zoom out
 	// max: 1.0, min: 0.2
 	float zoom = offset / 10;
-	if (debugging.in_debug_mode || (this->screen_scale - zoom > 0.1 && this->screen_scale - zoom <= 1.0)) {
-		this->screen_scale -= zoom;
+	if (debugging.in_debug_mode || (screen_scale - zoom > 0.1 && screen_scale - zoom <= 1.0)) {
+		screen_scale -= zoom;
 	}
 }
 
