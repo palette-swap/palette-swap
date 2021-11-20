@@ -95,14 +95,6 @@ static Direction opposite_direction(Direction d)
 	}
 }
 
-static bool is_straight_room(const std::set<Direction>& open_sides)
-{
-	if (open_sides.size() != 2) {
-		return false;
-	}
-	return (opposite_direction(*(open_sides.begin())) == *(open_sides.end()));
-}
-
 // Tile ID contants
 const static uint8_t solid_block_tile = 12;
 const static uint8_t floor_tile = 0;
@@ -148,8 +140,6 @@ static void smooth_room(RoomLayout& curr_layout, int iterations, const std::set<
 			&& (tile_col == 0 || room_layout.at(tile_row * room_size + tile_col - 1) == solid_block_tile)
 			&& (tile_col == room_size - 1 || room_layout.at(tile_row * room_size + tile_col + 1) == solid_block_tile));
 	};
-
-	std::bernoulli_distribution convert_to_void(0.5);
 
 	for (int i = 0; i < iterations; i++) {
 		for (int tile_position = 0; tile_position < curr_layout.size(); tile_position++) {
@@ -405,12 +395,10 @@ RoomLayout MapGenerator::generate_room(const std::set<Direction>& open_direction
 				room_layout.at(room_index) = static_cast<uint32_t>(void_tile);
 			} else if (is_boundary_tile(room_index)) {
 				room_layout.at(room_index) = static_cast<uint32_t>(solid_block_tile);
-			} else {
-				if ((room_type == RoomType::Critical)
+			} else if ((room_type == RoomType::Critical)
 					&& (critical_locations.find(room_index) == critical_locations.end())
 					&& blocks_dist(random_engs.general_eng)) {
-					room_layout.at(room_index) = static_cast<uint32_t>(solid_block_tile);
-				}
+				room_layout.at(room_index) = static_cast<uint32_t>(solid_block_tile);
 			}
 		}
 	}
@@ -594,8 +582,7 @@ LevelConfiguration MapGenerator::generate_level(LevelGenConf level_gen_conf, boo
 	std::default_random_engine enemy_random_eng_red;
 	enemy_random_eng_red.seed(level_gen_conf.seed);
 	std::default_random_engine enemy_random_eng_blue;
-	// use a different seed
-	enemy_random_eng_blue.seed(level_gen_conf.seed + 1);
+	enemy_random_eng_blue.seed(level_gen_conf.seed + 1); // use a different seed
 	// prepare level snapshot
 	rapidjson::Document level_snap_shot;
 	level_snap_shot.SetObject();
