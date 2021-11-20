@@ -145,11 +145,11 @@ private:
 		BTState process(Entity e, AISystem* ai) override
 		{
 			printf("Debug: SummonEnemies.process\n");
+
 			ai->summon_enemies(e, m_type, m_num);
 
-			// TODO (Evan): active(1) + temp-summon.
-			ai->switch_enemy_state(e, EnemyState::Idle);
 			// TODO (Evan): Change to not be hardcoded, currently aware that 2 is the specific boss's summoning state
+			ai->switch_enemy_state(e, EnemyState::Idle);
 			ai->animations->boss_event_animation(e, 2);
 
 			return handle_process_result(BTState::Success);
@@ -231,9 +231,9 @@ private:
 		BTState process(Entity e, AISystem* ai) override
 		{
 			printf("Debug: RegularAttack.process\n");
+
 			ai->attack_player(e);
 
-			// TODO (Evan): active(1) + temp-attack.
 			ai->switch_enemy_state(e, EnemyState::Idle);
 
 			return handle_process_result(BTState::Success);
@@ -253,8 +253,11 @@ private:
 		BTState process(Entity e, AISystem* ai) override
 		{
 			printf("Debug: RecoverHealth.process\n");
+
 			ai->recover_health(e, m_ratio);
+
 			ai->switch_enemy_state(e, EnemyState::Idle);
+
 			return handle_process_result(BTState::Success);
 		}
 
@@ -270,7 +273,9 @@ private:
 		BTState process(Entity e, AISystem* ai) override
 		{
 			printf("Debug: DoNothing.process\n");
+
 			ai->switch_enemy_state(e, EnemyState::Idle);
+
 			return handle_process_result(BTState::Success);
 		}
 	};
