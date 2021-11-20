@@ -794,7 +794,7 @@ struct Button {
 struct CutScene {
 	float radius;
 	Entity cutscene_ui;
-	std::vector<std::string> texts;
+	std::string texts;
 };
 
 struct CutSceneEvent {

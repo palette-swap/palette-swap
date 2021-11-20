@@ -238,12 +238,12 @@ void WorldSystem::restart_game()
 	// Restart the CombatSystem
 	combat->restart_game();
 
-	animations->create_boss_entry_entity(EnemyType::KingMush, player_starting_point);
+	Entity boss_entry_entity = animations->create_boss_entry_entity(EnemyType::KingMush, player_starting_point + uvec2(10, 2));
 	// Restart the UISystem
 	ui->restart_game();
 
 	// Restart the StorySystem
-	story->restart_game();
+	story->restart_game({ boss_entry_entity });
 	
 }
 
@@ -537,6 +537,7 @@ void WorldSystem::move_player(Direction direction)
 		// TODO: add different effects for trap tiles
 		registry.get<Stats>(player).health -= 10;
 	}
+	story->check_cutscene_invoktion();
 }
 
 void WorldSystem::change_color()
