@@ -256,8 +256,8 @@ void WorldSystem::handle_collisions()
 				Enemy& enemy = registry.get<Enemy>(entity_other);
 				ColorState enemy_color = enemy.team;
 				if (enemy_color != turns->get_inactive_color() && ui->has_current_attack()) {
-					combat->do_attack(player, ui->get_current_attack(), entity_other);
 					animations->player_spell_impact_animation(entity_other, ui->get_current_attack().damage_type);
+					combat->do_attack(player, ui->get_current_attack(), entity_other);
 				}
 			}
 			Entity temp = child_entity;

@@ -25,6 +25,7 @@ void AnimationSystem::update_animations(float elapsed_ms, ColorState inactive_co
 			registry.view<Animation>().each(animation_step_lambda);
 	}
 	resolve_event_animations();
+	resolve_transient_event_animations();
 }
 
 
@@ -257,7 +258,18 @@ void AnimationSystem::player_red_blue_animation(const Entity& player, ColorState
 }
 
 void AnimationSystem::player_spell_impact_animation(const Entity& enemy, DamageType spelltype) {
+	auto spell_impact_entity = registry.create();
+	MapPosition position = registry.get<MapPosition>(enemy);
 
+	registry.emplace<MapPosition>(spell_impact_entity, position);
+	registry.emplace<TransientEventAnimation>(spell_impact_entity);
+	registry.emplace<EffectRenderRequest>(
+		spell_impact_entity, TEXTURE_ASSET_ID::SPELLS, EFFECT_ASSET_ID::SPELL, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);
+	Animation& spell_impact_animation = registry.emplace<Animation>(spell_impact_entity);
+	spell_impact_animation.max_frames = 8;
+	spell_impact_animation.state = damage_type_to_spell_impact.at((int)spelltype);
+	spell_impact_animation.speed_adjustment = 1;
+	
 }
 
 void AnimationSystem::boss_event_animation(const Entity& boss, int event_state) {
@@ -293,6 +305,21 @@ void AnimationSystem::resolve_event_animations()
 			actual_animation.display_color = event_animation.restore_color;
 			// Removes event animation from registry
 			registry.remove<EventAnimation>(entity);
+		} else {
+			event_animation.frame = actual_animation.frame;
+		}
+	}
+}
+
+void AnimationSystem::resolve_transient_event_animations()
+{
+	for (auto [entity, event_animation, actual_animation] : registry.view<TransientEventAnimation, Animation>().each()) {
+
+		// Checks if the animation frame had been reset to 0. If true, this means event animation has completed
+		// TODO: Change to be a different check, this current one is a bit iffy, and is reliant on there being at least
+		// two frames in all event animations (which is technically correct since it's an "animation", but a bit iffy)
+		if (actual_animation.frame < event_animation.frame) {
+			registry.destroy(entity);
 		} else {
 			event_animation.frame = actual_animation.frame;
 		}
