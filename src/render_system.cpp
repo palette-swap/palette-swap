@@ -59,6 +59,58 @@ void RenderSystem::prepare_for_textured(GLuint texture_id)
 	gl_has_errors();
 }
 
+void RenderSystem::prepare_for_spritesheet(TEXTURE_ASSET_ID texture, vec2 offset, vec2 size)
+{
+	const auto program = (GLuint)effects.at((GLuint)EFFECT_ASSET_ID::SPRITESHEET);
+
+	// Setting shaders
+	glUseProgram(program);
+	gl_has_errors();
+
+	const GLuint vbo = vertex_buffers.at((int)GEOMETRY_BUFFER_ID::SPRITE);
+	const GLuint ibo = index_buffers.at((int)GEOMETRY_BUFFER_ID::SPRITE);
+
+	// Setting vertex and index buffers
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+	gl_has_errors();
+	GLint in_position_loc = glGetAttribLocation(program, "in_position");
+	GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
+	gl_has_errors();
+	assert(in_texcoord_loc >= 0);
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	glEnableVertexAttribArray(in_position_loc);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex), nullptr);
+	gl_has_errors();
+
+	glEnableVertexAttribArray(in_texcoord_loc);
+	glVertexAttribPointer(
+		in_texcoord_loc,
+		2,
+		GL_FLOAT,
+		GL_FALSE,
+		sizeof(TexturedVertex),
+		(void*)sizeof(vec3)); // NOLINT(performance-no-int-to-ptr,cppcoreguidelines-pro-type-cstyle-cast)
+	// Enabling and binding texture to slot 0
+	glActiveTexture(GL_TEXTURE0);
+	gl_has_errors();
+
+	GLint offset_loc = glGetUniformLocation(program, "offset");
+	glUniform2f(offset_loc, offset.x, offset.y);
+	gl_has_errors();
+
+	GLint size_loc = glGetUniformLocation(program, "size");
+	glUniform2f(size_loc, size.x,size.y);
+	gl_has_errors();
+
+	GLuint texture_id = texture_gl_handles.at((GLuint)texture);
+	glBindTexture(GL_TEXTURE_2D, texture_id);
+	gl_has_errors();
+}
+
 RenderSystem::TextData RenderSystem::generate_text(const Text& text)
 {
 	TextData text_data = {};
@@ -141,6 +193,12 @@ void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest& render
 
 		assert(registry.any_of<RenderRequest>(entity));
 		prepare_for_textured(texture_gl_handles.at((GLuint)registry.get<RenderRequest>(entity).used_texture));
+	} else if (render_request.used_effect == EFFECT_ASSET_ID::SPRITESHEET) {
+
+		TextureOffset& texture_offset = registry.get<TextureOffset>(entity);
+		vec2 shifted_offset = vec2(texture_offset.offset) * MapUtility::tile_size;
+		prepare_for_spritesheet(render_request.used_texture, shifted_offset, texture_offset.size);
+
 	} else if (render_request.used_effect == EFFECT_ASSET_ID::ENEMY
 			   || render_request.used_effect == EFFECT_ASSET_ID::PLAYER) {
 
@@ -225,6 +283,22 @@ void RenderSystem::draw_ui_element(Entity entity, const UIRenderRequest& ui_rend
 					   entity);
 	} else if (ui_render_request.used_effect == EFFECT_ASSET_ID::RECTANGLE) {
 		draw_rectangle(entity, transform, ui_render_request.size * vec2(window_width_px, window_height_px), projection);
+	} else if (ui_render_request.used_effect == EFFECT_ASSET_ID::SPRITESHEET) {
+
+		TextureOffset& texture_offset = registry.get<TextureOffset>(entity);
+
+		vec2 shifted_offset = vec2(texture_offset.offset) * MapUtility::tile_size;
+
+		prepare_for_spritesheet(ui_render_request.used_texture, shifted_offset, texture_offset.size);
+
+		if (registry.any_of<Color>(entity)) {
+			GLint color_uloc = glGetUniformLocation((GLuint)effects.at((GLuint)EFFECT_ASSET_ID::SPRITESHEET), "fcolor");
+			const vec3 color = registry.get<Color>(entity).color;
+			glUniform3fv(color_uloc, 1, glm::value_ptr(color));
+			gl_has_errors();
+		}
+
+		draw_triangles(transform, projection);
 	}
 }
 

@@ -394,6 +394,13 @@ void ItemTemplate::deserialize(Entity entity, const rapidjson::GenericObject<fal
 		StatBoosts& stat_boosts = registry.emplace<StatBoosts>(entity);
 		stat_boosts.deserialize(item["stat_boosts"].GetObj());
 	}
+
+	if (item.HasMember("texture_offset")) {
+		texture_offset = vec2(item["texture_offset"][0].GetInt(), item["texture_offset"][1].GetInt());
+		if (item.HasMember("texture_size")) {
+			texture_size = vec2(item["texture_size"][0].GetInt(), item["texture_size"][1].GetInt());
+		}
+	}
 }
 
 void StatBoosts::deserialize(const rapidjson::GenericObject<false, rapidjson::Value>& boosts) {

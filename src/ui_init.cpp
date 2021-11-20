@@ -150,13 +150,20 @@ Entity create_equip_slot(
 
 Entity create_ui_item(Entity ui_group, Entity slot, Entity item)
 {
-	Entity ui_item
-		= create_ui_text(ui_group, registry.get<ScreenPosition>(slot).position, registry.get<ItemTemplate>(item).name);
+	Entity ui_item = registry.create();
+	ItemTemplate& item_component = registry.get<ItemTemplate>(item);
+	registry.emplace<Item>(ui_item, item);
+	registry.emplace<ScreenPosition>(ui_item, registry.get<ScreenPosition>(slot).position);
+	registry.emplace<UIRenderRequest>(
+		ui_item, TEXTURE_ASSET_ID::ICONS, EFFECT_ASSET_ID::SPRITESHEET, GEOMETRY_BUFFER_ID::SPRITE, vec2(.1 * window_default_size.y / window_default_size.x, .1));
+	registry.emplace<TextureOffset>(ui_item, item_component.texture_offset, item_component.texture_size);
+	registry.emplace<Color>(ui_item, vec3(1));
 	registry.emplace<Draggable>(ui_item, slot);
 	registry.emplace<InteractArea>(ui_item, vec2(.1f));
 	registry.emplace<Item>(ui_item, item);
 
 	registry.get<UISlot>(slot).contents = ui_item;
+	UIGroup::add_element(ui_group, ui_item, registry.emplace<UIElement>(ui_item, ui_group, true), UILayer::Content);
 
 	return ui_item;
 }

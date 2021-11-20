@@ -17,6 +17,7 @@ Entity create_player(uvec2 pos)
 	fireball.mana_cost = 25;
 	inventory.equipped.at(static_cast<uint8>(Slot::Spell1))
 		= create_spell("Fireball", std::vector<Entity>({ fireball_entity }));
+	registry.get<ItemTemplate>(inventory.equipped.at(static_cast<uint8>(Slot::Spell1))).texture_offset = ivec2(0, 3);
 
 	// Setup Sword
 	Entity light_entity = registry.create();

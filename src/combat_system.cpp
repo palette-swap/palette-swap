@@ -201,17 +201,20 @@ void CombatSystem::drop_loot(uvec2 position)
 		registry.emplace<HealthPotion>(potion);
 		registry.emplace<MapPosition>(potion, position);
 		registry.emplace<RenderRequest>(
-			potion, TEXTURE_ASSET_ID::CANNONBALL, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE, true);
-		registry.emplace<Color>(potion, vec3(1, .1, .1));
+			potion, TEXTURE_ASSET_ID::ICONS, EFFECT_ASSET_ID::SPRITESHEET, GEOMETRY_BUFFER_ID::SPRITE, true);
+		registry.emplace<TextureOffset>(potion, ivec2(0,4), vec2(32,32));
+		registry.emplace<Color>(potion, vec3(1));
 		return;
 	}
 	Entity template_entity = loot_list.at(looted++ % loot_list.size());
+	ItemTemplate& item = registry.get<ItemTemplate>(template_entity);
 	Entity loot = registry.create();
 	registry.emplace<Item>(loot, template_entity);
 	registry.emplace<MapPosition>(loot, position);
 	registry.emplace<RenderRequest>(
-		loot, TEXTURE_ASSET_ID::CANNONBALL, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE, true);
-	registry.emplace<Color>(loot, vec3(.8314f, .6863f, .2157f) * 1.1f);
+		loot, TEXTURE_ASSET_ID::ICONS, EFFECT_ASSET_ID::SPRITESHEET, GEOMETRY_BUFFER_ID::SPRITE, true);
+	registry.emplace<TextureOffset>(loot, item.texture_offset, item.texture_size);
+	registry.emplace<Color>(loot, vec3(1));
 }
 
 void CombatSystem::kill(Entity attacker_entity, Entity target_entity)

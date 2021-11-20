@@ -119,7 +119,8 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 	TILE_SET = CANNONBALL + 1,
 	HELP_PIC = TILE_SET + 1,
 	END_PIC = HELP_PIC + 1,
-	TEXTURE_COUNT = END_PIC + 1,
+	ICONS = END_PIC + 1,
+	TEXTURE_COUNT = ICONS + 1,
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 
@@ -141,6 +142,8 @@ static constexpr std::array<vec2, texture_count> scaling_factors = {
 	vec2(MapUtility::tile_size * 0.5, MapUtility::tile_size * 0.5),
 	vec2(MapUtility::tile_size* MapUtility::room_size, MapUtility::tile_size* MapUtility::room_size),
 	vec2(MapUtility::tile_size* MapUtility::room_size * 3, MapUtility::tile_size* MapUtility::room_size * 2),
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
 };
 
 enum class EFFECT_ASSET_ID {
@@ -151,7 +154,8 @@ enum class EFFECT_ASSET_ID {
 	HEALTH = PLAYER + 1,
 	FANCY_HEALTH = HEALTH + 1,
 	TEXTURED = FANCY_HEALTH + 1,
-	WATER = TEXTURED + 1,
+	SPRITESHEET = TEXTURED + 1,
+	WATER = SPRITESHEET + 1,
 	TILE_MAP = WATER + 1,
 	EFFECT_COUNT = TILE_MAP + 1
 };
@@ -363,6 +367,11 @@ struct RenderRequest {
 	GEOMETRY_BUFFER_ID used_geometry = GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 
 	bool visible = true;
+};
+
+struct TextureOffset {
+	ivec2 offset;
+	vec2 size;
 };
 
 struct Color {
@@ -579,6 +588,8 @@ struct ItemTemplate {
 	std::string name;
 	int tier = 0;
 	SlotList<bool> allowed_slots = { false };
+	ivec2 texture_offset = ivec2(0);
+	vec2 texture_size = vec2(MapUtility::tile_size);
 	void deserialize(Entity entity, const rapidjson::GenericObject<false, rapidjson::Value>& item);
 };
 

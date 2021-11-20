@@ -5,7 +5,8 @@
         "slots": ["Armor"],
         "stat_boosts": {
             "evasion": 1
-        }
+        },
+        "texture_offset": [0, 2]
     },
     {
         "name": "Scale Armor",
@@ -13,7 +14,8 @@
         "slots": ["Armor"],
         "stat_boosts": {
             "evasion": 2
-        }
+        },
+        "texture_offset": [1, 2]
     },
     {
         "name": "Full Plate",
@@ -26,6 +28,7 @@
                 "Fire": 2,
                 "Cold": 2
             }
-        }
+        },
+        "texture_offset": [2, 2]
     }
 ]

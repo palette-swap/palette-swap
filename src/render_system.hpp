@@ -35,22 +35,24 @@ class RenderSystem {
 	// and then uses path to grab sprites, stats, and behaviour
 	// Make sure these paths remain in sync with the associated enumerators.
 	const std::array<std::string, texture_count> texture_paths = {
-			textures_path("./01-Player/Player Spritesheet.png"),
-			textures_path("./TrainingDummy/Dummy Spritesheet.png"),
-			textures_path("./Slime/Slime Spritesheet.png"),
-			textures_path("./Living Armor/Living Armor Spritesheet.png"),
-			textures_path("./Treeant/Treeant Spritesheet.png"),
-			textures_path("./Raven/Raven Spritesheet.png"),
-			textures_path("./Wraith/Wraith Spritesheet.png"),
-			textures_path("./Drake/Drake Spritesheet.png"),
-			textures_path("./Mushroom/Mushroom Spritesheet.png"),
-			textures_path("./Spider/Spider Spritesheet.png"),
-			textures_path("./Clone/Clone Spritesheet.png"),
-			textures_path("./02-Bosses/King Mush/King Mush Spritesheet.png"),
-			textures_path("cannon_ball.png"),
-			textures_path("tile_set.png"),
-			textures_path("help.png"),
-			textures_path("End Screen.png") };
+		textures_path("./01-Player/Player Spritesheet.png"),
+		textures_path("./TrainingDummy/Dummy Spritesheet.png"),
+		textures_path("./Slime/Slime Spritesheet.png"),
+		textures_path("./Living Armor/Living Armor Spritesheet.png"),
+		textures_path("./Treeant/Treeant Spritesheet.png"),
+		textures_path("./Raven/Raven Spritesheet.png"),
+		textures_path("./Wraith/Wraith Spritesheet.png"),
+		textures_path("./Drake/Drake Spritesheet.png"),
+		textures_path("./Mushroom/Mushroom Spritesheet.png"),
+		textures_path("./Spider/Spider Spritesheet.png"),
+		textures_path("./Clone/Clone Spritesheet.png"),
+		textures_path("./02-Bosses/King Mush/King Mush Spritesheet.png"),
+		textures_path("cannon_ball.png"),
+		textures_path("tile_set.png"),
+		textures_path("help.png"),
+		textures_path("End Screen.png"),
+		textures_path("icons.png"),
+	};
 
 	std::array<GLuint, effect_count> effects = {};
 	// Make sure these paths remain in sync with the associated enumerators.
@@ -139,6 +141,8 @@ private:
 
 	// Helper to ready to draw the Textured effect
 	void prepare_for_textured(GLuint texture_id);
+	// Helper to ready to draw the SpriteSheet effect
+	void prepare_for_spritesheet(TEXTURE_ASSET_ID texture, vec2 offset, vec2 size);
 
 	// Generates raster texture of provided text
 	// Returns vbo, ibo

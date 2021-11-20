@@ -5,7 +5,8 @@
         "slots": ["Ring"],
         "stat_boosts": {
             "health": 25
-        }
+        },
+        "texture_offset": [0, 1]
     },
     {
         "name": "Ring of Wizardry",
@@ -13,7 +14,8 @@
         "slots": ["Ring"],
         "stat_boosts": {
             "mana": 25
-        }
+        },
+        "texture_offset": [2, 1]
     },
     {
         "name": "Ring of Strength",
@@ -22,6 +24,7 @@
         "stat_boosts": {
             "to_hit": 3,
             "damage": 5
-        }
+        },
+        "texture_offset": [1, 1]
     }
 ]
