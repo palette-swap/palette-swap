@@ -438,7 +438,7 @@ void RenderSystem::draw_text(Entity entity, const Text& text, const mat3& projec
 
 	Transform transform = get_transform(entity);
 
-	const auto program = (GLuint)effects.at((uint8)EFFECT_ASSET_ID::TEXTURED);
+	const auto program = (GLuint)effects.at((text.bubble) ? (uint8)EFFECT_ASSET_ID::TEXT_BUBBLE : (uint8)EFFECT_ASSET_ID::TEXTURED);
 
 	// Setting shaders
 	glUseProgram(program);
@@ -452,7 +452,11 @@ void RenderSystem::draw_text(Entity entity, const Text& text, const mat3& projec
 	}
 
 	// Scale to expected pixel size, apply screen scale so not affected by zoom
-	transform.scale(vec2(text_data->second.texture_width, text_data->second.texture_height) * screen_scale
+	vec2 text_size = vec2(text_data->second.texture_width, text_data->second.texture_height);
+	if (text.bubble) {
+		text_size += vec2(32);
+	}
+	transform.scale(text_size * screen_scale
 					* get_ui_scale_factor());
 
 	// Shift according to desired alignment using fancy enum wizardry

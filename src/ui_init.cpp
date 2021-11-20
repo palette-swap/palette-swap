@@ -52,7 +52,8 @@ void UISystem::restart_game()
 	create_background(groups[(size_t)Groups::MainMenu], vec2(.75, .5), vec2(.5, 1), 1.f, vec4(.1, .1, .6, 1));
 
 	// Menu
-	create_ui_text(groups[(size_t)Groups::MainMenu], vec2(.5, .1), "PALETTE SWAP", Alignment::Center, Alignment::Start, 180);
+	Entity title = create_ui_text(groups[(size_t)Groups::MainMenu], vec2(.5, .1), "PALETTE SWAP", Alignment::Center, Alignment::Start, 180);
+	registry.get<Text>(title).bubble = true;
 	create_button(groups[(size_t)Groups::MainMenu],
 				  vec2(.5, .5),
 				  vec2(.1, .1),

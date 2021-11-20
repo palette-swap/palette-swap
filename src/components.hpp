@@ -157,7 +157,8 @@ enum class EFFECT_ASSET_ID {
 	SPRITESHEET = TEXTURED + 1,
 	WATER = SPRITESHEET + 1,
 	TILE_MAP = WATER + 1,
-	EFFECT_COUNT = TILE_MAP + 1
+	TEXT_BUBBLE = TILE_MAP + 1,
+	EFFECT_COUNT = TEXT_BUBBLE + 1,
 };
 constexpr int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 
@@ -744,20 +745,23 @@ struct Text {
 	uint16 font_size;
 	Alignment alignment_x;
 	Alignment alignment_y;
+	bool bubble = false;
 
-	Text(std::string_view text, uint16 font_size, Alignment alignment_x, Alignment alignment_y)
+	Text(std::string_view text, uint16 font_size, Alignment alignment_x, Alignment alignment_y, bool bubble = false)
 		: text(text)
 		, font_size(font_size)
 		, alignment_x(alignment_x)
 		, alignment_y(alignment_y)
+		, bubble(bubble)
 	{
 	}
 
-	Text(std::string text, uint16 font_size, Alignment alignment_x, Alignment alignment_y)
+	Text(std::string text, uint16 font_size, Alignment alignment_x, Alignment alignment_y, bool bubble = false)
 		: text(std::move(text))
 		, font_size(font_size)
 		, alignment_x(alignment_x)
 		, alignment_y(alignment_y)
+		, bubble(bubble)
 	{
 	}
 };

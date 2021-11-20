@@ -165,6 +165,7 @@ void UISystem::on_mouse_move(vec2 mouse_screen_pos)
 {
 	if (held_under_mouse != entt::null) {
 		registry.get<ScreenPosition>(held_under_mouse).position = mouse_screen_pos;
+		return;
 	}
 }
 
