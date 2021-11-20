@@ -18,6 +18,7 @@
 // The glm library provides vector and matrix operations as in GLSL
 #include <glm/ext/vector_int2.hpp> // ivec2
 #include <glm/gtc/constants.hpp>
+#include <glm/gtx/norm.hpp>
 #include <glm/mat3x3.hpp> // mat3
 #include <glm/vec2.hpp> // vec2
 #include <glm/vec3.hpp> // vec3
@@ -40,6 +41,7 @@ inline std::string textures_path(const std::string& name) { return data_path() +
 inline std::string audio_path(const std::string& name) { return data_path() + "/audio/" + std::string(name); };
 inline std::string fonts_path(const std::string& name) { return data_path() + "/fonts/" + std::string(name); };
 inline std::string mesh_path(const std::string& name) { return data_path() + "/meshes/" + std::string(name); };
+inline std::string json_schema_path(const std::string& name) { return data_path() + "/schemata/" + std::string(name); };
 
 // The 'Transform' component handles transformations passed to the Vertex shader
 // (similar to the gl Immediate mode equivalent, e.g., glTranslate()...)
@@ -78,10 +80,8 @@ static constexpr float tile_size = 32.f;
 static constexpr int room_size = 10;
 // Each map is 10x10 rooms
 static constexpr int map_size = 10;
-// RoomType is just a uint8_t
-using RoomType = uint8_t;
+using RoomID = uint8_t;
 using TileID = uint8_t;
-using MapId = uint8_t;
 
 static constexpr uvec2 map_top_left = { 0, 0 };
 static constexpr uvec2 map_down_right
@@ -154,9 +154,8 @@ enum class Direction : uint8_t {
 	Up,
 	Right,
 	Down,
+  Undefined
 };
-
-float direction_to_angle(Direction direction);
 
 namespace CameraUtility {
 // the size of camera, divide the whole window into camera_grid_size ^ 2 smaller grids

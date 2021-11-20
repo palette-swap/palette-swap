@@ -68,7 +68,7 @@ private:
 	void check_debug_keys(int key, int action, int mod);
 
 	// Mouse Click helpers
-	void try_fire_projectile();
+	void try_fire_projectile(Attack& attack);
 	void try_adjacent_attack(Attack& attack);
 
 	// restart level
@@ -86,9 +86,6 @@ private:
 
 	// OpenGL window handle
 	GLFWwindow* window = nullptr;
-
-	// Number of fish eaten by the salmon, displayed in the window title
-	unsigned int points;
 
 	// Game configuration
 	bool player_arrow_fired = false;
@@ -124,6 +121,8 @@ private:
 	std::shared_ptr<CombatSystem> combat;
 	std::shared_ptr<MapGeneratorSystem> map_generator;
 	std::shared_ptr<TurnSystem> turns;
+
+	bool is_editing_map = false;
 	std::shared_ptr<UISystem> ui;
 	std::shared_ptr<StorySystem> story;
 };

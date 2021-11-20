@@ -26,8 +26,7 @@ WorldSystem::WorldSystem(Debug& debugging,
 						 std::shared_ptr<SoLoud::Soloud> so_loud,
 						 std::shared_ptr<StorySystem> story)
 
-	: points(0)
-	, debugging(debugging)
+	: debugging(debugging)
 	, so_loud(std::move(so_loud))
 	, bgm_red()
 	, bgm_blue()
@@ -39,7 +38,8 @@ WorldSystem::WorldSystem(Debug& debugging,
 	, ui(std::move(ui))
 	, story(std::move(story))
 {
-	this->combat->init(rng, this->animations);
+	this->combat->init(rng, this->animations, this->map_generator);
+	this->combat->on_pickup([this](const Entity& item, size_t slot) { this->ui->add_to_inventory(item, slot); });
 }
 
 WorldSystem::~WorldSystem()
@@ -214,12 +214,12 @@ void WorldSystem::restart_game()
 	// Debugging for memory/component leaks
 	std::cout << "Alive: " << registry.alive() << std::endl;
 
-	map_generator->load_initial_level();
-
-	// a random starting position... probably need to update this
-	uvec2 player_starting_point = map_generator->get_player_start_position();
 	// Create a new Player instance and shift player onto a tile
-	player = create_player(player_starting_point);
+	// player position will be updated as the level load
+	player = create_player({ 0, 0 });
+	map_generator->load_initial_level();
+	uvec2 player_starting_point = registry.get<MapPosition>(player).position;
+
 	// TODO: Should move into create_player (under world init) afterwards
 	animations->set_player_animation(player);
 
@@ -234,6 +234,9 @@ void WorldSystem::restart_game()
 	// Create a new player arrow instance
 	vec2 player_location = MapUtility::map_position_to_world_position(player_starting_point);
 	player_arrow = create_arrow(player_location);
+
+	// Restart the CombatSystem
+	combat->restart_game();
 
 	animations->create_boss_entry_entity(EnemyType::KingMush, player_starting_point);
 	// Restart the UISystem
@@ -299,6 +302,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		return;
 	}
 
+	check_debug_keys(key, action, mod);
 	if (ui->player_can_act()) {
 		if (turns && action != GLFW_RELEASE) {
 
@@ -315,13 +319,34 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 				move_player(Direction::Down);
 			}
 		}
-
-		if (action == GLFW_RELEASE && key == GLFW_KEY_SPACE) {
+		if (key == GLFW_KEY_A) {
+			move_player(Direction::Left);
+		}
+		if (key == GLFW_KEY_W) {
+			move_player(Direction::Up);
+		}
+		if (key == GLFW_KEY_S) {
+			move_player(Direction::Down);
+		}
+	} else {
+		switch (key) {
+		case GLFW_KEY_SPACE:
 			change_color();
+			break;
+		case GLFW_KEY_LEFT_SHIFT:
+			if (turns->ready_to_act(player) && combat->try_pickup_items(player)) {
+				turns->skip_team_action(player);
+			}
+			break;
+		case GLFW_KEY_H:
+			if (turns->ready_to_act(player) && combat->try_drink_potion(player)) {
+				ui->update_potion_count();
+				turns->skip_team_action(player);
+			}
+		default:
+			break;
 		}
 	}
-
-	check_debug_keys(key, action, mod);
 }
 
 void WorldSystem::check_debug_keys(int key, int action, int mod)
@@ -343,6 +368,12 @@ void WorldSystem::check_debug_keys(int key, int action, int mod)
 		stats.damage_bonus = 100000;
 	}
 
+	// Drop loot on your current location
+	if (action == GLFW_RELEASE && (mod & GLFW_MOD_ALT) != 0 && key == GLFW_KEY_L) {
+		uvec2 pos = registry.get<MapPosition>(player).position;
+		combat->drop_loot(pos);
+	}
+
 	// Debugging
 	if (key == GLFW_KEY_B) {
 		debugging.in_debug_mode = action != GLFW_RELEASE;
@@ -358,6 +389,65 @@ void WorldSystem::check_debug_keys(int key, int action, int mod)
 		printf("Current speed = %f\n", current_speed);
 	}
 	current_speed = fmax(0.f, current_speed);
+
+	// for debugging levels
+	if (key == GLFW_KEY_N && (mod & GLFW_MOD_CONTROL) != 0 && action == GLFW_RELEASE) {
+		map_generator->load_next_level();
+	} else if (key == GLFW_KEY_B && (mod & GLFW_MOD_CONTROL) != 0 && action == GLFW_RELEASE) {
+		map_generator->load_last_level();
+	}
+
+	if (is_editing_map) {
+		if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_M) {
+			is_editing_map = false;
+			map_generator->stop_editing_level();
+			return;
+		}
+
+		if (key == GLFW_KEY_Q && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->increment_seed();
+		} else if (key == GLFW_KEY_W && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->decrement_seed();
+		} else if (key == GLFW_KEY_A && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->increment_path_length();
+		} else if (key == GLFW_KEY_S && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->decrement_path_length();
+		} else if (key == GLFW_KEY_Z && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->increase_room_density();
+		} else if (key == GLFW_KEY_X && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->decrease_room_density();
+		} else if (key == GLFW_KEY_E && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->increase_side_rooms();
+		} else if (key == GLFW_KEY_R && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->decrease_side_rooms();
+		} else if (key == GLFW_KEY_D && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->increase_room_path_complexity();
+		} else if (key == GLFW_KEY_F && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->decrease_room_path_complexity();
+		} else if (key == GLFW_KEY_C && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->increase_room_traps_density();
+		} else if (key == GLFW_KEY_V && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
+			map_generator->decrease_room_traps_density();
+		} else if (key == GLFW_KEY_P && (mod & GLFW_MOD_CONTROL) != 0 && action == GLFW_RELEASE) {
+			map_generator->save_level_generation_confs();
+		} else if (key == GLFW_KEY_N && (action == GLFW_RELEASE)) {
+			map_generator->edit_next_level();
+		} else if (key == GLFW_KEY_B && (action == GLFW_RELEASE)) {
+			map_generator->edit_previous_level();
+		} else if (key == GLFW_KEY_T && (action == GLFW_RELEASE)) {
+			map_generator->increase_room_smoothness();
+		} else if (key == GLFW_KEY_Y && (action == GLFW_RELEASE)) {
+			map_generator->decrease_room_smoothness();
+		} else if (key == GLFW_KEY_G && (action == GLFW_RELEASE)) {
+			map_generator->increase_enemy_density();
+		} else if (key == GLFW_KEY_H && (action == GLFW_RELEASE)) {
+			map_generator->decrease_enemy_density();
+		}
+	}
+	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_M) {
+		is_editing_map = true;
+		map_generator->start_editing_level();
+	}
 }
 
 // Tracks position of cursor, points arrow at potential fire location
@@ -391,7 +481,7 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 
 void WorldSystem::move_player(Direction direction)
 {
-	if (turns->get_active_team() != player) {
+	if (turns->get_active_team() != player || is_editing_map) {
 		return;
 	}
 
@@ -431,6 +521,7 @@ void WorldSystem::move_player(Direction direction)
 	map_pos.position = new_pos;
 	turns->complete_team_action(player);
 
+	// TODO: move the logics to map generator system
 	if (map_generator->is_next_level_tile(new_pos)) {
 		if (map_generator->is_last_level()) {
 			end_of_game = true;
@@ -439,11 +530,12 @@ void WorldSystem::move_player(Direction direction)
 
 		map_generator->load_next_level();
 		animations->set_all_inactive_colours(turns->get_inactive_color());
-		registry.get<MapPosition>(player).position = map_generator->get_player_start_position();
 	} else if (map_generator->is_last_level_tile(new_pos)) {
 		map_generator->load_last_level();
 		animations->set_all_inactive_colours(turns->get_inactive_color());
-		registry.get<MapPosition>(player).position = map_generator->get_player_end_position();
+	} else if (map_generator->is_trap_tile(new_pos)) {
+		// TODO: add different effects for trap tiles
+		registry.get<Stats>(player).health -= 10;
 	}
 }
 
@@ -482,7 +574,7 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 			}
 			Attack& attack = ui->get_current_attack();
 			if (attack.targeting_type == TargetingType::Projectile) {
-				try_fire_projectile();
+				try_fire_projectile(attack);
 			} else if (attack.targeting_type == TargetingType::Adjacent) {
 				try_adjacent_attack(attack);
 			}
@@ -501,11 +593,13 @@ void WorldSystem::on_mouse_scroll(float offset)
 // TODO: update to scale the scene as not changed when window is resized
 void WorldSystem::on_resize(int width, int height) { renderer->on_resize(width, height); }
 
-void WorldSystem::try_fire_projectile()
+void WorldSystem::try_fire_projectile(Attack& attack)
 {
-	if (player_arrow_fired || !turns->execute_team_action(player)) {
+	if (player_arrow_fired || registry.get<Stats>(player).mana < attack.mana_cost
+		|| !turns->execute_team_action(player)) {
 		return;
 	}
+	registry.get<Stats>(player).mana -= attack.mana_cost;
 	player_arrow_fired = true;
 	// Arrow becomes a projectile the moment it leaves the player, not while it's direction is being selected
 	ActiveProjectile& arrow_projectile = registry.emplace<ActiveProjectile>(player_arrow, player);
@@ -532,33 +626,16 @@ void WorldSystem::try_adjacent_attack(Attack& attack)
 	dvec2 mouse_screen_pos = {};
 	glfwGetCursorPos(window, &mouse_screen_pos.x, &mouse_screen_pos.y);
 
-	// Denotes whether a player was able to complete their turn or not (false be default)
-	bool combat_success = false;
 	// Convert to world pos
 	vec2 mouse_world_pos = renderer->screen_position_to_world_position(mouse_screen_pos);
 
 	// Get map_positions to compare
 	uvec2 mouse_map_pos = MapUtility::world_position_to_map_position(mouse_world_pos);
-	uvec2 player_pos = registry.get<MapPosition>(player).position;
-	ivec2 distance = mouse_map_pos - player_pos;
-	if (abs(distance.x) > 1 || abs(distance.y) > 1 || distance == ivec2(0, 0) || turns->get_active_team() != player) {
+	if (!combat->is_valid_attack(player, attack, mouse_map_pos) || !turns->execute_team_action(player)) {
 		return;
 	}
-	for (const auto& target : registry.view<Enemy, Stats>()) {
-		if (registry.get<MapPosition>(target).position == mouse_map_pos) {
-			Enemy& enemy = registry.get<Enemy>(target);
-			ColorState inactive_color = turns->get_inactive_color();
-			if (enemy.team == inactive_color || !turns->execute_team_action(player)) {
-				continue;
-			}
-
-			combat->do_attack(player, attack, target);
-			combat_success = true;
-			break;
-		}
-	}
-	if (combat_success) {
+	if (combat->do_attack(player, attack, mouse_map_pos)) {
 		so_loud->play(light_sword_wav);
-		turns->complete_team_action(player);
 	}
+	turns->complete_team_action(player);
 }

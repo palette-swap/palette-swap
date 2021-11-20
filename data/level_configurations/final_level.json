@@ -1,0 +1,44 @@
+{
+  "player": {
+    "position": {
+      "x": 26,
+      "y": 44
+    }
+  },
+  "enemies": [
+    {
+      "team": 3,
+      "type": 10,
+      "state": 0,
+      "radius": 10,
+      "speed": 0,
+      "attack_range": 10,
+      "nest_position": {
+        "x": 47,
+        "y": 42
+      },
+      "position": {
+        "x": 47,
+        "y": 42
+      },
+      "stats": {
+        "health": 60,
+        "health_max": 100,
+        "mana": 100,
+        "mana_max": 100,
+        "to_hit_bonus": 6,
+        "damage_bonus": 5,
+        "evasion": 12,
+        "attack": {
+          "name": "",
+          "to_hit_min": 1,
+          "to_hit_max": 20,
+          "damage_min": 5,
+          "damage_max": 15,
+          "damage_type": 0,
+          "targeting_type": 1
+        }
+      }
+    }
+  ]
+}

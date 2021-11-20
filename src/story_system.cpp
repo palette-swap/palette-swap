@@ -57,12 +57,6 @@ void StorySystem::trigger_cutscene(CutScene& c, const vec2& trigger_pos)
 	for (std::string text : c.texts) {
 		conversation.push_back(text);
 	}
-	/*std::istringstream iss(c.texts);
-	std::string token;
-	while (std::getline(iss, token, '.')) {
-	if (!token.empty())
-		conversation.push_back(token);
-	}*/
 	proceed_conversation();
 }
 
