@@ -287,17 +287,23 @@ void WorldSystem::return_arrow_to_player()
 void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 {
 	ui->on_key(key, action, mod);
-	Attack& current_attack = ui->get_current_attack();
-	EffectRenderRequest& arrow_render = registry.get<EffectRenderRequest>(player_arrow);
 
-	if (current_attack.damage_type == DamageType::Physical) {
+	// Sets player's attack/player arrow to the be the correct state
+	if (!ui->has_current_attack()) {
 		animations->player_idle_animation(player);
-		arrow_render.visible = false;
 	} else {
-		animations->player_spellcast_animation(player);
-		animations->player_toggle_spell(player_arrow, static_cast<int>(current_attack.damage_type) - 1);
-		arrow_render.visible = true;
+		Attack& current_attack = ui->get_current_attack();
+		EffectRenderRequest& arrow_render = registry.get<EffectRenderRequest>(player_arrow);
+
+		if (current_attack.damage_type == DamageType::Physical) {
+			arrow_render.visible = false;
+		} else {
+			animations->player_spellcast_animation(player);
+			animations->player_toggle_spell(player_arrow, static_cast<int>(current_attack.damage_type) - 1);
+			arrow_render.visible = true;
+		}
 	}
+
 
 	check_debug_keys(key, action, mod);
 	if (!ui->player_can_act()) {
@@ -348,7 +354,6 @@ void WorldSystem::check_debug_keys(int key, int action, int mod)
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_ALT) != 0 && key == GLFW_KEY_R) {
 		// int w, h;
 		// glfwGetWindowSize(window, &w, &h);
-
 		restart_game();
 	}
 
