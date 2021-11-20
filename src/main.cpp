@@ -48,10 +48,9 @@ int main()
 	// Global systems
 	Debug debugging;
 	WorldSystem world(debugging, combat, map, turns, animations, ui, so_loud, stories);
-	RenderSystem renderer;
+	RenderSystem renderer(debugging);
 	PhysicsSystem physics(debugging, map);
 	AISystem ai(debugging, combat, map, turns, animations, so_loud);
-	//StorySystem story;
 
 	// Initializing window
 	GLFWwindow* window = world.create_window(window_width_px, window_height_px);

@@ -72,23 +72,6 @@ bool gl_has_errors()
 	return true;
 }
 
-float direction_to_angle(Direction direction)
-{
-	switch (direction) {
-	case Direction::Left:
-		return 3 * glm::pi<float>() / 2;
-	case Direction::Up:
-		return 0;
-	case Direction::Right:
-		return glm::pi<float>() / 2;
-	case Direction::Down:
-		return glm::pi<float>();
-	default:
-		assert(false && "direction to angle: unexpected direction");
-	}
-	return 0.f;
-}
-
 entt::registry registry;// NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
 vec2 screen_size = { window_width_px, window_height_px }; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
 float screen_scale = window_default_scale; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)

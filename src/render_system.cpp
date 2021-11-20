@@ -212,22 +212,24 @@ void RenderSystem::draw_ui_element(Entity entity, const UIRenderRequest& ui_rend
 {
 	Transform transform = get_transform(entity);
 	transform.scale(ui_render_request.size * screen_scale * vec2(window_width_px, window_height_px)
-					* get_ui_scale_factor());
+					* ((registry.any_of<Background>(entity)) ? vec2(screen_size) / vec2(window_default_size)
+															 : vec2(get_ui_scale_factor())));
 	transform.translate(vec2((float)ui_render_request.alignment_x * .5, (float)ui_render_request.alignment_y * .5));
 	if (ui_render_request.used_effect == EFFECT_ASSET_ID::FANCY_HEALTH) {
 		transform.translate(vec2(-.5f, 0));
-		draw_healthbar(transform,
+		draw_stat_bar(transform,
 					   registry.get<Stats>(registry.view<Player>().front()),
 					   projection,
 					   true,
-					   ui_render_request.size.x / ui_render_request.size.y * 2.f);
+					   ui_render_request.size.x / ui_render_request.size.y * 2.f,
+					   entity);
 	} else if (ui_render_request.used_effect == EFFECT_ASSET_ID::RECTANGLE) {
 		draw_rectangle(entity, transform, ui_render_request.size * vec2(window_width_px, window_height_px), projection);
 	}
 }
 
-void RenderSystem::draw_healthbar(
-	Transform transform, const Stats& stats, const mat3& projection, bool fancy, float ratio = 1.f)
+void RenderSystem::draw_stat_bar(
+	Transform transform, const Stats& stats, const mat3& projection, bool fancy, float ratio = 1.f, Entity entity = entt::null)
 {
 	const auto program = (fancy) ? (GLuint)effects.at((uint8)EFFECT_ASSET_ID::FANCY_HEALTH)
 								 : (GLuint)effects.at((uint8)EFFECT_ASSET_ID::HEALTH);
@@ -265,11 +267,25 @@ void RenderSystem::draw_healthbar(
 	gl_has_errors();
 
 	GLint health_loc = glGetUniformLocation(program, "health");
-	glUniform1f(health_loc, max(static_cast<float>(stats.health), 0.f) / static_cast<float>(stats.health_max));
+	float percentage = 1.f;
+	if (fancy && registry.get<TargettedBar>(entity).target == BarType::Mana) {
+		percentage = max(static_cast<float>(stats.mana), 0.f) / static_cast<float>(stats.mana_max);
+	} else {
+		percentage = max(static_cast<float>(stats.health), 0.f) / static_cast<float>(stats.health_max);
+	}
+	glUniform1f(health_loc, percentage);
 
 	if (fancy) {
 		GLint xy_ratio_loc = glGetUniformLocation(program, "xy_ratio");
 		glUniform1f(xy_ratio_loc, ratio);
+
+		// Setup coloring
+		if (registry.any_of<Color>(entity)) {
+			GLint color_uloc = glGetUniformLocation(program, "fcolor");
+			const vec3 color = registry.get<Color>(entity).color;
+			glUniform3fv(color_uloc, 1, glm::value_ptr(color));
+			gl_has_errors();
+		}
 	}
 
 	draw_triangles(transform, projection);
@@ -456,14 +472,13 @@ void RenderSystem::draw_map(const mat3& projection)
 		Transform transform = get_transform(entity);
 		transform.scale(scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::TILE_SET)));
 
-		auto room_id = room.type;
 		glActiveTexture(GL_TEXTURE0);
 		gl_has_errors();
 		GLuint texture_id = texture_gl_handles.at((GLuint)TEXTURE_ASSET_ID::TILE_SET);
 		glBindTexture(GL_TEXTURE_2D, texture_id);
 		gl_has_errors();
 
-		const auto& room_layout = map_generator->get_room_layout(room_id);
+		const auto& room_layout = map_generator->get_room_layout(room.level, room.room_id);
 		GLint room_layout_loc = glGetUniformLocation(program, "room_layout");
 		glUniform1uiv(room_layout_loc, (GLsizei)room_layout.size(), room_layout.data());
 
@@ -471,6 +486,12 @@ void RenderSystem::draw_map(const mat3& projection)
 		glEnableVertexAttribArray(vertex_id_loc);
 		glVertexAttribIPointer(vertex_id_loc, 1, GL_INT, sizeof(int), nullptr);
 		gl_has_errors();
+
+		Animation& animation = registry.get<Animation>(entity);
+		assert(registry.any_of<Animation>(entity));
+
+		GLint frame_loc = glGetUniformLocation(program, "frame");
+		glUniform1i(frame_loc, animation.frame);
 
 		draw_triangles(transform, projection);
 	}
@@ -597,7 +618,7 @@ void RenderSystem::draw()
 		Transform transform = get_transform(entity);
 		transform.translate(vec2(2 - MapUtility::tile_size / 2, -MapUtility::tile_size / 2));
 		transform.scale(vec2(MapUtility::tile_size - 4, 3));
-		draw_healthbar(transform, stats, projection_2d, false);
+		draw_stat_bar(transform, stats, projection_2d, false);
 	};
 
 	// Renders entities + healthbars depending on which state we are in
@@ -719,8 +740,8 @@ void RenderSystem::scale_on_scroll(float offset)
 	// scrolling backward -> zoom out
 	// max: 1.0, min: 0.2
 	float zoom = offset / 10;
-	if (screen_scale - zoom > 0.1 && screen_scale - zoom <= 1.0) {
-		screen_scale -= zoom;
+	if (debugging.in_debug_mode || (this->screen_scale - zoom > 0.1 && this->screen_scale - zoom <= 1.0)) {
+		this->screen_scale -= zoom;
 	}
 }
 

@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json.schemastore.org/global.json",
+  "title": "Items",
+  "description": "A list of potential loot",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string"
+      },
+      "tier": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "slots": {
+        "type": "array",
+        "uniqueItems": true,
+        "items": {
+          "enum": [
+            "Weapon",
+            "Armor",
+            "Spell",
+            "Ring",
+            "Amulet"
+          ]
+        }
+      },
+      "attacks": {
+        "type": "array",
+        "items": {
+          "$ref": "./attack_schema.json#"
+        }
+      },
+      "stat_boosts": {
+        "type": "object",
+        "properties": {
+          "health": {
+            "type": "integer"
+          },
+          "mana": {
+            "type": "integer"
+          },
+          "to_hit": {
+            "type": "integer"
+          },
+          "damage": {
+            "type": "integer"
+          },
+          "evasion": {
+            "type": "integer"
+          },
+          "damage_mods": {
+            "type": "object",
+            "patternProperties": {
+              "^(Physical|Fire|Cold|Earth|Wind)$": {
+                "type": "integer"
+              }
+            },
+            "minProperties": 1,
+            "additionalProperties": false
+          }
+        },
+        "minProperties": 1
+      }
+    },
+    "required": [
+      "name",
+      "tier",
+      "slots"
+    ],
+    "additionalProperties": false
+  }
+}
