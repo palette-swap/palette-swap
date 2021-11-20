@@ -257,6 +257,7 @@ void WorldSystem::handle_collisions()
 				ColorState enemy_color = enemy.team;
 				if (enemy_color != turns->get_inactive_color() && ui->has_current_attack()) {
 					combat->do_attack(player, ui->get_current_attack(), entity_other);
+					animations->player_spell_impact_animation(entity_other, ui->get_current_attack().damage_type);
 				}
 			}
 			Entity temp = child_entity;
@@ -288,27 +289,32 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 {
 	ui->on_key(key, action, mod);
 
-	// Sets player's attack/player arrow to the be the correct state
-	if (!ui->has_current_attack()) {
-		animations->player_idle_animation(player);
-	} else {
-		Attack& current_attack = ui->get_current_attack();
-		EffectRenderRequest& arrow_render = registry.get<EffectRenderRequest>(player_arrow);
-
-		if (current_attack.damage_type == DamageType::Physical) {
-			arrow_render.visible = false;
-		} else {
-			animations->player_spellcast_animation(player);
-			animations->player_toggle_spell(player_arrow, static_cast<int>(current_attack.damage_type) - 1);
-			arrow_render.visible = true;
-		}
-	}
-
-
 	check_debug_keys(key, action, mod);
 	if (!ui->player_can_act()) {
 		return;
 	}
+
+	// Sets player's attack/player arrow to the be the correct state
+
+	if (turns->ready_to_act(player)) {
+		if (!ui->has_current_attack()) {
+			animations->player_idle_animation(player);
+		} else {
+			Attack& current_attack = ui->get_current_attack();
+			EffectRenderRequest& arrow_render = registry.get<EffectRenderRequest>(player_arrow);
+
+			if (current_attack.damage_type == DamageType::Physical) {
+				animations->player_idle_animation(player);
+				arrow_render.visible = false;
+			} else {
+				animations->player_spellcast_animation(player);
+				animations->player_toggle_spell(player_arrow, static_cast<int>(current_attack.damage_type) - 1);
+				arrow_render.visible = true;
+			}
+		}
+	}
+
+
 	if (action != GLFW_RELEASE) {
 		if (key == GLFW_KEY_D) {
 			move_player(Direction::Right);

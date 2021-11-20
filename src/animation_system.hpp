@@ -106,7 +106,8 @@ public:
 	void player_running_animation(const Entity& player);
 	// Triggers player transition between red/blue
 	void player_red_blue_animation(const Entity& player, ColorState color);
-	// Toggles player spell states based on the animation
+	// Sets a spell effect at the enemy's location
+	void player_spell_impact_animation(const Entity& enemy, DamageType spelltype);
 	
 	// Returns a boolean denoting whether or not all "irregular animations" such as attack
 	// or damage calculations have been completed

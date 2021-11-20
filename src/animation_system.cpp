@@ -252,9 +252,12 @@ void AnimationSystem::player_red_blue_animation(const Entity& player, ColorState
 		default:
 			player_animation.display_color = original_colours;
 			break;
-		}
-		
+		}	
 	}
+}
+
+void AnimationSystem::player_spell_impact_animation(const Entity& enemy, DamageType spelltype) {
+
 }
 
 void AnimationSystem::boss_event_animation(const Entity& boss, int event_state) {
@@ -273,7 +276,7 @@ void AnimationSystem::boss_event_animation(const Entity& boss, int event_state) 
 	}
 }
 
-bool AnimationSystem::animation_events_completed() { return (registry.empty<EventAnimation>()); }
+bool AnimationSystem::animation_events_completed() { return (registry.empty<EventAnimation, TransientEventAnimation>()); }
 
 void AnimationSystem::resolve_event_animations()
 {
