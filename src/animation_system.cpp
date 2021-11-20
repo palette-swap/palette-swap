@@ -180,12 +180,11 @@ void AnimationSystem::player_toggle_weapon(const Entity& player)
 	}
 }
 
-void AnimationSystem::player_toggle_spell(const Entity& player_arrow) 
+void AnimationSystem::player_toggle_spell(const Entity& player_arrow, int spell_type) 
 { 
 	assert(registry.any_of<Animation>(player_arrow)); 
 	Animation& player_spell_animation = registry.get<Animation>(player_arrow);
-	int next_state = (player_spell_animation.state + 1) % player_spell_states;
-	player_spell_animation.state = next_state;
+	player_spell_animation.state = spell_type;
 }
 
 

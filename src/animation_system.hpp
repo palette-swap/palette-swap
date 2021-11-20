@@ -98,7 +98,7 @@ public:
 	// Toggles player's weapon selection
 	void player_toggle_weapon(const Entity& player);
 	// Toggles player's spell_arrow
-	void player_toggle_spell(const Entity& player_arrow);
+	void player_toggle_spell(const Entity& player_arrow, int spell_type);
 	// TODO: Maybe generalize these two event animations to a general one
 	// Triggers attack animation for a entity specified as the player
 	void player_attack_animation(const Entity& player);

@@ -287,6 +287,18 @@ void WorldSystem::return_arrow_to_player()
 void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 {
 	ui->on_key(key, action, mod);
+	Attack& current_attack = ui->get_current_attack();
+	EffectRenderRequest& arrow_render = registry.get<EffectRenderRequest>(player_arrow);
+
+	if (current_attack.damage_type == DamageType::Physical) {
+		animations->player_idle_animation(player);
+		arrow_render.visible = false;
+	} else {
+		animations->player_spellcast_animation(player);
+		animations->player_toggle_spell(player_arrow, static_cast<int>(current_attack.damage_type) - 1);
+		arrow_render.visible = true;
+	}
+
 	check_debug_keys(key, action, mod);
 	if (!ui->player_can_act()) {
 		return;
@@ -305,13 +317,6 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 			move_player(Direction::Down);
 		}
 	}
-
-
-	// Change spell
-	if (action == GLFW_RELEASE && key == GLFW_KEY_K) {
-		animations->player_toggle_spell(player_arrow);
-	}
-
 
 	if (action == GLFW_RELEASE && key == GLFW_KEY_SPACE) {
 		change_color();
