@@ -40,6 +40,7 @@ enum class PlayerAnimationStates {
 	Melee = 2,
 	Running = 3,
 };
+
 enum class EnemyAnimationEvents {
 	Attack = 3,
 };
@@ -109,7 +110,8 @@ public:
 	// Generates the boss enemy entry animation 
 	// DOES NOT CREATE AN ACTUAL BOSS ENTITY, JUST CREATES THE ENTRY ANIMATION ENTITY AT THE LOCATION GIVEN
 	Entity create_boss_entry_entity(EnemyType boss_type, uvec2 position);
-
+	// Triggers full boss animation for a specific entity
+	void trigger_full_boss_intro(Entity boss_entity);
 	// Initiates boss temporary animation state, to be returned to original state after completion of animation
 	void boss_event_animation(const Entity& boss, int event_state);
 
