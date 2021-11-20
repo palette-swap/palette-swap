@@ -224,6 +224,10 @@ void CombatSystem::kill(Entity attacker_entity, Entity target_entity)
 
 	// TODO: Animate death
 	registry.destroy(target_entity);
+
+	for (const auto& callback : death_callbacks) {
+		callback(target_entity);
+	}
 }
 
 void CombatSystem::on_attack(
