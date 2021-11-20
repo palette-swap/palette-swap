@@ -268,7 +268,7 @@ void AnimationSystem::player_spell_impact_animation(const Entity& enemy, DamageT
 	Animation& spell_impact_animation = registry.emplace<Animation>(spell_impact_entity);
 	spell_impact_animation.max_frames = spell_impact_total_frames;
 	spell_impact_animation.state = damage_type_to_spell_impact.at((int)spelltype);
-	spell_impact_animation.speed_adjustment = player_spell_animation_speed;
+	spell_impact_animation.speed_adjustment = player_spell_impact_speed;
 	
 }
 
