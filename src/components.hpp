@@ -112,8 +112,9 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 	CLONE = SPIDER + 1,
 	// Bosses
 	KING_MUSH = CLONE + 1,
+	KING_MUSH_ENTRY = KING_MUSH + 1,
 	// Misc Assets
-	CANNONBALL = KING_MUSH + 1,
+	CANNONBALL = KING_MUSH_ENTRY + 1,
 	TILE_SET = CANNONBALL + 1,
 	HELP_PIC = TILE_SET + 1,
 	END_PIC = HELP_PIC + 1,
@@ -136,6 +137,7 @@ static constexpr std::array<vec2, texture_count> scaling_factors = {
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size * 3, MapUtility::tile_size * 3),
+	vec2(MapUtility::tile_size * 5, MapUtility::tile_size * 5),
 	vec2(MapUtility::tile_size * 0.5, MapUtility::tile_size * 0.5),
 	vec2(MapUtility::tile_size* MapUtility::room_size, MapUtility::tile_size* MapUtility::room_size),
 	vec2(MapUtility::tile_size* MapUtility::room_size * 3, MapUtility::tile_size* MapUtility::room_size * 2),
