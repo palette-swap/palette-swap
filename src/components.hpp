@@ -313,7 +313,7 @@ struct BlueExclusive {
 
 // Component denoting the AOE entity that is displaying a boss's attack
 struct AOEAttackActive {
-	Entity AOEAttack;
+	Entity aoe_attack;
 };
 
 // Component denoting an AOE's vector of intended attack targets
