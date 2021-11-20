@@ -665,37 +665,8 @@ struct UIRenderRequest {
 
 	vec2 size;
 	float angle = 0;
-	Alignment alignment_x;
-	Alignment alignment_y;
-
-	UIRenderRequest(TEXTURE_ASSET_ID used_texture,
-					EFFECT_ASSET_ID used_effect,
-					GEOMETRY_BUFFER_ID used_geometry,
-					vec2 size,
-					float angle,
-					Alignment alignment_x,
-					Alignment alignment_y)
-		: used_texture(used_texture)
-		, used_effect(used_effect)
-		, used_geometry(used_geometry)
-		, size(size)
-		, angle(angle)
-		, alignment_x(alignment_x)
-		, alignment_y(alignment_y)
-	{
-	}
-
-	UIRenderRequest(EFFECT_ASSET_ID used_effect, vec2 size, float angle)
-		: used_effect(used_effect)
-		, size(size)
-		, angle(angle)
-		, alignment_x(Alignment::Center)
-		, alignment_y(Alignment::Center)
-	{
-		if (used_effect == EFFECT_ASSET_ID::LINE) {
-			used_geometry = GEOMETRY_BUFFER_ID::LINE;
-		}
-	}
+	Alignment alignment_x = Alignment::Center;
+	Alignment alignment_y = Alignment::Center;
 };
 
 enum class BarType {
@@ -718,13 +689,22 @@ struct UIElement {
 	}
 };
 
+enum class UILayer {
+	Boxes = 0,
+	Content = Boxes + 1,
+	TooltipBoxes = Content + 1,
+	TooltipContent = TooltipBoxes + 1,
+	Count = TooltipContent + 1
+};
+
 struct UIGroup {
 	bool visible = false;
-	Entity first_element = entt::null;
-	Entity first_text = entt::null;
+	std::array<Entity, (size_t)UILayer::Count> first_elements = { };
 
-	static void add_element(Entity group, Entity element, UIElement& ui_element);
-	static void add_text(Entity group, Entity text, UIElement& ui_element);
+	UIGroup() { first_elements.fill(entt::null);
+	}
+
+	static void add_element(Entity group, Entity element, UIElement& ui_element, UILayer layer = UILayer::Boxes);
 };
 
 struct UISlot {

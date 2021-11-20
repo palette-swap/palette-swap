@@ -65,7 +65,7 @@ void UISystem::restart_game()
 Entity create_ui_group(bool visible)
 {
 	Entity entity = registry.create();
-	registry.emplace<UIGroup>(entity, visible);
+	registry.emplace<UIGroup>(entity).visible = visible;
 	return entity;
 }
 
@@ -160,7 +160,6 @@ Entity create_ui_item(Entity ui_group, Entity slot, Entity item)
 	registry.emplace<Color>(ui_item, vec3(1));
 	registry.emplace<Draggable>(ui_item, slot);
 	registry.emplace<InteractArea>(ui_item, vec2(.1f));
-	registry.emplace<Item>(ui_item, item);
 
 	registry.get<UISlot>(slot).contents = ui_item;
 	UIGroup::add_element(ui_group, ui_item, registry.emplace<UIElement>(ui_item, ui_group, true), UILayer::Content);
@@ -179,7 +178,7 @@ Entity create_ui_text(Entity ui_group,
 	registry.emplace<ScreenPosition>(entity, screen_position);
 	registry.emplace<Color>(entity, vec3(1.f));
 	registry.emplace<Text>(entity, text, font_size, alignment_x, alignment_y);
-	UIGroup::add_text(ui_group, entity, registry.emplace<UIElement>(entity, ui_group, true));
+	UIGroup::add_element(ui_group, entity, registry.emplace<UIElement>(entity, ui_group, true), UILayer::Content);
 	return entity;
 }
 

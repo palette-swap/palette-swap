@@ -720,37 +720,28 @@ void RenderSystem::draw_ui(const mat3& projection)
 		}
 	}
 
-	// Draw rectangles, lines, etc.
-	for (auto [entity, group] : registry.view<UIGroup>().each()) {
-		if (!group.visible) {
-			continue;
-		}
-		Entity curr = group.first_element;
+	auto draw_list = [&](Entity curr)
+	{
 		while (curr != entt::null) {
 			UIElement& element = registry.get<UIElement>(curr);
 			if (element.visible) {
 				if (UIRenderRequest* ui_render_request = registry.try_get<UIRenderRequest>(curr)) {
 					draw_ui_element(curr, *ui_render_request, projection);
 				} else if (Line* line = registry.try_get<Line>(curr)) {
-					draw_line(entity, *line, projection);
+					draw_line(curr, *line, projection);
+				} else if (Text* text = registry.try_get<Text>(curr)) {
+					draw_text(curr, registry.get<Text>(curr), projection);
 				}
 			}
 			curr = element.next;
 		}
-	}
-
-	// Draw text over top
-	for (auto [entity, group] : registry.view<UIGroup>().each()) {
-		if (!group.visible) {
-			continue;
-		}
-		Entity curr = group.first_text;
-		while (curr != entt::null) {
-			UIElement& element = registry.get<UIElement>(curr);
-			if (element.visible) {
-				draw_text(curr, registry.get<Text>(curr), projection);
+	};
+	for (size_t layer = 0; layer < (size_t)UILayer::Count; layer++) {
+		for (auto [entity, group] : registry.view<UIGroup>().each()) {
+			if (!group.visible) {
+				continue;
 			}
-			curr = element.next;
+			draw_list(group.first_elements[layer]);
 		}
 	}
 
