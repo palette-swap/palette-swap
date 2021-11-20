@@ -25,6 +25,7 @@ void MapGeneratorSystem::init()
 {
 	load_predefined_level_configurations();
 	load_generated_level_configurations();
+	load_final_level();
 	current_level = -1;
 }
 
@@ -80,6 +81,42 @@ void MapGeneratorSystem::load_predefined_level_configurations()
 		// rooms
 		level_configurations.at(i).room_layouts = room_layouts;
 	}
+}
+
+void MapGeneratorSystem::load_final_level()
+{
+	// room layouts is the same as help level
+	// TODO: probably just use a constant among all predefined levels
+	LevelConfiguration level_conf;
+	level_conf.room_layouts = level_configurations.at(0).room_layouts;
+
+	// map layout
+	MapLayout& level_mapping = level_conf.map_layout;
+	std::ifstream level_file(final_level_path);
+	std::string line;
+	int col = 0;
+	int row = 0;
+
+	while (std::getline(level_file, line)) {
+		std::string room_id;
+		std::stringstream ss(line);
+		while (std::getline(ss, room_id, ',')) {
+			level_mapping.at(row).at(col) = (MapUtility::RoomID)std::stoi(room_id);
+			col++;
+			if (col == room_size) {
+				row++;
+				col = 0;
+			}
+		}
+	}
+
+	// level snapshot
+	std::ifstream config(final_level_configuration_path);
+	std::stringstream buffer;
+	buffer << config.rdbuf();
+	level_conf.level_snap_shot = buffer.str();
+
+	level_configurations.emplace_back(level_conf);
 }
 
 void MapGeneratorSystem::load_generated_level_configurations()

@@ -55,6 +55,8 @@ private:
 	};
 	const std::array<std::string, MapUtility::num_predefined_levels> predefined_level_paths
 		= { levels_path("help_level.csv") };
+	const std::string final_level_path = levels_path("final_level.csv");
+	const std::string final_level_configuration_path = level_configurations_path("final_level.json");
 	const std::array<std::string, MapUtility::num_predefined_levels> level_configuration_paths
 		= { level_configurations_path("help_level.json") };
 
@@ -64,6 +66,9 @@ private:
 	void load_predefined_level_configurations();
 	// load generated levels to level configurations, so it's ready to be used
 	void load_generated_level_configurations();
+	// load the final level
+	// TODO: probably need to redesign this depending on how we manage predefined levels within generated levels
+	void load_final_level();
 
 	// Note: the number of generation files won't be fixed, so we use the level number as each file name
 	// e.g. conf for first generated level will be 0.json, second will be 1.json...
