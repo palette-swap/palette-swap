@@ -56,6 +56,10 @@ void AISystem::step(float /*elapsed_ms*/)
 				switch (enemy.behaviour) {
 
 				// Small Enemy Behaviours (State Machines)
+				case EnemyBehaviour::Dummy:
+					execute_dummy_sm(enemy_entity);
+					break;
+
 				case EnemyBehaviour::Basic:
 					execute_basic_sm(enemy_entity);
 					break;
@@ -107,6 +111,22 @@ void AISystem::do_attack_callback(const Entity& attacker, const Entity& target)
 		if (!is_player_spotted(target)) {
 			enemy.radius = MapUtility::room_size * MapUtility::map_size;
 		}
+	}
+}
+
+void AISystem::execute_dummy_sm(const Entity& entity)
+{
+	Enemy& enemy = registry.get<Enemy>(entity);
+
+	switch (enemy.state) {
+
+	case EnemyState::Idle:
+	case EnemyState::Active:
+		recover_health(entity, 0.5f);
+		break;
+
+	default:
+		throw std::runtime_error("Invalid enemy state for enemy behaviour Dummy.");
 	}
 }
 

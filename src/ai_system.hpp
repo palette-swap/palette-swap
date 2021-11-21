@@ -30,6 +30,7 @@ public:
 
 private:
 	// Execute small enemy behaviours (state machines).
+	void execute_dummy_sm(const Entity& entity);
 	void execute_basic_sm(const Entity& entity);
 	void execute_cowardly_sm(const Entity& entity);
 	void execute_defensive_sm(const Entity& entity);

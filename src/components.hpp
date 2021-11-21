@@ -246,7 +246,8 @@ enum class EnemyType {
 
 enum class EnemyBehaviour {
 	// Small Enemy Behaviours (State Machines)
-	Basic = 0,
+	Dummy = 0,
+	Basic = Dummy + 1,
 	Cowardly = Basic + 1,
 	Defensive = Cowardly + 1,
 	Aggressive = Defensive + 1,
@@ -256,7 +257,7 @@ enum class EnemyBehaviour {
 };
 
 const std::array<EnemyBehaviour, (size_t)EnemyType::EnemyCount> enemy_type_to_behaviour = {
-	EnemyBehaviour::Basic, 
+	EnemyBehaviour::Dummy,
 	EnemyBehaviour::Cowardly,
 	EnemyBehaviour::Basic,
 	EnemyBehaviour::Defensive,
@@ -270,13 +271,14 @@ const std::array<EnemyBehaviour, (size_t)EnemyType::EnemyCount> enemy_type_to_be
 };
 
 // Small Enemy Behaviours (State Machines) uses the following states.
+// Dummy:		Idle, Active.
 // Basic:		Idle, Active.
 // Cowardly:	Idle, Active, Flinched.
 // Defensive:	Idle, Active, Immortal.
 // Aggressive:	Idle, Active, Powerup.
 // 
 // Boss Enemy Behaviours (Behaviour Trees) uses the following states.
-// Summoner:	Idle, Active, Charging.
+// Summoner:	Idle, Charging.
 enum class EnemyState {
 	Idle = 0,
 	Active = Idle + 1,
