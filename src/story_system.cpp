@@ -81,7 +81,6 @@ void StorySystem::proceed_conversation()
 		registry.get<UIGroup>(ui_entity).visible = false;
 		registry.remove<CutScene>(current_cutscene_entity);
 		current_cutscene_entity = entt::null;
-		curr_text_pos = text_init_pos;
 		return;
 	}
 
