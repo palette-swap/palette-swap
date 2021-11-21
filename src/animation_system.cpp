@@ -288,10 +288,11 @@ Entity AnimationSystem::create_boss_entry_entity(EnemyType boss_type, uvec2 map_
 	return boss_entry_entity;
 }
 
-void AnimationSystem::trigger_full_boss_intro(Entity boss_entity) {
+void AnimationSystem::trigger_full_boss_intro(const Entity& boss_entity) {
 	Animation& boss_animation = registry.get<Animation>(boss_entity);
 	boss_animation.max_frames = 32;
 	boss_animation.frame = 0;
+	registry.emplace<UndisplayEventAnimation>(boss_entity);
 }
 
 void AnimationSystem::player_spell_impact_animation(const Entity& enemy, DamageType spelltype) {
@@ -401,6 +402,19 @@ void AnimationSystem::resolve_undisplay_event_animations()
 		// two frames in all event animations (which is technically correct since it's an "animation", but a bit iffy)
 		if (actual_animation.frame < event_animation.frame) {
 			effect.visible = false;
+		} else {
+			event_animation.frame = actual_animation.frame;
+		}
+	}
+
+	for (auto [entity, event_animation, actual_animation, render] :
+		 registry.view<UndisplayEventAnimation, Animation, RenderRequest>().each()) {
+
+		// Checks if the animation frame had been reset to 0. If true, this means event animation has completed
+		// TODO: Change to be a different check, this current one is a bit iffy, and is reliant on there being at least
+		// two frames in all event animations (which is technically correct since it's an "animation", but a bit iffy)
+		if (actual_animation.frame < event_animation.frame) {
+			render.visible = false;
 		} else {
 			event_animation.frame = actual_animation.frame;
 		}
