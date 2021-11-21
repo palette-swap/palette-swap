@@ -13,9 +13,9 @@ uniform vec2 texcoord_rel;
 uniform bool actual_aoe = false;
 
 // aoe constants
-uniform vec3 aoe_color = {200,200,200};
-uniform float aoe_opacity_amplitude = 0.2;
-uniform float aoe_opacity_mean = 0.4;
+uniform vec3 aoe_color = {200.f,200.f,200.f};
+uniform float aoe_opacity_amplitude = 0.2f;
+uniform float aoe_opacity_mean = 0.4f;
 uniform float aoe_time_period = 3.f;
 
 // Output color

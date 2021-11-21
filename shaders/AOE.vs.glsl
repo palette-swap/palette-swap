@@ -13,11 +13,11 @@ uniform mat3 transform;
 uniform mat3 projection;
 
 // Value used for sprite size, used for calculating spritesheet offset
-uniform float sprite_size = 32;
+uniform float sprite_size = 32.f;
 // Value used for representing number of frames:
-uniform float num_frames = 8;
+uniform float num_frames = 8.f;
 // Value denoting total number of states for an enemy:
-uniform float num_states = 8;
+uniform float num_states = 8.f;
 // Denotes current frame_state (frame rendered in animation as well as entity state)
 uniform int frame;
 uniform int state;
