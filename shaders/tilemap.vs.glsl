@@ -15,7 +15,7 @@ uniform int frame;
 
 const uint room_size = 10u;
 const uint num_animated_tiles = 2u;
-const uint animated_tiles[num_animated_tiles] = uint[](28, 36);
+const uint animated_tiles[num_animated_tiles] = uint[](28u, 36u);
 
 void main()
 {
