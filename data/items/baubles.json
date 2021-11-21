@@ -1,7 +1,7 @@
 [
     {
         "name": "Ring of Vitality",
-        "tier": 1,
+        "tier": 2,
         "slots": ["Ring"],
         "stat_boosts": {
             "health": 25
@@ -10,7 +10,7 @@
     },
     {
         "name": "Ring of Wizardry",
-        "tier": 1,
+        "tier": 2,
         "slots": ["Ring"],
         "stat_boosts": {
             "mana": 25
@@ -19,7 +19,7 @@
     },
     {
         "name": "Ring of Strength",
-        "tier": 1,
+        "tier": 2,
         "slots": ["Ring"],
         "stat_boosts": {
             "to_hit": 3,

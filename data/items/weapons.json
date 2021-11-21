@@ -1,7 +1,7 @@
 [
   {
     "name": "Axe",
-    "tier": 0,
+    "tier": 1,
     "slots": ["Weapon"],
     "attacks": [
       {
@@ -25,7 +25,7 @@
   },
   {
     "name": "Ice Orb",
-    "tier": 0,
+    "tier": 1,
     "slots": ["Spell"],
     "attacks": [
       {
@@ -43,7 +43,7 @@
   },
   {
     "name": "Mace",
-    "tier": 0,
+    "tier": 1,
     "slots": ["Weapon"],
     "attacks": [
       {
@@ -66,7 +66,7 @@
   },
   {
     "name": "Spear",
-    "tier": 1,
+    "tier": 2,
     "slots": ["Weapon"],
     "attacks": [
       {

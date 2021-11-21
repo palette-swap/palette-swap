@@ -1,7 +1,7 @@
 [
     {
         "name": "Leather Armor",
-        "tier": 0,
+        "tier": 1,
         "slots": ["Armor"],
         "stat_boosts": {
             "evasion": 1
@@ -10,7 +10,7 @@
     },
     {
         "name": "Scale Armor",
-        "tier": 1,
+        "tier": 2,
         "slots": ["Armor"],
         "stat_boosts": {
             "evasion": 2
@@ -19,7 +19,7 @@
     },
     {
         "name": "Full Plate",
-        "tier": 2,
+        "tier": 3,
         "slots": ["Armor"],
         "stat_boosts": {
             "evasion": 3,
