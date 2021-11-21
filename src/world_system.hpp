@@ -19,6 +19,7 @@
 #include "map_generator_system.hpp"
 #include "render_system.hpp"
 #include "turn_system.hpp"
+#include "ui_system.hpp"
 
 // Container for all our entities and game logic. Individual rendering / update is
 // deferred to the relative update() methods
@@ -29,6 +30,7 @@ public:
 				std::shared_ptr<MapGeneratorSystem> map,
 				std::shared_ptr<TurnSystem> turns,
 				std::shared_ptr<AnimationSystem> animations,
+				std::shared_ptr<UISystem> ui,
 				std::shared_ptr<SoLoud::Soloud> so_loud);
 
 	// Creates a window
@@ -65,7 +67,7 @@ private:
 	void check_debug_keys(int key, int action, int mod);
 
 	// Mouse Click helpers
-	void try_fire_projectile();
+	void try_fire_projectile(Attack& attack);
 	void try_adjacent_attack(Attack& attack);
 
 	// restart level
@@ -78,21 +80,11 @@ private:
 	// if the tile is blocked by a wall, player won't move
 	void move_player(Direction direction);
 
-	// Equip the next weapon in alphabetical order
-	void equip_next_weapon();
-
-	// Currently mouse-controlled attack
-	Entity current_weapon;
-	size_t current_attack = 0;
-
 	// Flips color state.
 	void change_color();
 
 	// OpenGL window handle
 	GLFWwindow* window = nullptr;
-
-	// Number of fish eaten by the salmon, displayed in the window title
-	unsigned int points;
 
 	// Game configuration
 	bool player_arrow_fired = false;
@@ -103,10 +95,10 @@ private:
 	RenderSystem* renderer = nullptr;
 	float current_speed = 0;
 	bool end_of_game = false;
+	float spell_distance_from_player = 22.f;
 	Entity player = registry.create();
 	Entity camera = registry.create();
 	Entity player_arrow = registry.create();
-	Entity attack_display = registry.create();
 	Debug& debugging;
 
 	// music references
@@ -120,6 +112,10 @@ private:
 	SoLoud::Wav light_sword_wav;
 	SoLoud::Wav cannon_wav;
 
+	// King mush sound effects
+	SoLoud::Wav king_mush_summon_wav;
+	SoLoud::Wav king_mush_aoe_wav;
+
 	// C++ random number generator
 	std::shared_ptr<std::default_random_engine> rng;
 	std::uniform_real_distribution<float> uniform_dist; // number between 0..1
@@ -128,4 +124,7 @@ private:
 	std::shared_ptr<CombatSystem> combat;
 	std::shared_ptr<MapGeneratorSystem> map_generator;
 	std::shared_ptr<TurnSystem> turns;
+
+	bool is_editing_map = false;
+	std::shared_ptr<UISystem> ui;
 };

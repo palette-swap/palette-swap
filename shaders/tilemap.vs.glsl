@@ -11,7 +11,11 @@ uniform mat3 transform;
 uniform mat3 projection;
 uniform uint room_layout[100];
 
+uniform int frame;
+
 const uint room_size = 10u;
+const uint num_animated_tiles = 2u;
+const uint animated_tiles[num_animated_tiles] = uint[](28u, 36u);
 
 void main()
 {
@@ -51,6 +55,11 @@ void main()
 
 	int vertex_id = cur_vertex_id % 6;
 	uint texture_id = room_layout[cur_vertex_id / 6];
+	for (int i = 0; i < 2; i++) {
+		if (texture_id == animated_tiles[i]) {
+			texture_id = texture_id + uint(frame);
+		}
+	}
 	texcoord = texture_coord[vertex_id] + vec2((int(texture_id) % 8) * 32.0 / 256.0, (int(texture_id) / 8) * 32.0 / 256.0);
 
 	int row = cur_vertex_id / (6 * int(room_size));

@@ -18,6 +18,7 @@ bool RenderSystem::init(
 	screen_size_capped = { width, height };
 	map_generator = std::move(map);
 	this->window = window_arg;
+	this->debugging = debugging;
 
 	glfwMakeContextCurrent(window);
 	glfwSwapInterval(1); // vsync
@@ -55,6 +56,9 @@ bool RenderSystem::init(
 
 	return true;
 }
+
+RenderSystem::RenderSystem(Debug& debugging)
+	: debugging(debugging) {};
 
 void RenderSystem::initialize_gl_textures()
 {
@@ -167,7 +171,7 @@ void RenderSystem::initialize_gl_geometry_buffers()
 	// TODO: Consolidate all animated sprites (quads) into a single type
 	// Initialize ENEMY sprites
 	// The position corresponds to the center of the texture.
-	std::vector<EnemyVertex> enemy_vertices(4);
+	std::vector<SmallSpriteVertex> enemy_vertices(4);
 	enemy_vertices[0].position = { -1.f / 2, +1.f / 2, 0.f };
 	enemy_vertices[1].position = { +1.f / 2, +1.f / 2, 0.f };
 	enemy_vertices[2].position = { +1.f / 2, -1.f / 2, 0.f };
@@ -179,25 +183,7 @@ void RenderSystem::initialize_gl_geometry_buffers()
 
 	// Counterclockwise as it's the default opengl front winding direction.
 	const std::vector<uint16_t> enemy_indices = { 0, 3, 1, 1, 3, 2 };
-	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::ENEMY, enemy_vertices, enemy_indices);
-
-	//////////////////////////
-	// TODO: Consolidate all animated sprites (quads) into a single type
-	// Initialize PLAYER geometry
-	// The position corresponds to the center of the texture.
-	std::vector<PlayerVertex> player_vertices(4);
-	player_vertices[0].position = { -1.f / 2, +1.f / 2, 0.f };
-	player_vertices[1].position = { +1.f / 2, +1.f / 2, 0.f };
-	player_vertices[2].position = { +1.f / 2, -1.f / 2, 0.f };
-	player_vertices[3].position = { -1.f / 2, -1.f / 2, 0.f };
-	player_vertices[0].texcoord = { 0, sprite_size / player_spritesheet_height };
-	player_vertices[1].texcoord = { sprite_size / player_spritesheet_width, sprite_size / player_spritesheet_height };
-	player_vertices[2].texcoord = { sprite_size / player_spritesheet_width, 0 };
-	player_vertices[3].texcoord = { 0, 0 };
-
-	// Counterclockwise as it's the default opengl front winding direction.
-	const std::vector<uint16_t> player_indices = { 0, 3, 1, 1, 3, 2 };
-	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::PLAYER, player_vertices, player_indices);
+	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::SMALL_SPRITE, enemy_vertices, enemy_indices);
 
 	//////////////////////////////////
 	// Initialize health bars
@@ -205,15 +191,17 @@ void RenderSystem::initialize_gl_geometry_buffers()
 	std::vector<uint16_t> health_indices;
 
 	constexpr float depth = 0.8f;
+
+	constexpr vec3 white = { 1, 1, 1 };
 	constexpr vec3 red = { 0.8, 0.1, 0.1 };
 	constexpr vec3 black = { 0, 0, 0 };
 
 	// Corner points
 	health_vertices = {
-		{ { 0, -.5, depth }, red },
-		{ { 0, .5, depth }, red },
-		{ { 1, .5, depth }, red },
-		{ { 1, -.5, depth }, red },
+		{ { 0, -.5, depth }, white },
+		{ { 0, .5, depth }, white },
+		{ { 1, .5, depth }, white },
+		{ { 1, -.5, depth }, white },
 		{ { 0, -.5, depth }, black },
 		{ { 0, .5, depth }, black },
 		{ { 1, .5, depth }, black },
@@ -228,36 +216,30 @@ void RenderSystem::initialize_gl_geometry_buffers()
 	health.vertex_indices = health_indices;
 	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::HEALTH, health_vertices, health_indices);
 
-	////////////////////////
-	// Initialize pebble
-	std::vector<ColoredVertex> pebble_vertices;
-	std::vector<uint16_t> pebble_indices;
-	constexpr float z = -0.1f;
-	constexpr int num_triangles = 62;
+	//////////////////////////////////
+	// Initialize regular line
+	std::vector<ColoredVertex> line_vertices;
+	std::vector<uint16_t> line_indices;
 
-	for (int i = 0; i < num_triangles; i++) {
-		const float t = float(i) * glm::pi<float>() * 2.f / float(num_triangles - 1);
-		pebble_vertices.push_back({});
-		pebble_vertices.back().position = { 0.5 * cos(t), 0.5 * sin(t), z };
-		pebble_vertices.back().color = { 0.8, 0.8, 0.8 };
-	}
-	pebble_vertices.push_back({});
-	pebble_vertices.back().position = { 0, 0, 0 };
-	pebble_vertices.back().color = { 0.8, 0.8, 0.8 };
-	for (int i = 0; i < num_triangles; i++) {
-		pebble_indices.push_back((uint16_t)i);
-		pebble_indices.push_back((uint16_t)((i + 1) % num_triangles));
-		pebble_indices.push_back((uint16_t)num_triangles);
-	}
+	// Corner points
+	line_vertices = {
+		{ { -0.5, -0.5, depth }, white },
+		{ { -0.5, 0.5, depth }, white },
+		{ { 0.5, 0.5, depth }, white },
+		{ { 0.5, -0.5, depth }, white },
+	};
+
+	// Two triangles
+	line_indices = { 0, 1, 3, 1, 2, 3 };
+
 	Mesh& line = meshes.at((int)GEOMETRY_BUFFER_ID::LINE);
-	line.vertices = pebble_vertices;
-	line.vertex_indices = pebble_indices;
-	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::DEBUG_LINE, pebble_vertices, pebble_indices);
+	line.vertices = line_vertices;
+	line.vertex_indices = line_indices;
+	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::LINE, line_vertices, line_indices);
 
 	//////////////////////////////////
 	// Initialize debug line
-	std::vector<ColoredVertex> line_vertices;
-	std::vector<uint16_t> line_indices;
+	std::vector<ColoredVertex> debug_line_vertices;
 
 	// Corner points
 	line_vertices = {
@@ -267,13 +249,10 @@ void RenderSystem::initialize_gl_geometry_buffers()
 		{ { 0.5, -0.5, depth }, red },
 	};
 
-	// Two triangles
-	line_indices = { 0, 1, 3, 1, 2, 3 };
-
 	Mesh& debug_line = meshes.at((int)GEOMETRY_BUFFER_ID::DEBUG_LINE);
-	debug_line.vertices = line_vertices;
+	debug_line.vertices = debug_line_vertices;
 	debug_line.vertex_indices = line_indices;
-	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::DEBUG_LINE, line_vertices, line_indices);
+	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::DEBUG_LINE, debug_line_vertices, line_indices);
 
 	///////////////////////////////////////////////////////
 	// Initialize screen triangle (yes, triangle, not quad; its more efficient).

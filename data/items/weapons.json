@@ -1,0 +1,88 @@
+[
+  {
+    "name": "Axe",
+    "tier": 0,
+    "slots": ["Weapon"],
+    "attacks": [
+      {
+        "name": "Chop",
+        "to_hit": [10, 20],
+        "damage": [10, 20],
+        "damage_type": "Physical",
+        "targeting_type": "Adjacent"
+      },
+      {
+        "name": "Sweep",
+        "to_hit": [7, 17],
+        "damage": [5, 15],
+        "damage_type": "Physical",
+        "targeting_type": "Adjacent",
+        "pattern": "Rectangle",
+        "perpendicular_size": 2
+      }
+    ]
+  },
+  {
+    "name": "Ice Orb",
+    "tier": 0,
+    "slots": ["Spell"],
+    "attacks": [
+      {
+        "name": "Ice Orb",
+        "mana_cost": 20,
+        "to_hit": [15, 20],
+        "damage": [0, 8],
+        "damage_type": "Cold",
+        "targeting_type": "Projectile",
+        "range": 4,
+        "effects": [{"effect": "Stun", "magnitude": 3, "chance": 0.95}]
+      }
+    ]
+  },
+  {
+    "name": "Mace",
+    "tier": 0,
+    "slots": ["Weapon"],
+    "attacks": [
+      {
+        "name": "Bash",
+        "to_hit": [10, 20],
+        "damage": [13, 17],
+        "damage_type": "Physical",
+        "targeting_type": "Adjacent"
+      },
+      {
+        "name": "Stun",
+        "to_hit": [7, 17],
+        "damage": [0, 10],
+        "damage_type": "Physical",
+        "targeting_type": "Adjacent",
+        "effects": [{"effect": "Stun", "chance": 0.5, "magnitude": 2}]
+      }
+    ]
+  },
+  {
+    "name": "Spear",
+    "tier": 1,
+    "slots": ["Weapon"],
+    "attacks": [
+      {
+        "name": "Stab",
+        "to_hit": [10, 20],
+        "damage": [10, 25],
+        "damage_type": "Physical",
+        "targeting_type": "Adjacent",
+        "range": 2
+      },
+      {
+        "name": "Push Back",
+        "to_hit": [7, 17],
+        "damage": [0, 10],
+        "damage_type": "Physical",
+        "targeting_type": "Adjacent",
+        "range": 1,
+        "effects": [{"effect": "Shove", "chance": 0.5, "magnitude": 2}]
+      }
+    ]
+  }
+]

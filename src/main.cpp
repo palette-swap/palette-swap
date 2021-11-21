@@ -13,6 +13,7 @@
 #include "physics_system.hpp"
 #include "render_system.hpp"
 #include "turn_system.hpp"
+#include "ui_system.hpp"
 #include "world_system.hpp"
 
 
@@ -28,19 +29,22 @@ int main()
 	// Combat System
 	std::shared_ptr<CombatSystem> combat = std::make_shared<CombatSystem>();
 
-	// Map system
-	std::shared_ptr<MapGeneratorSystem> map = std::make_shared<MapGeneratorSystem>();
-
 	// Turn System
 	std::shared_ptr<TurnSystem> turns = std::make_shared<TurnSystem>();
 
-	//// Animation System
-	std::shared_ptr <AnimationSystem > animations = std::make_shared<AnimationSystem>();
+	// Map system
+	std::shared_ptr<MapGeneratorSystem> map = std::make_shared<MapGeneratorSystem>(turns);
+
+	// Animation System
+	std::shared_ptr<AnimationSystem> animations = std::make_shared<AnimationSystem>();
+
+	// UI System
+	std::shared_ptr<UISystem> ui = std::make_shared<UISystem>();
 
 	// Global systems
 	Debug debugging;
-	WorldSystem world(debugging, combat, map, turns, animations, so_loud);
-	RenderSystem renderer;
+	WorldSystem world(debugging, combat, map, turns, animations, ui, so_loud);
+	RenderSystem renderer(debugging);
 	PhysicsSystem physics(debugging, map);
 	AISystem ai(debugging, combat, map, turns, animations, so_loud);
 

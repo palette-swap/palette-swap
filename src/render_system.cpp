@@ -21,6 +21,23 @@ Transform RenderSystem::get_transform(Entity entity)
 			transform.rotate(registry.get<Velocity>(entity).angle);
 		}
 	} else {
+		transform.translate(
+			screen_position_to_world_position(registry.get<ScreenPosition>(entity).position * vec2(screen_size)));
+	}
+	return transform;
+}
+
+Transform RenderSystem::get_transform_no_rotation(Entity entity)
+{
+	Transform transform;
+	if (registry.any_of<MapPosition>(entity)) {
+		MapPosition& map_position = registry.get<MapPosition>(entity);
+		transform.translate(MapUtility::map_position_to_world_position(map_position.position));
+	} else if (registry.any_of<WorldPosition>(entity)) {
+		// Most objects in the game are expected to use MapPosition, exceptions are:
+		// Arrow, Room.
+		transform.translate(registry.get<WorldPosition>(entity).position);
+	} else {
 		transform.translate(screen_position_to_world_position(registry.get<ScreenPosition>(entity).position * vec2(screen_size)));
 	}
 	return transform;
@@ -43,12 +60,13 @@ void RenderSystem::prepare_for_textured(GLuint texture_id)
 	gl_has_errors();
 
 	glEnableVertexAttribArray(in_texcoord_loc);
-	glVertexAttribPointer(in_texcoord_loc,
-						  2,
-						  GL_FLOAT,
-						  GL_FALSE,
-						  sizeof(TexturedVertex),
-						  (void*)sizeof(vec3)); // NOLINT(performance-no-int-to-ptr,cppcoreguidelines-pro-type-cstyle-cast)
+	glVertexAttribPointer(
+		in_texcoord_loc,
+		2,
+		GL_FLOAT,
+		GL_FALSE,
+		sizeof(TexturedVertex),
+		(void*)sizeof(vec3)); // NOLINT(performance-no-int-to-ptr,cppcoreguidelines-pro-type-cstyle-cast)
 	// Enabling and binding texture to slot 0
 	glActiveTexture(GL_TEXTURE0);
 	gl_has_errors();
@@ -69,11 +87,13 @@ RenderSystem::TextData RenderSystem::generate_text(const Text& text)
 	if (font_itr != fonts.end()) {
 		font = font_itr->second;
 	} else {
-		font = fonts.emplace(text.font_size, TTF_OpenFont(fonts_path("VT323-Regular.ttf").c_str(), text.font_size)).first->second;
+		font = fonts.emplace(text.font_size, TTF_OpenFont(fonts_path("VT323-Regular.ttf").c_str(), text.font_size))
+				   .first->second;
 	}
 
 	// Render the text using SDL
-	SDL_Surface* surface = TTF_RenderText_Blended_Wrapped(font, text.text.c_str(), SDL_Color({ 255, 255, 255, 0 }), screen_size.x);
+	SDL_Surface* surface
+		= TTF_RenderText_Blended_Wrapped(font, text.text.c_str(), SDL_Color({ 255, 255, 255, 0 }), screen_size.x);
 	SDL_LockSurface(surface);
 	text_data.texture_width = surface->w;
 	text_data.texture_height = surface->h;
@@ -137,7 +157,8 @@ void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest& render
 
 		assert(registry.any_of<RenderRequest>(entity));
 		prepare_for_textured(texture_gl_handles.at((GLuint)registry.get<RenderRequest>(entity).used_texture));
-	} else if (render_request.used_effect == EFFECT_ASSET_ID::ENEMY || render_request.used_effect == EFFECT_ASSET_ID::PLAYER) {
+	} else if (render_request.used_effect == EFFECT_ASSET_ID::ENEMY
+			   || render_request.used_effect == EFFECT_ASSET_ID::PLAYER) {
 
 		GLint in_position_loc = glGetAttribLocation(program, "in_position");
 		GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
@@ -145,16 +166,17 @@ void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest& render
 		assert(in_texcoord_loc >= 0);
 
 		glEnableVertexAttribArray(in_position_loc);
-		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(EnemyVertex), nullptr);
+		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(SmallSpriteVertex), nullptr);
 		gl_has_errors();
 
 		glEnableVertexAttribArray(in_texcoord_loc);
-		glVertexAttribPointer(in_texcoord_loc,
-							  2,
-							  GL_FLOAT,
-							  GL_FALSE,
-							  sizeof(EnemyVertex),
-							  (void*)sizeof(vec3));  // NOLINT(performance-no-int-to-ptr,cppcoreguidelines-pro-type-cstyle-cast)
+		glVertexAttribPointer(
+			in_texcoord_loc,
+			2,
+			GL_FLOAT,
+			GL_FALSE,
+			sizeof(SmallSpriteVertex),
+			(void*)sizeof(vec3)); // NOLINT(performance-no-int-to-ptr,cppcoreguidelines-pro-type-cstyle-cast)
 		// Enabling and binding texture to slot 0
 		glActiveTexture(GL_TEXTURE0);
 		gl_has_errors();
@@ -185,7 +207,14 @@ void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest& render
 	}
 
 	// Getting uniform locations for glUniform* calls
-	if (registry.any_of<Color>(entity)) {
+	if (registry.any_of<Animation>(entity)) {
+		GLint color_uloc = glGetUniformLocation(program, "fcolor");
+		GLint opacity_uloc = glGetUniformLocation(program, "opacity");
+		const vec4 color = registry.get<Animation>(entity).display_color;
+		glUniform3fv(color_uloc, 1, glm::value_ptr(color));
+		glUniform1f(opacity_uloc, color.w);
+		gl_has_errors();
+	} else if (registry.any_of<Color>(entity)) {
 		GLint color_uloc = glGetUniformLocation(program, "fcolor");
 		const vec3 color = registry.get<Color>(entity).color;
 		glUniform3fv(color_uloc, 1, glm::value_ptr(color));
@@ -195,13 +224,128 @@ void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest& render
 	draw_triangles(transform, projection);
 }
 
-void RenderSystem::draw_healthbar(Entity entity, const Stats& stats, const mat3& projection)
+void RenderSystem::draw_effect(Entity entity, const EffectRenderRequest& render_request, const mat3& projection)
+{
+	Transform transform = get_transform_no_rotation(entity);
+
+	transform.scale(scaling_factors.at(static_cast<int>(render_request.used_texture)));
+
+	const auto used_effect_enum = (GLuint)render_request.used_effect;
+	assert(used_effect_enum != (GLuint)EFFECT_ASSET_ID::EFFECT_COUNT);
+	const auto program = (GLuint)effects.at(used_effect_enum);
+
+	// Setting shaders
+	glUseProgram(program);
+	gl_has_errors();
+
+	assert(render_request.used_geometry != GEOMETRY_BUFFER_ID::GEOMETRY_COUNT);
+	int vbo_ibo_offset = 0;
+
+	const GLuint vbo = vertex_buffers.at((int)render_request.used_geometry + vbo_ibo_offset);
+	const GLuint ibo = index_buffers.at((int)render_request.used_geometry + vbo_ibo_offset);
+
+	// Setting vertex and index buffers
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+	gl_has_errors();
+
+		GLint in_position_loc = glGetAttribLocation(program, "in_position");
+		GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
+		gl_has_errors();
+		assert(in_texcoord_loc >= 0);
+
+		glEnableVertexAttribArray(in_position_loc);
+		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(SmallSpriteVertex), nullptr);
+		gl_has_errors();
+
+		glEnableVertexAttribArray(in_texcoord_loc);
+		glVertexAttribPointer(
+			in_texcoord_loc,
+			2,
+			GL_FLOAT,
+			GL_FALSE,
+			sizeof(SmallSpriteVertex),
+			(void*)sizeof(vec3)); // NOLINT(performance-no-int-to-ptr,cppcoreguidelines-pro-type-cstyle-cast)
+		// Enabling and binding texture to slot 0
+		glActiveTexture(GL_TEXTURE0);
+		gl_has_errors();
+
+		Animation& animation = registry.get<Animation>(entity);
+		assert(registry.any_of<Animation>(entity));
+
+		// Updates time in shader program
+		GLint time_uloc = glGetUniformLocation(program, "time");
+		glUniform1f(time_uloc, (float)(glfwGetTime() * 10.0f));
+
+		// Updates frame for entity
+		GLint frame_loc = glGetUniformLocation(program, "frame");
+		glUniform1i(frame_loc, animation.frame);
+		gl_has_errors();
+
+		// Updates frame for entity
+		GLint state_loc = glGetUniformLocation(program, "state");
+		glUniform1i(state_loc, animation.state);
+
+	if (render_request.used_effect == EFFECT_ASSET_ID::SPELL) {
+		// Updates frame for entity
+		GLint spell_loc = glGetUniformLocation(program, "spelltype");
+		glUniform1i(spell_loc, animation.state);
+	}
+
+	if (render_request.used_effect == EFFECT_ASSET_ID::AOE) {
+		AOESquare& aoe_status = registry.get<AOESquare>(entity);
+		GLint actual_aoe = glGetUniformLocation(program, "actual_aoe");
+		glUniform1i(actual_aoe, aoe_status.actual_attack_displayed);
+	}
+
+	GLuint texture_id = texture_gl_handles.at((GLuint)render_request.used_texture);
+
+	glBindTexture(GL_TEXTURE_2D, texture_id);
+	gl_has_errors();
+
+	// Getting uniform locations for glUniform* calls
+	if (registry.any_of<Animation>(entity)) {
+		GLint color_uloc = glGetUniformLocation(program, "fcolor");
+		GLint opacity_uloc = glGetUniformLocation(program, "opacity");
+		const vec4 color = registry.get<Animation>(entity).display_color;
+		glUniform3fv(color_uloc, 1, glm::value_ptr(color));
+		glUniform1f(opacity_uloc, color.w);
+		gl_has_errors();
+	} else if (registry.any_of<Color>(entity)) {
+		GLint color_uloc = glGetUniformLocation(program, "fcolor");
+		const vec3 color = registry.get<Color>(entity).color;
+		glUniform3fv(color_uloc, 1, glm::value_ptr(color));
+		gl_has_errors();
+	}
+
+	draw_triangles(transform, projection);
+}
+
+void RenderSystem::draw_ui_element(Entity entity, const UIRenderRequest& ui_render_request, const mat3& projection)
 {
 	Transform transform = get_transform(entity);
-	transform.translate(vec2(2-MapUtility::tile_size / 2, -MapUtility::tile_size / 2));
-	transform.scale(vec2(MapUtility::tile_size - 4, 3));
+	transform.scale(ui_render_request.size * screen_scale * vec2(window_width_px, window_height_px)
+					* ((registry.any_of<Background>(entity)) ? vec2(screen_size) / vec2(window_default_size)
+															 : vec2(get_ui_scale_factor())));
+	transform.translate(vec2((float)ui_render_request.alignment_x * .5, (float)ui_render_request.alignment_y * .5));
+	if (ui_render_request.used_effect == EFFECT_ASSET_ID::FANCY_HEALTH) {
+		transform.translate(vec2(-.5f, 0));
+		draw_stat_bar(transform,
+					   registry.get<Stats>(registry.view<Player>().front()),
+					   projection,
+					   true,
+					   ui_render_request.size.x / ui_render_request.size.y * 2.f,
+					   entity);
+	} else if (ui_render_request.used_effect == EFFECT_ASSET_ID::RECTANGLE) {
+		draw_rectangle(entity, transform, ui_render_request.size * vec2(window_width_px, window_height_px), projection);
+	}
+}
 
-	const auto program = (GLuint)effects.at((uint8) EFFECT_ASSET_ID::HEALTH);
+void RenderSystem::draw_stat_bar(
+	Transform transform, const Stats& stats, const mat3& projection, bool fancy, float ratio = 1.f, Entity entity = entt::null)
+{
+	const auto program = (fancy) ? (GLuint)effects.at((uint8)EFFECT_ASSET_ID::FANCY_HEALTH)
+								 : (GLuint)effects.at((uint8)EFFECT_ASSET_ID::HEALTH);
 
 	// Setting shaders
 	glUseProgram(program);
@@ -226,22 +370,111 @@ void RenderSystem::draw_healthbar(Entity entity, const Stats& stats, const mat3&
 	gl_has_errors();
 
 	glEnableVertexAttribArray(in_color_loc);
-	glVertexAttribPointer(in_color_loc,
-						  3,
-						  GL_FLOAT,
-						  GL_FALSE,
-						  sizeof(ColoredVertex),
-						  (void*)sizeof(vec3)); // NOLINT(performance-no-int-to-ptr,cppcoreguidelines-pro-type-cstyle-cast)
+	glVertexAttribPointer(
+		in_color_loc,
+		3,
+		GL_FLOAT,
+		GL_FALSE,
+		sizeof(ColoredVertex),
+		(void*)sizeof(vec3)); // NOLINT(performance-no-int-to-ptr,cppcoreguidelines-pro-type-cstyle-cast)
 	gl_has_errors();
 
 	GLint health_loc = glGetUniformLocation(program, "health");
-	glUniform1f(health_loc, max(static_cast<float>(stats.health), 0.f) / static_cast<float>(stats.health_max));
+	float percentage = 1.f;
+	if (fancy && registry.get<TargettedBar>(entity).target == BarType::Mana) {
+		percentage = max(static_cast<float>(stats.mana), 0.f) / static_cast<float>(stats.mana_max);
+	} else {
+		percentage = max(static_cast<float>(stats.health), 0.f) / static_cast<float>(stats.health_max);
+	}
+	glUniform1f(health_loc, percentage);
+
+	if (fancy) {
+		GLint xy_ratio_loc = glGetUniformLocation(program, "xy_ratio");
+		glUniform1f(xy_ratio_loc, ratio);
+
+		// Setup coloring
+		if (registry.any_of<Color>(entity)) {
+			GLint color_uloc = glGetUniformLocation(program, "fcolor");
+			const vec3 color = registry.get<Color>(entity).color;
+			glUniform3fv(color_uloc, 1, glm::value_ptr(color));
+			gl_has_errors();
+		}
+	}
+
+	draw_triangles(transform, projection);
+}
+
+void RenderSystem::draw_rectangle(Entity entity, Transform transform, vec2 scale, const mat3& projection)
+{
+	const auto program = (GLuint)effects.at((uint8)EFFECT_ASSET_ID::RECTANGLE);
+
+	// Setting shaders
+	glUseProgram(program);
+	gl_has_errors();
+
+	const GLuint vbo = vertex_buffers.at((int)GEOMETRY_BUFFER_ID::LINE);
+	const GLuint ibo = index_buffers.at((int)GEOMETRY_BUFFER_ID::LINE);
+
+	// Setting vertex and index buffers
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+	gl_has_errors();
+
+	GLint in_position_loc = glGetAttribLocation(program, "in_position");
+	gl_has_errors();
+
+	GLint in_color_loc = glGetAttribLocation(program, "in_color");
+	gl_has_errors();
+
+	glEnableVertexAttribArray(in_position_loc);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), nullptr);
+	gl_has_errors();
+
+	glEnableVertexAttribArray(in_color_loc);
+	glVertexAttribPointer(
+		in_color_loc,
+		3,
+		GL_FLOAT,
+		GL_FALSE,
+		sizeof(ColoredVertex),
+		(void*)sizeof(vec3)); // NOLINT(performance-no-int-to-ptr,cppcoreguidelines-pro-type-cstyle-cast)
+	gl_has_errors();
+
+	GLint scale_loc = glGetUniformLocation(program, "scale");
+	glUniform2f(scale_loc, scale.x, scale.y);
+
+	GLint thickness_loc = glGetUniformLocation(program, "thickness");
+	glUniform1f(thickness_loc, 6);
+
+	// Setup coloring
+	vec4 color = vec4(1);
+	vec4 fill_color = vec4(0);
+	if (registry.any_of<Color>(entity)) {
+		color = vec4(registry.get<Color>(entity).color, 1.f);
+	}
+	if (registry.any_of<UIRectangle>(entity)) {
+		UIRectangle& rect = registry.get<UIRectangle>(entity);
+		color = vec4(vec3(color), rect.opacity);
+		fill_color = rect.fill_color;
+	}
+
+	GLint fill_color_uloc = glGetUniformLocation(program, "fcolor_fill");
+	glUniform4fv(fill_color_uloc, 1, glm::value_ptr(fill_color));
+	gl_has_errors();
+
+	GLint color_uloc = glGetUniformLocation(program, "fcolor");
+	glUniform4fv(color_uloc, 1, glm::value_ptr(color));
+	gl_has_errors();
 
 	draw_triangles(transform, projection);
 }
 
 void RenderSystem::draw_text(Entity entity, const Text& text, const mat3& projection)
 {
+	if (text.text.empty()) {
+		return;
+	}
+
 	Transform transform = get_transform(entity);
 
 	const auto program = (GLuint)effects.at((uint8)EFFECT_ASSET_ID::TEXTURED);
@@ -258,7 +491,8 @@ void RenderSystem::draw_text(Entity entity, const Text& text, const mat3& projec
 	}
 
 	// Scale to expected pixel size, apply screen scale so not affected by zoom
-	transform.scale(vec2(text_data->second.texture_width, text_data->second.texture_height) * screen_scale);
+	transform.scale(vec2(text_data->second.texture_width, text_data->second.texture_height) * screen_scale
+					* get_ui_scale_factor());
 
 	// Shift according to desired alignment using fancy enum wizardry
 	transform.translate({ (float)text.alignment_x * .5, (float)text.alignment_y * .5 });
@@ -351,21 +585,26 @@ void RenderSystem::draw_map(const mat3& projection)
 		Transform transform = get_transform(entity);
 		transform.scale(scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::TILE_SET)));
 
-		auto room_id = room.type;
 		glActiveTexture(GL_TEXTURE0);
 		gl_has_errors();
 		GLuint texture_id = texture_gl_handles.at((GLuint)TEXTURE_ASSET_ID::TILE_SET);
 		glBindTexture(GL_TEXTURE_2D, texture_id);
 		gl_has_errors();
 
-		const auto& room_layout = map_generator->get_room_layout(room_id);
+		const auto& room_layout = map_generator->get_room_layout(room.level, room.room_id);
 		GLint room_layout_loc = glGetUniformLocation(program, "room_layout");
-		glUniform1uiv(room_layout_loc, (GLsizei) room_layout.size(), room_layout.data());
+		glUniform1uiv(room_layout_loc, (GLsizei)room_layout.size(), room_layout.data());
 
 		GLint vertex_id_loc = glGetAttribLocation(program, "cur_vertex_id");
 		glEnableVertexAttribArray(vertex_id_loc);
 		glVertexAttribIPointer(vertex_id_loc, 1, GL_INT, sizeof(int), nullptr);
 		gl_has_errors();
+
+		Animation& animation = registry.get<Animation>(entity);
+		assert(registry.any_of<Animation>(entity));
+
+		GLint frame_loc = glGetUniformLocation(program, "frame");
+		glUniform1i(frame_loc, animation.frame);
 
 		draw_triangles(transform, projection);
 	}
@@ -469,25 +708,53 @@ void RenderSystem::draw()
 
 	draw_map(projection_2d);
 
-	for (auto [entity, render_request] : registry.view<RenderRequest>().each()) {
-		// Note, its not very efficient to access elements indirectly via the entity
-		// albeit iterating through all Sprites in sequence. A good point to optimize
-		if (render_request.visible) {
-			draw_textured_mesh(entity, render_request, projection_2d);
+	// Draw any backgrounds
+	for (auto [entity, request] : registry.view<Background, RenderRequest>().each()) {
+		if (request.visible) {
+			draw_textured_mesh(entity, request, projection_2d);
 		}
 	}
 
-	for (auto [entity, stats] : registry.view<Stats>().each()) {
-		draw_healthbar(entity, stats, projection_2d);
+	// Grabs player's perception of which colour is "inactive"
+	Entity player = registry.view<Player>().front();
+	PlayerInactivePerception& player_perception = registry.get<PlayerInactivePerception>(player);
+	ColorState& inactive_color = player_perception.inactive;
+
+	auto render_requests_lambda = [&](Entity entity, RenderRequest& render_request) {
+		if (render_request.visible) {
+			draw_textured_mesh(entity, render_request, projection_2d);
+		}
+	};
+
+	auto health_group_lambda = [&](Entity entity, Stats& stats, Enemy& /*enemy*/) {
+		Transform transform = get_transform(entity);
+		transform.translate(vec2(2 - MapUtility::tile_size / 2, -MapUtility::tile_size / 2));
+		transform.scale(vec2(MapUtility::tile_size - 4, 3));
+		draw_stat_bar(transform, stats, projection_2d, false);
+	};
+
+	// Renders entities + healthbars depending on which state we are in
+	if (inactive_color == ColorState::Red) {
+		registry.view<RenderRequest>(entt::exclude<Background, RedExclusive>).each(render_requests_lambda);
+		registry.view<Stats, Enemy>(entt::exclude<RedExclusive>).each(health_group_lambda);
+	} else if (inactive_color == ColorState::Blue) {
+		registry.view<RenderRequest>(entt::exclude<Background, BlueExclusive>).each(render_requests_lambda);
+		registry.view<Stats, Enemy>(entt::exclude<BlueExclusive>).each(health_group_lambda);
+	} else {
+		registry.view<RenderRequest>().each(render_requests_lambda);
+		registry.view<Stats, Enemy>().each(health_group_lambda);
 	}
 
-	for (auto [entity, text] : registry.view<Text>().each()) {
-		draw_text(entity, text, projection_2d);
+	// Renders effects (ie spells), intended to be overlayed on top of regular render effects
+	for (auto [entity, effect_render_request] : registry.view<EffectRenderRequest>().each()) {
+		// Note, its not very efficient to access elements indirectly via the entity
+		// albeit iterating through all Sprites in sequence. A good point to optimize
+		if (effect_render_request.visible) {
+			draw_effect(entity, effect_render_request, projection_2d);
+		}
 	}
 
-	for (auto [entity, line] : registry.view<Line>().each()) {
-		draw_line(entity, line, projection_2d);
-	}
+	draw_ui(projection_2d);
 
 	// Truely render to the screen
 	draw_to_screen();
@@ -497,6 +764,55 @@ void RenderSystem::draw()
 	gl_has_errors();
 }
 
+void RenderSystem::draw_ui(const mat3& projection)
+{
+	// Draw any UI backgrounds
+	for (auto [entity, element, request] : registry.view<Background, UIElement, UIRenderRequest>().each()) {
+		if (registry.get<UIGroup>(element.group).visible) {
+			draw_ui_element(entity, request, projection);
+		}
+	}
+
+	// Draw rectangles, lines, etc.
+	for (auto [entity, group] : registry.view<UIGroup>().each()) {
+		if (!group.visible) {
+			continue;
+		}
+		Entity curr = group.first_element;
+		while (curr != entt::null) {
+			UIElement& element = registry.get<UIElement>(curr);
+			if (element.visible) {
+				if (UIRenderRequest* ui_render_request = registry.try_get<UIRenderRequest>(curr)) {
+					draw_ui_element(curr, *ui_render_request, projection);
+				} else if (Line* line = registry.try_get<Line>(curr)) {
+					draw_line(entity, *line, projection);
+				}
+			}
+			curr = element.next;
+		}
+	}
+
+	// Draw text over top
+	for (auto [entity, group] : registry.view<UIGroup>().each()) {
+		if (!group.visible) {
+			continue;
+		}
+		Entity curr = group.first_text;
+		while (curr != entt::null) {
+			UIElement& element = registry.get<UIElement>(curr);
+			if (element.visible) {
+				draw_text(curr, registry.get<Text>(curr), projection);
+			}
+			curr = element.next;
+		}
+	}
+
+	// Finally, draw debug lines over absolutely everything
+	for (auto [entity, line] : registry.view<Line>(entt::exclude<UIElement>).each()) {
+		draw_line(entity, line, projection);
+	}
+}
+
 // projection matrix based on position of camera entity
 mat3 RenderSystem::create_projection_matrix()
 {
@@ -504,7 +820,7 @@ mat3 RenderSystem::create_projection_matrix()
 
 	vec2 top_left, bottom_right;
 	std::tie(top_left, bottom_right) = get_window_bounds();
-	
+
 	vec2 scaled_screen = vec2(screen_size) * screen_scale;
 
 	float sx = 2.f / (scaled_screen.x);
@@ -525,14 +841,19 @@ std::pair<vec2, vec2> RenderSystem::get_window_bounds()
 	WorldPosition& camera_world_pos = registry.get<WorldPosition>(camera);
 
 	vec2 buffer_top_left, buffer_down_right;
-	
+
 	std::tie(buffer_top_left, buffer_down_right)
 		= CameraUtility::get_buffer_positions(camera_world_pos.position, window_size.x, window_size.y);
 
 	update_camera_position(camera_world_pos, player_pos, buffer_top_left, buffer_down_right);
 
-
 	return { camera_world_pos.position - window_size / 2.f, camera_world_pos.position + window_size / 2.f };
+}
+
+float RenderSystem::get_ui_scale_factor() const
+{
+	vec2 ratios = vec2(screen_size) / vec2(window_default_size);
+	return min(ratios.x, ratios.y);
 }
 
 vec2 RenderSystem::screen_position_to_world_position(vec2 screen_pos)
@@ -540,17 +861,16 @@ vec2 RenderSystem::screen_position_to_world_position(vec2 screen_pos)
 	return screen_pos * screen_scale + get_window_bounds().first;
 }
 
- void RenderSystem::scale_on_scroll(float offset)
+void RenderSystem::scale_on_scroll(float offset)
 {
 	// scale the camera based on scrolling offset
 	// scrolling forward -> zoom in
 	// scrolling backward -> zoom out
 	// max: 1.0, min: 0.2
 	float zoom = offset / 10;
-	if (this->screen_scale - zoom > 0.1 && this->screen_scale - zoom <= 1.0) {
+	if (debugging.in_debug_mode || (this->screen_scale - zoom > 0.1 && this->screen_scale - zoom <= 1.0)) {
 		this->screen_scale -= zoom;
 	}
-
 }
 
 void RenderSystem::on_resize(int width, int height)
@@ -559,11 +879,12 @@ void RenderSystem::on_resize(int width, int height)
 	screen_size_capped = { min(width, window_width_px), min(height, window_height_px) };
 
 	glBindTexture(GL_TEXTURE_2D, off_screen_render_buffer_color);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screen_size_capped.x, screen_size_capped.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+	glTexImage2D(
+		GL_TEXTURE_2D, 0, GL_RGBA, screen_size_capped.x, screen_size_capped.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 	gl_has_errors();
 }
 
- // update camera's map position when player move out of buffer
+// update camera's map position when player move out of buffer
 void RenderSystem::update_camera_position(WorldPosition& camera_world_pos,
 										  const vec2& player_pos,
 										  const vec2& buffer_top_left,

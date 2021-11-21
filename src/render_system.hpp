@@ -35,25 +35,36 @@ class RenderSystem {
 	// and then uses path to grab sprites, stats, and behaviour
 	// Make sure these paths remain in sync with the associated enumerators.
 	const std::array<std::string, texture_count> texture_paths = {
-			textures_path("./01/Player Spritesheet.png"),
+			textures_path("./01-Player/Player Spritesheet.png"),
+			textures_path("./TrainingDummy/Dummy Spritesheet.png"),
 			textures_path("./Slime/Slime Spritesheet.png"),
 			textures_path("./Living Armor/Living Armor Spritesheet.png"),
 			textures_path("./Treeant/Treeant Spritesheet.png"),
 			textures_path("./Raven/Raven Spritesheet.png"),
 			textures_path("./Wraith/Wraith Spritesheet.png"),
 			textures_path("./Drake/Drake Spritesheet.png"),
+			textures_path("./Mushroom/Mushroom Spritesheet.png"),
+			textures_path("./Spider/Spider Spritesheet.png"),
+			textures_path("./Clone/Clone Spritesheet.png"),
+			textures_path("./02-Bosses/King Mush/King Mush Spritesheet.png"),
+			textures_path("./02-Bosses/King Mush/King Mush Attack Spritesheet.png"),
 			textures_path("cannon_ball.png"),
+			textures_path("/01-Player/Spell Spritesheet.png"),
 			textures_path("tile_set.png"),
 			textures_path("help.png"),
-			textures_path("End Screen.png")};
+			textures_path("End Screen.png") };
 
 	std::array<GLuint, effect_count> effects = {};
 	// Make sure these paths remain in sync with the associated enumerators.
 	const std::array<std::string, effect_count> effect_paths = { shader_path("line"),
+																 shader_path("rectangle"),
 																 shader_path("enemy"), 
 																 shader_path("player"),
 																 shader_path("health_bar"),
-																 shader_path("textured"),
+																 shader_path("fancy_bar"),
+																 shader_path("textured"), 
+																 shader_path("spell"),		
+															     shader_path("aoe"),
 																 shader_path("water"),
 																 shader_path("tilemap") };
 
@@ -90,8 +101,7 @@ public:
 	// Destroy resources associated to one or all entities created by the system
 	~RenderSystem();
 
-	// rule of five
-	RenderSystem() = default;
+	RenderSystem(Debug & debugging);
 	RenderSystem(const RenderSystem&) = delete; // copy constructor
 	RenderSystem& operator=(const RenderSystem&) = delete; // copy assignment
 	RenderSystem(RenderSystem&&) = delete; // move constructor
@@ -100,12 +110,17 @@ public:
 	// Draw all entities
 	void draw();
 
+	// Draw UI entities over top
+	void draw_ui(const mat3& projection);
+
 	mat3 create_projection_matrix();
 	vec2 screen_position_to_world_position(vec2 screen_pos);
 
 	// WorldSystem callbacks for window changes
 	void scale_on_scroll(float offset);
 	void on_resize(int width, int height);
+
+	vec2 get_screen_size() { return screen_size; }
 
 private:
 	////////////////////////////////////////////////////////
@@ -124,8 +139,12 @@ private:
 	// General helper functions
 	// Get world position of top left and bottom right of screen
 	std::pair<vec2, vec2> get_window_bounds();
+	// Get UI scale based on difference between current window size and default
+	float get_ui_scale_factor() const;
 	// Helper to get position transform
 	Transform get_transform(Entity entity);
+	// Helper to get position transform without rotation
+	Transform get_transform_no_rotation(Entity entity);
 
 	// Helper to ready to draw the Textured effect
 	void prepare_for_textured(GLuint texture_id);
@@ -137,7 +156,11 @@ private:
 	////////////////////////////////////////////////////////
 	// Internal drawing functions for each entity type
 	void draw_textured_mesh(Entity entity, const RenderRequest& render_request, const mat3& projection);
-	void draw_healthbar(Entity entity, const Stats& stats, const mat3& projection);
+	void draw_effect(Entity entity, const EffectRenderRequest& render_request, const mat3& projection);
+	void draw_ui_element(Entity entity, const UIRenderRequest& ui_render_request, const mat3& projection);
+	void draw_stat_bar(
+		Transform transform, const Stats& stats, const mat3& projection, bool fancy, float ratio, Entity entity);
+	void draw_rectangle(Entity entity, Transform transform, vec2 scale, const mat3& projection);
 	void draw_text(Entity entity, const Text& text, const mat3& projection);
 	void draw_line(Entity entity, const Line& line, const mat3& projection);
 	void draw_map(const mat3& projection);
@@ -160,6 +183,8 @@ private:
 	Entity screen_state_entity = registry.create();
 	ivec2 screen_size = { window_width_px, window_height_px };
 	ivec2 screen_size_capped = { window_width_px, window_height_px };
+
+	Debug& debugging;
 	float screen_scale = 1; // Screen to pixel coordinates scale factor (for apple
 							// retina display?)
 };
