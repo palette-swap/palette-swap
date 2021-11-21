@@ -258,8 +258,14 @@ void WorldSystem::handle_collisions()
 				ColorState enemy_color = enemy.team;
 				if (enemy_color != turns->get_inactive_color() && ui->has_current_attack()) {
 					animations->player_spell_impact_animation(entity_other, ui->get_current_attack().damage_type);
-					combat->do_attack(player, ui->get_current_attack(), registry.get<MapPosition>(entity_other).position);
+					combat->do_attack(
+						player, ui->get_current_attack(), registry.get<MapPosition>(entity_other).position);
 				}
+			} else {
+				combat->do_attack(
+					player,
+					ui->get_current_attack(),
+					MapUtility::world_position_to_map_position(registry.get<WorldPosition>(entity).position));
 			}
 			Entity temp = child_entity;
 			child_entity = child.next;
@@ -288,7 +294,9 @@ void WorldSystem::return_arrow_to_player()
 // On key callback
 void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 {
-	ui->on_key(key, action, mod);
+	if (turns->ready_to_act(player)) {
+		ui->on_key(key, action, mod);
+	}
 
 	check_debug_keys(key, action, mod);
 	if (!ui->player_can_act()) {
@@ -314,7 +322,6 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 			}
 		}
 	}
-
 
 	if (action != GLFW_RELEASE) {
 		if (key == GLFW_KEY_D) {
