@@ -119,8 +119,9 @@ bool CombatSystem::do_attack(Entity attacker, Attack& attack, uvec2 target)
 	}
 	registry.get<Stats>(attacker).mana -= attack.mana_cost;
 	bool success = false;
+	MapPosition& attacker_pos = registry.get<MapPosition>(attacker);
 	for (const auto& target_entity : registry.view<Enemy, Stats>()) {
-		if (registry.get<MapPosition>(target_entity).position == target) {
+		if (attack.is_in_range(attacker_pos.position, target, registry.get<MapPosition>(target_entity).position)) {
 			success |= do_attack(attacker, attack, target_entity);
 		}
 	}

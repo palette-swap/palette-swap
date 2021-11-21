@@ -246,7 +246,7 @@ void WorldSystem::handle_collisions()
 	for (auto [entity, collision, projectile] : registry.view<Collision, ActiveProjectile>().each()) {
 		Entity child_entity = collision.children;
 		while (child_entity != entt::null) {
-			const Child& child = registry.get<Child>(child_entity);
+			const CollisionEntry& child = registry.get<CollisionEntry>(child_entity);
 			Entity entity_other = child.target;
 			// TODO: rename hittable container type
 			// TODO: Convert all checks to if tile is walkable, currently has issue that enemies can overlay player
@@ -258,7 +258,7 @@ void WorldSystem::handle_collisions()
 				ColorState enemy_color = enemy.team;
 				if (enemy_color != turns->get_inactive_color() && ui->has_current_attack()) {
 					animations->player_spell_impact_animation(entity_other, ui->get_current_attack().damage_type);
-					combat->do_attack(player, ui->get_current_attack(), entity_other);
+					combat->do_attack(player, ui->get_current_attack(), registry.get<MapPosition>(entity_other).position);
 				}
 			}
 			Entity temp = child_entity;

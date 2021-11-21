@@ -181,16 +181,23 @@ void Enemy::deserialize(const std::string& prefix, const rapidjson::Document& js
 
 bool Attack::is_in_range(uvec2 source, uvec2 target, uvec2 pos) const
 {
+	dvec2 area = dvec2(parallel_size - 1, perpendicular_size - 1);
 	dvec2 distance = dvec2(target) - dvec2(pos);
 	dvec2 attack_direction = dvec2(target) - dvec2(source);
 	double attack_angle = atan2(attack_direction.y, attack_direction.x);
-	dvec2 aligned_distance = glm::rotate(distance, -attack_angle);
+	dvec2 aligned_distance = round(abs(glm::rotate(distance, -attack_angle)));
 	if (pattern == AttackPattern::Rectangle) {
-		return aligned_distance.x <= static_cast<double>(parallel_size)
-			&& aligned_distance.y <= static_cast<double>(perpendicular_size);
+		return abs(aligned_distance.x) <= area.x && abs(aligned_distance.y) <= area.y;
 	}
 	if (pattern == AttackPattern::Circle) {
-		return pow(aligned_distance.x / parallel_size, 2) + pow(aligned_distance.y / perpendicular_size, 2) <= 1;
+		auto make_square = [](double dist, double max) {
+			if (max == 0) {
+				return dist == 0 ? 0.0 : 2.0;
+			}
+			return pow(dist / max, 2);
+		};
+		dvec2 dist_squared = { make_square(aligned_distance.x, area.x), make_square(aligned_distance.y, area.y) };
+		return dist_squared.x + dist_squared.y <= 1;
 	}
 	return true;
 }
@@ -335,10 +342,10 @@ void Collision::add(Entity parent, Entity child)
 	Collision* collision = registry.try_get<Collision>(parent);
 	if (collision == nullptr) {
 		collision = &(registry.emplace<Collision>(parent, registry.create()));
-		registry.emplace<Child>(collision->children, parent, entt::null, child);
+		registry.emplace<CollisionEntry>(collision->children, parent, entt::null, child);
 	} else {
 		Entity new_collision = registry.create();
-		registry.emplace<Child>(new_collision, parent, collision->children, child);
+		registry.emplace<CollisionEntry>(new_collision, parent, collision->children, child);
 		collision->children = new_collision;
 	}
 }

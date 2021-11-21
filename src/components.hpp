@@ -638,7 +638,7 @@ struct Collision {
 	static void add(Entity parent, Entity child);
 };
 
-struct Child {
+struct CollisionEntry {
 	Entity parent;
 	Entity next;
 	Entity target;

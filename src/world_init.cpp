@@ -13,8 +13,10 @@ Entity create_player(uvec2 pos)
 
 	// Setup Casting
 	Entity fireball_entity = registry.create();
-	Attack& fireball = registry.emplace<Attack>(fireball_entity, "Fireball", -3, 10, 10, 20, DamageType::Fire, TargetingType::Projectile, -1);
+	Attack& fireball = registry.emplace<Attack>(fireball_entity, "Fireball", 5, 15, 10, 20, DamageType::Fire, TargetingType::Projectile, -1);
 	fireball.mana_cost = 25;
+	fireball.parallel_size = 4;
+	fireball.perpendicular_size = 4;
 	inventory.equipped.at(static_cast<uint8>(Slot::Spell1))
 		= create_spell("Fireball", std::vector<Entity>({ fireball_entity }));
 	registry.get<ItemTemplate>(inventory.equipped.at(static_cast<uint8>(Slot::Spell1))).texture_offset = ivec2(0, 3);
