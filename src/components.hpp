@@ -464,6 +464,8 @@ struct StatBoosts {
 	int evasion = 0;
 	DamageTypeList<int> damage_modifiers = { 0 };
 	void deserialize(const rapidjson::GenericObject<false, rapidjson::Value>& boosts);
+
+	std::string get_description()const;
 };
 
 enum class Slot {

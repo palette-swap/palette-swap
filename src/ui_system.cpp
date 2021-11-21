@@ -197,6 +197,12 @@ void UISystem::on_mouse_move(vec2 mouse_screen_pos)
 
 	if (tooltip != entt::null) {
 		Entity target = registry.get<Tooltip>(tooltip).target;
+
+		if (!registry.valid(target)) {
+			destroy_tooltip();
+			return;
+		}
+
 		bool on_target = false;
 		if (ScreenPosition* pos = registry.try_get<ScreenPosition>(target)) {
 			on_target = Geometry::Rectangle(pos->position, registry.get<UIRenderRequest>(target).size)

@@ -462,10 +462,45 @@ std::string Item::get_description(bool detailed) const
 		return description;
 	}
 	
+	if (StatBoosts* boosts = registry.try_get<StatBoosts>(item_template)) {
+		description += boosts->get_description();
+	}
+
 	if (Weapon* weapon = registry.try_get<Weapon>(item_template)) {
 		description += weapon->get_description();
 	}
 
+	return description;
+}
+
+std::string int_to_signed_string(int i) { return ((i >= 0) ? '+' : '-') + std::to_string(i); }
+
+std::string StatBoosts::get_description() const
+{
+	std::string description;
+	if (health != 0) {
+		description += "\n" + int_to_signed_string(health) + " health";
+	}
+	if (mana != 0) {
+		description += "\n" + int_to_signed_string(mana) + " mana";
+	}
+	if (to_hit_bonus != 0) {
+		description += "\n" + int_to_signed_string(to_hit_bonus) + " to hit";
+	}
+	if (damage_bonus != 0) {
+		description += "\n" + int_to_signed_string(damage_bonus) + " dmg";
+	}
+	if (evasion != 0) {
+		description += "\n" + int_to_signed_string(evasion) + " evasion";
+	}
+	for (size_t i = 0; i < (size_t)DamageType::Count; i++) {
+		int mod = damage_modifiers.at(i);
+		if (mod != 0) {
+			description += "\n" + std::to_string(abs(mod)) + " ";
+			description += damage_type_names.at(i);
+			description += (mod < 0) ? " resistance" : " vulnerability";
+		}
+	}
 	return description;
 }
 
