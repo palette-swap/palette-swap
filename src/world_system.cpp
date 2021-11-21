@@ -38,6 +38,7 @@ WorldSystem::WorldSystem(Debug& debugging,
 {
 	this->combat->init(rng, this->animations, this->map_generator);
 	this->combat->on_pickup([this](const Entity& item, size_t slot) { this->ui->add_to_inventory(item, slot); });
+	this->combat->on_death([this](const Entity& entity) { this->ui->update_resource_count(); });
 }
 
 WorldSystem::~WorldSystem()
@@ -338,20 +339,29 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		}
 	}
 
-	if (action == GLFW_RELEASE && key == GLFW_KEY_SPACE) {
-		change_color();
-	} else {
+	if (action == GLFW_PRESS) {
 		switch (key) {
-		case GLFW_KEY_LEFT_SHIFT:
+		case GLFW_KEY_SPACE: {
+			Inventory& inventory = registry.get<Inventory>(player);
+			if (inventory.resources.at((size_t)Resource::PaletteSwap) > 0) {
+				inventory.resources.at((size_t)Resource::PaletteSwap)--;
+				ui->update_resource_count();
+				change_color();
+			}
+			break;
+		}
+		case GLFW_KEY_LEFT_SHIFT: {
 			if (turns->ready_to_act(player) && combat->try_pickup_items(player)) {
 				turns->skip_team_action(player);
 			}
 			break;
-		case GLFW_KEY_H:
+		}
+		case GLFW_KEY_H: {
 			if (turns->ready_to_act(player) && combat->try_drink_potion(player)) {
 				ui->update_resource_count();
 				turns->skip_team_action(player);
 			}
+		}
 		default:
 			break;
 		}

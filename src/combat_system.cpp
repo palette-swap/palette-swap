@@ -224,6 +224,10 @@ void CombatSystem::kill(Entity attacker_entity, Entity target_entity)
 	// Regen 25% of total mana with a successful kill
 	stats.mana = min(stats.mana_max, stats.mana + stats.mana_max / 4);
 
+	if (Inventory* inventory = registry.try_get<Inventory>(attacker_entity)) {
+		inventory->resources.at((size_t)Resource::PaletteSwap)++;
+	}
+
 	drop_loot(registry.get<MapPosition>(target_entity).position);
 
 	// TODO: Animate death

@@ -495,7 +495,7 @@ struct Inventory {
 	static constexpr size_t inventory_size = 12;
 	std::array<Entity, inventory_size> inventory;
 	SlotList<Entity> equipped;
-	std::array<size_t, (size_t)Resource::Count> resources = {2, 0, 2};
+	std::array<size_t, (size_t)Resource::Count> resources = {2, 0, 3};
 	Inventory()
 		: inventory()
 		, equipped()
