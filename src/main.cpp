@@ -43,7 +43,7 @@ int main()
 	std::shared_ptr<UISystem> ui = std::make_shared<UISystem>();
 
 	// Story System
-	std::shared_ptr<StorySystem> stories = std::make_shared<StorySystem>();
+	std::shared_ptr<StorySystem> stories = std::make_shared<StorySystem>(animations);
 
 	// Global systems
 	Debug debugging;

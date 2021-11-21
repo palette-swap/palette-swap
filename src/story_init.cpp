@@ -10,8 +10,8 @@ Entity create_ui_for_conversation()
 	return ui_group;
 }
 
-void create_cutscene(Entity attacher, float radius, std::string conversation)
+void create_cutscene(Entity attacher, CutSceneType type, float radius, std::string conversation)
 {
 	auto ui_entity = create_ui_for_conversation();
-	registry.emplace<CutScene>(attacher, radius, ui_entity, conversation);
+	registry.emplace<CutScene>(attacher, type, radius, ui_entity, conversation);
 }

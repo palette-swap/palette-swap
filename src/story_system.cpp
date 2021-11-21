@@ -1,6 +1,6 @@
 #include "story_system.hpp"
-#include <vector>
 #include <sstream>
+#include <vector>
 
 void StorySystem::restart_game(const std::vector<Entity>& entities_for_cutscene)
 {
@@ -11,8 +11,13 @@ void StorySystem::restart_game(const std::vector<Entity>& entities_for_cutscene)
 	}
 	// register cutscene for the boss
 	for (auto entity : entities_for_cutscene) {
-		create_cutscene(entity, 256, std::string("This is the boss. Beat it!"));
+		create_cutscene(entity, CutSceneType::BossEntry, 256, std::string("This is the boss. Beat it!"));
 	}
+}
+
+StorySystem::StorySystem(std::shared_ptr<AnimationSystem> animation_sys_ptr)
+	: animations(std::move(animation_sys_ptr))
+{
 }
 
 bool StorySystem::in_cutscene() { return current_cutscene_entity != entt::null; }
@@ -45,18 +50,11 @@ void StorySystem::step()
 	}
 
 	render_text_each_frame();
-
-
 }
 
 void StorySystem::trigger_cutscene(CutScene& c, const vec2& trigger_pos)
 {
-	Entity camera = registry.view<Camera>().front();
-	WorldPosition& camera_world_pos = registry.get<WorldPosition>(camera);
-	UIGroup& ui_group = registry.get<UIGroup>(c.cutscene_ui);
-	ui_group.visible = true;
-	camera_world_pos.position = trigger_pos;
-	
+
 	std::stringstream ss(c.texts);
 	int word_count = 0;
 	std::string buff;
@@ -70,7 +68,8 @@ void StorySystem::trigger_cutscene(CutScene& c, const vec2& trigger_pos)
 		}
 	}
 	conversations.push_back(acc);
-	proceed_conversation();
+	trigger_animation(c.type);
+	trigger_conversation(trigger_pos);
 }
 
 void StorySystem::proceed_conversation()
@@ -92,7 +91,16 @@ void StorySystem::proceed_conversation()
 	for (char c : text_in_frame) {
 		text_frames.push_back(std::string(1, c));
 	}
-	
+}
+
+bool StorySystem::in_cutscene_animation()
+{
+	assert(current_cutscene_entity != entt::null);
+	if (registry.any_of<Animation>(current_cutscene_entity)) {
+		Animation a = registry.get<Animation>(current_cutscene_entity);
+		return a.frame < a.max_frames;
+	}
+	return false;
 }
 
 void StorySystem::render_text_each_frame()
@@ -111,5 +119,28 @@ void StorySystem::render_text_each_frame()
 	text_comp.text += text_per_frame;
 	if (text_comp.text.length() != 0 && text_comp.text.length() % max_line_len == 0) {
 		text_comp.text += "\n";
+	}
+}
+
+void StorySystem::trigger_conversation(const vec2& trigger_pos)
+{
+	CutScene c = registry.get<CutScene>(current_cutscene_entity);
+	Entity camera = registry.view<Camera>().front();
+	WorldPosition& camera_world_pos = registry.get<WorldPosition>(camera);
+	UIGroup& ui_group = registry.get<UIGroup>(c.cutscene_ui);
+	ui_group.visible = true;
+	camera_world_pos.position = trigger_pos;
+	proceed_conversation();
+}
+
+void StorySystem::trigger_animation(CutSceneType type)
+{
+	assert(current_cutscene_entity != entt::null);
+	switch (type) {
+	case CutSceneType::BossEntry:
+		animations->trigger_full_boss_intro(current_cutscene_entity);
+		break;
+	default:
+		break;
 	}
 }

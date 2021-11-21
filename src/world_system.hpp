@@ -20,6 +20,7 @@
 #include "render_system.hpp"
 #include "turn_system.hpp"
 #include "ui_system.hpp"
+#include "story_system.hpp"
 
 // Container for all our entities and game logic. Individual rendering / update is
 // deferred to the relative update() methods

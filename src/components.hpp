@@ -289,7 +289,7 @@ struct Enemy {
 	uint speed = 1;
 	uint attack_range = 1;
 
-	void serialize(const std::string & prefix, rapidjson::Document &json) const;
+	void serialize(const std::string& prefix, rapidjson::Document& json) const;
 	void deserialize(const std::string& prefix, const rapidjson::Document& json, bool load_from_file = true);
 };
 
@@ -320,22 +320,14 @@ struct PlayerInactivePerception {
 // Remember to add a mapping to a new texture (or use a default such as a slime)
 // This will help load the animation by enemy type when you load enemies
 const std::array<TEXTURE_ASSET_ID, static_cast<int>(EnemyType::EnemyCount)> enemy_type_textures {
-	TEXTURE_ASSET_ID::DUMMY,
-	TEXTURE_ASSET_ID::SLIME,
-	TEXTURE_ASSET_ID::RAVEN,
-	TEXTURE_ASSET_ID::ARMOR,
-	TEXTURE_ASSET_ID::TREEANT,
-	TEXTURE_ASSET_ID::WRAITH,
-	TEXTURE_ASSET_ID::DRAKE,
-	TEXTURE_ASSET_ID::MUSHROOM,
-	TEXTURE_ASSET_ID::SPIDER,
-	TEXTURE_ASSET_ID::CLONE,
-	TEXTURE_ASSET_ID::KING_MUSH,
+	TEXTURE_ASSET_ID::DUMMY,   TEXTURE_ASSET_ID::SLIME,  TEXTURE_ASSET_ID::RAVEN,	 TEXTURE_ASSET_ID::ARMOR,
+	TEXTURE_ASSET_ID::TREEANT, TEXTURE_ASSET_ID::WRAITH, TEXTURE_ASSET_ID::DRAKE,	 TEXTURE_ASSET_ID::MUSHROOM,
+	TEXTURE_ASSET_ID::SPIDER,  TEXTURE_ASSET_ID::CLONE,  TEXTURE_ASSET_ID::KING_MUSH,
 };
 
 // Maps enemy type to a specific entry animation
-const std::map<EnemyType, TEXTURE_ASSET_ID> boss_type_entry_animation_map { 
-	{EnemyType::KingMush, TEXTURE_ASSET_ID::KING_MUSH_ENTRY},
+const std::map<EnemyType, TEXTURE_ASSET_ID> boss_type_entry_animation_map {
+	{ EnemyType::KingMush, TEXTURE_ASSET_ID::KING_MUSH_ENTRY },
 };
 
 const std::array<int, (size_t)EnemyState::EnemyStateCount> enemy_state_to_animation_state = {
@@ -790,13 +782,13 @@ struct Button {
 	Entity action_target;
 };
 
+enum class CutSceneType {
+	BossEntry
+};
 // CutScene
 struct CutScene {
+	CutSceneType type;
 	float radius;
 	Entity cutscene_ui;
 	std::string texts;
-};
-
-struct CutSceneEvent {
-	std::string text;
 };
