@@ -250,11 +250,6 @@ void AnimationSystem::player_red_blue_animation(const Entity& player, ColorState
 	if (!registry.any_of<EventAnimation>(player)) {
 		EventAnimation& player_melee = registry.emplace<EventAnimation>(player);
 
-		//// Stores restoration states for the player's animations, to be called after animation event is resolved
-		// player_melee.restore_speed = player_animation.speed_adjustment;
-		// player_melee.restore_state = player_animation.state;
-		// player_melee.restore_color = player_color;
-
 		this->animation_event_setup(player_animation, player_melee, player_animation.display_color);
 
 		// Sets animation state to be the beginning of the melee animation
