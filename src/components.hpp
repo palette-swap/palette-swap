@@ -707,6 +707,7 @@ struct UIGroup {
 	}
 
 	static void add_element(Entity group, Entity element, UIElement& ui_element, UILayer layer = UILayer::Boxes);
+	static void remove_element(Entity group, Entity element, UILayer layer = UILayer::Boxes);
 };
 
 struct UISlot {
@@ -724,6 +725,13 @@ struct EquipSlot {
 
 struct Draggable {
 	Entity container;
+};
+
+struct Tooltip {
+	Entity target;
+};
+
+struct HasTooltip {
 };
 
 struct InteractArea {

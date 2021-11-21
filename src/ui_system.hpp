@@ -48,9 +48,11 @@ private:
 		HUD,
 		Inventory,
 		MainMenu,
+		Tooltips,
 		Count,
 	};
 
 	std::array<Entity, (size_t)Groups::Count> groups = { entt::null };
 	Entity held_under_mouse = entt::null;
+	Entity tooltip = entt::null;
 };

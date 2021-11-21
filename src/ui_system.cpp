@@ -129,7 +129,7 @@ void UISystem::do_action(Button& button)
 {
 	if (button.action == ButtonAction::SwitchToGroup) {
 		for (auto [entity, group] : registry.view<UIGroup>().each()) {
-			group.visible = entity == button.action_target;
+			group.visible = entity == button.action_target || entity == groups[(size_t)Groups::Tooltips];
 		}
 	}
 }
@@ -142,6 +142,9 @@ void UISystem::on_left_click(int action, dvec2 mouse_screen_pos)
 			if (element.visible && registry.get<UIGroup>(element.group).visible
 				&& Geometry::Rectangle(screen_pos.position, interact_area.size).contains(vec2(mouse_screen_pos))) {
 				held_under_mouse = entity;
+				UIGroup::remove_element(groups[(size_t)Groups::Tooltips], tooltip, UILayer::TooltipContent);
+				registry.destroy(tooltip);
+				tooltip = entt::null;
 				return;
 			}
 		}
@@ -166,6 +169,37 @@ void UISystem::on_mouse_move(vec2 mouse_screen_pos)
 	if (held_under_mouse != entt::null) {
 		registry.get<ScreenPosition>(held_under_mouse).position = mouse_screen_pos;
 		return;
+	}
+
+	if (tooltip != entt::null) {
+		Entity target = registry.get<Tooltip>(tooltip).target;
+
+		if (Geometry::Rectangle(registry.get<ScreenPosition>(target).position,
+								registry.get<UIRenderRequest>(target).size)
+				.contains(mouse_screen_pos)) {
+			registry.get<ScreenPosition>(tooltip).position = mouse_screen_pos + vec2(0, -.03);
+		} else {
+			UIGroup::remove_element(groups[(size_t)Groups::Tooltips], tooltip, UILayer::TooltipContent);
+			registry.destroy(tooltip);
+			tooltip = entt::null;
+		}
+		return;
+	}
+
+	for (auto [entity, pos, request] : registry.view<HasTooltip, ScreenPosition, UIRenderRequest>().each()) {
+		if (Geometry::Rectangle(pos.position, request.size).contains(mouse_screen_pos)) {
+			std::string* text;
+			if (Item* item = registry.try_get<Item>(entity)) {
+				text = &registry.get<ItemTemplate>(item->item_template).name;
+			}
+			tooltip = create_ui_tooltip(groups[(size_t)Groups::Tooltips],
+										mouse_screen_pos + vec2(0, -.03),
+										(text != nullptr) ? *text : "",
+										Alignment::Center,
+										Alignment::End);
+			registry.get<Text>(tooltip).bubble = true;
+			registry.emplace<Tooltip>(tooltip, entity);
+		}
 	}
 }
 

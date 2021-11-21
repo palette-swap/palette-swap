@@ -353,6 +353,29 @@ void UIGroup::add_element(Entity group, Entity element, UIElement& ui_element, U
 	g.first_elements[(size_t)layer] = element;
 }
 
+void UIGroup::remove_element(Entity group, Entity element, UILayer layer)
+{
+	if (group == entt::null) {
+		return;
+	}
+	UIGroup& g = registry.get<UIGroup>(group);
+	Entity prev = g.first_elements[(size_t)layer];
+	Entity curr = registry.get<UIElement>(prev).next;
+	if (prev == element) {
+		g.first_elements[(size_t)layer] = registry.get<UIElement>(prev).next;
+		return;
+	}
+	while (curr != entt::null) {
+		if (curr == element) {
+			registry.get<UIElement>(prev).next = registry.get<UIElement>(curr).next;
+			return;
+		}
+		UIElement& element = registry.get<UIElement>(curr);
+		prev = curr;
+		curr = element.next;
+	}
+}
+
 Entity Inventory::get(Entity entity, Slot slot) { return registry.get<Inventory>(entity).equipped.at((size_t)slot); }
 
 void ItemTemplate::deserialize(Entity entity, const rapidjson::GenericObject<false, rapidjson::Value>& item)
