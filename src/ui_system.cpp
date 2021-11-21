@@ -249,8 +249,7 @@ void UISystem::on_mouse_move(vec2 mouse_screen_pos)
 		return;
 	}
 
-	auto create_tooltip = [&](Entity entity, Item& item, bool detailed) {
-		std::string text = item.get_description(detailed);
+	auto create_tooltip = [&](const std::string_view& text, Entity entity) {
 		tooltip = create_ui_tooltip(groups[(size_t)Groups::Tooltips], mouse_screen_pos, text, 24u);
 		registry.emplace<Tooltip>(tooltip, entity);
 		align_tooltip(mouse_screen_pos);
@@ -260,7 +259,7 @@ void UISystem::on_mouse_move(vec2 mouse_screen_pos)
 		 registry.group<Item>(entt::get<ScreenPosition, UIRenderRequest, UIElement>).each()) {
 		if (element.visible && Geometry::Rectangle(pos.position, request.size).contains(mouse_screen_pos)
 			&& registry.get<UIGroup>(element.group).visible) {
-			create_tooltip(entity, item, true);
+			create_tooltip(item.get_description(true), entity);
 			return;
 		}
 	}
@@ -269,7 +268,13 @@ void UISystem::on_mouse_move(vec2 mouse_screen_pos)
 			= MapUtility::world_position_to_map_position(renderer->screen_position_to_world_position(mouse_screen_pos));
 		for (auto [entity, item, pos, request] : registry.view<Item, MapPosition, RenderRequest>().each()) {
 			if (request.visible && pos.position == mouse_map_pos) {
-				create_tooltip(entity, item, false);
+				create_tooltip(item.get_description(false), entity);
+				return;
+			}
+		}
+		for (auto [entity, pickup, pos, request] : registry.view<ResourcePickup, MapPosition, RenderRequest>().each()) {
+			if (request.visible && pos.position == mouse_map_pos) {
+				create_tooltip(resource_names.at((size_t)pickup.resource), entity);
 				return;
 			}
 		}

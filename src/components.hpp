@@ -66,14 +66,12 @@ struct Mesh {
 	std::vector<uint16_t> vertex_indices;
 };
 
-
 // Test Texture Buffer element for enemies
 // TODO: change to animated vertices after bringing player into this 3D element group
 struct SmallSpriteVertex {
 	vec3 position;
 	vec2 texcoord;
 };
-
 
 /**
  * The following enumerators represent global identifiers refering to graphic
@@ -182,9 +180,8 @@ enum class GEOMETRY_BUFFER_ID : uint8_t {
 };
 const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 
-
 // Represents allowed directions for an animated sprite (e.g whether the sprite is facing left or right)
-enum class Sprite_Direction : uint8_t { SPRITE_LEFT, SPRITE_RIGHT};
+enum class Sprite_Direction : uint8_t { SPRITE_LEFT, SPRITE_RIGHT };
 
 // Represents the position on the map,
 // top left is (0,0) bottom right is (99,99)
@@ -226,14 +223,14 @@ struct TileMapVertex {
 	vec2 texcoord = vec3(0);
 };
 
-
 enum class ColorState { None = 0, Red = 1, Blue = 2, All = Blue + 1 };
 
 //---------------------------------------------------------------------------
 //-------------------------           AI            -------------------------
 //---------------------------------------------------------------------------
 
-// Enemy List: https://docs.google.com/document/d/1HyGTf5afBIQPUthAuvrTZ-UZRlS8scZUTA4rekU3-kE/edit#heading=h.am6gzz477ssj
+// Enemy List:
+// https://docs.google.com/document/d/1HyGTf5afBIQPUthAuvrTZ-UZRlS8scZUTA4rekU3-kE/edit#heading=h.am6gzz477ssj
 enum class EnemyType {
 	// Small Enemy Types
 	TrainingDummy = 0,
@@ -264,17 +261,9 @@ enum class EnemyBehaviour {
 };
 
 const std::array<EnemyBehaviour, (size_t)EnemyType::EnemyCount> enemy_type_to_behaviour = {
-	EnemyBehaviour::Dummy,
-	EnemyBehaviour::Cowardly,
-	EnemyBehaviour::Basic,
-	EnemyBehaviour::Defensive,
-	EnemyBehaviour::Aggressive, 
-	EnemyBehaviour::Basic,	   
-	EnemyBehaviour::Basic, 
-	EnemyBehaviour::Cowardly,
-	EnemyBehaviour::Aggressive, 
-	EnemyBehaviour::Defensive,
-	EnemyBehaviour::Summoner,
+	EnemyBehaviour::Dummy,		EnemyBehaviour::Cowardly,  EnemyBehaviour::Basic,	 EnemyBehaviour::Defensive,
+	EnemyBehaviour::Aggressive, EnemyBehaviour::Basic,	   EnemyBehaviour::Basic,	 EnemyBehaviour::Cowardly,
+	EnemyBehaviour::Aggressive, EnemyBehaviour::Defensive, EnemyBehaviour::Summoner,
 };
 
 // Small Enemy Behaviours (State Machines) uses the following states.
@@ -283,7 +272,7 @@ const std::array<EnemyBehaviour, (size_t)EnemyType::EnemyCount> enemy_type_to_be
 // Cowardly:	Idle, Active, Flinched.
 // Defensive:	Idle, Active, Immortal.
 // Aggressive:	Idle, Active, Powerup.
-// 
+//
 // Boss Enemy Behaviours (Behaviour Trees) uses the following states.
 // Summoner:	Idle, Charging.
 enum class EnemyState {
@@ -309,16 +298,14 @@ struct Enemy {
 	uint speed = 1;
 	uint attack_range = 1;
 
-	void serialize(const std::string & prefix, rapidjson::Document &json) const;
+	void serialize(const std::string& prefix, rapidjson::Document& json) const;
 	void deserialize(const std::string& prefix, const rapidjson::Document& json, bool load_from_file = true);
 };
 
 struct RedExclusive {
-
 };
 
 struct BlueExclusive {
-
 };
 
 // Component denoting the AOE entity that is displaying a boss's attack
@@ -328,9 +315,7 @@ struct AOEAttackActive {
 
 // Component denoting an AOE's vector of intended attack targets
 struct AOETargets {
-	
 };
-
 
 // Component that denotes what colour the player cannot see at the moment
 struct PlayerInactivePerception {
@@ -467,7 +452,7 @@ struct StatBoosts {
 	DamageTypeList<int> damage_modifiers = { 0 };
 	void deserialize(const rapidjson::GenericObject<false, rapidjson::Value>& boosts);
 
-	std::string get_description()const;
+	std::string get_description() const;
 };
 
 enum class Slot {
@@ -493,11 +478,17 @@ enum class Resource {
 	Count = PaletteSwap + 1,
 };
 
+const std::array<std::string_view, (size_t)Resource::Count> resource_names = {
+	"Health Potion",
+	"Mana Potion",
+	"Palette Swap",
+};
+
 struct Inventory {
 	static constexpr size_t inventory_size = 12;
 	std::array<Entity, inventory_size> inventory;
 	SlotList<Entity> equipped;
-	std::array<size_t, (size_t)Resource::Count> resources = {3, 1, 3};
+	std::array<size_t, (size_t)Resource::Count> resources = { 3, 1, 3 };
 	Inventory()
 		: inventory()
 		, equipped()
@@ -571,7 +562,7 @@ struct Background {
 
 struct TextureOffset {
 	ivec2 offset;
-	vec2 size;	
+	vec2 size;
 };
 
 struct RenderRequest {
@@ -736,10 +727,9 @@ enum class UILayer {
 
 struct UIGroup {
 	bool visible = false;
-	std::array<Entity, (size_t)UILayer::Count> first_elements = { };
+	std::array<Entity, (size_t)UILayer::Count> first_elements = {};
 
-	UIGroup() { first_elements.fill(entt::null);
-	}
+	UIGroup() { first_elements.fill(entt::null); }
 
 	static void add_element(Entity group, Entity element, UIElement& ui_element, UILayer layer = UILayer::Boxes);
 	static void remove_element(Entity group, Entity element, UILayer layer = UILayer::Boxes);
