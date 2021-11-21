@@ -32,16 +32,28 @@ void UISystem::restart_game()
 										   64u);
 	registry.get<Color>(health_potion_display).color = vec3(.7, 1, .7);
 	Entity health_pot = create_ui_icon(groups[(size_t)Groups::HUD],
-								 ivec2(0, 4),
-								 vec2(MapUtility::tile_size),
-								 health_pos,
-								 4.f * vec2(MapUtility::tile_size) / vec2(window_default_size));
+									   ivec2(0, 4),
+									   vec2(MapUtility::tile_size),
+									   health_pos,
+									   4.f * vec2(MapUtility::tile_size) / vec2(window_default_size));
 	registry.get<UIRenderRequest>(health_pot).alignment_y = Alignment::Center;
 	registry.emplace<Button>(health_pot, health_potion_display, ButtonAction::TryHeal, player);
 
 	// Attack Display
 	attack_display = create_ui_text(
 		groups[(size_t)Groups::HUD], vec2(0, 1), make_attack_display_text(), Alignment::Start, Alignment::End);
+
+	// Inventory button
+	create_button(groups[(size_t)Groups::HUD],
+				  vec2(.98, .02),
+				  vec2(.1, .07),
+				  vec4(.1, .1, .1, 1),
+				  ButtonAction::SwitchToGroup,
+				  groups[(size_t)Groups::Inventory],
+				  "Inventory",
+				  48u,
+				  Alignment::End,
+				  Alignment::Start);
 
 	// Inventory background
 	create_background(groups[(size_t)Groups::Inventory], vec2(.5, .5), vec2(1, 1), 1.f, vec4(0, 0, 0, .8));
@@ -64,12 +76,25 @@ void UISystem::restart_game()
 		create_ui_item(groups[(size_t)Groups::Inventory], slot, item);
 	}
 
+	// Close Inventory button
+	create_button(groups[(size_t)Groups::Inventory],
+				  vec2(.02 * window_height_px / window_width_px, .02),
+				  vec2(.07 * window_height_px / window_width_px, .07),
+				  vec4(.1, .1, .1, 1),
+				  ButtonAction::SwitchToGroup,
+				  groups[(size_t)Groups::HUD],
+				  "X",
+				  48u,
+				  Alignment::Start,
+				  Alignment::Start);
+
 	// Menu background
 	create_background(groups[(size_t)Groups::MainMenu], vec2(.25, .5), vec2(.5, 1), 1.f, vec4(.6, .1, .1, 1));
 	create_background(groups[(size_t)Groups::MainMenu], vec2(.75, .5), vec2(.5, 1), 1.f, vec4(.1, .1, .6, 1));
 
 	// Menu
-	Entity title = create_ui_text(groups[(size_t)Groups::MainMenu], vec2(.5, .1), "PALETTE SWAP", Alignment::Center, Alignment::Start, 180);
+	Entity title = create_ui_text(
+		groups[(size_t)Groups::MainMenu], vec2(.5, .1), "PALETTE SWAP", Alignment::Center, Alignment::Start, 180);
 	registry.get<Text>(title).border = 24;
 	create_button(groups[(size_t)Groups::MainMenu],
 				  vec2(.5, .5),
@@ -166,13 +191,12 @@ Entity create_equip_slot(
 	return entity;
 }
 
-Entity create_ui_icon(Entity ui_group, ivec2 offset, vec2 texture_size, vec2 pos, vec2 size, UILayer layer) {
+Entity create_ui_icon(Entity ui_group, ivec2 offset, vec2 texture_size, vec2 pos, vec2 size, UILayer layer)
+{
 	Entity ui_item = registry.create();
 	registry.emplace<ScreenPosition>(ui_item, pos);
-	registry.emplace<UIRenderRequest>(ui_item,
-									  TEXTURE_ASSET_ID::ICONS,
-									  EFFECT_ASSET_ID::SPRITESHEET,
-									  GEOMETRY_BUFFER_ID::SPRITE, size);
+	registry.emplace<UIRenderRequest>(
+		ui_item, TEXTURE_ASSET_ID::ICONS, EFFECT_ASSET_ID::SPRITESHEET, GEOMETRY_BUFFER_ID::SPRITE, size);
 	registry.emplace<TextureOffset>(ui_item, offset, texture_size);
 	registry.emplace<Color>(ui_item, vec3(1));
 
@@ -212,16 +236,14 @@ Entity create_ui_text(Entity ui_group,
 	return entity;
 }
 
-Entity create_ui_tooltip(Entity ui_group,
-						 vec2 screen_position,
-						 const std::string_view& text,
-						 uint16 font_size)
+Entity create_ui_tooltip(Entity ui_group, vec2 screen_position, const std::string_view& text, uint16 font_size)
 {
 	Entity entity = registry.create();
 	registry.emplace<ScreenPosition>(entity, screen_position);
 	registry.emplace<Color>(entity, vec3(1.f));
 	registry.emplace<Text>(entity, std::string(text), font_size).border = 12;
-	UIGroup::add_element(ui_group, entity, registry.emplace<UIElement>(entity, ui_group, true), UILayer::TooltipContent);
+	UIGroup::add_element(
+		ui_group, entity, registry.emplace<UIElement>(entity, ui_group, true), UILayer::TooltipContent);
 	return entity;
 }
 
@@ -242,10 +264,16 @@ Entity create_button(Entity ui_group,
 					 ButtonAction action,
 					 Entity action_target,
 					 const std::string& text,
-					 uint16 font_size)
+					 uint16 font_size,
+					 Alignment alignment_x,
+					 Alignment alignment_y)
 {
 	Entity entity = create_ui_rectangle(ui_group, screen_pos, size);
-	Entity label = create_ui_text(ui_group, screen_pos, text, Alignment::Center, Alignment::Center, font_size);
+	UIRenderRequest& request = registry.get<UIRenderRequest>(entity);
+	request.alignment_x = alignment_x;
+	request.alignment_y = alignment_y;
+	vec2 text_pos = screen_pos + size * vec2((float)alignment_x, (float)alignment_y) * .5f;
+	Entity label = create_ui_text(ui_group, text_pos, text, Alignment::Center, Alignment::Center, font_size);
 	registry.emplace<Button>(entity, label, action, action_target);
 	registry.emplace<UIRectangle>(entity, 1.f, fill_color);
 	return entity;

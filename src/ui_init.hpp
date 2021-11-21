@@ -43,4 +43,6 @@ Entity create_button(Entity ui_group,
 					 ButtonAction action,
 					 Entity action_target,
 					 const std::string& text,
-					 uint16 font_size = 60);
+					 uint16 font_size = 60,
+					 Alignment alignment_x = Alignment::Center,
+					 Alignment alignment_y = Alignment::Center);

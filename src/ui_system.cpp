@@ -155,6 +155,8 @@ void UISystem::do_action(Button& button)
 {
 	switch (button.action) {
 	case ButtonAction::SwitchToGroup: {
+		try_settle_held();
+		destroy_tooltip();
 		for (auto [entity, group] : registry.view<UIGroup>().each()) {
 			group.visible = entity == button.action_target || entity == groups[(size_t)Groups::Tooltips];
 		}
