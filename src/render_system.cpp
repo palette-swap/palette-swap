@@ -688,7 +688,7 @@ void RenderSystem::draw_line(Entity entity, const Line& line, const mat3& projec
 	draw_triangles(transform, projection);
 }
 
-void RenderSystem::draw_map(const mat3& projection)
+void RenderSystem::draw_map(const mat3& projection, ColorState color)
 {
 	const auto program = (GLuint)effects.at((uint8)EFFECT_ASSET_ID::TILE_MAP);
 	gl_has_errors();
@@ -702,15 +702,17 @@ void RenderSystem::draw_map(const mat3& projection)
 	gl_has_errors();
 
 	glUseProgram(program);
+
+	glActiveTexture(GL_TEXTURE0);
+	gl_has_errors();
+	TEXTURE_ASSET_ID tex
+		= (color == ColorState::Blue) ? TEXTURE_ASSET_ID::TILE_SET_BLUE : TEXTURE_ASSET_ID::TILE_SET_RED;
+	GLuint texture_id = texture_gl_handles.at((GLuint)tex);
+	glBindTexture(GL_TEXTURE_2D, texture_id);
+	gl_has_errors();
 	for (auto [entity, room] : registry.view<Room>().each()) {
 		Transform transform = get_transform(entity);
-		transform.scale(scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::TILE_SET)));
-
-		glActiveTexture(GL_TEXTURE0);
-		gl_has_errors();
-		GLuint texture_id = texture_gl_handles.at((GLuint)TEXTURE_ASSET_ID::TILE_SET);
-		glBindTexture(GL_TEXTURE_2D, texture_id);
-		gl_has_errors();
+		transform.scale(scaling_factors.at(static_cast<int>(tex)));
 
 		const auto& room_layout = map_generator->get_room_layout(room.level, room.room_id);
 		GLint room_layout_loc = glGetUniformLocation(program, "room_layout");
@@ -827,7 +829,12 @@ void RenderSystem::draw()
 	gl_has_errors();
 	mat3 projection_2d = create_projection_matrix();
 
-	draw_map(projection_2d);
+	// Grabs player's perception of which colour is "inactive"
+	Entity player = registry.view<Player>().front();
+	PlayerInactivePerception& player_perception = registry.get<PlayerInactivePerception>(player);
+	ColorState& inactive_color = player_perception.inactive;
+
+	draw_map(projection_2d, inactive_color == ColorState::Blue ? ColorState::Red : ColorState::Blue);
 
 	// Draw any backgrounds
 	for (auto [entity, request] : registry.view<Background, RenderRequest>().each()) {
@@ -835,11 +842,6 @@ void RenderSystem::draw()
 			draw_textured_mesh(entity, request, projection_2d);
 		}
 	}
-
-	// Grabs player's perception of which colour is "inactive"
-	Entity player = registry.view<Player>().front();
-	PlayerInactivePerception& player_perception = registry.get<PlayerInactivePerception>(player);
-	ColorState& inactive_color = player_perception.inactive;
 
 	auto render_requests_lambda = [&](Entity entity, RenderRequest& render_request) {
 		if (render_request.visible) {

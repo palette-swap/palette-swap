@@ -49,7 +49,8 @@ class RenderSystem {
 			textures_path("./02-Bosses/King Mush/King Mush Spritesheet.png"),
 			textures_path("cannon_ball.png"),
 			textures_path("/01-Player/Spell Spritesheet.png"),
-			textures_path("tile_set.png"),
+			textures_path("tile_set_red.png"),
+			textures_path("tile_set_blue.png"),
 			textures_path("help.png"),
 			textures_path("End Screen.png"),
 			textures_path("Icons.png"),
@@ -171,7 +172,7 @@ private:
 	void draw_rectangle(Entity entity, Transform transform, vec2 scale, const mat3& projection);
 	void draw_text(Entity entity, const Text& text, const mat3& projection);
 	void draw_line(Entity entity, const Line& line, const mat3& projection);
-	void draw_map(const mat3& projection);
+	void draw_map(const mat3& projection, ColorState color);
 
 	void draw_triangles(const Transform& transform, const mat3& projection);
 	void draw_to_screen();
