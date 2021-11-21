@@ -123,18 +123,18 @@ public:
 	void trigger_aoe_attack_animation(const Entity& aoe);
 	// Triggers boss's range attacked display at the specified location
 	void boss_ranged_attack(EnemyType boss, uvec2 target_position);
+	// Generates the boss enemy entry animation
+	// DOES NOT CREATE AN ACTUAL BOSS ENTITY, JUST CREATES THE ENTRY ANIMATION ENTITY AT THE LOCATION GIVEN
+	Entity create_boss_entry_entity(EnemyType boss_type, uvec2 position);
+	// Triggers full boss animation for a specific entity
+	void trigger_full_boss_intro(Entity boss_entity);
 
 	// Returns a boolean denoting whether or not all "irregular animations" such as attack
 	// or damage calculations have been completed
 	bool animation_events_completed();
 
-	// Generates the boss enemy entry animation 
-	// DOES NOT CREATE AN ACTUAL BOSS ENTITY, JUST CREATES THE ENTRY ANIMATION ENTITY AT THE LOCATION GIVEN
-	Entity create_boss_entry_entity(EnemyType boss_type, uvec2 position);
-	// Triggers full boss animation for a specific entity
-	void trigger_full_boss_intro(Entity boss_entity);
-	// Initiates boss temporary animation state, to be returned to original state after completion of animation
-	void boss_event_animation(const Entity& boss, int event_state);
+
+
 
 private:
 	// helper function, checks event animation components to see if they should be removed, and animation states should
