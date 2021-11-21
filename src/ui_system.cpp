@@ -20,21 +20,18 @@ void UISystem::on_key(int key, int action, int /*mod*/)
 	}
 
 	// Change attack
-	// TODO: Generalize for many attacks, check out of bounds
 	// Key Codes for 1-9
 	if (49 <= key && key <= 57) {
-		if (key - 49 < 4) {
-			size_t index = ((size_t)key) - 49;
-			for (Slot slot : attacks_slots) {
-				Entity weapon_entity = Inventory::get(registry.view<Player>().front(), slot);
-				if (weapon_entity != entt::null) {
-					Weapon& weapon = registry.get<Weapon>(weapon_entity);
-					if (index < weapon.given_attacks.size()) {
-						set_current_attack(slot, index);
-						break;
-					}
-					index -= weapon.given_attacks.size();
+		size_t index = ((size_t)key) - 49;
+		for (Slot slot : attacks_slots) {
+			Entity weapon_entity = Inventory::get(registry.view<Player>().front(), slot);
+			if (weapon_entity != entt::null) {
+				Weapon& weapon = registry.get<Weapon>(weapon_entity);
+				if (index < weapon.given_attacks.size()) {
+					set_current_attack(slot, index);
+					break;
 				}
+				index -= weapon.given_attacks.size();
 			}
 		}
 	}
@@ -193,7 +190,7 @@ void UISystem::do_action(Button& button)
 	}
 }
 
-void UISystem::on_left_click(int action, dvec2 mouse_screen_pos)
+bool UISystem::on_left_click(int action, dvec2 mouse_screen_pos)
 {
 	if (action == GLFW_PRESS) {
 		for (auto [entity, draggable, element, screen_pos, interact_area] :
@@ -202,7 +199,7 @@ void UISystem::on_left_click(int action, dvec2 mouse_screen_pos)
 				&& Geometry::Rectangle(screen_pos.position, interact_area.size).contains(vec2(mouse_screen_pos))) {
 				held_under_mouse = entity;
 				destroy_tooltip();
-				return;
+				return true;
 			}
 		}
 		for (auto [entity, element, pos, request, button] :
@@ -215,12 +212,13 @@ void UISystem::on_left_click(int action, dvec2 mouse_screen_pos)
 			if (element.visible && registry.get<UIGroup>(element.group).visible
 				&& button_rect.contains(vec2(mouse_screen_pos))) {
 				do_action(button);
-				return;
+				return true;
 			}
 		}
 	} else if (action == GLFW_RELEASE && held_under_mouse != entt::null) {
 		try_settle_held();
 	}
+	return false;
 }
 
 void UISystem::on_mouse_move(vec2 mouse_screen_pos)

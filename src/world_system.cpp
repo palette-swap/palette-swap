@@ -589,9 +589,9 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 		// Get screen position of mouse
 		dvec2 mouse_screen_pixels_pos = {};
 		glfwGetCursorPos(window, &mouse_screen_pixels_pos.x, &mouse_screen_pixels_pos.y);
-		ui->on_left_click(action, mouse_screen_pixels_pos / dvec2(renderer->get_screen_size()));
+		bool used = ui->on_left_click(action, mouse_screen_pixels_pos / dvec2(renderer->get_screen_size()));
 
-		if (ui->player_can_act() && action == GLFW_PRESS) {
+		if (!used && ui->player_can_act() && action == GLFW_PRESS) {
 			if (turns->get_active_team() != player || !ui->has_current_attack()) {
 				return;
 			}
