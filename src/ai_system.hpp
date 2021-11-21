@@ -376,7 +376,6 @@ private:
 		{
 			// Selector - active
 			auto summon_enemies = std::make_unique<SummonEnemies>(EnemyType::Mushroom, 1);
-			ai->so_loud->play(ai->king_mush_summon_wav);
 			std::vector<ivec2> aoe_shape;
 			aoe_shape.push_back(ivec2(0, 0));
 			aoe_shape.push_back(ivec2(0, -1));

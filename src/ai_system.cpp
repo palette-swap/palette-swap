@@ -442,6 +442,8 @@ void AISystem::summon_enemies(const Entity& entity, EnemyType enemy_type, int nu
 			create_enemy(enemy.team, enemy_type, new_map_pos);
 		}
 	}
+
+	so_loud->play(king_mush_summon_wav);
 }
 
 void AISystem::release_aoe(const std::vector<Entity>& aoe)
