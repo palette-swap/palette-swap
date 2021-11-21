@@ -14,12 +14,12 @@
       "speed": 1,
       "attack_range": 1,
       "nest_position": {
-        "x": 30,
-        "y": 43
+        "x": 54,
+        "y": 45
       },
       "position": {
-        "x": 30,
-        "y": 43
+        "x": 54,
+        "y": 45
       },
       "stats": {
         "health": 100,
@@ -48,12 +48,12 @@
       "speed": 1,
       "attack_range": 1,
       "nest_position": {
-        "x": 30,
-        "y": 45
+        "x": 54,
+        "y": 47
       },
       "position": {
-        "x": 30,
-        "y": 45
+        "x": 54,
+        "y": 47
       },
       "stats": {
         "health": 100,

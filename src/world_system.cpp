@@ -120,7 +120,7 @@ GLFWwindow* WorldSystem::create_window(int width, int height)
 	bgm_blue_wav.setLooping(true);
 
 	light_sword_wav.load(audio_path("sword1.wav").c_str());
-	cannon_wav.load(audio_path("cannon.wav").c_str());
+	cannon_wav.load(audio_path("fireball.wav").c_str());
 
 	return window;
 }

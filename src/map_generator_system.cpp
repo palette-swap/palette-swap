@@ -214,7 +214,7 @@ void MapGeneratorSystem::create_picture()
 	help_picture = registry.create();
 
 	// Create and (empty) player component to be able to refer to other enttities
-	registry.emplace<WorldPosition>(help_picture, vec2(window_width_px / 2, window_height_px / 2));
+	registry.emplace<WorldPosition>(help_picture, vec2(window_width_px / 2 - 400, window_height_px / 2));
 
 	registry.emplace<RenderRequest>(
 		help_picture, TEXTURE_ASSET_ID::HELP_PIC, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE, true);
