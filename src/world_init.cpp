@@ -116,18 +116,20 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 		throw std::runtime_error("Invalid enemy type.");
 	}
 
+	Animation& enemy_animation = registry.emplace<Animation>(entity);
+	enemy_animation.max_frames = 4;
+
 	registry.emplace<RenderRequest>(
 		entity, enemy_type_textures.at(static_cast<int>(type)), EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);
 	if (team == ColorState::Red) {
-		registry.emplace<Color>(entity, AnimationUtility::default_enemy_red);
+		enemy_animation.display_color = vec4(AnimationUtility::default_enemy_red,1);
+		registry.emplace<RedExclusive>(entity);
 	} else if (team == ColorState::Blue) {
-		registry.emplace<Color>(entity, AnimationUtility::default_enemy_blue);
-	} else {
-		registry.emplace<Color>(entity, vec3(1, 1, 1));
+		enemy_animation.display_color = vec4(AnimationUtility::default_enemy_blue,1);
+		registry.emplace<BlueExclusive>(entity);
 	}
 
-	Animation& enemy_animation = registry.emplace<Animation>(entity);
-	enemy_animation.max_frames = 4;
+
 
 	return entity;
 }
