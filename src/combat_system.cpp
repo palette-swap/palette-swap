@@ -180,30 +180,33 @@ bool CombatSystem::do_attack(Entity attacker_entity, Attack& attack, Entity targ
 void CombatSystem::drop_loot(uvec2 position)
 {
 	// Initial Drop rates are as follows
-	// 1-3: Nothing
+	// 1-2: Nothing
+	//  3 : Mana Potion
 	// 4-5: Health Potion
 	// 6-9: Item Drop
 	// If all items have dropped, only drop health potions as follows:
-	// 1-6: Nothing
+	// 1-4: Nothing
+	// 5-6: Mana Potion
 	// 7-9: Health Potion
 
 	// This is tempered by increasing the floor by the number of consecutive misses
 	bool all_dropped = looted >= loot_list.size();
 	std::uniform_int_distribution<size_t> drop_chance(1 + loot_misses, 9);
 	size_t result = drop_chance(*rng);
-	if (result <= 3 || (all_dropped && result <= 6)) {
+	if (result <= 3 || (all_dropped && result <= 4)) {
 		loot_misses++;
 		return;
 	}
 	loot_misses = 0;
 	if (result <= 5 || all_dropped) {
-		// Health Potion
+		// Potion
 		Entity potion = registry.create();
-		registry.emplace<HealthPotion>(potion);
+		bool mana = (all_dropped && result <= 6) || (!all_dropped && result == 3);
+		registry.emplace<ResourcePickup>(potion, mana ? Resource::ManaPotion : Resource::HealthPotion);
 		registry.emplace<MapPosition>(potion, position);
 		registry.emplace<RenderRequest>(
 			potion, TEXTURE_ASSET_ID::ICONS, EFFECT_ASSET_ID::SPRITESHEET, GEOMETRY_BUFFER_ID::SPRITE, true);
-		registry.emplace<TextureOffset>(potion, ivec2(0,4), vec2(32,32));
+		registry.emplace<TextureOffset>(potion, ivec2(mana ? 1 : 0, 4), vec2(32, 32));
 		registry.emplace<Color>(potion, vec3(1));
 		return;
 	}
