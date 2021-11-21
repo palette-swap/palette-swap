@@ -47,6 +47,7 @@ class RenderSystem {
 			textures_path("./Spider/Spider Spritesheet.png"),
 			textures_path("./Clone/Clone Spritesheet.png"),
 			textures_path("./02-Bosses/King Mush/King Mush Spritesheet.png"),
+			textures_path("./02-Bosses/King Mush/King Mush Attack Spritesheet.png"),
 			textures_path("cannon_ball.png"),
 			textures_path("/01-Player/Spell Spritesheet.png"),
 			textures_path("tile_set.png"),
@@ -61,8 +62,9 @@ class RenderSystem {
 																 shader_path("player"),
 																 shader_path("health_bar"),
 																 shader_path("fancy_bar"),
-																 shader_path("textured"),
-																 shader_path("spell"),
+																 shader_path("textured"), 
+																 shader_path("spell"),		
+															     shader_path("aoe"),
 																 shader_path("water"),
 																 shader_path("tilemap") };
 

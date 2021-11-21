@@ -146,8 +146,11 @@ std::vector<Entity> create_aoe(const std::vector<uvec2>& aoe_area, const Stats& 
 		registry.emplace<Stats>(aoe_square, stats);
 
 		// TODO (Evan): Replace CANNONBALL with a suitable texture for a basic AOE.
-		registry.emplace<RenderRequest>(
-			aoe_square, TEXTURE_ASSET_ID::CANNONBALL, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE, true);
+		registry.emplace<EffectRenderRequest>(
+			aoe_square, TEXTURE_ASSET_ID::KING_MUSH_ATTACKS, EFFECT_ASSET_ID::AOE, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);
+
+		registry.emplace<Animation>(aoe_square);
+
 		registry.emplace<Color>(aoe_square, vec3(1, 0, 0));
 
 		aoe.push_back(aoe_square);

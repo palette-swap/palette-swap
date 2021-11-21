@@ -248,7 +248,6 @@ void RenderSystem::draw_effect(Entity entity, const EffectRenderRequest& render_
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 	gl_has_errors();
-	if (render_request.used_effect == EFFECT_ASSET_ID::SPELL) {
 
 		GLint in_position_loc = glGetAttribLocation(program, "in_position");
 		GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
@@ -287,6 +286,7 @@ void RenderSystem::draw_effect(Entity entity, const EffectRenderRequest& render_
 		GLint state_loc = glGetUniformLocation(program, "state");
 		glUniform1i(state_loc, animation.state);
 
+	if (render_request.used_effect == EFFECT_ASSET_ID::SPELL) {
 		// Updates frame for entity
 		GLint spell_loc = glGetUniformLocation(program, "spelltype");
 		glUniform1i(spell_loc, animation.state);
