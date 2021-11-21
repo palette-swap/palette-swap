@@ -142,6 +142,8 @@ static void smooth_room(RoomLayout& curr_layout, int iterations, const std::set<
 	};
 
 	for (int i = 0; i < iterations; i++) {
+		// each iteration is broken into two steps, smoothing out and shrinking
+		// 1. smooth room out based on neighbouring tiles
 		for (int tile_position = 0; tile_position < curr_layout.size(); tile_position++) {
 			if (critical_locations.find(tile_position) != critical_locations.end()
 				|| curr_layout.at(tile_position) == next_level_tile
@@ -150,14 +152,23 @@ static void smooth_room(RoomLayout& curr_layout, int iterations, const std::set<
 			}
 			int tile_row = tile_position / 10;
 			int tile_col = tile_position % 10;
-
 			int num_walls_around = get_neighbour_walls(tile_row, tile_col, curr_layout);
-			if (num_walls_around == 8 || can_become_void(tile_row, tile_col, curr_layout)) {
-				updated_layout.at(tile_position) = void_tile;
-			} else if (num_walls_around > 3) {
+
+			if (num_walls_around > 3) {
 				updated_layout.at(tile_position) = solid_block_tile;
 			} else {
 				updated_layout.at(tile_position) = floor_tile;
+			}
+		}
+
+		// 2. shrink room from outside
+		for (int tile_position = 0; tile_position < curr_layout.size(); tile_position++)  {
+			int tile_row = tile_position / 10;
+			int tile_col = tile_position % 10;
+			int num_walls_around = get_neighbour_walls(tile_row, tile_col, updated_layout);
+
+			if (num_walls_around == 8 || can_become_void(tile_row, tile_col, updated_layout)) {
+				updated_layout.at(tile_position) = void_tile;
 			}
 		}
 		curr_layout = updated_layout;
