@@ -58,7 +58,7 @@ void UISystem::restart_game()
 
 	// Menu
 	Entity title = create_ui_text(groups[(size_t)Groups::MainMenu], vec2(.5, .1), "PALETTE SWAP", Alignment::Center, Alignment::Start, 180);
-	registry.get<Text>(title).bubble = true;
+	registry.get<Text>(title).border = 24;
 	create_button(groups[(size_t)Groups::MainMenu],
 				  vec2(.5, .5),
 				  vec2(.1, .1),
@@ -196,7 +196,7 @@ Entity create_ui_tooltip(Entity ui_group,
 	Entity entity = registry.create();
 	registry.emplace<ScreenPosition>(entity, screen_position);
 	registry.emplace<Color>(entity, vec3(1.f));
-	registry.emplace<Text>(entity, std::string(text), font_size).bubble = true;
+	registry.emplace<Text>(entity, std::string(text), font_size).border = 12;
 	UIGroup::add_element(ui_group, entity, registry.emplace<UIElement>(entity, ui_group, true), UILayer::TooltipContent);
 	return entity;
 }

@@ -223,7 +223,6 @@ void UISystem::on_mouse_move(vec2 mouse_screen_pos)
 	auto create_tooltip = [&](Entity entity, Item& item, bool detailed) {
 		std::string text = item.get_description(detailed);
 		tooltip = create_ui_tooltip(groups[(size_t)Groups::Tooltips], mouse_screen_pos, text, 24u);
-		registry.get<Text>(tooltip).bubble = true;
 		registry.emplace<Tooltip>(tooltip, entity);
 		align_tooltip(mouse_screen_pos);
 	};

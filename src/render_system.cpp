@@ -591,7 +591,7 @@ void RenderSystem::draw_text(Entity entity, const Text& text, const mat3& projec
 
 	Transform transform = get_transform(entity);
 
-	const auto program = (GLuint)effects.at((text.bubble) ? (uint8)EFFECT_ASSET_ID::TEXT_BUBBLE : (uint8)EFFECT_ASSET_ID::TEXTURED);
+	const auto program = (GLuint)effects.at((text.border > 0) ? (uint8)EFFECT_ASSET_ID::TEXT_BUBBLE : (uint8)EFFECT_ASSET_ID::TEXTURED);
 
 	// Setting shaders
 	glUseProgram(program);
@@ -605,10 +605,7 @@ void RenderSystem::draw_text(Entity entity, const Text& text, const mat3& projec
 	}
 
 	// Scale to expected pixel size, apply screen scale so not affected by zoom
-	vec2 text_size = vec2(text_data->second.texture_width, text_data->second.texture_height);
-	if (text.bubble) {
-		text_size += vec2(32);
-	}
+	vec2 text_size = vec2(text_data->second.texture_width, text_data->second.texture_height) + 2.f * text.border;
 	transform.scale(text_size * screen_scale
 					* get_ui_scale_factor());
 
@@ -630,6 +627,12 @@ void RenderSystem::draw_text(Entity entity, const Text& text, const mat3& projec
 		GLint color_uloc = glGetUniformLocation(program, "fcolor");
 		const vec3 color = registry.get<Color>(entity).color;
 		glUniform3fv(color_uloc, 1, glm::value_ptr(color));
+		gl_has_errors();
+	}
+
+	if (text.border > 0) {
+		GLint border_uloc = glGetUniformLocation(program, "fborder");
+		glUniform1ui(border_uloc, text.border);
 		gl_has_errors();
 	}
 

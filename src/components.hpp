@@ -776,7 +776,7 @@ struct Text {
 	uint16 font_size;
 	Alignment alignment_x = Alignment::Center;
 	Alignment alignment_y = Alignment::Center;
-	bool bubble = false;
+	size_t border = 0;
 };
 
 extern bool operator==(const Text& t1, const Text& t2);

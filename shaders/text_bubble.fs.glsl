@@ -6,14 +6,14 @@ in vec2 texcoord;
 // Application data
 uniform sampler2D sampler0;
 uniform vec3 fcolor;
-
-const float border = 16;
+uniform uint fborder;
 
 // Output color
 layout(location = 0) out  vec4 color;
 
 void main()
 {
+	float border = fborder;
 	vec2 dist = abs(texcoord - vec2(.5)) * (textureSize(sampler0, 0) + vec2(2 * border));
 	vec2 max_size = textureSize(sampler0, 0) / 2.f;
 	vec2 difference = max_size - dist;
