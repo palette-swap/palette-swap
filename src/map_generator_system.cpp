@@ -258,30 +258,31 @@ bool MapGeneratorSystem::walkable(uvec2 pos) const
 
 bool MapGeneratorSystem::walkable_and_free(uvec2 pos, bool check_active_color) const
 {
+	ColorState active_color = turns->get_active_color();
+	return ((active_color == ColorState::Red) != check_active_color) ? walkable_and_free<RedExclusive>(pos)
+																	 : walkable_and_free<BlueExclusive>(pos);
+}
+
+template <typename ColorExclusive> bool MapGeneratorSystem::walkable_and_free(uvec2 pos) const
+{
 	if (!walkable(pos)) {
 		return false;
 	}
-	ColorState active_color = turns->get_active_color();
-	auto check_overlap = [pos](const Entity e) { return registry.get<MapPosition>(e).position == pos; };
-	auto check_big_overlap = [pos](const Entity e) {
-		auto it = MapArea(registry.get<MapPosition>(e), registry.get<MapSize>(e));
-		return std::any_of(it.begin(), it.end(), [pos](const uvec2& other_pos) { return pos == other_pos; });
-	};
-	if ((active_color == ColorState::Red) != check_active_color) {
-		auto view = registry.view<MapPosition>(entt::exclude<Player, RedExclusive, Item, ResourcePickup>);
-		if (std::any_of(view.begin(), view.end(), check_overlap)) {
+	for (auto [entity, map_pos] :
+		registry.view<MapPosition>(entt::exclude<Player, ColorExclusive, Item, ResourcePickup>).each()) {
+		if (map_pos.position == pos) {
 			return false;
 		}
-		auto big_view = registry.view<MapSize, MapPosition>(entt::exclude<Player, RedExclusive, Item, ResourcePickup>);
-		return !std::any_of(big_view.begin(), big_view.end(), check_big_overlap);
 	}
+	for (auto [entity, map_size, map_pos] :
+		registry.view<MapSize, MapPosition>(entt::exclude<Player, ColorExclusive, Item, ResourcePickup>).each()) {
+		auto it = MapArea(map_pos, map_size);
+		if (std::any_of(it.begin(), it.end(), [pos](const uvec2& other_pos) { return pos == other_pos; })) {
+			return false;
+		}
+	}
+	return true;
 
-	auto view = registry.view<MapPosition>(entt::exclude<Player, BlueExclusive, Item, ResourcePickup>);
-	if (std::any_of(view.begin(), view.end(), check_overlap)) {
-		return false;
-	}
-	auto big_view = registry.view<MapSize, MapPosition>(entt::exclude<Player, BlueExclusive, Item, ResourcePickup>);
-	return !std::any_of(big_view.begin(), big_view.end(), check_big_overlap);
 }
 
 bool MapGeneratorSystem::is_wall(uvec2 pos) const
