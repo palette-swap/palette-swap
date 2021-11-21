@@ -127,6 +127,9 @@ private:
 	// helper function, checks that transient event animation to see if complete. If complete, the ENTITY ASSOCIATED
 	// WITH THE TRANSIENT EFFECT IS REMOVED;
 	void resolve_transient_event_animations();
+	// helper function, checks undisplay event animations to see if complete, If complete, the entity stops displaying 
+	// after completion of a single animation cycle
+	void resolve_undisplay_event_animations();
 	// helper function for setting animation events
 	void animation_event_setup(Animation& animation, EventAnimation& EventAnimation, vec4& color);
 };

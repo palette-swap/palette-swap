@@ -597,6 +597,11 @@ struct TransientEventAnimation {
 	int frame = 0;
 };
 
+// Denotes that an animation event should stop being displayed after completion, but not erased
+struct UndisplayEventAnimation {
+	int frame = 0;
+};
+
 // Denotes that an entity has an textured asset, and should be rendered after regular assets (such as player/enemy)
 struct EffectRenderRequest {
 	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
@@ -612,6 +617,10 @@ const std::array<int, (size_t)DamageType::Count> damage_type_to_spell_impact = {
 	5, // Ice effect
 	6, // Earth effect
 	7, // Wind effect
+};
+
+const std::map<EnemyType, TEXTURE_ASSET_ID> boss_type_attack_spritesheet { 
+	{ EnemyType::KingMush, TEXTURE_ASSET_ID::KING_MUSH_ATTACKS } 
 };
 //---------------------------------------------------------------------------
 //-------------------------		    Physics         -------------------------

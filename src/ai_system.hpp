@@ -201,8 +201,10 @@ private:
 				aoe_stats.base_attack.damage_max *= 2;
 				aoe_stats.damage_bonus *= 2;
 
+				Enemy enemy = registry.get<Enemy>(e);
+				
 				// Create AOE.
-				m_aoe = create_aoe(aoe_area, aoe_stats);
+				m_aoe = create_aoe(aoe_area, aoe_stats, enemy.type);
 				
 				ai->switch_enemy_state(e, EnemyState::Charging);
 

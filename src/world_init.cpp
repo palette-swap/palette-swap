@@ -132,7 +132,7 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 	return entity;
 }
 
-std::vector<Entity> create_aoe(const std::vector<uvec2>& aoe_area, const Stats& stats)
+std::vector<Entity> create_aoe(const std::vector<uvec2>& aoe_area, const Stats& stats, EnemyType enemy_type)
 {
 	std::vector<Entity> aoe;
 
@@ -147,7 +147,7 @@ std::vector<Entity> create_aoe(const std::vector<uvec2>& aoe_area, const Stats& 
 
 		// TODO (Evan): Replace CANNONBALL with a suitable texture for a basic AOE.
 		registry.emplace<EffectRenderRequest>(
-			aoe_square, TEXTURE_ASSET_ID::KING_MUSH_ATTACKS, EFFECT_ASSET_ID::AOE, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);
+			aoe_square, boss_type_attack_spritesheet.at(enemy_type), EFFECT_ASSET_ID::AOE, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);
 
 		registry.emplace<Animation>(aoe_square);
 
