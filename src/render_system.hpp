@@ -66,6 +66,7 @@ class RenderSystem {
 		shader_path("health_bar"),
 		shader_path("fancy_bar"),
 		shader_path("textured"),
+		shader_path("spritesheet"),
 		shader_path("spell"),
 		shader_path("water"),
 		shader_path("tilemap"),
@@ -105,7 +106,7 @@ public:
 	// Destroy resources associated to one or all entities created by the system
 	~RenderSystem();
 
-	RenderSystem(Debug & debugging);
+	explicit RenderSystem(Debug & debugging);
 	RenderSystem(const RenderSystem&) = delete; // copy constructor
 	RenderSystem& operator=(const RenderSystem&) = delete; // copy assignment
 	RenderSystem(RenderSystem&&) = delete; // move constructor
@@ -118,6 +119,7 @@ public:
 	void draw_ui(const mat3& projection);
 
 	mat3 create_projection_matrix();
+	vec2 mouse_position_to_world_position(dvec2 mouse_pos);
 	vec2 screen_position_to_world_position(vec2 screen_pos);
 
 	// WorldSystem callbacks for window changes

@@ -455,9 +455,10 @@ void WorldSystem::check_debug_keys(int key, int action, int mod)
 // TODO: Integrate into turn state to only enable if player's turn is on
 void WorldSystem::on_mouse_move(vec2 mouse_position)
 {
+	vec2 mouse_screen_pos = mouse_position / renderer->get_screen_size();
 	if (ui->player_can_act() && !player_arrow_fired) {
 
-		vec2 mouse_world_position = renderer->screen_position_to_world_position(mouse_position);
+		vec2 mouse_world_position = renderer->screen_position_to_world_position(mouse_screen_pos);
 
 		Velocity& arrow_velocity = registry.get<Velocity>(player_arrow);
 		WorldPosition& arrow_position = registry.get<WorldPosition>(player_arrow);
@@ -476,7 +477,7 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 		arrow_velocity.angle = atan2(eucl_diff.x, -eucl_diff.y);
 	}
 
-	ui->on_mouse_move(mouse_position / renderer->get_screen_size());
+	ui->on_mouse_move(mouse_screen_pos);
 }
 
 void WorldSystem::move_player(Direction direction)
@@ -564,9 +565,9 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 {
 	if (button == GLFW_MOUSE_BUTTON_LEFT) {
 		// Get screen position of mouse
-		dvec2 mouse_screen_pos = {};
-		glfwGetCursorPos(window, &mouse_screen_pos.x, &mouse_screen_pos.y);
-		ui->on_left_click(action, mouse_screen_pos / dvec2(renderer->get_screen_size()));
+		dvec2 mouse_screen_pixels_pos = {};
+		glfwGetCursorPos(window, &mouse_screen_pixels_pos.x, &mouse_screen_pixels_pos.y);
+		ui->on_left_click(action, mouse_screen_pixels_pos / dvec2(renderer->get_screen_size()));
 
 		if (ui->player_can_act() && action == GLFW_PRESS) {
 			if (turns->get_active_team() != player || !ui->has_current_attack()) {
@@ -622,12 +623,12 @@ void WorldSystem::try_adjacent_attack(Attack& attack)
 	if (!turns->ready_to_act(player)) {
 		return;
 	}
-	// Get screen position of mouse
-	dvec2 mouse_screen_pos = {};
-	glfwGetCursorPos(window, &mouse_screen_pos.x, &mouse_screen_pos.y);
+	// Get position of mouse
+	dvec2 mouse_pos = {};
+	glfwGetCursorPos(window, &mouse_pos.x, &mouse_pos.y);
 
 	// Convert to world pos
-	vec2 mouse_world_pos = renderer->screen_position_to_world_position(mouse_screen_pos);
+	vec2 mouse_world_pos = renderer->mouse_position_to_world_position(mouse_pos);
 
 	// Get map_positions to compare
 	uvec2 mouse_map_pos = MapUtility::world_position_to_map_position(mouse_world_pos);

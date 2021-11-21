@@ -22,7 +22,7 @@ Transform RenderSystem::get_transform(Entity entity)
 		}
 	} else {
 		transform.translate(
-			screen_position_to_world_position(registry.get<ScreenPosition>(entity).position * vec2(screen_size)));
+			screen_position_to_world_position(registry.get<ScreenPosition>(entity).position));
 	}
 	return transform;
 }
@@ -38,7 +38,7 @@ Transform RenderSystem::get_transform_no_rotation(Entity entity)
 		// Arrow, Room.
 		transform.translate(registry.get<WorldPosition>(entity).position);
 	} else {
-		transform.translate(screen_position_to_world_position(registry.get<ScreenPosition>(entity).position * vec2(screen_size)));
+		transform.translate(screen_position_to_world_position(registry.get<ScreenPosition>(entity).position));
 	}
 	return transform;
 }
@@ -866,7 +866,7 @@ void RenderSystem::draw_ui(const mat3& projection)
 			if (!group.visible) {
 				continue;
 			}
-			draw_list(group.first_elements[layer]);
+			draw_list(group.first_elements.at(layer));
 		}
 	}
 
@@ -921,7 +921,7 @@ float RenderSystem::get_ui_scale_factor() const
 
 vec2 RenderSystem::screen_position_to_world_position(vec2 screen_pos)
 {
-	return screen_pos * screen_scale + get_window_bounds().first;
+	return screen_pos * screen_scale * vec2(screen_size) + get_window_bounds().first;
 }
 
 void RenderSystem::scale_on_scroll(float offset)
