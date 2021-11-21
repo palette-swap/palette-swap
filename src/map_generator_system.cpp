@@ -170,7 +170,7 @@ static void load_enemy(unsigned int enemy_index, const rapidjson::Document& json
 	enemy_component.behaviour = enemy_type_to_behaviour.at(static_cast<int>(enemy_component.type));
 
 	MapPosition& map_position_component = registry.emplace<MapPosition>(entity, uvec2(0, 0));
-	map_position_component.deserialize(enemy_prefix, json_doc);
+	map_position_component.deserialize(entity, enemy_prefix, json_doc);
 
 	Stats& stats = registry.emplace<Stats>(entity);
 	stats.deserialize(enemy_prefix + "/stats", json_doc);
@@ -463,7 +463,8 @@ void MapGeneratorSystem::load_level(int level)
 	}
 
 	// update player position
-	registry.get<MapPosition>(registry.view<Player>().front()).deserialize("/player", json_doc);
+	Entity player = registry.view<Player>().front();
+	registry.get<MapPosition>(player).deserialize(player , "/player", json_doc);
 
 	if (level == 0) {
 		if (!registry.valid(help_picture) || !registry.any_of<RenderRequest>(help_picture)) {

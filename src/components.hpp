@@ -673,7 +673,7 @@ struct MapPosition {
 	};
 
 	void serialize(const std::string& prefix, rapidjson::Document& json) const;
-	void deserialize(const std::string& prefix, const rapidjson::Document& json);
+	void deserialize(Entity entity, const std::string& prefix, const rapidjson::Document& json);
 };
 
 struct MapSize {

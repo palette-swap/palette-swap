@@ -137,12 +137,20 @@ void MapPosition::serialize(const std::string& prefix, rapidjson::Document& json
 	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/position/y").c_str()), position.y);
 }
 
-void MapPosition::deserialize(const std::string& prefix, const rapidjson::Document& json)
+void MapPosition::deserialize(Entity entity, const std::string& prefix, const rapidjson::Document& json)
 {
 	const auto* position_x = get_and_assert_value_from_json(prefix + "/position/x", json);
 	position.x = position_x->GetInt();
 	const auto* position_y = get_and_assert_value_from_json(prefix + "/position/y", json);
 	position.y = position_y->GetInt();
+	const auto* location = get_and_assert_value_from_json(prefix, json);
+	if (location->HasMember("tile_area") && location->HasMember("tile_center")) {
+		uvec2 area = { get_and_assert_value_from_json(prefix + "/tile_area/0", json)->GetUint(),
+					   get_and_assert_value_from_json(prefix + "/tile_area/1", json)->GetUint() };
+		uvec2 center = { get_and_assert_value_from_json(prefix + "/tile_center/0", json)->GetUint(),
+						 get_and_assert_value_from_json(prefix + "/tile_center/1", json)->GetUint() };
+		registry.emplace<MapSize>(entity, area, center);
+	}
 }
 
 void Enemy::serialize(const std::string& prefix, rapidjson::Document& json) const
