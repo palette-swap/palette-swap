@@ -143,39 +143,85 @@ RenderSystem::TextData RenderSystem::generate_text(const Text& text)
 				   .first->second;
 	}
 
-	// Render the text using SDL
-	SDL_Surface* surface
-		= TTF_RenderText_Blended_Wrapped(font, text.text.c_str(), SDL_Color({ 255, 255, 255, 0 }), screen_size.x);
-	SDL_LockSurface(surface);
-	text_data.texture_width = surface->w;
-	text_data.texture_height = surface->h;
-	if (surface == nullptr) {
-		fprintf(stderr, "Error TTF_RenderText %s\n", text.text.c_str());
-		return text_data;
+	const std::string& string = text.text;
+
+	size_t start = 0;
+	size_t end = string.find('\n');
+	std::vector<SDL_Surface*> surfaces;
+	while (true) {
+		if (start == end) {
+			start = end + 1;
+			end = string.find('\n', start);
+			continue;
+		}
+
+		// Render the text using SDL
+		SDL_Surface* surface = TTF_RenderText_Blended_Wrapped(
+			font, string.substr(start, (end == -1) ? end : end - start).c_str(), SDL_Color({ 255, 255, 255, 255 }), static_cast<Uint32>(screen_size.x));
+		text_data.texture_width = max(text_data.texture_width, surface->w);
+		text_data.texture_height += surface->h;
+		if (surface == nullptr) {
+			fprintf(stderr, "Error TTF_RenderText %s\n", text.text.c_str());
+			return text_data;
+		}
+		surfaces.push_back(surface);
+
+		if (end == -1) {
+			break;
+		}
+		start = end + 1;
+		end = string.find('\n', start);
 	}
-	GLint colors = surface->format->BytesPerPixel;
-	assert(colors == 3 || colors == 4);
+
+	void* pixels = nullptr;
+
+	if (surfaces.size() == 1) {
+		SDL_LockSurface(surfaces.at(0));
+		pixels = surfaces.at(0)->pixels;
+	} else {
+		// Combine lines of text into one larger texture
+		auto* texture = new uint32[text_data.texture_width * text_data.texture_height];
+		int curr_height = 0;
+		for (auto* surface : surfaces) {
+			SDL_LockSurface(surface);
+			for (int y = 0; y < surface->h; y++) {
+				// The fix to this lint complaint requires C++ 20, don't really want to go there just yet
+				for (int x = 0; x < surface->w; x++) {
+					texture[x + (y + curr_height) * text_data.texture_width]
+						= static_cast<uint32*>(surface->pixels)[x + y * surface->w];
+				}
+				for (int x = surface->w; x < text_data.texture_width; x++) {
+					texture[x + (y + curr_height) * text_data.texture_width] = 0;
+				}
+			}
+			curr_height += surface->h;
+			SDL_FreeSurface(surface);
+		}
+		pixels = texture;
+	}
 
 	// Extract the SDL image data into the texture
 	glBindTexture(GL_TEXTURE_2D, text_data.texture);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	glTexImage2D(GL_TEXTURE_2D,
 				 0,
-				 (colors == 4) ? GL_RGBA : GL_RGB,
+				 GL_RGBA,
 				 text_data.texture_width,
 				 text_data.texture_height,
 				 0,
-				 (colors == 4) ? GL_RGBA : GL_RGB,
-				 GL_UNSIGNED_BYTE,
-				 surface->pixels);
+				 GL_BGRA,
+				 GL_UNSIGNED_INT_8_8_8_8_REV,
+				 pixels);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	gl_has_errors();
 
-	// Free the SDL Image
-	SDL_FreeSurface(surface);
+	// Free single surface
+	if (surfaces.size() == 1) {
+		SDL_FreeSurface(surfaces.at(0));
+	}
 	return text_data;
 }
 
@@ -893,6 +939,15 @@ mat3 RenderSystem::create_projection_matrix()
 	return { { sx, 0.f, 0.f }, { 0.f, sy, 0.f }, { tx, ty, 1.f } };
 }
 
+vec2 RenderSystem::mouse_position_to_world_position(dvec2 mouse_pos) {
+	return screen_position_to_world_position(vec2(mouse_pos) / vec2(screen_size));
+}
+
+vec2 RenderSystem::screen_position_to_world_position(vec2 screen_pos)
+{
+	return screen_pos * screen_scale * vec2(screen_size) + get_window_bounds().first;
+}
+
 std::pair<vec2, vec2> RenderSystem::get_window_bounds()
 {
 	vec2 window_size = vec2(screen_size) * screen_scale;
@@ -917,11 +972,6 @@ float RenderSystem::get_ui_scale_factor() const
 {
 	vec2 ratios = vec2(screen_size) / vec2(window_default_size);
 	return min(ratios.x, ratios.y);
-}
-
-vec2 RenderSystem::screen_position_to_world_position(vec2 screen_pos)
-{
-	return screen_pos * screen_scale * vec2(screen_size) + get_window_bounds().first;
 }
 
 void RenderSystem::scale_on_scroll(float offset)
