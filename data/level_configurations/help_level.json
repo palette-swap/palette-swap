@@ -14,11 +14,11 @@
       "speed": 0,
       "attack_range": 0,
       "nest_position": {
-        "x": 24,
+        "x": 54,
         "y": 43
       },
       "position": {
-        "x": 24,
+        "x": 54,
         "y": 43
       },
       "stats": {
@@ -48,11 +48,11 @@
       "speed": 0,
       "attack_range": 0,
       "nest_position": {
-        "x": 24,
+        "x": 54,
         "y": 45
       },
       "position": {
-        "x": 24,
+        "x": 54,
         "y": 45
       },
       "stats": {
@@ -82,11 +82,11 @@
       "speed": 0,
       "attack_range": 0,
       "nest_position": {
-        "x": 32,
+        "x": 62,
         "y": 44
       },
       "position": {
-        "x": 32,
+        "x": 62,
         "y": 44
       },
       "stats": {
@@ -116,11 +116,11 @@
       "speed": 0,
       "attack_range": 0,
       "nest_position": {
-        "x": 24,
+        "x": 54,
         "y": 47
       },
       "position": {
-        "x": 24,
+        "x": 54,
         "y": 47
       },
       "stats": {
@@ -150,11 +150,11 @@
       "speed": 0,
       "attack_range": 0,
       "nest_position": {
-        "x": 24,
+        "x": 54,
         "y": 49
       },
       "position": {
-        "x": 24,
+        "x": 54,
         "y": 49
       },
       "stats": {
@@ -184,11 +184,11 @@
       "speed": 0,
       "attack_range": 0,
       "nest_position": {
-        "x": 32,
+        "x": 62,
         "y": 48
       },
       "position": {
-        "x": 32,
+        "x": 62,
         "y": 48
       },
       "stats": {
