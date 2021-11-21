@@ -31,6 +31,10 @@ static constexpr float player_blue_red_switch_speed = 1;
 
 // Used for boss action speeds
 static constexpr float boss_action_speed = 0.5f;
+static constexpr int boss_aoe_state = 0;
+static constexpr int boss_ranged_attack_state = 1;
+static constexpr int boss_ranged_attack_total_frames = 8;
+static constexpr float boss_ranged_attack_speed = 2.f;
 
 // Used for spell animation details
 static constexpr float player_spell_animation_speed = 3.f;
@@ -111,21 +115,27 @@ public:
 	// Sets a spell effect at the enemy's location
 	void player_spell_impact_animation(const Entity& enemy, DamageType spelltype);
 	
+	// Initiates boss temporary animation state, to be returned to original state after completion of animation
+	void boss_event_animation(const Entity& boss, int event_state);
+	// Triggers the actual animation for an entity's aoe attack
+	void trigger_aoe_attack_animation(const Entity& aoe);
+	// Triggers boss's range attacked display at the specified location
+	void boss_ranged_attack(EnemyType boss, uvec2 target_position);
+
 	// Returns a boolean denoting whether or not all "irregular animations" such as attack
 	// or damage calculations have been completed
 	bool animation_events_completed();
 
-	// Initiates boss temporary animation state, to be returned to original state after completion of animation
-
-	void boss_event_animation(const Entity& boss, int event_state);
-
-private:
+	private:
 	// helper function, checks event animation components to see if they should be removed, and animation states should
 	// be restored
 	void resolve_event_animations();
 	// helper function, checks that transient event animation to see if complete. If complete, the ENTITY ASSOCIATED
 	// WITH THE TRANSIENT EFFECT IS REMOVED;
 	void resolve_transient_event_animations();
+	// helper function, checks undisplay event animations to see if complete, If complete, the entity stops displaying 
+	// after completion of a single animation cycle
+	void resolve_undisplay_event_animations();
 	// helper function for setting animation events
 	void animation_event_setup(Animation& animation, EventAnimation& EventAnimation, vec4& color);
 };
