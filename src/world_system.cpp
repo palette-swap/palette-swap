@@ -265,6 +265,7 @@ void WorldSystem::handle_collisions()
 				Enemy& enemy = registry.get<Enemy>(entity_other);
 				ColorState enemy_color = enemy.team;
 				if (enemy_color != turns->get_inactive_color() && ui->has_current_attack()) {
+					animations->player_spell_impact_animation(entity_other, ui->get_current_attack().damage_type);
 					combat->do_attack(player, ui->get_current_attack(), entity_other);
 				}
 			}
@@ -296,28 +297,40 @@ void WorldSystem::return_arrow_to_player()
 void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 {
 	ui->on_key(key, action, mod);
-	
+
+	check_debug_keys(key, action, mod);
+	if (!ui->player_can_act()) {
+		return;
+	}
+
 	if (story->in_cutscene()) {
 		story->on_key(key, action, mod);
 		return;
 	}
+	// Sets player's attack/player arrow to the be the correct state
 
-	check_debug_keys(key, action, mod);
-	if (ui->player_can_act()) {
-		if (turns && action != GLFW_RELEASE) {
+	if (turns->ready_to_act(player)) {
+		if (!ui->has_current_attack()) {
+			animations->player_idle_animation(player);
+		} else {
+			Attack& current_attack = ui->get_current_attack();
+			EffectRenderRequest& arrow_render = registry.get<EffectRenderRequest>(player_arrow);
 
-			if (key == GLFW_KEY_D) {
-				move_player(Direction::Right);
+			if (current_attack.damage_type == DamageType::Physical) {
+				animations->player_idle_animation(player);
+				arrow_render.visible = false;
+			} else {
+				animations->player_spellcast_animation(player);
+				animations->player_toggle_spell(player_arrow, static_cast<int>(current_attack.damage_type) - 1);
+				arrow_render.visible = true;
 			}
-			if (key == GLFW_KEY_A) {
-				move_player(Direction::Left);
-			}
-			if (key == GLFW_KEY_W) {
-				move_player(Direction::Up);
-			}
-			if (key == GLFW_KEY_S) {
-				move_player(Direction::Down);
-			}
+		}
+	}
+
+
+	if (action != GLFW_RELEASE) {
+		if (key == GLFW_KEY_D) {
+			move_player(Direction::Right);
 		}
 		if (key == GLFW_KEY_A) {
 			move_player(Direction::Left);
@@ -328,11 +341,12 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		if (key == GLFW_KEY_S) {
 			move_player(Direction::Down);
 		}
+	}
+
+	if (action == GLFW_RELEASE && key == GLFW_KEY_SPACE) {
+		change_color();
 	} else {
 		switch (key) {
-		case GLFW_KEY_SPACE:
-			change_color();
-			break;
 		case GLFW_KEY_LEFT_SHIFT:
 			if (turns->ready_to_act(player) && combat->try_pickup_items(player)) {
 				turns->skip_team_action(player);
@@ -356,7 +370,6 @@ void WorldSystem::check_debug_keys(int key, int action, int mod)
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_ALT) != 0 && key == GLFW_KEY_R) {
 		// int w, h;
 		// glfwGetWindowSize(window, &w, &h);
-
 		restart_game();
 	}
 
@@ -469,7 +482,7 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 		vec2 eucl_diff = mouse_world_position - player_screen_position;
 
 		// Calculates arrow position based on position of mouse relative to player
-		vec2 new_arrow_position = normalize(eucl_diff) * 20.f + player_screen_position;
+		vec2 new_arrow_position = normalize(eucl_diff) * spell_distance_from_player + player_screen_position;
 		arrow_position.position = new_arrow_position;
 
 		// Calculates arrow angle based on position of mouse

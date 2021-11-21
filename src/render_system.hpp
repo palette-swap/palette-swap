@@ -49,6 +49,7 @@ class RenderSystem {
 			textures_path("./02-Bosses/King Mush/King Mush Spritesheet.png"),
 			textures_path("./02-Bosses/King Mush/King Mush Entry Animation.png"),
 			textures_path("cannon_ball.png"),
+			textures_path("/01-Player/Spell Spritesheet.png"),
 			textures_path("tile_set.png"),
 			textures_path("help.png"),
 			textures_path("End Screen.png") };
@@ -63,11 +64,11 @@ class RenderSystem {
 		shader_path("boss_intro"),
 		shader_path("health_bar"),
 		shader_path("fancy_bar"),
-		shader_path("textured"), 
+		shader_path("textured"),
+		shader_path("spell"),
 		shader_path("water"),		
 		shader_path("tilemap"),
-	};
-
+	}
 	// TODO: move these constants into animation system most likely, need to finalize
 	// hierachy between animation and render system
 	// Filler for experimental spritesheet dimensions (3 rows and 4 columns)
@@ -147,6 +148,8 @@ private:
 	float get_ui_scale_factor() const;
 	// Helper to get position transform
 	Transform get_transform(Entity entity);
+	// Helper to get position transform without rotation
+	Transform get_transform_no_rotation(Entity entity);
 
 	// Helper to ready to draw the Textured effect
 	void prepare_for_textured(GLuint texture_id);
@@ -158,6 +161,7 @@ private:
 	////////////////////////////////////////////////////////
 	// Internal drawing functions for each entity type
 	void draw_textured_mesh(Entity entity, const RenderRequest& render_request, const mat3& projection);
+	void draw_effect(Entity entity, const EffectRenderRequest& render_request, const mat3& projection);
 	void draw_ui_element(Entity entity, const UIRenderRequest& ui_render_request, const mat3& projection);
 	void draw_stat_bar(
 		Transform transform, const Stats& stats, const mat3& projection, bool fancy, float ratio, Entity entity);
