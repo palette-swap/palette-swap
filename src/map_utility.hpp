@@ -114,11 +114,9 @@ struct MapArea {
 	MapAreaIterator end()
 	{
 		uvec2 current_pos;
-		current_pos.x = (map_pos.position.x + map_size.area.x - 1 >= map_size.center.x)
-			? map_pos.position.x + map_size.area.x - 1 - map_size.center.x
-			: 0;
-		current_pos.y = (map_pos.position.y + map_size.area.y - 1 >= map_size.center.y)
-			? map_pos.position.y + map_size.area.y - 1 - map_size.center.y
+		current_pos.x = (map_pos.position.x >= map_size.center.x) ? map_pos.position.x - map_size.center.x : 0;
+		current_pos.y = (map_pos.position.y + map_size.area.y >= map_size.center.y)
+			? map_pos.position.y + map_size.area.y - map_size.center.y
 			: 0;
 		return MapAreaIterator(current_pos.x - map_size.area.x + 1, current_pos.x, current_pos);
 	}
