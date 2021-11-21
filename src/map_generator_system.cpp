@@ -483,6 +483,12 @@ void MapGeneratorSystem::clear_level() const
 	auto enemy_view = registry.view<Enemy>();
 	registry.destroy(enemy_view.begin(), enemy_view.end());
 
+	// Clear the drops
+	auto item_view = registry.view<Item>();
+	registry.destroy(item_view.begin(), item_view.end());
+	auto pickup_view = registry.view<ResourcePickup>();
+	registry.destroy(pickup_view.begin(), pickup_view.end());
+
 	if (current_level == 0) {
 		if (registry.valid(help_picture) && registry.any_of<RenderRequest>(help_picture)) {
 			registry.get<RenderRequest>(help_picture).visible = false;
