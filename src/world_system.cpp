@@ -39,6 +39,7 @@ WorldSystem::WorldSystem(Debug& debugging,
 	this->combat->init(rng, this->animations, this->map_generator);
 	this->combat->on_pickup([this](const Entity& item, size_t slot) { this->ui->add_to_inventory(item, slot); });
 	this->combat->on_death([this](const Entity& entity) { this->ui->update_resource_count(); });
+	this->ui->on_show_world([this]() { return_arrow_to_player(); });
 }
 
 WorldSystem::~WorldSystem()
@@ -406,8 +407,10 @@ void WorldSystem::check_debug_keys(int key, int action, int mod)
 	// for debugging levels
 	if (key == GLFW_KEY_N && (mod & GLFW_MOD_CONTROL) != 0 && action == GLFW_RELEASE) {
 		map_generator->load_next_level();
+		return_arrow_to_player();
 	} else if (key == GLFW_KEY_B && (mod & GLFW_MOD_CONTROL) != 0 && action == GLFW_RELEASE) {
 		map_generator->load_last_level();
+		return_arrow_to_player();
 	}
 
 	if (is_editing_map) {

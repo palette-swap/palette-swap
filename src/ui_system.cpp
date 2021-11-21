@@ -8,18 +8,14 @@ void UISystem::on_key(int key, int action, int /*mod*/)
 {
 	if (!registry.get<UIGroup>(groups[(size_t)Groups::MainMenu]).visible) {
 		if (action == GLFW_PRESS && key == GLFW_KEY_I) {
-			try_settle_held();
-			destroy_tooltip();
-			UIGroup& group = registry.get<UIGroup>(groups[(size_t)Groups::Inventory]);
-			group.visible = !group.visible;
-			registry.get<UIGroup>(groups[(size_t)Groups::HUD]).visible = !group.visible;
+			if (player_can_act()) {
+				switch_to_group(groups[(size_t)Groups::Inventory]);
+			} else {
+				switch_to_group(groups[(size_t)Groups::HUD]);
+			}
 		}
 		if (action == GLFW_PRESS && key == GLFW_KEY_ESCAPE) {
-			try_settle_held();
-			destroy_tooltip();
-			UIGroup& group = registry.get<UIGroup>(groups[(size_t)Groups::Inventory]);
-			group.visible = false;
-			registry.get<UIGroup>(groups[(size_t)Groups::HUD]).visible = true;
+			switch_to_group(groups[(size_t)Groups::HUD]);
 		}
 	}
 
@@ -69,6 +65,20 @@ void UISystem::try_settle_held()
 		held_pos.position = container_pos.position;
 	}
 	held_under_mouse = entt::null;
+}
+
+void UISystem::switch_to_group(Entity group)
+{
+	try_settle_held();
+	destroy_tooltip();
+	for (auto [entity, other_group] : registry.view<UIGroup>().each()) {
+		other_group.visible = entity == group || entity == groups[(size_t)Groups::Tooltips];
+	}
+	if (group == groups[(size_t)Groups::HUD]) {
+		for (auto& callback : show_world_callbacks) {
+			callback();
+		}
+	}
 }
 
 void UISystem::destroy_tooltip()
@@ -155,11 +165,7 @@ void UISystem::do_action(Button& button)
 {
 	switch (button.action) {
 	case ButtonAction::SwitchToGroup: {
-		try_settle_held();
-		destroy_tooltip();
-		for (auto [entity, group] : registry.view<UIGroup>().each()) {
-			group.visible = entity == button.action_target || entity == groups[(size_t)Groups::Tooltips];
-		}
+		switch_to_group(button.action_target);
 		break;
 	}
 	case ButtonAction::TryHeal:
@@ -300,6 +306,11 @@ Attack& UISystem::get_current_attack()
 {
 	return registry.get<Weapon>(Inventory::get(registry.view<Player>().front(), current_attack_slot))
 		.get_attack(current_attack);
+}
+
+void UISystem::on_show_world(const std::function<void()>& on_show_world_callback)
+{
+	show_world_callbacks.push_back(on_show_world_callback);
 }
 
 void UISystem::add_to_inventory(Entity item, size_t slot)

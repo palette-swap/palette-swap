@@ -20,11 +20,15 @@ public:
 	bool has_current_attack() const;
 	Attack& get_current_attack();
 
+	void on_show_world(const std::function<void()>& on_show_world_callback);
+
 	void add_to_inventory(Entity item, size_t slot);
 	void update_resource_count();
 
 private:
 	void try_settle_held();
+
+	void switch_to_group(Entity group);
 
 	// Remove tooltip from group, destroy entity
 	void destroy_tooltip();
@@ -68,4 +72,6 @@ private:
 
 	RenderSystem* renderer;
 	std::function<void()> try_change_color;
+
+	std::vector<std::function<void()>> show_world_callbacks;
 };
