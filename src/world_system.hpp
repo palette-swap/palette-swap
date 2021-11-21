@@ -110,7 +110,10 @@ private:
 
 	// Sound effects
 	SoLoud::Wav light_sword_wav;
-	SoLoud::Wav cannon_wav;
+	SoLoud::Wav fire_spell_wav;
+	SoLoud::Wav ice_spell_wav;
+	SoLoud::Wav earth_spell_wav;
+	SoLoud::Wav wind_spell_wav;
 
 	// C++ random number generator
 	std::shared_ptr<std::default_random_engine> rng;
