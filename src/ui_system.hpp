@@ -7,7 +7,7 @@
 class UISystem {
 public:
 
-	void init(RenderSystem* render_system);
+	void init(RenderSystem* render_system, std::function<void()> change_color);
 
 	void restart_game();
 
@@ -55,11 +55,11 @@ private:
 	Entity attack_display = entt::null;
 
 	enum class Groups {
-		HUD,
-		Inventory,
-		MainMenu,
-		Tooltips,
-		Count,
+		HUD = 0,
+		Inventory = HUD + 1,
+		MainMenu = Inventory + 1,
+		Tooltips = MainMenu + 1,
+		Count = Tooltips + 1,
 	};
 
 	std::array<Entity, (size_t)Groups::Count> groups = { entt::null };
@@ -67,4 +67,5 @@ private:
 	Entity tooltip = entt::null;
 
 	RenderSystem* renderer;
+	std::function<void()> try_change_color;
 };

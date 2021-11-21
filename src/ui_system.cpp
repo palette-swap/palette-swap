@@ -162,14 +162,24 @@ void UISystem::do_action(Button& button)
 		}
 		break;
 	}
-	case ButtonAction::TryHeal: {
+	case ButtonAction::TryHeal:
+	case ButtonAction::TryMana: {
 		Inventory& inventory = registry.get<Inventory>(button.action_target);
-		if (inventory.resources.at((size_t)Resource::HealthPotion) > 0) {
+		Resource resource = (button.action == ButtonAction::TryHeal) ? Resource::HealthPotion : Resource::ManaPotion;
+		if (inventory.resources.at((size_t)resource) > 0) {
 			Stats& stats = registry.get<Stats>(button.action_target);
-			stats.health = stats.health_max;
-			inventory.resources.at((size_t)Resource::HealthPotion)--;
+			if (resource == Resource::HealthPotion) {
+				stats.health = stats.health_max;
+			} else {
+				stats.mana = stats.mana_max;
+			}
+			inventory.resources.at((size_t)resource)--;
 			update_resource_count();
 		}
+		break;
+	}
+	case ButtonAction::TryPalette: {
+		try_change_color();
 		break;
 	}
 	default:

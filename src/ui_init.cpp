@@ -1,7 +1,10 @@
 #include "ui_init.hpp"
 #include "ui_system.hpp"
 
-void UISystem::init(RenderSystem* render_system) { renderer = render_system; }
+void UISystem::init(RenderSystem* render_system, std::function<void()> try_change_color) {
+	renderer = render_system;
+	this->try_change_color = std::move(try_change_color);
+}
 
 void UISystem::restart_game()
 {
@@ -129,13 +132,13 @@ Entity create_ui_counter(Entity group, Resource resource, ivec2 offset, int size
 								   Alignment::Center,
 								   64u);
 	registry.get<Color>(entity).color = vec3(.7, 1, .7);
-	Entity health_pot = create_ui_icon(group,
+	Entity pot = create_ui_icon(group,
 									   offset,
 									   vec2(MapUtility::tile_size * static_cast<float>(size)),
 									   pos,
 									   4.f * vec2(MapUtility::tile_size) / vec2(window_default_size));
-	registry.get<UIRenderRequest>(health_pot).alignment_y = Alignment::Center;
-	registry.emplace<Button>(health_pot, entity, ButtonAction::TryHeal, player);
+	size_t action = (size_t)ButtonAction::TryHeal + (size_t)resource;
+	registry.emplace<Button>(pot, entity, (ButtonAction)action, player);
 	return entity;
 }
 

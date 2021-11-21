@@ -81,7 +81,7 @@ private:
 	void move_player(Direction direction);
 
 	// Flips color state.
-	void change_color();
+	void try_change_color();
 
 	// OpenGL window handle
 	GLFWwindow* window = nullptr;

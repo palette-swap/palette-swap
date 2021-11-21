@@ -55,9 +55,9 @@ void CombatSystem::restart_game()
 bool CombatSystem::try_pickup_items(Entity player)
 {
 	MapPosition& player_pos = registry.get<MapPosition>(player);
-	for (auto [entity, pos] : registry.view<HealthPotion, MapPosition>().each()) {
+	for (auto [entity, resource, pos] : registry.view<ResourcePickup, MapPosition>().each()) {
 		if (player_pos.position == pos.position) {
-			registry.get<Inventory>(player).resources.at((size_t)Resource::HealthPotion)++;
+			registry.get<Inventory>(player).resources.at((size_t)resource.resource)++;
 			registry.destroy(entity);
 
 			for (const auto& callback : pickup_callbacks) {

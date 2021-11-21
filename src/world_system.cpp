@@ -129,7 +129,7 @@ GLFWwindow* WorldSystem::create_window(int width, int height)
 void WorldSystem::init(RenderSystem* renderer_arg)
 {
 	this->renderer = renderer_arg;
-	ui->init(renderer_arg);
+	ui->init(renderer_arg, [this]() { try_change_color(); });
 
 	// Playing background music indefinitely
 	bgm_red = so_loud->play(bgm_red_wav);
@@ -342,12 +342,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 	if (action == GLFW_PRESS) {
 		switch (key) {
 		case GLFW_KEY_SPACE: {
-			Inventory& inventory = registry.get<Inventory>(player);
-			if (inventory.resources.at((size_t)Resource::PaletteSwap) > 0) {
-				inventory.resources.at((size_t)Resource::PaletteSwap)--;
-				ui->update_resource_count();
-				change_color();
-			}
+			try_change_color();
 			break;
 		}
 		case GLFW_KEY_LEFT_SHIFT: {
@@ -558,11 +553,17 @@ void WorldSystem::move_player(Direction direction)
 	}
 }
 
-void WorldSystem::change_color()
+void WorldSystem::try_change_color()
 {
 	if (!turns->ready_to_act(player)) {
 		return;
 	}
+	Inventory& inventory = registry.get<Inventory>(player);
+	if (inventory.resources.at((size_t)Resource::PaletteSwap) == 0) {
+		return;
+	}
+	inventory.resources.at((size_t)Resource::PaletteSwap)--;
+	ui->update_resource_count();
 	MapPosition player_pos = registry.get<MapPosition>(player);
 
 	if (map_generator->walkable_and_free(player_pos.position, false)) {
