@@ -192,8 +192,6 @@ void WorldSystem::restart_game()
 	std::cout << "Alive: " << registry.alive() << std::endl;
 	printf("Restarting\n");
 
-	// Reset the game speed
-	current_speed = 1.f;
 	// Reset the game end
 	end_of_game = false;
 
@@ -394,16 +392,15 @@ void WorldSystem::check_debug_keys(int key, int action, int mod)
 		debugging.in_debug_mode = action != GLFW_RELEASE;
 	}
 
-	// Control the current speed with `<` `>`
-	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_COMMA) {
-		current_speed -= 0.1f;
-		printf("Current speed = %f\n", current_speed);
+	// Control the current volume with `<` `>`
+	if (action != GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_COMMA) {
+		current_volume -= 0.1f;
 	}
-	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_PERIOD) {
-		current_speed += 0.1f;
-		printf("Current speed = %f\n", current_speed);
+	if (action != GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_PERIOD) {
+		current_volume += 0.1f;
 	}
-	current_speed = fmax(0.f, current_speed);
+	current_volume = fmax(0.f, current_volume);
+	so_loud->setGlobalVolume(current_volume);
 
 	// for debugging levels
 	if (key == GLFW_KEY_N && (mod & GLFW_MOD_CONTROL) != 0 && action == GLFW_RELEASE) {

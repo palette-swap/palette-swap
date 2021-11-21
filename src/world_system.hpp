@@ -93,7 +93,7 @@ private:
 
 	// Game state
 	RenderSystem* renderer = nullptr;
-	float current_speed = 0;
+	float current_volume = 1;
 	bool end_of_game = false;
 	float spell_distance_from_player = 22.f;
 	Entity player = registry.create();
