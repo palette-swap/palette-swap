@@ -134,18 +134,31 @@ bool CombatSystem::do_attack(Entity attacker_entity, Attack& attack, Entity targ
 	if (attacker_entity == target_entity) {
 		return false;
 	}
-	MapPosition& attacker_position = registry.get<MapPosition>(attacker_entity);
-	MapPosition& target_position = registry.get<MapPosition>(target_entity);
-	// Changes attacker's direction based on the location of the target relative to
-	// the target entity
-	if (target_position.position.x < attacker_position.position.x) {
-		animations->set_sprite_direction(attacker_entity, Sprite_Direction::SPRITE_LEFT);
+
+	if (registry.any_of<AOESquare>(attacker_entity)) {
+		// Attacker is an AOE square.
+		
+		// TODO (Evan): explode the AOE square and make it invisible after the explosion animation.
+		// (Don't worry about destroying AOE square entity since the AI system will do so in the next turn.)
+		// 
+		// First set a stable state which makes AOE square invisible.
+		// Then add a temporary explosion animation event to the AOE square.
+
 	} else {
-		animations->set_sprite_direction(attacker_entity, Sprite_Direction::SPRITE_RIGHT);
+		MapPosition& attacker_position = registry.get<MapPosition>(attacker_entity);
+		MapPosition& target_position = registry.get<MapPosition>(target_entity);
+		// Changes attacker's direction based on the location of the target relative to
+		// the target entity
+		if (target_position.position.x < attacker_position.position.x) {
+			animations->set_sprite_direction(attacker_entity, Sprite_Direction::SPRITE_LEFT);
+		} else {
+			animations->set_sprite_direction(attacker_entity, Sprite_Direction::SPRITE_RIGHT);
+		}
+
+		// Triggers attack based on player/enemy attack prescence
+		animations->attack_animation(attacker_entity);
 	}
 
-	// Triggers attack based on player/enemy attack prescence
-	animations->attack_animation(attacker_entity);
 	animations->damage_animation(target_entity);
 
 	Stats& attacker = registry.get<Stats>(attacker_entity);
@@ -235,6 +248,10 @@ void CombatSystem::kill(Entity attacker_entity, Entity target_entity)
 
 	// TODO: Animate death
 	registry.destroy(target_entity);
+
+	for (const auto& callback : death_callbacks) {
+		callback(target_entity);
+	}
 }
 
 void CombatSystem::on_attack(
