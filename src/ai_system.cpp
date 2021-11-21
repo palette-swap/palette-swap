@@ -117,12 +117,20 @@ void AISystem::do_attack_callback(const Entity& attacker, const Entity& target)
 void AISystem::execute_dummy_sm(const Entity& entity)
 {
 	Enemy& enemy = registry.get<Enemy>(entity);
+	Stats& stats = registry.get<Stats>(entity);
 
 	switch (enemy.state) {
 
 	case EnemyState::Idle:
+		for (size_t i = 0; i < static_cast<size_t>(DamageType::Count); ++i) {
+			if (i != static_cast<size_t>(DamageType::Physical)) {
+				stats.damage_modifiers[i] = INT_MIN;
+			}
+		}
+		break;
+
 	case EnemyState::Active:
-		recover_health(entity, 0.5f);
+		stats.damage_modifiers.at(static_cast<size_t>(DamageType::Physical)) = INT_MIN;
 		break;
 
 	default:
