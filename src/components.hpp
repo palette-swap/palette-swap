@@ -487,6 +487,9 @@ struct Weapon {
 //-------------------------		  ANIMATIONS        -------------------------
 //---------------------------------------------------------------------------
 
+// Represents allowed directions for an animated sprite (e.g whether the sprite is facing left or right)
+enum class Sprite_Direction : uint8_t { SPRITE_LEFT, SPRITE_RIGHT };
+
 // Maps enemy types to corresponding texture asset
 // Remember to add a mapping to a new texture (or use a default such as a slime)
 // This will help load the animation by enemy type when you load enemies
