@@ -10,9 +10,43 @@
       "team": 1,
       "type": 0,
       "state": 0,
-      "radius": 3,
-      "speed": 1,
-      "attack_range": 1,
+      "radius": 0,
+      "speed": 0,
+      "attack_range": 0,
+      "nest_position": {
+        "x": 54,
+        "y": 43
+      },
+      "position": {
+        "x": 54,
+        "y": 43
+      },
+      "stats": {
+        "health": 50,
+        "health_max": 50,
+        "mana": 0,
+        "mana_max": 0,
+        "to_hit_bonus": 0,
+        "damage_bonus": 0,
+        "evasion": 0,
+        "attack": {
+          "name": "",
+          "to_hit_min": 0,
+          "to_hit_max": 0,
+          "damage_min": 0,
+          "damage_max": 0,
+          "damage_type": 0,
+          "targeting_type": 0
+        }
+      }
+    },
+    {
+      "team": 1,
+      "type": 0,
+      "state": 0,
+      "radius": 0,
+      "speed": 0,
+      "attack_range": 0,
       "nest_position": {
         "x": 54,
         "y": 45
@@ -22,21 +56,123 @@
         "y": 45
       },
       "stats": {
-        "health": 100,
-        "health_max": 100,
-        "mana": 100,
-        "mana_max": 100,
-        "to_hit_bonus": 6,
-        "damage_bonus": 5,
-        "evasion": 12,
+        "health": 50,
+        "health_max": 50,
+        "mana": 0,
+        "mana_max": 0,
+        "to_hit_bonus": 0,
+        "damage_bonus": 0,
+        "evasion": 0,
         "attack": {
           "name": "",
-          "to_hit_min": 1,
-          "to_hit_max": 20,
-          "damage_min": 5,
-          "damage_max": 15,
+          "to_hit_min": 0,
+          "to_hit_max": 0,
+          "damage_min": 0,
+          "damage_max": 0,
           "damage_type": 0,
-          "targeting_type": 1
+          "targeting_type": 0
+        }
+      }
+    },
+    {
+      "team": 1,
+      "type": 0,
+      "state": 1,
+      "radius": 0,
+      "speed": 0,
+      "attack_range": 0,
+      "nest_position": {
+        "x": 62,
+        "y": 44
+      },
+      "position": {
+        "x": 62,
+        "y": 44
+      },
+      "stats": {
+        "health": 50,
+        "health_max": 50,
+        "mana": 0,
+        "mana_max": 0,
+        "to_hit_bonus": 0,
+        "damage_bonus": 0,
+        "evasion": 0,
+        "attack": {
+          "name": "",
+          "to_hit_min": 0,
+          "to_hit_max": 0,
+          "damage_min": 0,
+          "damage_max": 0,
+          "damage_type": 0,
+          "targeting_type": 0
+        }
+      }
+    },
+    {
+      "team": 2,
+      "type": 0,
+      "state": 0,
+      "radius": 0,
+      "speed": 0,
+      "attack_range": 0,
+      "nest_position": {
+        "x": 54,
+        "y": 47
+      },
+      "position": {
+        "x": 54,
+        "y": 47
+      },
+      "stats": {
+        "health": 50,
+        "health_max": 50,
+        "mana": 0,
+        "mana_max": 0,
+        "to_hit_bonus": 0,
+        "damage_bonus": 0,
+        "evasion": 0,
+        "attack": {
+          "name": "",
+          "to_hit_min": 0,
+          "to_hit_max": 0,
+          "damage_min": 0,
+          "damage_max": 0,
+          "damage_type": 0,
+          "targeting_type": 0
+        }
+      }
+    },
+    {
+      "team": 2,
+      "type": 0,
+      "state": 0,
+      "radius": 0,
+      "speed": 0,
+      "attack_range": 0,
+      "nest_position": {
+        "x": 54,
+        "y": 49
+      },
+      "position": {
+        "x": 54,
+        "y": 49
+      },
+      "stats": {
+        "health": 50,
+        "health_max": 50,
+        "mana": 0,
+        "mana_max": 0,
+        "to_hit_bonus": 0,
+        "damage_bonus": 0,
+        "evasion": 0,
+        "attack": {
+          "name": "",
+          "to_hit_min": 0,
+          "to_hit_max": 0,
+          "damage_min": 0,
+          "damage_max": 0,
+          "damage_type": 0,
+          "targeting_type": 0
         }
       }
     },
@@ -44,33 +180,33 @@
       "team": 2,
       "type": 0,
       "state": 1,
-      "radius": 3,
-      "speed": 1,
-      "attack_range": 1,
+      "radius": 0,
+      "speed": 0,
+      "attack_range": 0,
       "nest_position": {
-        "x": 54,
-        "y": 47
+        "x": 62,
+        "y": 48
       },
       "position": {
-        "x": 54,
-        "y": 47
+        "x": 62,
+        "y": 48
       },
       "stats": {
-        "health": 100,
-        "health_max": 100,
-        "mana": 100,
-        "mana_max": 100,
-        "to_hit_bonus": 6,
-        "damage_bonus": 5,
-        "evasion": 12,
+        "health": 50,
+        "health_max": 50,
+        "mana": 0,
+        "mana_max": 0,
+        "to_hit_bonus": 0,
+        "damage_bonus": 0,
+        "evasion": 0,
         "attack": {
           "name": "",
-          "to_hit_min": 1,
-          "to_hit_max": 20,
-          "damage_min": 5,
-          "damage_max": 15,
+          "to_hit_min": 0,
+          "to_hit_max": 0,
+          "damage_min": 0,
+          "damage_max": 0,
           "damage_type": 0,
-          "targeting_type": 1
+          "targeting_type": 0
         }
       }
     }

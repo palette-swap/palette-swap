@@ -125,6 +125,7 @@ GLFWwindow* WorldSystem::create_window(int width, int height)
 	earth_spell_wav.load(audio_path("earth.wav").c_str());
 	wind_spell_wav.load(audio_path("wind.wav").c_str());
 
+
 	return window;
 }
 

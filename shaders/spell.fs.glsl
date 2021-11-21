@@ -12,7 +12,7 @@ uniform int spelltype = 0;
 uniform vec2 texcoord_rel;
 
 // Fire spell constants
-uniform vec2 fireball_offset = {-0.028,0.022};
+uniform vec2 fireball_offset = vec2(-0.028, 0.022);
 uniform float fireball_darken = 0.3;
 uniform float fireball_radius = 0.18;
 uniform float fireball_color_gradient = 0.3;
@@ -32,7 +32,7 @@ uniform float rock_time_period = 3;
 
 // Wind spell constants
 uniform float wind_ball_default_color_amplitude = 3.5;
-uniform vec2 wind_ball_offset = {0,0.3};
+uniform vec2 wind_ball_offset = vec2(0, 0.3);
 uniform float wind_xradial_amplitutde = 10;
 uniform float wind_y_amplitutde = 20;
 
