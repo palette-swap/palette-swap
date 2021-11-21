@@ -247,6 +247,7 @@ void WorldSystem::handle_collisions()
 	// Loop over all collisions detected by the physics system
 	for (auto [entity, collision, projectile] : registry.view<Collision, ActiveProjectile>().each()) {
 		Entity child_entity = collision.children;
+		bool did_attack = false;
 		while (child_entity != entt::null) {
 			const CollisionEntry& child = registry.get<CollisionEntry>(child_entity);
 			Entity entity_other = child.target;
@@ -258,20 +259,20 @@ void WorldSystem::handle_collisions()
 			if (registry.all_of<Hittable, Stats, Enemy>(entity_other)) {
 				Enemy& enemy = registry.get<Enemy>(entity_other);
 				ColorState enemy_color = enemy.team;
-				if (enemy_color != turns->get_inactive_color() && ui->has_current_attack()) {
+				if (!did_attack && enemy_color != turns->get_inactive_color() && ui->has_current_attack()) {
 					animations->player_spell_impact_animation(entity_other, ui->get_current_attack().damage_type);
-					combat->do_attack(
+					did_attack = combat->do_attack(
 						player, ui->get_current_attack(), registry.get<MapPosition>(entity_other).position);
 				}
-			} else {
-				combat->do_attack(
-					player,
-					ui->get_current_attack(),
-					MapUtility::world_position_to_map_position(registry.get<WorldPosition>(entity).position));
 			}
 			Entity temp = child_entity;
 			child_entity = child.next;
 			registry.destroy(temp);
+		}
+		if (!did_attack) {
+			combat->do_attack(player,
+							  ui->get_current_attack(),
+							  MapUtility::world_position_to_map_position(registry.get<WorldPosition>(entity).position));
 		}
 		// Stops projectile motion, adds projectile to list of resolved projectiles
 		registry.get<Velocity>(entity).speed = 0;
