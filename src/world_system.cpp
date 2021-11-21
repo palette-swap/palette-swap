@@ -124,6 +124,7 @@ GLFWwindow* WorldSystem::create_window(int width, int height)
 	light_sword_wav.load(audio_path("sword1.wav").c_str());
 	cannon_wav.load(audio_path("cannon.wav").c_str());
 
+
 	return window;
 }
 

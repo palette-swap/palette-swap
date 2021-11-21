@@ -77,8 +77,8 @@ private:
 	// An entity summons new enemies with a certain type and number.
 	void summon_enemies(const Entity& entity, EnemyType enemy_type, int num);
 
-	// AOE attack on an area.
-	void aoe_attack(const Entity& entity, const std::vector<uvec2>& area);
+	// AOE attack.
+	void release_aoe(const std::vector<Entity>& aoe);
 
 	// Debugging
 	const Debug& debugging;
@@ -93,6 +93,8 @@ private:
 	// Sound stuff
 	std::shared_ptr<SoLoud::Soloud> so_loud;
 	SoLoud::Wav enemy_attack1_wav;
+	SoLoud::Wav king_mush_summon_wav;
+	SoLoud::Wav king_mush_aoe_wav;
 
 	// Entity representing the enemy team's turn.
 	Entity enemy_team;
@@ -146,11 +148,10 @@ private:
 		BTState process(Entity e, AISystem* ai) override
 		{
 			printf("Debug: SummonEnemies.process\n");
+
 			ai->summon_enemies(e, m_type, m_num);
 
-			// TODO (Evan): active(1) + temp-summon.
 			ai->switch_enemy_state(e, EnemyState::Idle);
-			// TODO (Evan): Change to not be hardcoded, currently aware that 2 is the specific boss's summoning state
 			ai->animations->boss_event_animation(e, 2);
 
 			return handle_process_result(BTState::Success);
@@ -166,8 +167,8 @@ private:
 	class AOEAttack : public BTNode {
 	public:
 		AOEAttack(const std::vector<ivec2>& area_pattern)
-			: m_area_pattern(area_pattern)
-			, m_isCharged(false)
+			: m_isCharged(false)
+			, m_aoe_shape(area_pattern)
 		{
 		}
 
@@ -175,53 +176,57 @@ private:
 		{
 			printf("Debug: AOEAttack.init\n");
 			m_isCharged = false;
-			m_aiming_area.clear();
+			m_aoe.clear();
 		}
 
 		BTState process(Entity e, AISystem* ai) override
 		{
 			printf("Debug: AOEAttack.process\n");
+
 			if (!m_isCharged) {
 				// Charging
 				m_isCharged = true;
-				// Aiming area
+
+				// Compute AOE area using AOE shape and player position.
 				Entity player = registry.view<Player>().front();
 				const uvec2& player_map_pos = registry.get<MapPosition>(player).position;
-				for (const ivec2& pattern_pos : m_area_pattern) {
-					ivec2 map_pos = pattern_pos + static_cast<ivec2>(player_map_pos);
+				std::vector<uvec2> aoe_area;
+				for (const ivec2& map_pos_offset : m_aoe_shape) {
+					const ivec2& map_pos = map_pos_offset + static_cast<ivec2>(player_map_pos);
 					if (map_pos.x >= 0 || map_pos.y >= 0) {
-						m_aiming_area.push_back(map_pos);
+						aoe_area.push_back(map_pos);
 					}
 				}
 
-				// Debug
-				for (const uvec2& aiming_point : m_aiming_area) {
-					create_path_point(MapUtility::map_position_to_world_position(aiming_point));
-				}
-				Entity aoe_attack = create_aoe_target_squares();
-				/*registry.emplace<AOEAttackActive>(e, aoe_attack);*/
-				// TODO (Evan): charge(2).
+				// Create AOE stats.
+				Stats aoe_stats = registry.get<Stats>(e);
+				aoe_stats.base_attack.damage_min *= 2;
+				aoe_stats.base_attack.damage_max *= 2;
+				aoe_stats.damage_bonus *= 2;
+
+				Enemy enemy = registry.get<Enemy>(e);
+				
+				// Create AOE.
+				m_aoe = create_aoe(aoe_area, aoe_stats, enemy.type);
+				
 				ai->switch_enemy_state(e, EnemyState::Charging);
-				// Need animation to visualize m_aiming_area, like the Debug above.
 
 				return handle_process_result(BTState::Running);
 			} else {
-				// AOE attack.
-				ai->aoe_attack(e, m_aiming_area);
+				// Release AOE.
+				ai->release_aoe(m_aoe);
 
-				// TODO (Evan): active(1) + temp-aoeAttacks.
 				ai->switch_enemy_state(e, EnemyState::Idle);
 				ai->animations->boss_event_animation(e, 4);
-				// ai->animations->aoe_animation(e, m_aiming_area);
-
+				ai->so_loud->play(ai->king_mush_aoe_wav);
 				return handle_process_result(BTState::Success);
 			}
 		}
 
 	private:
-		std::vector<ivec2> m_area_pattern;
 		bool m_isCharged;
-		std::vector<uvec2> m_aiming_area;
+		std::vector<ivec2> m_aoe_shape;
+		std::vector<Entity> m_aoe;
 	};
 
 	// Leaf action node: RegularAttack
@@ -232,10 +237,18 @@ private:
 		BTState process(Entity e, AISystem* ai) override
 		{
 			printf("Debug: RegularAttack.process\n");
+
 			ai->attack_player(e);
 
-			// TODO (Evan): active(1) + temp-attack.
 			ai->switch_enemy_state(e, EnemyState::Idle);
+
+			// Gets information related to where the boss is attacking from a ranged. 
+			// Can be moved into animation ssytem to make this portion clearer and free or registry accesses
+			Entity player_entity = registry.view<Player>().front();
+			uvec2 player_location = registry.get<MapPosition>(player_entity).position;
+			EnemyType boss_enemy_type = registry.get<Enemy>(e).type;
+
+			ai->animations->boss_ranged_attack(boss_enemy_type, player_location);
 
 			return handle_process_result(BTState::Success);
 		}
@@ -254,8 +267,11 @@ private:
 		BTState process(Entity e, AISystem* ai) override
 		{
 			printf("Debug: RecoverHealth.process\n");
+
 			ai->recover_health(e, m_ratio);
+
 			ai->switch_enemy_state(e, EnemyState::Idle);
+
 			return handle_process_result(BTState::Success);
 		}
 
@@ -271,7 +287,9 @@ private:
 		BTState process(Entity e, AISystem* ai) override
 		{
 			printf("Debug: DoNothing.process\n");
+
 			ai->switch_enemy_state(e, EnemyState::Idle);
+
 			return handle_process_result(BTState::Success);
 		}
 	};
@@ -359,12 +377,12 @@ private:
 		{
 			// Selector - active
 			auto summon_enemies = std::make_unique<SummonEnemies>(EnemyType::Mushroom, 1);
-			std::vector<ivec2> area_pattern;
-			area_pattern.push_back(ivec2(0, 0));
-			area_pattern.push_back(ivec2(0, -1));
-			area_pattern.push_back(ivec2(-1, 0));
-			area_pattern.push_back(ivec2(1, 0));
-			auto aoe_attack = std::make_unique<AOEAttack>(area_pattern);
+			std::vector<ivec2> aoe_shape;
+			aoe_shape.push_back(ivec2(0, 0));
+			aoe_shape.push_back(ivec2(0, -1));
+			aoe_shape.push_back(ivec2(-1, 0));
+			aoe_shape.push_back(ivec2(1, 0));
+			auto aoe_attack = std::make_unique<AOEAttack>(aoe_shape);
 			auto regular_attack = std::make_unique<RegularAttack>();
 			auto selector_active = std::make_unique<Selector>(std::move(regular_attack));
 			Selector* p = selector_active.get();
@@ -373,7 +391,7 @@ private:
 				[p](Entity e) { return (p->get_process_count() % 5 == 0) && (p->get_process_count() != 0); },
 				std::move(summon_enemies));
 			selector_active->add_precond_and_child(
-				// Summoner has 20% chance to make an AOE attack with the following area pattern.
+				// Summoner has 20% chance to make an AOESquare attack with the following AOE shape.
 				// ┌───┐
 				// │ x │
 				// │xPx|

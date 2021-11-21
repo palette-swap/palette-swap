@@ -50,6 +50,7 @@ void AnimationSystem::update_animations(float elapsed_ms, ColorState inactive_co
 	}
 	resolve_event_animations();
 	resolve_transient_event_animations();
+	resolve_undisplay_event_animations();
 }
 
 void AnimationSystem::set_sprite_direction(const Entity& sprite, Sprite_Direction direction)
@@ -324,6 +325,35 @@ void AnimationSystem::boss_event_animation(const Entity& boss, int event_state) 
 	}
 }
 
+void AnimationSystem::boss_ranged_attack(EnemyType boss, uvec2 target_position) {
+	auto boss_range_attack_entity = registry.create();
+
+	registry.emplace<MapPosition>(boss_range_attack_entity, target_position);
+	registry.emplace<TransientEventAnimation>(boss_range_attack_entity);
+	registry.emplace<EffectRenderRequest>(boss_range_attack_entity,
+										  boss_type_attack_spritesheet.at(boss),
+										  EFFECT_ASSET_ID::ENEMY,
+										  GEOMETRY_BUFFER_ID::SMALL_SPRITE,
+										  true);
+	Animation& spell_impact_animation = registry.emplace<Animation>(boss_range_attack_entity);
+	spell_impact_animation.max_frames = boss_ranged_attack_total_frames;
+	spell_impact_animation.state = boss_ranged_attack_state;
+	spell_impact_animation.speed_adjustment = boss_ranged_attack_speed;
+}
+
+void AnimationSystem::trigger_aoe_attack_animation(const Entity& aoe) { 
+	Animation& aoe_animation = registry.get<Animation>(aoe); 
+	AOESquare& aoe_status = registry.get<AOESquare>(aoe);
+
+	aoe_animation.state = 0;
+	aoe_animation.frame = 0;
+	aoe_animation.max_frames = 8;
+	aoe_animation.speed_adjustment = 0.8f;
+	aoe_status.actual_attack_displayed = true;
+
+	registry.emplace<UndisplayEventAnimation>(aoe);
+}
+
 bool AnimationSystem::animation_events_completed() { return (registry.empty<EventAnimation, TransientEventAnimation>()); }
 
 void AnimationSystem::resolve_event_animations()
@@ -355,6 +385,22 @@ void AnimationSystem::resolve_transient_event_animations()
 		// two frames in all event animations (which is technically correct since it's an "animation", but a bit iffy)
 		if (actual_animation.frame < event_animation.frame) {
 			registry.destroy(entity);
+		} else {
+			event_animation.frame = actual_animation.frame;
+		}
+	}
+}
+
+void AnimationSystem::resolve_undisplay_event_animations()
+{
+	for (auto [entity, event_animation, actual_animation, effect] :
+		 registry.view<UndisplayEventAnimation, Animation, EffectRenderRequest>().each()) {
+
+		// Checks if the animation frame had been reset to 0. If true, this means event animation has completed
+		// TODO: Change to be a different check, this current one is a bit iffy, and is reliant on there being at least
+		// two frames in all event animations (which is technically correct since it's an "animation", but a bit iffy)
+		if (actual_animation.frame < event_animation.frame) {
+			effect.visible = false;
 		} else {
 			event_animation.frame = actual_animation.frame;
 		}

@@ -114,6 +114,10 @@ private:
 	SoLoud::Wav light_sword_wav;
 	SoLoud::Wav cannon_wav;
 
+	// King mush sound effects
+	SoLoud::Wav king_mush_summon_wav;
+	SoLoud::Wav king_mush_aoe_wav;
+
 	// C++ random number generator
 	std::shared_ptr<std::default_random_engine> rng;
 	std::uniform_real_distribution<float> uniform_dist; // number between 0..1
