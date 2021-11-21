@@ -110,7 +110,10 @@ private:
 
 	// Sound effects
 	SoLoud::Wav light_sword_wav;
-	SoLoud::Wav cannon_wav;
+	SoLoud::Wav fire_spell_wav;
+	SoLoud::Wav ice_spell_wav;
+	SoLoud::Wav earth_spell_wav;
+	SoLoud::Wav wind_spell_wav;
 
 	// King mush sound effects
 	SoLoud::Wav king_mush_summon_wav;

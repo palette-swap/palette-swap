@@ -236,9 +236,16 @@ void CombatSystem::drop_loot(uvec2 position)
 
 void CombatSystem::kill(Entity attacker_entity, Entity target_entity)
 {
+	const Enemy& enemy = registry.get<Enemy>(target_entity);
 	Stats& stats = registry.get<Stats>(attacker_entity);
-	// Regen 25% of total mana with a successful kill
-	stats.mana = min(stats.mana_max, stats.mana + stats.mana_max / 4);
+	
+	if (enemy.type == EnemyType::TrainingDummy) {
+		// Regen 100% of total mana with a successful kill of training dummies.
+		stats.mana = stats.mana_max;
+	} else {
+		// Regen 25% of total mana with a successful kill.
+		stats.mana = min(stats.mana_max, stats.mana + stats.mana_max / 4);
+	}
 
 	if (Inventory* inventory = registry.try_get<Inventory>(attacker_entity)) {
 		inventory->resources.at((size_t)Resource::PaletteSwap)++;
