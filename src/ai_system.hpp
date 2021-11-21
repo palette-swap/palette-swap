@@ -239,6 +239,14 @@ private:
 
 			ai->switch_enemy_state(e, EnemyState::Idle);
 
+			// Gets information related to where the boss is attacking from a ranged. 
+			// Can be moved into animation ssytem to make this portion clearer and free or registry accesses
+			Entity player_entity = registry.view<Player>().front();
+			uvec2 player_location = registry.get<MapPosition>(player_entity).position;
+			EnemyType boss_enemy_type = registry.get<Enemy>(e).type;
+
+			ai->animations->boss_ranged_attack(boss_enemy_type, player_location);
+
 			return handle_process_result(BTState::Success);
 		}
 	};

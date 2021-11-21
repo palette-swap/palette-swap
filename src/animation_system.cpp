@@ -289,6 +289,22 @@ void AnimationSystem::boss_event_animation(const Entity& boss, int event_state) 
 	}
 }
 
+void AnimationSystem::boss_ranged_attack(EnemyType boss, uvec2 target_position) {
+	auto boss_range_attack_entity = registry.create();
+
+	registry.emplace<MapPosition>(boss_range_attack_entity, target_position);
+	registry.emplace<TransientEventAnimation>(boss_range_attack_entity);
+	registry.emplace<EffectRenderRequest>(boss_range_attack_entity,
+										  boss_type_attack_spritesheet.at(boss),
+										  EFFECT_ASSET_ID::ENEMY,
+										  GEOMETRY_BUFFER_ID::SMALL_SPRITE,
+										  true);
+	Animation& spell_impact_animation = registry.emplace<Animation>(boss_range_attack_entity);
+	spell_impact_animation.max_frames = boss_ranged_attack_total_frames;
+	spell_impact_animation.state = boss_ranged_attack_state;
+	spell_impact_animation.speed_adjustment = boss_ranged_attack_speed;
+}
+
 void AnimationSystem::trigger_aoe_attack_animation(const Entity& aoe) { 
 	Animation& aoe_animation = registry.get<Animation>(aoe); 
 	AOESquare& aoe_status = registry.get<AOESquare>(aoe);
