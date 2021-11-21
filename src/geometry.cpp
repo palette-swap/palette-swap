@@ -26,7 +26,7 @@ bool Geometry::Rectangle::intersects(const Circle& c) const
 
 bool Geometry::Rectangle::contains(const vec2& p) const {
 	vec2 difference = p - center;
-	return abs(difference.x) <= size.x && abs(difference.y) <= size.y;
+	return abs(difference.x) <= size.x * .5 && abs(difference.y) <= size.y * .5;
 }
 
 bool Geometry::Circle::intersects(const Geometry::Rectangle& r) const { return r.intersects(*this); }

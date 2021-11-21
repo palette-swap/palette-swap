@@ -46,11 +46,11 @@ void main()
 	// The corresponding tile textures to tile vertices
 	const vec2 texture_coord[] = vec2[](
 		vec2(0.0,0.0),
-		vec2(0.0, 31.0/256.0),
-		vec2(31.0/256.0, 0),
-		vec2(31.0/256.0, 0),
-		vec2(0.0, 31.0/256.0),
-		vec2(31.0/256.0, 31.0/256.0)
+		vec2(0.0, 32.0/256.0),
+		vec2(32.0/256.0, 0),
+		vec2(32.0/256.0, 0),
+		vec2(0.0, 32.0/256.0),
+		vec2(32.0/256.0, 32.0/256.0)
 	);
 
 	int vertex_id = cur_vertex_id % 6;

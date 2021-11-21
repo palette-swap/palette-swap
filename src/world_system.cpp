@@ -38,6 +38,8 @@ WorldSystem::WorldSystem(Debug& debugging,
 {
 	this->combat->init(rng, this->animations, this->map_generator);
 	this->combat->on_pickup([this](const Entity& item, size_t slot) { this->ui->add_to_inventory(item, slot); });
+	this->combat->on_death([this](const Entity& entity) { this->ui->update_resource_count(); });
+	this->ui->on_show_world([this]() { return_arrow_to_player(); });
 }
 
 WorldSystem::~WorldSystem()
@@ -129,6 +131,7 @@ GLFWwindow* WorldSystem::create_window(int width, int height)
 void WorldSystem::init(RenderSystem* renderer_arg)
 {
 	this->renderer = renderer_arg;
+	ui->init(renderer_arg, [this]() { try_change_color(); });
 
 	// Playing background music indefinitely
 	bgm_red = so_loud->play(bgm_red_wav);
@@ -190,8 +193,6 @@ void WorldSystem::restart_game()
 	std::cout << "Alive: " << registry.alive() << std::endl;
 	printf("Restarting\n");
 
-	// Reset the game speed
-	current_speed = 1.f;
 	// Reset the game end
 	end_of_game = false;
 
@@ -245,8 +246,9 @@ void WorldSystem::handle_collisions()
 	// Loop over all collisions detected by the physics system
 	for (auto [entity, collision, projectile] : registry.view<Collision, ActiveProjectile>().each()) {
 		Entity child_entity = collision.children;
+		bool did_attack = false;
 		while (child_entity != entt::null) {
-			const Child& child = registry.get<Child>(child_entity);
+			const CollisionEntry& child = registry.get<CollisionEntry>(child_entity);
 			Entity entity_other = child.target;
 			// TODO: rename hittable container type
 			// TODO: Convert all checks to if tile is walkable, currently has issue that enemies can overlay player
@@ -256,14 +258,20 @@ void WorldSystem::handle_collisions()
 			if (registry.all_of<Hittable, Stats, Enemy>(entity_other)) {
 				Enemy& enemy = registry.get<Enemy>(entity_other);
 				ColorState enemy_color = enemy.team;
-				if (enemy_color != turns->get_inactive_color() && ui->has_current_attack()) {
+				if (!did_attack && enemy_color != turns->get_inactive_color() && ui->has_current_attack()) {
 					animations->player_spell_impact_animation(entity_other, ui->get_current_attack().damage_type);
-					combat->do_attack(player, ui->get_current_attack(), entity_other);
+					did_attack = combat->do_attack(
+						player, ui->get_current_attack(), registry.get<MapPosition>(entity_other).position);
 				}
 			}
 			Entity temp = child_entity;
 			child_entity = child.next;
 			registry.destroy(temp);
+		}
+		if (!did_attack) {
+			combat->do_attack(player,
+							  ui->get_current_attack(),
+							  MapUtility::world_position_to_map_position(registry.get<WorldPosition>(entity).position));
 		}
 		// Stops projectile motion, adds projectile to list of resolved projectiles
 		registry.get<Velocity>(entity).speed = 0;
@@ -288,7 +296,9 @@ void WorldSystem::return_arrow_to_player()
 // On key callback
 void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 {
-	ui->on_key(key, action, mod);
+	if (turns->ready_to_act(player)) {
+		ui->on_key(key, action, mod);
+	}
 
 	check_debug_keys(key, action, mod);
 	if (!ui->player_can_act()) {
@@ -315,7 +325,6 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		}
 	}
 
-
 	if (action != GLFW_RELEASE) {
 		if (key == GLFW_KEY_D) {
 			move_player(Direction::Right);
@@ -331,20 +340,24 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		}
 	}
 
-	if (action == GLFW_RELEASE && key == GLFW_KEY_SPACE) {
-		change_color();
-	} else {
+	if (action == GLFW_PRESS) {
 		switch (key) {
-		case GLFW_KEY_LEFT_SHIFT:
+		case GLFW_KEY_SPACE: {
+			try_change_color();
+			break;
+		}
+		case GLFW_KEY_LEFT_SHIFT: {
 			if (turns->ready_to_act(player) && combat->try_pickup_items(player)) {
 				turns->skip_team_action(player);
 			}
 			break;
-		case GLFW_KEY_H:
+		}
+		case GLFW_KEY_H: {
 			if (turns->ready_to_act(player) && combat->try_drink_potion(player)) {
-				ui->update_potion_count();
+				ui->update_resource_count();
 				turns->skip_team_action(player);
 			}
+		}
 		default:
 			break;
 		}
@@ -380,22 +393,23 @@ void WorldSystem::check_debug_keys(int key, int action, int mod)
 		debugging.in_debug_mode = action != GLFW_RELEASE;
 	}
 
-	// Control the current speed with `<` `>`
-	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_COMMA) {
-		current_speed -= 0.1f;
-		printf("Current speed = %f\n", current_speed);
+	// Control the current volume with `<` `>`
+	if (action != GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_COMMA) {
+		current_volume -= 0.1f;
 	}
-	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_PERIOD) {
-		current_speed += 0.1f;
-		printf("Current speed = %f\n", current_speed);
+	if (action != GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_PERIOD) {
+		current_volume += 0.1f;
 	}
-	current_speed = fmax(0.f, current_speed);
+	current_volume = fmax(0.f, current_volume);
+	so_loud->setGlobalVolume(current_volume);
 
 	// for debugging levels
 	if (key == GLFW_KEY_N && (mod & GLFW_MOD_CONTROL) != 0 && action == GLFW_RELEASE) {
 		map_generator->load_next_level();
+		return_arrow_to_player();
 	} else if (key == GLFW_KEY_B && (mod & GLFW_MOD_CONTROL) != 0 && action == GLFW_RELEASE) {
 		map_generator->load_last_level();
+		return_arrow_to_player();
 	}
 
 	if (is_editing_map) {
@@ -456,9 +470,10 @@ void WorldSystem::check_debug_keys(int key, int action, int mod)
 // TODO: Integrate into turn state to only enable if player's turn is on
 void WorldSystem::on_mouse_move(vec2 mouse_position)
 {
+	vec2 mouse_screen_pos = mouse_position / renderer->get_screen_size();
 	if (ui->player_can_act() && !player_arrow_fired) {
 
-		vec2 mouse_world_position = renderer->screen_position_to_world_position(mouse_position);
+		vec2 mouse_world_position = renderer->screen_position_to_world_position(mouse_screen_pos);
 
 		Velocity& arrow_velocity = registry.get<Velocity>(player_arrow);
 		WorldPosition& arrow_position = registry.get<WorldPosition>(player_arrow);
@@ -477,7 +492,7 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 		arrow_velocity.angle = atan2(eucl_diff.x, -eucl_diff.y);
 	}
 
-	ui->on_mouse_move(mouse_position / renderer->get_screen_size());
+	ui->on_mouse_move(mouse_screen_pos);
 }
 
 void WorldSystem::move_player(Direction direction)
@@ -540,11 +555,17 @@ void WorldSystem::move_player(Direction direction)
 	}
 }
 
-void WorldSystem::change_color()
+void WorldSystem::try_change_color()
 {
 	if (!turns->ready_to_act(player)) {
 		return;
 	}
+	Inventory& inventory = registry.get<Inventory>(player);
+	if (inventory.resources.at((size_t)Resource::PaletteSwap) == 0) {
+		return;
+	}
+	inventory.resources.at((size_t)Resource::PaletteSwap)--;
+	ui->update_resource_count();
 	MapPosition player_pos = registry.get<MapPosition>(player);
 
 	if (map_generator->walkable_and_free(player_pos.position, false)) {
@@ -565,11 +586,11 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 {
 	if (button == GLFW_MOUSE_BUTTON_LEFT) {
 		// Get screen position of mouse
-		dvec2 mouse_screen_pos = {};
-		glfwGetCursorPos(window, &mouse_screen_pos.x, &mouse_screen_pos.y);
-		ui->on_left_click(action, mouse_screen_pos / dvec2(renderer->get_screen_size()));
+		dvec2 mouse_screen_pixels_pos = {};
+		glfwGetCursorPos(window, &mouse_screen_pixels_pos.x, &mouse_screen_pixels_pos.y);
+		bool used = ui->on_left_click(action, mouse_screen_pixels_pos / dvec2(renderer->get_screen_size()));
 
-		if (ui->player_can_act() && action == GLFW_PRESS) {
+		if (!used && ui->player_can_act() && action == GLFW_PRESS) {
 			if (turns->get_active_team() != player || !ui->has_current_attack()) {
 				return;
 			}
@@ -600,7 +621,6 @@ void WorldSystem::try_fire_projectile(Attack& attack)
 		|| !turns->execute_team_action(player)) {
 		return;
 	}
-	registry.get<Stats>(player).mana -= attack.mana_cost;
 	player_arrow_fired = true;
 	// Arrow becomes a projectile the moment it leaves the player, not while it's direction is being selected
 	ActiveProjectile& arrow_projectile = registry.emplace<ActiveProjectile>(player_arrow, player);
@@ -623,12 +643,12 @@ void WorldSystem::try_adjacent_attack(Attack& attack)
 	if (!turns->ready_to_act(player)) {
 		return;
 	}
-	// Get screen position of mouse
-	dvec2 mouse_screen_pos = {};
-	glfwGetCursorPos(window, &mouse_screen_pos.x, &mouse_screen_pos.y);
+	// Get position of mouse
+	dvec2 mouse_pos = {};
+	glfwGetCursorPos(window, &mouse_pos.x, &mouse_pos.y);
 
 	// Convert to world pos
-	vec2 mouse_world_pos = renderer->screen_position_to_world_position(mouse_screen_pos);
+	vec2 mouse_world_pos = renderer->mouse_position_to_world_position(mouse_pos);
 
 	// Get map_positions to compare
 	uvec2 mouse_map_pos = MapUtility::world_position_to_map_position(mouse_world_pos);

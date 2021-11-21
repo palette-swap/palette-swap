@@ -55,9 +55,9 @@ void CombatSystem::restart_game()
 bool CombatSystem::try_pickup_items(Entity player)
 {
 	MapPosition& player_pos = registry.get<MapPosition>(player);
-	for (auto [entity, pos] : registry.view<HealthPotion, MapPosition>().each()) {
+	for (auto [entity, resource, pos] : registry.view<ResourcePickup, MapPosition>().each()) {
 		if (player_pos.position == pos.position) {
-			registry.get<Inventory>(player).health_potions++;
+			registry.get<Inventory>(player).resources.at((size_t)resource.resource)++;
 			registry.destroy(entity);
 
 			for (const auto& callback : pickup_callbacks) {
@@ -88,10 +88,10 @@ bool CombatSystem::try_pickup_items(Entity player)
 bool CombatSystem::try_drink_potion(Entity player)
 {
 	Inventory& inventory = registry.get<Inventory>(player);
-	if (inventory.health_potions == 0) {
+	if (inventory.resources.at((size_t)Resource::HealthPotion) == 0) {
 		return false;
 	}
-	inventory.health_potions--;
+	inventory.resources.at((size_t)Resource::HealthPotion)--;
 	Stats& stats = registry.get<Stats>(player);
 	stats.health = stats.health_max;
 	return true;
@@ -119,8 +119,9 @@ bool CombatSystem::do_attack(Entity attacker, Attack& attack, uvec2 target)
 	}
 	registry.get<Stats>(attacker).mana -= attack.mana_cost;
 	bool success = false;
+	MapPosition& attacker_pos = registry.get<MapPosition>(attacker);
 	for (const auto& target_entity : registry.view<Enemy, Stats>()) {
-		if (registry.get<MapPosition>(target_entity).position == target) {
+		if (attack.is_in_range(attacker_pos.position, target, registry.get<MapPosition>(target_entity).position)) {
 			success |= do_attack(attacker, attack, target_entity);
 		}
 	}
@@ -192,39 +193,45 @@ bool CombatSystem::do_attack(Entity attacker_entity, Attack& attack, Entity targ
 void CombatSystem::drop_loot(uvec2 position)
 {
 	// Initial Drop rates are as follows
-	// 1-3: Nothing
+	// 1-2: Nothing
+	//  3 : Mana Potion
 	// 4-5: Health Potion
 	// 6-9: Item Drop
 	// If all items have dropped, only drop health potions as follows:
-	// 1-6: Nothing
+	// 1-4: Nothing
+	// 5-6: Mana Potion
 	// 7-9: Health Potion
 
 	// This is tempered by increasing the floor by the number of consecutive misses
 	bool all_dropped = looted >= loot_list.size();
 	std::uniform_int_distribution<size_t> drop_chance(1 + loot_misses, 9);
 	size_t result = drop_chance(*rng);
-	if (result <= 3 || (all_dropped && result <= 6)) {
+	if (result <= 3 || (all_dropped && result <= 4)) {
 		loot_misses++;
 		return;
 	}
 	loot_misses = 0;
 	if (result <= 5 || all_dropped) {
-		// Health Potion
+		// Potion
 		Entity potion = registry.create();
-		registry.emplace<HealthPotion>(potion);
+		bool mana = (all_dropped && result <= 6) || (!all_dropped && result == 3);
+		registry.emplace<ResourcePickup>(potion, mana ? Resource::ManaPotion : Resource::HealthPotion);
 		registry.emplace<MapPosition>(potion, position);
 		registry.emplace<RenderRequest>(
-			potion, TEXTURE_ASSET_ID::CANNONBALL, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE, true);
-		registry.emplace<Color>(potion, vec3(1, .1, .1));
+			potion, TEXTURE_ASSET_ID::ICONS, EFFECT_ASSET_ID::SPRITESHEET, GEOMETRY_BUFFER_ID::SPRITE, true);
+		registry.emplace<TextureOffset>(potion, ivec2(mana ? 1 : 0, 4), vec2(32, 32));
+		registry.emplace<Color>(potion, vec3(1));
 		return;
 	}
 	Entity template_entity = loot_list.at(looted++ % loot_list.size());
+	ItemTemplate& item = registry.get<ItemTemplate>(template_entity);
 	Entity loot = registry.create();
 	registry.emplace<Item>(loot, template_entity);
 	registry.emplace<MapPosition>(loot, position);
 	registry.emplace<RenderRequest>(
-		loot, TEXTURE_ASSET_ID::CANNONBALL, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE, true);
-	registry.emplace<Color>(loot, vec3(.8314f, .6863f, .2157f) * 1.1f);
+		loot, TEXTURE_ASSET_ID::ICONS, EFFECT_ASSET_ID::SPRITESHEET, GEOMETRY_BUFFER_ID::SPRITE, true);
+	registry.emplace<TextureOffset>(loot, item.texture_offset, item.texture_size);
+	registry.emplace<Color>(loot, vec3(1));
 }
 
 void CombatSystem::kill(Entity attacker_entity, Entity target_entity)
@@ -232,6 +239,10 @@ void CombatSystem::kill(Entity attacker_entity, Entity target_entity)
 	Stats& stats = registry.get<Stats>(attacker_entity);
 	// Regen 25% of total mana with a successful kill
 	stats.mana = min(stats.mana_max, stats.mana + stats.mana_max / 4);
+
+	if (Inventory* inventory = registry.try_get<Inventory>(attacker_entity)) {
+		inventory->resources.at((size_t)Resource::PaletteSwap)++;
+	}
 
 	drop_loot(registry.get<MapPosition>(target_entity).position);
 

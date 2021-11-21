@@ -2,12 +2,17 @@
 
 #include "components.hpp"
 
+#include "render_system.hpp"
+
 class UISystem {
 public:
+
+	void init(RenderSystem* render_system, std::function<void()> change_color);
+
 	void restart_game();
 
 	void on_key(int key, int action, int /*mod*/);
-	void on_left_click(int action, dvec2 mouse_screen_pos);
+	bool on_left_click(int action, dvec2 mouse_screen_pos);
 	void on_mouse_move(vec2 mouse_screen_pos);
 
 	bool player_can_act();
@@ -15,11 +20,20 @@ public:
 	bool has_current_attack() const;
 	Attack& get_current_attack();
 
+	void on_show_world(const std::function<void()>& on_show_world_callback);
+
 	void add_to_inventory(Entity item, size_t slot);
-	void update_potion_count();
+	void update_resource_count();
 
 private:
 	void try_settle_held();
+
+	void switch_to_group(Entity group);
+
+	// Remove tooltip from group, destroy entity
+	void destroy_tooltip();
+	// Set tooltip alignment based on its position
+	void align_tooltip(vec2 new_pos);
 
 	bool can_insert_into_slot(Entity item, Entity container);
 	void insert_into_slot(Entity item, Entity container);
@@ -41,16 +55,23 @@ private:
 	Slot current_attack_slot = Slot::Count;
 	size_t current_attack = 0;
 
-	Entity health_potion_display = entt::null;
+	std::array<Entity, (size_t)Resource::Count> resource_displays = { entt::null };
 	Entity attack_display = entt::null;
 
 	enum class Groups {
-		HUD,
-		Inventory,
-		MainMenu,
-		Count,
+		HUD = 0,
+		Inventory = HUD + 1,
+		MainMenu = Inventory + 1,
+		Tooltips = MainMenu + 1,
+		Count = Tooltips + 1,
 	};
 
 	std::array<Entity, (size_t)Groups::Count> groups = { entt::null };
 	Entity held_under_mouse = entt::null;
+	Entity tooltip = entt::null;
+
+	RenderSystem* renderer;
+	std::function<void()> try_change_color;
+
+	std::vector<std::function<void()>> show_world_callbacks;
 };
