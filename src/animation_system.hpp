@@ -128,6 +128,8 @@ public:
 	Entity create_boss_entry_entity(EnemyType boss_type, uvec2 position);
 	// Triggers full boss animation for a specific entity
 	void trigger_full_boss_intro(const Entity& boss_entity);
+	// Checks if an entity has a animation event that still has not completed
+	bool boss_intro_complete(const Entity& boss_entity);
 
 	// Returns a boolean denoting whether or not all "irregular animations" such as attack
 	// or damage calculations have been completed

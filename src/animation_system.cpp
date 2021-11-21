@@ -295,6 +295,11 @@ void AnimationSystem::trigger_full_boss_intro(const Entity& boss_entity) {
 	registry.emplace<UndisplayEventAnimation>(boss_entity);
 }
 
+bool AnimationSystem::boss_intro_complete(const Entity& boss_entity)
+{
+	return (!registry.any_of<UndisplayEventAnimation> (boss_entity));
+}
+
 void AnimationSystem::player_spell_impact_animation(const Entity& enemy, DamageType spelltype) {
 	auto spell_impact_entity = registry.create();
 	MapPosition position = registry.get<MapPosition>(enemy);
@@ -402,6 +407,7 @@ void AnimationSystem::resolve_undisplay_event_animations()
 		// two frames in all event animations (which is technically correct since it's an "animation", but a bit iffy)
 		if (actual_animation.frame < event_animation.frame) {
 			effect.visible = false;
+			registry.remove<UndisplayEventAnimation>(entity);
 		} else {
 			event_animation.frame = actual_animation.frame;
 		}
@@ -415,6 +421,7 @@ void AnimationSystem::resolve_undisplay_event_animations()
 		// two frames in all event animations (which is technically correct since it's an "animation", but a bit iffy)
 		if (actual_animation.frame < event_animation.frame) {
 			render.visible = false;
+			registry.remove<UndisplayEventAnimation>(entity);
 		} else {
 			event_animation.frame = actual_animation.frame;
 		}
