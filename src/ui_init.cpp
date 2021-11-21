@@ -21,25 +21,14 @@ void UISystem::restart_game()
 		= create_fancy_healthbar(groups[(size_t)Groups::HUD], vec2(.025f, .09f), vec2(.15f, .03f), BarType::Mana);
 	registry.get<Color>(mana).color = vec3(.1, .1, .8);
 
-	// Health Potion counter
-	Inventory& inventory = registry.get<Inventory>(player);
-	vec2 health_pos = vec2(.3f, .05125f);
-	health_potion_display = create_ui_text(groups[(size_t)Groups::HUD],
-										   health_pos + vec2(-.002, .01),
-										   std::to_string(inventory.health_potions),
-										   Alignment::Center,
-										   Alignment::Center,
-										   64u);
-	registry.get<Color>(health_potion_display).color = vec3(.7, 1, .7);
-	Entity health_pot = create_ui_icon(groups[(size_t)Groups::HUD],
-									   ivec2(0, 4),
-									   vec2(MapUtility::tile_size),
-									   health_pos,
-									   4.f * vec2(MapUtility::tile_size) / vec2(window_default_size));
-	registry.get<UIRenderRequest>(health_pot).alignment_y = Alignment::Center;
-	registry.emplace<Button>(health_pot, health_potion_display, ButtonAction::TryHeal, player);
-
+	// Resource counters
+	resource_displays = {
+		create_ui_counter(groups[(size_t)Groups::HUD], Resource::HealthPotion, ivec2(0, 4), 1, vec2(.29f, .05125f)),
+		create_ui_counter(groups[(size_t)Groups::HUD], Resource::ManaPotion, ivec2(1, 4), 1, vec2(.325f, .05125f)),
+		create_ui_counter(groups[(size_t)Groups::HUD], Resource::PaletteSwap, ivec2(0, 5), 3, vec2(.36f, .05125f)),
+	};
 	// Attack Display
+	Inventory& inventory = registry.get<Inventory>(player);
 	attack_display = create_ui_text(
 		groups[(size_t)Groups::HUD], vec2(0, 1), make_attack_display_text(), Alignment::Start, Alignment::End);
 
@@ -127,6 +116,26 @@ Entity create_fancy_healthbar(Entity ui_group, vec2 pos, vec2 size, BarType targ
 	registry.emplace<Color>(entity, vec3(.8, .1, .1));
 	registry.emplace<TargettedBar>(entity, target);
 	UIGroup::add_element(ui_group, entity, registry.emplace<UIElement>(entity, ui_group, true));
+	return entity;
+}
+
+Entity create_ui_counter(Entity group, Resource resource, ivec2 offset, int size, vec2 pos)
+{
+	Entity player = registry.view<Player>().front();
+	Entity entity = create_ui_text(group,
+										   pos + vec2(0, .01),
+								   std::to_string(registry.get<Inventory>(player).resources.at((size_t)resource)),
+								   Alignment::Center,
+								   Alignment::Center,
+								   64u);
+	registry.get<Color>(entity).color = vec3(.7, 1, .7);
+	Entity health_pot = create_ui_icon(group,
+									   offset,
+									   vec2(MapUtility::tile_size * static_cast<float>(size)),
+									   pos,
+									   4.f * vec2(MapUtility::tile_size) / vec2(window_default_size));
+	registry.get<UIRenderRequest>(health_pot).alignment_y = Alignment::Center;
+	registry.emplace<Button>(health_pot, entity, ButtonAction::TryHeal, player);
 	return entity;
 }
 

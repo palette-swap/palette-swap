@@ -8,6 +8,7 @@ Entity create_fancy_healthbar(Entity ui_group,
 							  vec2 pos = vec2(.02f),
 							  vec2 size = vec2(.25f, .0625f),
 							  BarType target = BarType::Health);
+Entity create_ui_counter(Entity group, Resource resource, ivec2 offset, int size, vec2 pos);
 Entity create_ui_rectangle(Entity ui_group, vec2 pos, vec2 size);
 Entity create_grid_rectangle(Entity ui_group, size_t slot, float width, float height, const Geometry::Rectangle& area);
 Entity create_inventory_slot(Entity ui_group,

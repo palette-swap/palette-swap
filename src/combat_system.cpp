@@ -57,7 +57,7 @@ bool CombatSystem::try_pickup_items(Entity player)
 	MapPosition& player_pos = registry.get<MapPosition>(player);
 	for (auto [entity, pos] : registry.view<HealthPotion, MapPosition>().each()) {
 		if (player_pos.position == pos.position) {
-			registry.get<Inventory>(player).health_potions++;
+			registry.get<Inventory>(player).resources.at((size_t)Resource::HealthPotion)++;
 			registry.destroy(entity);
 
 			for (const auto& callback : pickup_callbacks) {
@@ -88,10 +88,10 @@ bool CombatSystem::try_pickup_items(Entity player)
 bool CombatSystem::try_drink_potion(Entity player)
 {
 	Inventory& inventory = registry.get<Inventory>(player);
-	if (inventory.health_potions == 0) {
+	if (inventory.resources.at((size_t)Resource::HealthPotion) == 0) {
 		return false;
 	}
-	inventory.health_potions--;
+	inventory.resources.at((size_t)Resource::HealthPotion)--;
 	Stats& stats = registry.get<Stats>(player);
 	stats.health = stats.health_max;
 	return true;

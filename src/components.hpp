@@ -484,11 +484,18 @@ const std::array<std::string_view, (size_t)Slot::Count> slot_names = {
 
 template <typename T> using SlotList = std::array<T, static_cast<size_t>(Slot::Count)>;
 
+enum class Resource {
+	HealthPotion,
+	ManaPotion = HealthPotion + 1,
+	PaletteSwap = ManaPotion + 1,
+	Count = PaletteSwap + 1,
+};
+
 struct Inventory {
 	static constexpr size_t inventory_size = 12;
 	std::array<Entity, inventory_size> inventory;
 	SlotList<Entity> equipped;
-	size_t health_potions = 2;
+	std::array<size_t, (size_t)Resource::Count> resources = {2, 0, 2};
 	Inventory()
 		: inventory()
 		, equipped()

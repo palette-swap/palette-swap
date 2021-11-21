@@ -21,7 +21,7 @@ public:
 	Attack& get_current_attack();
 
 	void add_to_inventory(Entity item, size_t slot);
-	void update_potion_count();
+	void update_resource_count();
 
 private:
 	void try_settle_held();
@@ -51,7 +51,7 @@ private:
 	Slot current_attack_slot = Slot::Count;
 	size_t current_attack = 0;
 
-	Entity health_potion_display = entt::null;
+	std::array<Entity, (size_t)Resource::Count> resource_displays = { entt::null };
 	Entity attack_display = entt::null;
 
 	enum class Groups {

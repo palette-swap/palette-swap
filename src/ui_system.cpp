@@ -164,11 +164,11 @@ void UISystem::do_action(Button& button)
 	}
 	case ButtonAction::TryHeal: {
 		Inventory& inventory = registry.get<Inventory>(button.action_target);
-		if (inventory.health_potions > 0) {
+		if (inventory.resources.at((size_t)Resource::HealthPotion) > 0) {
 			Stats& stats = registry.get<Stats>(button.action_target);
 			stats.health = stats.health_max;
-			inventory.health_potions--;
-			update_potion_count();
+			inventory.resources.at((size_t)Resource::HealthPotion)--;
+			update_resource_count();
 		}
 		break;
 	}
@@ -291,7 +291,7 @@ void UISystem::add_to_inventory(Entity item, size_t slot)
 		return;
 	}
 	if (slot == MAXSIZE_T) {
-		update_potion_count();
+		update_resource_count();
 		return;
 	}
 	auto view = registry.view<InventorySlot>();
@@ -304,10 +304,12 @@ void UISystem::add_to_inventory(Entity item, size_t slot)
 	create_ui_item(groups[(size_t)Groups::Inventory], (*matching_slot), item);
 }
 
-void UISystem::update_potion_count()
+void UISystem::update_resource_count()
 {
-	registry.get<Text>(health_potion_display).text
-		= std::to_string(registry.get<Inventory>(registry.view<Player>().front()).health_potions);
+	for (size_t i = 0; i < (size_t)Resource::Count; i++) {
+		registry.get<Text>(resource_displays.at(i)).text
+			= std::to_string(registry.get<Inventory>(registry.view<Player>().front()).resources.at(i));
+	}
 }
 
 void UISystem::set_current_attack(Slot slot, size_t attack)

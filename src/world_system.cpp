@@ -349,7 +349,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 			break;
 		case GLFW_KEY_H:
 			if (turns->ready_to_act(player) && combat->try_drink_potion(player)) {
-				ui->update_potion_count();
+				ui->update_resource_count();
 				turns->skip_team_action(player);
 			}
 		default:
