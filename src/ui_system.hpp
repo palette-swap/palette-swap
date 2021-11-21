@@ -2,8 +2,13 @@
 
 #include "components.hpp"
 
+#include "render_system.hpp"
+
 class UISystem {
 public:
+
+	void init(RenderSystem* render_system);
+
 	void restart_game();
 
 	void on_key(int key, int action, int /*mod*/);
@@ -20,6 +25,11 @@ public:
 
 private:
 	void try_settle_held();
+
+	// Remove tooltip from group, destroy entity
+	void destroy_tooltip();
+	// Set tooltip alignment based on its position
+	void align_tooltip(vec2 new_pos);
 
 	bool can_insert_into_slot(Entity item, Entity container);
 	void insert_into_slot(Entity item, Entity container);
@@ -55,4 +65,6 @@ private:
 	std::array<Entity, (size_t)Groups::Count> groups = { entt::null };
 	Entity held_under_mouse = entt::null;
 	Entity tooltip = entt::null;
+
+	RenderSystem* renderer;
 };

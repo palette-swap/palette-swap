@@ -1,10 +1,15 @@
 #include "ui_init.hpp"
 #include "ui_system.hpp"
 
+void UISystem::init(RenderSystem* render_system) { renderer = render_system; }
+
 void UISystem::restart_game()
 {
 	auto ui_group_view = registry.view<UIGroup>();
 	registry.destroy(ui_group_view.begin(), ui_group_view.end());
+
+	held_under_mouse = entt::null;
+	destroy_tooltip();
 
 	groups = { create_ui_group(false), create_ui_group(false), create_ui_group(true), create_ui_group(true) };
 
@@ -161,7 +166,6 @@ Entity create_ui_item(Entity ui_group, Entity slot, Entity item)
 	registry.emplace<Color>(ui_item, vec3(1));
 	registry.emplace<Draggable>(ui_item, slot);
 	registry.emplace<InteractArea>(ui_item, vec2(.1f));
-	registry.emplace<HasTooltip>(ui_item);
 
 	registry.get<UISlot>(slot).contents = ui_item;
 	UIGroup::add_element(ui_group, ui_item, registry.emplace<UIElement>(ui_item, ui_group, true), UILayer::Content);
@@ -179,7 +183,7 @@ Entity create_ui_text(Entity ui_group,
 	Entity entity = registry.create();
 	registry.emplace<ScreenPosition>(entity, screen_position);
 	registry.emplace<Color>(entity, vec3(1.f));
-	registry.emplace<Text>(entity, text, font_size, alignment_x, alignment_y);
+	registry.emplace<Text>(entity, std::string(text), font_size, alignment_x, alignment_y);
 	UIGroup::add_element(ui_group, entity, registry.emplace<UIElement>(entity, ui_group, true), UILayer::Content);
 	return entity;
 }
@@ -187,14 +191,12 @@ Entity create_ui_text(Entity ui_group,
 Entity create_ui_tooltip(Entity ui_group,
 						 vec2 screen_position,
 						 const std::string_view& text,
-						 Alignment alignment_x,
-						 Alignment alignment_y,
 						 uint16 font_size)
 {
 	Entity entity = registry.create();
 	registry.emplace<ScreenPosition>(entity, screen_position);
 	registry.emplace<Color>(entity, vec3(1.f));
-	registry.emplace<Text>(entity, text, font_size, alignment_x, alignment_y).bubble = true;
+	registry.emplace<Text>(entity, std::string(text), font_size).bubble = true;
 	UIGroup::add_element(ui_group, entity, registry.emplace<UIElement>(entity, ui_group, true), UILayer::TooltipContent);
 	return entity;
 }

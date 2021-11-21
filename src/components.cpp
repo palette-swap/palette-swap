@@ -349,8 +349,8 @@ void UIGroup::add_element(Entity group, Entity element, UIElement& ui_element, U
 		return;
 	}
 	UIGroup& g = registry.get<UIGroup>(group);
-	ui_element.next = g.first_elements[(size_t)layer];
-	g.first_elements[(size_t)layer] = element;
+	ui_element.next = g.first_elements.at((size_t)layer);
+	g.first_elements.at((size_t)layer) = element;
 }
 
 void UIGroup::remove_element(Entity group, Entity element, UILayer layer)
@@ -359,10 +359,10 @@ void UIGroup::remove_element(Entity group, Entity element, UILayer layer)
 		return;
 	}
 	UIGroup& g = registry.get<UIGroup>(group);
-	Entity prev = g.first_elements[(size_t)layer];
+	Entity prev = g.first_elements.at((size_t)layer);
 	Entity curr = registry.get<UIElement>(prev).next;
 	if (prev == element) {
-		g.first_elements[(size_t)layer] = registry.get<UIElement>(prev).next;
+		g.first_elements.at((size_t)layer) = registry.get<UIElement>(prev).next;
 		return;
 	}
 	while (curr != entt::null) {
@@ -442,4 +442,73 @@ void StatBoosts::deserialize(const rapidjson::GenericObject<false, rapidjson::Va
 			}
 		}
 	}
+}
+
+std::string Item::get_description(bool detailed) const
+{
+	ItemTemplate& item = registry.get<ItemTemplate>(item_template);
+	std::string description = item.name;
+
+	description += " - Tier " + std::to_string(item.tier);
+
+	if (!detailed) {
+		return description;
+	}
+	
+	if (Weapon* weapon = registry.try_get<Weapon>(item_template)) {
+		description += weapon->get_description();
+	}
+
+	return description;
+}
+
+std::string Weapon::get_description() {
+	std::string description = "\n-Attacks-";
+	for (auto attack_entity : given_attacks) {
+		description += "\n" + registry.get<Attack>(attack_entity).get_description();
+	}
+	return description;
+}
+
+std::string Attack::get_description() const {
+	using std::to_string;
+	std::string description = name + "\n  ";
+	if (mana_cost != 0) {
+		description += to_string(mana_cost) + " mana\n  ";
+	}
+
+	// To hit
+	description += to_string(to_hit_min) + "-" + to_string(to_hit_max) + " to hit\n  ";
+
+	// Damage
+	description += to_string(damage_min) + "-" + to_string(damage_max) + " ";
+	description += damage_type_names.at((size_t)damage_type);
+	description += " dmg\n  ";
+
+	if (targeting_type == TargetingType::Adjacent) {
+		if (range > 1) {
+			description += "range " + to_string(range) + "\n  ";
+		}
+		if (perpendicular_size > 1 || parallel_size > 1) {
+			description += to_string(parallel_size) + "x" + to_string(perpendicular_size) + " area\n  ";
+		}
+	} else {
+		description += "projectile\n  ";
+	}
+
+	Entity curr = effects;
+	while (curr != entt::null) {
+		EffectEntry& effect = registry.get<EffectEntry>(curr);
+		description += to_string(static_cast<int>(effect.chance * 100.f)) + "% ";
+		description += effect_names.at((size_t)effect.effect);
+		description += " " + to_string(effect.magnitude) + "\n  ";
+		curr = effect.next_effect;
+	}
+
+	// Remove trailing "\n  "
+	description.pop_back();
+	description.pop_back();
+	description.pop_back();
+
+	return description;
 }

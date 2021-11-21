@@ -395,6 +395,8 @@ struct Attack {
 	void serialize(const std::string& prefix, rapidjson::Document& json) const;
 	void deserialize(const std::string& prefix, const rapidjson::Document& json);
 	void deserialize(const rapidjson::GenericObject<false, rapidjson::Value>& attack_json);
+
+	std::string get_description() const;
 };
 
 enum class Effect {
@@ -501,6 +503,7 @@ struct HealthPotion {
 
 struct Item {
 	Entity item_template;
+	std::string get_description(bool detailed) const;
 };
 
 struct ItemTemplate {
@@ -516,6 +519,7 @@ struct Weapon {
 	// TODO: Potentially replace with intelligent direct/indirect container
 	std::vector<Entity> given_attacks;
 	Attack& get_attack(size_t i) { return registry.get<Attack>(given_attacks.at(i)); }
+	std::string get_description();
 };
 //---------------------------------------------------------------------------
 //-------------------------		  ANIMATIONS        -------------------------
@@ -551,6 +555,11 @@ const std::array<int, (size_t)EnemyState::EnemyStateCount> enemy_state_to_animat
 
 // Render behind other elements in its grouping
 struct Background {
+};
+
+struct TextureOffset {
+	ivec2 offset;
+	vec2 size;	
 };
 
 struct RenderRequest {
@@ -745,9 +754,6 @@ struct Tooltip {
 	Entity target;
 };
 
-struct HasTooltip {
-};
-
 struct InteractArea {
 	vec2 size;
 };
@@ -766,27 +772,9 @@ struct Line {
 struct Text {
 	std::string text;
 	uint16 font_size;
-	Alignment alignment_x;
-	Alignment alignment_y;
+	Alignment alignment_x = Alignment::Center;
+	Alignment alignment_y = Alignment::Center;
 	bool bubble = false;
-
-	Text(std::string_view text, uint16 font_size, Alignment alignment_x, Alignment alignment_y, bool bubble = false)
-		: text(text)
-		, font_size(font_size)
-		, alignment_x(alignment_x)
-		, alignment_y(alignment_y)
-		, bubble(bubble)
-	{
-	}
-
-	Text(std::string text, uint16 font_size, Alignment alignment_x, Alignment alignment_y, bool bubble = false)
-		: text(std::move(text))
-		, font_size(font_size)
-		, alignment_x(alignment_x)
-		, alignment_y(alignment_y)
-		, bubble(bubble)
-	{
-	}
 };
 
 extern bool operator==(const Text& t1, const Text& t2);

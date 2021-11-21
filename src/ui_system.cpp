@@ -9,12 +9,14 @@ void UISystem::on_key(int key, int action, int /*mod*/)
 	if (!registry.get<UIGroup>(groups[(size_t)Groups::MainMenu]).visible) {
 		if (action == GLFW_PRESS && key == GLFW_KEY_I) {
 			try_settle_held();
+			destroy_tooltip();
 			UIGroup& group = registry.get<UIGroup>(groups[(size_t)Groups::Inventory]);
 			group.visible = !group.visible;
 			registry.get<UIGroup>(groups[(size_t)Groups::HUD]).visible = !group.visible;
 		}
 		if (action == GLFW_PRESS && key == GLFW_KEY_ESCAPE) {
 			try_settle_held();
+			destroy_tooltip();
 			UIGroup& group = registry.get<UIGroup>(groups[(size_t)Groups::Inventory]);
 			group.visible = false;
 			registry.get<UIGroup>(groups[(size_t)Groups::HUD]).visible = true;
@@ -67,6 +69,30 @@ void UISystem::try_settle_held()
 		held_pos.position = container_pos.position;
 	}
 	held_under_mouse = entt::null;
+}
+
+void UISystem::destroy_tooltip()
+{
+	if (tooltip == entt::null) {
+		return;
+	}
+	UIGroup::remove_element(groups[(size_t)Groups::Tooltips], tooltip, UILayer::TooltipContent);
+	registry.destroy(tooltip);
+	tooltip = entt::null;
+}
+
+void UISystem::align_tooltip(vec2 new_pos)
+{
+	if (tooltip == entt::null) {
+		return;
+	}
+
+	Text& text = registry.get<Text>(tooltip);
+	text.alignment_x = (new_pos.x > .5) ? Alignment::End : Alignment::Start;
+	text.alignment_y = (new_pos.y > .5) ? Alignment::End : Alignment::Start;
+
+	registry.get<ScreenPosition>(tooltip).position
+		= new_pos + vec2(0, .03 * (int)text.alignment_y);
 }
 
 bool UISystem::can_insert_into_slot(Entity item, Entity container)
@@ -142,9 +168,7 @@ void UISystem::on_left_click(int action, dvec2 mouse_screen_pos)
 			if (element.visible && registry.get<UIGroup>(element.group).visible
 				&& Geometry::Rectangle(screen_pos.position, interact_area.size).contains(vec2(mouse_screen_pos))) {
 				held_under_mouse = entity;
-				UIGroup::remove_element(groups[(size_t)Groups::Tooltips], tooltip, UILayer::TooltipContent);
-				registry.destroy(tooltip);
-				tooltip = entt::null;
+				destroy_tooltip();
 				return;
 			}
 		}
@@ -173,32 +197,47 @@ void UISystem::on_mouse_move(vec2 mouse_screen_pos)
 
 	if (tooltip != entt::null) {
 		Entity target = registry.get<Tooltip>(tooltip).target;
-
-		if (Geometry::Rectangle(registry.get<ScreenPosition>(target).position,
-								registry.get<UIRenderRequest>(target).size)
-				.contains(mouse_screen_pos)) {
-			registry.get<ScreenPosition>(tooltip).position = mouse_screen_pos + vec2(0, -.03);
+		bool on_target = false;
+		if (ScreenPosition* pos = registry.try_get<ScreenPosition>(target)) {
+			on_target = Geometry::Rectangle(pos->position, registry.get<UIRenderRequest>(target).size)
+							.contains(mouse_screen_pos);
+		} else if (MapPosition* pos = registry.try_get<MapPosition>(target)) {
+			on_target = MapUtility::world_position_to_map_position(
+							renderer->screen_position_to_world_position(mouse_screen_pos))
+				== pos->position;
+		}
+		if (on_target) {
+			align_tooltip(mouse_screen_pos);
 		} else {
-			UIGroup::remove_element(groups[(size_t)Groups::Tooltips], tooltip, UILayer::TooltipContent);
-			registry.destroy(tooltip);
-			tooltip = entt::null;
+			destroy_tooltip();
 		}
 		return;
 	}
 
-	for (auto [entity, pos, request] : registry.view<HasTooltip, ScreenPosition, UIRenderRequest>().each()) {
-		if (Geometry::Rectangle(pos.position, request.size).contains(mouse_screen_pos)) {
-			std::string* text;
-			if (Item* item = registry.try_get<Item>(entity)) {
-				text = &registry.get<ItemTemplate>(item->item_template).name;
+	auto create_tooltip = [&](Entity entity, Item& item, bool detailed) {
+		std::string text = item.get_description(detailed);
+		tooltip = create_ui_tooltip(groups[(size_t)Groups::Tooltips], mouse_screen_pos, text, 24u);
+		registry.get<Text>(tooltip).bubble = true;
+		registry.emplace<Tooltip>(tooltip, entity);
+		align_tooltip(mouse_screen_pos);
+	};
+
+	for (auto [entity, item, pos, request, element] :
+		 registry.group<Item>(entt::get<ScreenPosition, UIRenderRequest, UIElement>).each()) {
+		if (element.visible && Geometry::Rectangle(pos.position, request.size).contains(mouse_screen_pos)
+			&& registry.get<UIGroup>(element.group).visible) {
+			create_tooltip(entity, item, true);
+			return;
+		}
+	}
+	if (player_can_act()) {
+		uvec2 mouse_map_pos
+			= MapUtility::world_position_to_map_position(renderer->screen_position_to_world_position(mouse_screen_pos));
+		for (auto [entity, item, pos, request] : registry.view<Item, MapPosition, RenderRequest>().each()) {
+			if (request.visible && pos.position == mouse_map_pos) {
+				create_tooltip(entity, item, false);
+				return;
 			}
-			tooltip = create_ui_tooltip(groups[(size_t)Groups::Tooltips],
-										mouse_screen_pos + vec2(0, -.03),
-										(text != nullptr) ? *text : "",
-										Alignment::Center,
-										Alignment::End);
-			registry.get<Text>(tooltip).bubble = true;
-			registry.emplace<Tooltip>(tooltip, entity);
 		}
 	}
 }
