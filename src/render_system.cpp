@@ -292,6 +292,12 @@ void RenderSystem::draw_effect(Entity entity, const EffectRenderRequest& render_
 		glUniform1i(spell_loc, animation.state);
 	}
 
+	if (render_request.used_effect == EFFECT_ASSET_ID::AOE) {
+		AOESquare& aoe_status = registry.get<AOESquare>(entity);
+		GLint actual_aoe = glGetUniformLocation(program, "actual_aoe");
+		glUniform1i(actual_aoe, aoe_status.actual_attack_displayed);
+	}
+
 	GLuint texture_id = texture_gl_handles.at((GLuint)render_request.used_texture);
 
 	glBindTexture(GL_TEXTURE_2D, texture_id);

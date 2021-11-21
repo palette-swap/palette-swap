@@ -10,7 +10,7 @@ uniform vec3 fcolor;
 uniform float time;
 uniform int spelltype = 0;
 uniform vec2 texcoord_rel;
-uniform bool active = false;
+uniform bool actual_aoe = false;
 
 // aoe constants
 uniform vec3 aoe_color = {200,200,200};
@@ -23,7 +23,7 @@ layout(location = 0) out  vec4 color;
 
 void main()
 {
-		if (active == true) {
+		if (actual_aoe == true) {
 			color = vec4(fcolor, 1) * texture(sampler0, vec2(texcoord.x, texcoord.y));
 		} else {
 			color = vec4(aoe_color, (aoe_opacity_mean + aoe_opacity_amplitude * sin(time/aoe_time_period)));

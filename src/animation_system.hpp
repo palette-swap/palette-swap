@@ -116,10 +116,9 @@ public:
 	bool animation_events_completed();
 
 	// Initiates boss temporary animation state, to be returned to original state after completion of animation
-
 	void boss_event_animation(const Entity& boss, int event_state);
 
-	void aoe_charge_animation(const Entity& aoe);
+	void trigger_aoe_attack_animation(const Entity& aoe);
 
 private:
 	// helper function, checks event animation components to see if they should be removed, and animation states should

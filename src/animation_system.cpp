@@ -288,11 +288,14 @@ void AnimationSystem::boss_event_animation(const Entity& boss, int event_state) 
 	}
 }
 
-void AnimationSystem::aoe_charge_animation(const Entity& aoe) { 
+void AnimationSystem::trigger_aoe_attack_animation(const Entity& aoe) { 
+	Animation& aoe_animation = registry.get<Animation>(aoe); 
+	AOESquare& aoe_status = registry.get<AOESquare>(aoe);
 
-	// TODO: Change single king mush attack to be based on which enemy type requested the charge animation
-	registry.emplace<EffectRenderRequest>(
-		aoe, TEXTURE_ASSET_ID::KING_MUSH_ATTACKS, EFFECT_ASSET_ID::AOE, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);
+	aoe_animation.state = 0;
+	aoe_animation.max_frames = 8;
+	aoe_animation.speed_adjustment = 0.5f;
+	aoe_status.actual_attack_displayed = true;
 }
 
 bool AnimationSystem::animation_events_completed() { return (registry.empty<EventAnimation, TransientEventAnimation>()); }

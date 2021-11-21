@@ -451,6 +451,7 @@ void AISystem::release_aoe(const std::vector<Entity>& aoe)
 			attack_player(aoe_square);
 		}
 
+		animations->trigger_aoe_attack_animation(aoe_square);
 		// Released AOE squares will be destroyed in the next turn.
 		registry.get<AOESquare>(aoe_square).isReleased = true;
 	}
