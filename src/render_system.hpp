@@ -52,23 +52,15 @@ class RenderSystem {
 			textures_path("/01-Player/Spell Spritesheet.png"),
 			textures_path("tile_set.png"),
 			textures_path("help.png"),
-			textures_path("End Screen.png") };
+			textures_path("End Screen.png")
+	};
 
 	std::array<GLuint, effect_count> effects = {};
 	// Make sure these paths remain in sync with the associated enumerators.
-	const std::array<std::string, effect_count> effect_paths = {
-		shader_path("line"),	 
-		shader_path("rectangle"),	
-		shader_path("enemy"),
-		shader_path("player"),
-		shader_path("boss_intro"),
-		shader_path("health_bar"),
-		shader_path("fancy_bar"),
-		shader_path("textured"),
-		shader_path("spell"),
-		shader_path("water"),		
-		shader_path("tilemap"),
-	}
+	const std::array<std::string, effect_count> effect_paths
+		= { shader_path("line"),	   shader_path("rectangle"),  shader_path("enemy"),		shader_path("player"),
+			shader_path("boss_intro"), shader_path("health_bar"), shader_path("fancy_bar"), shader_path("textured"),
+			shader_path("spell"),	  shader_path("water"),	  shader_path("tilemap") };
 	// TODO: move these constants into animation system most likely, need to finalize
 	// hierachy between animation and render system
 	// Filler for experimental spritesheet dimensions (3 rows and 4 columns)
