@@ -153,10 +153,25 @@ bool UISystem::swap_or_move_item(ScreenPosition& container_pos,
 
 void UISystem::do_action(Button& button)
 {
-	if (button.action == ButtonAction::SwitchToGroup) {
+	switch (button.action) {
+	case ButtonAction::SwitchToGroup: {
 		for (auto [entity, group] : registry.view<UIGroup>().each()) {
 			group.visible = entity == button.action_target || entity == groups[(size_t)Groups::Tooltips];
 		}
+		break;
+	}
+	case ButtonAction::TryHeal: {
+		Inventory& inventory = registry.get<Inventory>(button.action_target);
+		if (inventory.health_potions > 0) {
+			Stats& stats = registry.get<Stats>(button.action_target);
+			stats.health = stats.health_max;
+			inventory.health_potions--;
+			update_potion_count();
+		}
+		break;
+	}
+	default:
+		break;
 	}
 }
 

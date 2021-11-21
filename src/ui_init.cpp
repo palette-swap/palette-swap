@@ -22,12 +22,24 @@ void UISystem::restart_game()
 	registry.get<Color>(mana).color = vec3(.1, .1, .8);
 
 	// Health Potion counter
-	health_potion_display
-		= create_ui_text(groups[(size_t)Groups::HUD], vec2(.28f, .05125f), "0", Alignment::Start, Alignment::Center, 64u);
-
+	Inventory& inventory = registry.get<Inventory>(player);
+	vec2 health_pos = vec2(.3f, .05125f);
+	health_potion_display = create_ui_text(groups[(size_t)Groups::HUD],
+										   health_pos + vec2(-.002, .01),
+										   std::to_string(inventory.health_potions),
+										   Alignment::Center,
+										   Alignment::Center,
+										   64u);
+	registry.get<Color>(health_potion_display).color = vec3(.7, 1, .7);
+	Entity health_pot = create_ui_icon(groups[(size_t)Groups::HUD],
+								 ivec2(0, 4),
+								 vec2(MapUtility::tile_size),
+								 health_pos,
+								 4.f * vec2(MapUtility::tile_size) / vec2(window_default_size));
+	registry.get<UIRenderRequest>(health_pot).alignment_y = Alignment::Center;
+	registry.emplace<Button>(health_pot, health_potion_display, ButtonAction::TryHeal, player);
 
 	// Attack Display
-	Inventory& inventory = registry.get<Inventory>(player);
 	attack_display = create_ui_text(
 		groups[(size_t)Groups::HUD], vec2(0, 1), make_attack_display_text(), Alignment::Start, Alignment::End);
 
@@ -154,21 +166,33 @@ Entity create_equip_slot(
 	return entity;
 }
 
+Entity create_ui_icon(Entity ui_group, ivec2 offset, vec2 texture_size, vec2 pos, vec2 size, UILayer layer) {
+	Entity ui_item = registry.create();
+	registry.emplace<ScreenPosition>(ui_item, pos);
+	registry.emplace<UIRenderRequest>(ui_item,
+									  TEXTURE_ASSET_ID::ICONS,
+									  EFFECT_ASSET_ID::SPRITESHEET,
+									  GEOMETRY_BUFFER_ID::SPRITE, size);
+	registry.emplace<TextureOffset>(ui_item, offset, texture_size);
+	registry.emplace<Color>(ui_item, vec3(1));
+
+	UIGroup::add_element(ui_group, ui_item, registry.emplace<UIElement>(ui_item, ui_group, true), layer);
+	return ui_item;
+}
+
 Entity create_ui_item(Entity ui_group, Entity slot, Entity item)
 {
-	Entity ui_item = registry.create();
 	ItemTemplate& item_component = registry.get<ItemTemplate>(item);
+	Entity ui_item = create_ui_icon(ui_group,
+									item_component.texture_offset,
+									item_component.texture_size,
+									registry.get<ScreenPosition>(slot).position,
+									vec2(.1 * window_default_size.y / window_default_size.x, .1),
+									UILayer::Content);
 	registry.emplace<Item>(ui_item, item);
-	registry.emplace<ScreenPosition>(ui_item, registry.get<ScreenPosition>(slot).position);
-	registry.emplace<UIRenderRequest>(
-		ui_item, TEXTURE_ASSET_ID::ICONS, EFFECT_ASSET_ID::SPRITESHEET, GEOMETRY_BUFFER_ID::SPRITE, vec2(.1 * window_default_size.y / window_default_size.x, .1));
-	registry.emplace<TextureOffset>(ui_item, item_component.texture_offset, item_component.texture_size);
-	registry.emplace<Color>(ui_item, vec3(1));
 	registry.emplace<Draggable>(ui_item, slot);
 	registry.emplace<InteractArea>(ui_item, vec2(.1f));
-
 	registry.get<UISlot>(slot).contents = ui_item;
-	UIGroup::add_element(ui_group, ui_item, registry.emplace<UIElement>(ui_item, ui_group, true), UILayer::Content);
 
 	return ui_item;
 }

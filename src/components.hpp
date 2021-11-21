@@ -488,7 +488,7 @@ struct Inventory {
 	static constexpr size_t inventory_size = 12;
 	std::array<Entity, inventory_size> inventory;
 	SlotList<Entity> equipped;
-	size_t health_potions = 0;
+	size_t health_potions = 2;
 	Inventory()
 		: inventory()
 		, equipped()
@@ -793,6 +793,7 @@ template <> struct std::hash<Text> {
 
 enum class ButtonAction {
 	SwitchToGroup,
+	TryHeal,
 };
 
 struct Button {
