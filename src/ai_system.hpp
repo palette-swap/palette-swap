@@ -92,6 +92,8 @@ private:
 	// Sound stuff
 	std::shared_ptr<SoLoud::Soloud> so_loud;
 	SoLoud::Wav enemy_attack1_wav;
+	SoLoud::Wav king_mush_summon_wav;
+	SoLoud::Wav king_mush_aoe_wav;
 
 	// Entity representing the enemy team's turn.
 	Entity enemy_team;
@@ -215,7 +217,7 @@ private:
 
 				ai->switch_enemy_state(e, EnemyState::Idle);
 				ai->animations->boss_event_animation(e, 4);
-
+				ai->so_loud->play(ai->king_mush_aoe_wav);
 				return handle_process_result(BTState::Success);
 			}
 		}
@@ -374,6 +376,7 @@ private:
 		{
 			// Selector - active
 			auto summon_enemies = std::make_unique<SummonEnemies>(EnemyType::Mushroom, 1);
+			ai->so_loud->play(ai->king_mush_summon_wav);
 			std::vector<ivec2> aoe_shape;
 			aoe_shape.push_back(ivec2(0, 0));
 			aoe_shape.push_back(ivec2(0, -1));

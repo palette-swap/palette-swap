@@ -25,6 +25,10 @@ AISystem::AISystem(const Debug& debugging,
 	this->turns->add_team_to_queue(enemy_team);
 
 	enemy_attack1_wav.load(audio_path("enemy_attack1.wav").c_str());
+
+	king_mush_summon_wav.load(audio_path("King Mush Shrooma.wav").c_str());
+	king_mush_aoe_wav.load(audio_path("King Mush Fudun.wav").c_str());
+
 	std::vector<std::function<void(const Entity& attacker, const Entity& target)>> callbacks;
 
 	this->combat->on_attack(
