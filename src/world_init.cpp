@@ -163,11 +163,16 @@ Entity create_arrow(vec2 position)
 	registry.emplace<WorldPosition>(entity, position);
 	registry.emplace<Velocity>(entity, 0.f, 0.f);
 
-	// Create and (empty) player component to be able to refer to other enttities
-	registry.emplace<RenderRequest>(
-		entity, TEXTURE_ASSET_ID::CANNONBALL, EFFECT_ASSET_ID::TEXTURED, GEOMETRY_BUFFER_ID::SPRITE, true);
+	// Create and (empty) player component to be able to refer to other entities
+	// TODO: replace with single geometry buffer sprites
+	registry.emplace<EffectRenderRequest>(
+		entity, TEXTURE_ASSET_ID::SPELLS, EFFECT_ASSET_ID::SPELL, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);
+	Animation& spell_animation = registry.emplace<Animation>(entity);
+	spell_animation.max_frames = 8;
+	spell_animation.color = ColorState::None;
+	spell_animation.state = 0;
+	spell_animation.speed_adjustment = 1;
 	registry.emplace<Color>(entity, vec3(1, 1, 1));
-
 	return entity;
 }
 

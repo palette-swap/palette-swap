@@ -31,6 +31,13 @@ static constexpr float player_blue_red_switch_speed = 1;
 
 // Used for boss action speeds
 static constexpr float boss_action_speed = 0.5f;
+
+// Used for spell animation details
+static constexpr float player_spell_animation_speed = 3.f;
+static constexpr int player_spell_states = 4;
+static constexpr float player_spell_impact_speed = 1.f;
+static constexpr int spell_impact_total_frames = 8;
+
 // Value denoting the animation states for the player
 // KEEP ALIGNED WITH STATES REPRESENTED IN PLAYER SPRITESHEET
 enum class PlayerAnimationStates {
@@ -92,6 +99,8 @@ public:
 	void player_spellcast_animation(const Entity& player);
 	// Toggles player's weapon selection
 	void player_toggle_weapon(const Entity& player);
+	// Toggles player's spell_arrow
+	void player_toggle_spell(const Entity& player_arrow, int spell_type);
 	// TODO: Maybe generalize these two event animations to a general one
 	// Triggers attack animation for a entity specified as the player
 	void player_attack_animation(const Entity& player);
@@ -99,7 +108,9 @@ public:
 	void player_running_animation(const Entity& player);
 	// Triggers player transition between red/blue
 	void player_red_blue_animation(const Entity& player, ColorState color);
-
+	// Sets a spell effect at the enemy's location
+	void player_spell_impact_animation(const Entity& enemy, DamageType spelltype);
+	
 	// Returns a boolean denoting whether or not all "irregular animations" such as attack
 	// or damage calculations have been completed
 	bool animation_events_completed();
@@ -112,6 +123,9 @@ private:
 	// helper function, checks event animation components to see if they should be removed, and animation states should
 	// be restored
 	void resolve_event_animations();
+	// helper function, checks that transient event animation to see if complete. If complete, the ENTITY ASSOCIATED
+	// WITH THE TRANSIENT EFFECT IS REMOVED;
+	void resolve_transient_event_animations();
 	// helper function for setting animation events
 	void animation_event_setup(Animation& animation, EventAnimation& EventAnimation, vec4& color);
 };
