@@ -201,9 +201,11 @@ void UISystem::on_left_click(int action, dvec2 mouse_screen_pos)
 		}
 		for (auto [entity, element, pos, request, button] :
 			 registry.view<UIElement, ScreenPosition, UIRenderRequest, Button>().each()) {
+			vec2 size_scale = request.size * ((request.used_effect == EFFECT_ASSET_ID::RECTANGLE) ? 1.f : .5f);
 			Geometry::Rectangle button_rect = Geometry::Rectangle(
-				pos.position + vec2((float)request.alignment_x, (float)request.alignment_y) * request.size * .5f,
-				request.size);
+				pos.position
+					+ vec2((float)request.alignment_x, (float)request.alignment_y) * .5f * size_scale,
+				 size_scale);
 			if (element.visible && registry.get<UIGroup>(element.group).visible
 				&& button_rect.contains(vec2(mouse_screen_pos))) {
 				do_action(button);
