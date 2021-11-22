@@ -144,6 +144,29 @@ void AnimationSystem::enemy_attack_animation(const Entity& enemy)
 	}
 }
 
+void AnimationSystem::enemy_tile_transition(const Entity& enemy, uvec2 map_start_point, uvec2 map_end_point)
+{
+	EnemyType enemy_type = registry.get<Enemy>(enemy).type;
+	Animation& enemy_animation = registry.get<Animation>(enemy);
+	TravelEventAnimation& enemy_transition = registry.emplace<TravelEventAnimation>(enemy);
+
+	enemy_transition.restore_speed = enemy_animation.speed_adjustment;
+	enemy_transition.restore_state = enemy_animation.state;
+	enemy_transition.start_point = MapUtility::map_position_to_world_position(map_start_point);
+	enemy_transition.end_point = MapUtility::map_position_to_world_position(map_end_point);
+	enemy_transition.middle_point = (enemy_transition.start_point + enemy_transition.end_point) * 0.5f;
+	enemy_transition.max_time = enemy_tile_travel_time_ms;
+
+	registry.emplace<WorldPosition>(enemy, enemy_transition.start_point);
+
+	// TODO: Change this to not be a hard check for mushrooms/slimes
+	// This has been added to be a git issue
+	if (enemy_type == EnemyType::Mushroom || enemy_type == EnemyType::Slime) {
+		enemy_transition.middle_point -= vec2(0, MapUtility::tile_size * 0.2f);
+	}
+		
+}
+
 void AnimationSystem::set_all_inactive_colours(ColorState inactive_color)
 {
 	Entity player = registry.view<Player>().front();
@@ -443,8 +466,35 @@ void AnimationSystem::resolve_travel_event_animations(float elapsed_ms)
 		 } else {
 			 float time_percent = travel_animation.total_time / travel_animation.max_time;
 
-			 world_position.position = (travel_animation.end_point - travel_animation.start_point) * time_percent
-				 + travel_animation.start_point;
+			 if (registry.any_of<Player>(entity)) {
+				 world_position.position = (travel_animation.end_point - travel_animation.start_point) * time_percent
+					 + travel_animation.start_point;
+			 } else {
+				 // Applies a spline equation to dictate movement if moving left or right
+				 if (travel_animation.start_point.x == travel_animation.end_point.x) {
+					 world_position.position
+						 = (travel_animation.end_point - travel_animation.start_point) * time_percent
+						 + travel_animation.start_point;
+				 } else {
+					 if (time_percent <= 0.5f) {
+						 float norm_time = time_percent / 0.5f;
+						 float y_offset = travel_animation.middle_point.y - travel_animation.start_point.y;
+						 world_position.position.y = travel_animation.start_point.y
+							 + y_offset * (-norm_time * norm_time) * (2 * norm_time - 3);
+					 } else {
+						 float norm_time = (1.f - time_percent) / 0.5f;
+						 float y_offset = travel_animation.middle_point.y - travel_animation.end_point.y;
+						 world_position.position.y = travel_animation.middle_point.y
+							 - y_offset * ((norm_time * norm_time) * (2 * norm_time - 3) + 1) ;
+					 }
+
+					 world_position.position.x
+						 = (travel_animation.end_point.x - travel_animation.start_point.x) * time_percent
+						 + travel_animation.start_point.x;
+				 }
+
+			 }
+			 
 		 }
 	}
 }
