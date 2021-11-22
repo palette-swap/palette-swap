@@ -281,7 +281,6 @@ void WorldSystem::handle_collisions()
 				Enemy& enemy = registry.get<Enemy>(entity_other);
 				ColorState enemy_color = enemy.team;
 				if (!did_attack && enemy_color != turns->get_inactive_color() && ui->has_current_attack()) {
-					animations->player_spell_impact_animation(entity_other, ui->get_current_attack().damage_type);
 					did_attack = combat->do_attack(
 						player, ui->get_current_attack(), registry.get<MapPosition>(entity_other).position);
 				}
@@ -551,7 +550,7 @@ void WorldSystem::move_player(Direction direction)
 		new_pos = uvec2(map_pos.position.x, map_pos.position.y + 1);
 	}
 
-	if (map_pos.position == new_pos || !map_generator->walkable_and_free(new_pos)
+	if (map_pos.position == new_pos || !map_generator->walkable_and_free(player, new_pos)
 		|| !turns->execute_team_action(player)) {
 		return;
 	}
@@ -600,7 +599,7 @@ void WorldSystem::try_change_color()
 	ui->update_resource_count();
 	MapPosition player_pos = registry.get<MapPosition>(player);
 
-	if (map_generator->walkable_and_free(player_pos.position, false)) {
+	if (map_generator->walkable_and_free(player, player_pos.position, false)) {
 		ColorState inactive_color = turns->get_inactive_color();
 		turns->set_active_color(inactive_color);
 

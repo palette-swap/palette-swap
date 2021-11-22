@@ -115,10 +115,20 @@ template <typename ColorExclusive> bool CombatSystem::is_valid_attack(Entity att
 		return false;
 	}
 	uvec2 attacker_pos = registry.get<MapPosition>(attacker).position;
-	for (const auto& target_entity : registry.view<Enemy, Stats>(entt::exclude<ColorExclusive>)) {
-		if (attack.is_in_range(attacker_pos, target, registry.get<MapPosition>(target_entity).position)) {
+	auto view = registry.view<MapPosition, Enemy, Stats>(entt::exclude<ColorExclusive>);
+	for (const Entity target_entity : view) {
+		if (attack.is_in_range(attacker_pos, target, view.template get<MapPosition>(target_entity).position)) {
 
 			return true;
+		}
+	}
+	auto view_big = registry.view<MapPosition, MapHitbox, Enemy, Stats>(entt::exclude<ColorExclusive>);
+	for (const Entity target_entity : view_big) {
+		for (auto square : MapUtility::MapArea(view_big.template get<MapPosition>(target_entity),
+											   view_big.template get<MapHitbox>(target_entity))) {
+			if (attack.is_in_range(attacker_pos, target, square)) {
+				return true;
+			}
 		}
 	}
 	return false;
@@ -140,10 +150,28 @@ template <typename ColorExclusive> bool CombatSystem::do_attack(Entity attacker,
 	}
 	registry.get<Stats>(attacker).mana -= attack.mana_cost;
 	bool success = false;
-	MapPosition& attacker_pos = registry.get<MapPosition>(attacker);
-	for (const auto& target_entity : registry.view<Enemy, Stats>(entt::exclude<ColorExclusive>)) {
-		if (attack.is_in_range(attacker_pos.position, target, registry.get<MapPosition>(target_entity).position)) {
+	uvec2 attacker_pos = registry.get<MapPosition>(attacker).position;
+	auto try_attack = [&](Entity target_entity, uvec2 pos) -> bool {
+		if (attack.is_in_range(attacker_pos, target, pos)) {
+			if (attack.mana_cost != 0) {
+				animations->player_spell_impact_animation(target_entity, attack.damage_type);
+			}
 			success |= do_attack(attacker, attack, target_entity);
+			return true;
+		}
+		return false;
+	};
+	auto view = registry.view<MapPosition, Enemy, Stats>(entt::exclude<MapHitbox, ColorExclusive>);
+	for (const Entity target_entity : view) {
+		try_attack(target_entity, view.template get<MapPosition>(target_entity).position);
+	}
+	auto view_big = registry.view<MapPosition, MapHitbox, Enemy, Stats>(entt::exclude<ColorExclusive>);
+	for (const Entity target_entity : view_big) {
+		for (auto square : MapUtility::MapArea(view_big.template get<MapPosition>(target_entity),
+											   view_big.template get<MapHitbox>(target_entity))) {
+			if (try_attack(target_entity, square)) {
+				break;
+			}
 		}
 	}
 	return success;
@@ -353,6 +381,18 @@ void CombatSystem::do_attack_effects(Entity attacker, Attack& attack, Entity tar
 				stunned.rounds = max(stunned.rounds, effect.magnitude);
 				break;
 			}
+			case Effect::EvasionDown: {
+				StatBoosts& boosts = registry.get_or_emplace<StatBoosts>(target);
+				int evasion_old = boosts.evasion;
+				boosts.evasion = max(boosts.evasion - effect.magnitude, min(boosts.evasion, -effect.magnitude));
+				registry.get<Stats>(target).evasion += boosts.evasion - evasion_old;
+				break;
+			}
+			case Effect::Immobilize: {
+				Immobilized& immobilized = registry.get_or_emplace<Immobilized>(target, effect.magnitude);
+				immobilized.rounds = max(immobilized.rounds, effect.magnitude);
+				break;
+			}
 			default:
 				break;
 			}
@@ -363,6 +403,10 @@ void CombatSystem::do_attack_effects(Entity attacker, Attack& attack, Entity tar
 
 void CombatSystem::try_shove(Entity attacker, EffectEntry& effect, Entity target)
 {
+	if (registry.any_of<MapHitbox>(target)) {
+		// Can't shove big creatures
+		return;
+	}
 	MapPosition& a_pos = registry.get<MapPosition>(attacker);
 	MapPosition& t_pos = registry.get<MapPosition>(target);
 	vec2 distance = glm::normalize(vec2(t_pos.position) - vec2(a_pos.position)) * static_cast<float>(effect.magnitude);
@@ -374,7 +418,8 @@ void CombatSystem::try_shove(Entity attacker, EffectEntry& effect, Entity target
 		// Each of these helpers moves the player 1 unit along its respective axis if the map allows it
 		// and returns whether or not it worked
 		auto try_x = [&]() -> bool {
-			if (abs(shift.x) > 0 && map->walkable_and_free(uvec2(t_pos.position.x + shift_sign.x, t_pos.position.y))) {
+			if (abs(shift.x) > 0
+				&& map->walkable_and_free(target, uvec2(t_pos.position.x + shift_sign.x, t_pos.position.y))) {
 				t_pos.position.x += shift_sign.x;
 				shift.x -= shift_sign.x;
 				return true;
@@ -382,7 +427,7 @@ void CombatSystem::try_shove(Entity attacker, EffectEntry& effect, Entity target
 			return false;
 		};
 		auto try_y = [&]() -> bool {
-			if (abs(shift.y) > 0 && map->walkable_and_free(uvec2(t_pos.position.x, t_pos.position.y + shift_sign.y))) {
+			if (abs(shift.y) > 0 && map->walkable_and_free(target, uvec2(t_pos.position.x, t_pos.position.y + shift_sign.y))) {
 				t_pos.position.y += shift_sign.y;
 				shift.y -= shift_sign.y;
 				return true;

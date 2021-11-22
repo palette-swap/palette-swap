@@ -2,91 +2,164 @@
   {
     "name": "Axe",
     "tier": 1,
-    "slots": ["Weapon"],
+    "slots": [ "Weapon" ],
     "attacks": [
       {
         "name": "Chop",
-        "to_hit": [10, 20],
-        "damage": [10, 20],
+        "to_hit": [ 10, 20 ],
+        "damage": [ 10, 20 ],
         "damage_type": "Physical",
         "targeting_type": "Adjacent"
       },
       {
         "name": "Sweep",
-        "to_hit": [7, 17],
-        "damage": [5, 15],
+        "to_hit": [ 7, 17 ],
+        "damage": [ 5, 15 ],
         "damage_type": "Physical",
         "targeting_type": "Adjacent",
         "pattern": "Rectangle",
         "perpendicular_size": 2
       }
     ],
-    "texture_offset": [1, 0]
+    "texture_offset": [ 1, 0 ]
   },
   {
     "name": "Ice Orb",
     "tier": 1,
-    "slots": ["Spell"],
+    "slots": [ "Spell" ],
     "attacks": [
       {
         "name": "Ice Orb",
         "mana_cost": 20,
-        "to_hit": [15, 20],
-        "damage": [0, 8],
+        "to_hit": [ 15, 20 ],
+        "damage": [ 0, 8 ],
         "damage_type": "Cold",
         "targeting_type": "Projectile",
         "range": 4,
-        "effects": [{"effect": "Stun", "magnitude": 3, "chance": 0.95}]
+        "effects": [
+          {
+            "effect": "Stun",
+            "magnitude": 3,
+            "chance": 0.95
+          }
+        ]
       }
     ],
-    "texture_offset": [1, 3]
+    "texture_offset": [ 1, 3 ]
   },
   {
     "name": "Mace",
     "tier": 1,
-    "slots": ["Weapon"],
+    "slots": [ "Weapon" ],
     "attacks": [
       {
         "name": "Bash",
-        "to_hit": [10, 20],
-        "damage": [13, 17],
+        "to_hit": [ 10, 20 ],
+        "damage": [ 13, 17 ],
         "damage_type": "Physical",
         "targeting_type": "Adjacent"
       },
       {
         "name": "Stun",
-        "to_hit": [7, 17],
-        "damage": [0, 10],
+        "to_hit": [ 7, 17 ],
+        "damage": [ 0, 10 ],
         "damage_type": "Physical",
         "targeting_type": "Adjacent",
-        "effects": [{"effect": "Stun", "chance": 0.5, "magnitude": 2}]
+        "effects": [
+          {
+            "effect": "Stun",
+            "chance": 0.5,
+            "magnitude": 2
+          }
+        ]
       }
     ],
-    "texture_offset": [2, 0]
+    "texture_offset": [ 2, 0 ]
   },
   {
     "name": "Spear",
     "tier": 2,
-    "slots": ["Weapon"],
+    "slots": [ "Weapon" ],
     "attacks": [
       {
         "name": "Stab",
-        "to_hit": [10, 20],
-        "damage": [10, 25],
+        "to_hit": [ 10, 20 ],
+        "damage": [ 10, 25 ],
         "damage_type": "Physical",
         "targeting_type": "Adjacent",
         "range": 2
       },
       {
         "name": "Push Back",
-        "to_hit": [7, 17],
-        "damage": [0, 10],
+        "to_hit": [ 7, 17 ],
+        "damage": [ 0, 10 ],
         "damage_type": "Physical",
         "targeting_type": "Adjacent",
         "range": 1,
-        "effects": [{"effect": "Shove", "chance": 0.5, "magnitude": 2}]
+        "effects": [
+          {
+            "effect": "Shove",
+            "chance": 0.5,
+            "magnitude": 2
+          }
+        ]
       }
     ],
-    "texture_offset": [3, 0]
+    "texture_offset": [ 3, 0 ]
+  },
+  {
+    "name": "Gale Blast",
+    "tier": 2,
+    "slots": [ "Spell" ],
+    "attacks": [
+      {
+        "name": "Gale Blast",
+        "mana_cost": 25,
+        "to_hit": [ 15, 20 ],
+        "damage": [ 10, 15 ],
+        "damage_type": "Wind",
+        "targeting_type": "Projectile",
+        "range": 4,
+        "parallel_size": 4,
+        "perpendicular_size": 4,
+        "effects": [
+          {
+            "effect": "Shove",
+            "magnitude": 4,
+            "chance": 0.95
+          }
+        ]
+      }
+    ],
+    "texture_offset": [ 3, 3 ]
+  },
+  {
+    "name": "Tar Ball",
+    "tier": 3,
+    "slots": [ "Spell" ],
+    "attacks": [
+      {
+        "name": "Tar Ball",
+        "mana_cost": 25,
+        "to_hit": [ 15, 25 ],
+        "damage": [ 8, 15 ],
+        "damage_type": "Earth",
+        "targeting_type": "Projectile",
+        "range": 4,
+        "effects": [
+          {
+            "effect": "EvasionDown",
+            "magnitude": 2,
+            "chance": 0.5
+          },
+          {
+            "effect": "Immobilize",
+            "magnitude": 2,
+            "chance": 0.95
+          }
+        ]
+      }
+    ],
+    "texture_offset": [ 2, 3 ]
   }
 ]
