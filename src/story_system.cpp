@@ -122,7 +122,7 @@ void StorySystem::render_text_each_frame()
 	}
 	CutScene c = registry.get<CutScene>(current_cutscene_entity);
 	UIGroup group = registry.get<UIGroup>(c.cutscene_ui);
-	Entity text_entity = group.first_text;
+	Entity text_entity = group.first_elements.at(static_cast<size_t>(UILayer::Content));
 	Text& text_comp = registry.get<Text>(text_entity);
 
 	std::string text_per_frame = text_frames.front();
