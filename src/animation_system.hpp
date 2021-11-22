@@ -50,6 +50,7 @@ enum class PlayerAnimationStates {
 	Melee = 2,
 	Running = 3,
 };
+
 enum class EnemyAnimationEvents {
 	Attack = 3,
 };
@@ -67,7 +68,8 @@ static constexpr vec4 default_enemy_blue = { 1, 1, 2, 1 };
 
 static constexpr vec4 damage_color = { 5, 5, 5, 1 };
 
-static constexpr int max_inactive_colors = 3;
+
+
 
 class AnimationSystem {
 
@@ -121,12 +123,22 @@ public:
 	void trigger_aoe_attack_animation(const Entity& aoe);
 	// Triggers boss's range attacked display at the specified location
 	void boss_ranged_attack(EnemyType boss, uvec2 target_position);
+	// Generates the boss enemy entry animation
+	// DOES NOT CREATE AN ACTUAL BOSS ENTITY, JUST CREATES THE ENTRY ANIMATION ENTITY AT THE LOCATION GIVEN
+	Entity create_boss_entry_entity(EnemyType boss_type, uvec2 position);
+	// Triggers full boss animation for a specific entity
+	void trigger_full_boss_intro(const Entity& boss_entity);
+	// Checks if an entity has a animation event that still has not completed
+	bool boss_intro_complete(const Entity& boss_entity);
 
 	// Returns a boolean denoting whether or not all "irregular animations" such as attack
 	// or damage calculations have been completed
 	bool animation_events_completed();
 
-	private:
+
+
+
+private:
 	// helper function, checks event animation components to see if they should be removed, and animation states should
 	// be restored
 	void resolve_event_animations();
@@ -138,6 +150,11 @@ public:
 	void resolve_undisplay_event_animations();
 	// helper function for setting animation events
 	void animation_event_setup(Animation& animation, EventAnimation& EventAnimation, vec4& color);
+	// helper function for updating camera
+	void camera_update_position();
+	
+	// helper function for update the camera to track the buffer
+	void camera_track_buffer();
 };
 
 

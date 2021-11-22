@@ -113,8 +113,10 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 	// Bosses
 	KING_MUSH = CLONE + 1,
 	KING_MUSH_ATTACKS = KING_MUSH + 1,
+	KING_MUSH_ENTRY = KING_MUSH_ATTACKS + 1,
 	// Misc Assets
-	CANNONBALL = KING_MUSH_ATTACKS + 1,
+
+	CANNONBALL = KING_MUSH_ENTRY + 1,
 	SPELLS = CANNONBALL + 1,
 	TILE_SET_RED = SPELLS + 1,
 	TILE_SET_BLUE = TILE_SET_RED + 1,
@@ -141,6 +143,7 @@ static constexpr std::array<vec2, texture_count> scaling_factors = {
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size * 3, MapUtility::tile_size * 3),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size * 5, MapUtility::tile_size * 5),
 	vec2(MapUtility::tile_size * 0.5, MapUtility::tile_size * 0.5),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size* MapUtility::room_size, MapUtility::tile_size* MapUtility::room_size),
@@ -155,7 +158,8 @@ enum class EFFECT_ASSET_ID {
 	RECTANGLE = LINE + 1,
 	ENEMY = RECTANGLE + 1,
 	PLAYER = ENEMY + 1,
-	HEALTH = PLAYER + 1,
+	BOSS_INTRO_SHADER = PLAYER + 1,
+	HEALTH = BOSS_INTRO_SHADER + 1,
 	FANCY_HEALTH = HEALTH + 1,
 	TEXTURED = FANCY_HEALTH + 1,
 	SPRITESHEET = TEXTURED + 1,
@@ -172,7 +176,8 @@ enum class GEOMETRY_BUFFER_ID : uint8_t {
 	SALMON = 0,
 	SPRITE = SALMON + 1,
 	SMALL_SPRITE = SPRITE + 1,
-	HEALTH = SMALL_SPRITE + 1,
+	ENTRY_ANIMATION_STRIP = SMALL_SPRITE + 1,
+	HEALTH = ENTRY_ANIMATION_STRIP + 1,
 	FANCY_HEALTH = HEALTH + 1,
 	LINE = FANCY_HEALTH + 1,
 	DEBUG_LINE = LINE + 1,
@@ -329,7 +334,6 @@ struct AOETargets {
 struct PlayerInactivePerception {
 	ColorState inactive = ColorState::Red;
 };
-
 //---------------------------------------------------------------------------
 //-------------------------         COMBAT          -------------------------
 //---------------------------------------------------------------------------
@@ -553,6 +557,10 @@ const std::array<TEXTURE_ASSET_ID, static_cast<int>(EnemyType::EnemyCount)> enem
 	// TODO (Evan): temporarily used MUSHROOM to mock KINGMUSH for testing, please replace it when the texture is
 	// available.
 	TEXTURE_ASSET_ID::KING_MUSH,
+};
+
+const std::map<EnemyType, TEXTURE_ASSET_ID> boss_type_entry_animation_map {
+	{ EnemyType::KingMush, TEXTURE_ASSET_ID::KING_MUSH_ENTRY },
 };
 
 const std::array<int, (size_t)EnemyState::EnemyStateCount> enemy_state_to_animation_state = {
@@ -819,4 +827,16 @@ struct Button {
 	Entity label;
 	ButtonAction action;
 	Entity action_target;
+};
+
+enum class CutSceneType {
+	BossEntry
+};
+// CutScene
+struct CutScene {
+	Entity actual_entity;
+	Entity cutscene_ui;
+	CutSceneType type;
+	float radius;
+	std::string texts;
 };

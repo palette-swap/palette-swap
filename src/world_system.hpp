@@ -20,6 +20,7 @@
 #include "render_system.hpp"
 #include "turn_system.hpp"
 #include "ui_system.hpp"
+#include "story_system.hpp"
 
 // Container for all our entities and game logic. Individual rendering / update is
 // deferred to the relative update() methods
@@ -31,7 +32,8 @@ public:
 				std::shared_ptr<TurnSystem> turns,
 				std::shared_ptr<AnimationSystem> animations,
 				std::shared_ptr<UISystem> ui,
-				std::shared_ptr<SoLoud::Soloud> so_loud);
+				std::shared_ptr<SoLoud::Soloud> so_loud,
+				std::shared_ptr<StorySystem> story);
 
 	// Creates a window
 	GLFWwindow* create_window(int width, int height);
@@ -130,4 +132,5 @@ private:
 
 	bool is_editing_map = false;
 	std::shared_ptr<UISystem> ui;
+	std::shared_ptr<StorySystem> story;
 };

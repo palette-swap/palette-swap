@@ -1,11 +1,35 @@
 #include "animation_system.hpp"
 
-void AnimationSystem::init()
+/// static helpers
+static void move_camera_to(const vec2& dest)
 {
+	Entity camera = registry.view<Camera>().front();
+	WorldPosition& camera_world_pos = registry.get<WorldPosition>(camera);
+	camera_world_pos.position = dest;
 }
+
+static const vec2 get_camera_pos_from_buffer(const vec2& camera_pos,
+											 const vec2& player_pos,
+											 const vec2& buffer_top_left,
+											 const vec2& buffer_down_right)
+{
+	vec2 offset_top_left = player_pos - buffer_top_left;
+	vec2 offset_down_right = player_pos - buffer_down_right;
+	vec2 map_top_left = MapUtility::map_position_to_world_position(MapUtility::map_top_left);
+	vec2 map_bottom_right = MapUtility::map_position_to_world_position(MapUtility::map_down_right);
+
+	vec2 final_pos;
+	final_pos = max(min(camera_pos, camera_pos + offset_top_left), map_top_left);
+	final_pos = min(max(final_pos, final_pos + offset_down_right), map_bottom_right);
+
+	return final_pos;
+}
+
+void AnimationSystem::init() {}
 
 void AnimationSystem::update_animations(float elapsed_ms, ColorState inactive_color)
 {
+	camera_update_position();
 	auto animation_step_lambda = [&](Entity /*entity*/, Animation& animation) {
 		animation.elapsed_time += elapsed_ms;
 		if (animation.elapsed_time >= base_animation_speed / animation.speed_adjustment) {
@@ -15,20 +39,19 @@ void AnimationSystem::update_animations(float elapsed_ms, ColorState inactive_co
 	};
 
 	switch (inactive_color) {
-		case ColorState::Red:
-			registry.view<Animation>(entt::exclude<RedExclusive>).each(animation_step_lambda);
+	case ColorState::Red:
+		registry.view<Animation>(entt::exclude<RedExclusive>).each(animation_step_lambda);
 
-		case ColorState::Blue:
-			registry.view<Animation>(entt::exclude<BlueExclusive>).each(animation_step_lambda);
+	case ColorState::Blue:
+		registry.view<Animation>(entt::exclude<BlueExclusive>).each(animation_step_lambda);
 
-		default:
-			registry.view<Animation>().each(animation_step_lambda);
+	default:
+		registry.view<Animation>().each(animation_step_lambda);
 	}
 	resolve_event_animations();
 	resolve_transient_event_animations();
 	resolve_undisplay_event_animations();
 }
-
 
 void AnimationSystem::set_sprite_direction(const Entity& sprite, Sprite_Direction direction)
 {
@@ -42,7 +65,6 @@ void AnimationSystem::set_sprite_direction(const Entity& sprite, Sprite_Directio
 	}
 }
 
-
 void AnimationSystem::damage_animation(const Entity& entity)
 {
 	if (!registry.any_of<EventAnimation>(entity)) {
@@ -54,8 +76,8 @@ void AnimationSystem::damage_animation(const Entity& entity)
 	}
 }
 
-void AnimationSystem::attack_animation(const Entity& entity) 
-{ 
+void AnimationSystem::attack_animation(const Entity& entity)
+{
 	if (registry.any_of<Player>(entity)) {
 		this->player_attack_animation(entity);
 	} else {
@@ -63,7 +85,7 @@ void AnimationSystem::attack_animation(const Entity& entity)
 	}
 }
 
-void AnimationSystem::set_enemy_animation(const Entity& enemy, TEXTURE_ASSET_ID enemy_type, ColorState color) 
+void AnimationSystem::set_enemy_animation(const Entity& enemy, TEXTURE_ASSET_ID enemy_type, ColorState color)
 {
 	Animation& enemy_animation = registry.get<Animation>(enemy);
 	RenderRequest& enemy_render = registry.get<RenderRequest>(enemy);
@@ -79,8 +101,7 @@ void AnimationSystem::set_enemy_animation(const Entity& enemy, TEXTURE_ASSET_ID 
 	enemy_animation.speed_adjustment = 1;
 
 	// Loads specific enemy spritesheet desired
-	enemy_render = { enemy_type, EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::SMALL_SPRITE
-	};
+	enemy_render = { enemy_type, EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::SMALL_SPRITE };
 
 	// Changes enemy color to a predefined default of red or blue (or nothing, if that's what you want)
 	if (color == ColorState::Red) {
@@ -103,7 +124,6 @@ void AnimationSystem::set_enemy_state(const Entity& enemy, int state)
 		enemy_animation.state = state;
 		enemy_animation.frame = 0;
 	}
-	
 }
 
 void AnimationSystem::enemy_attack_animation(const Entity& enemy)
@@ -122,7 +142,6 @@ void AnimationSystem::enemy_attack_animation(const Entity& enemy)
 		enemy_animation.speed_adjustment = enemy_attack_speed;
 	}
 }
-
 
 void AnimationSystem::set_all_inactive_colours(ColorState inactive_color)
 {
@@ -172,7 +191,6 @@ void AnimationSystem::player_toggle_weapon(const Entity& player)
 	assert(registry.any_of<Player>(player));
 	Animation& player_animation = registry.get<Animation>(player);
 	int next_state = (player_animation.state + 1) % player_weapon_states;
-	
 
 	if (registry.any_of<EventAnimation>(player)) {
 		EventAnimation& player_event = registry.get<EventAnimation>(player);
@@ -233,11 +251,6 @@ void AnimationSystem::player_red_blue_animation(const Entity& player, ColorState
 	if (!registry.any_of<EventAnimation>(player)) {
 		EventAnimation& player_melee = registry.emplace<EventAnimation>(player);
 
-		//// Stores restoration states for the player's animations, to be called after animation event is resolved
-		//player_melee.restore_speed = player_animation.speed_adjustment;
-		//player_melee.restore_state = player_animation.state;
-		//player_melee.restore_color = player_color;
-
 		this->animation_event_setup(player_animation, player_melee, player_animation.display_color);
 
 		// Sets animation state to be the beginning of the melee animation
@@ -254,8 +267,37 @@ void AnimationSystem::player_red_blue_animation(const Entity& player, ColorState
 		default:
 			player_animation.display_color = original_colours;
 			break;
-		}	
+		}
 	}
+}
+
+Entity AnimationSystem::create_boss_entry_entity(EnemyType boss_type, uvec2 map_position) {
+
+	auto boss_entry_entity = registry.create();
+
+	registry.emplace<RenderRequest>(boss_entry_entity, boss_type_entry_animation_map.at(boss_type), 
+									EFFECT_ASSET_ID::BOSS_INTRO_SHADER, 
+									GEOMETRY_BUFFER_ID::ENTRY_ANIMATION_STRIP, true);
+
+	registry.emplace<MapPosition>(boss_entry_entity, map_position);
+	Animation& entry_animation = registry.emplace<Animation>(boss_entry_entity);
+	entry_animation.max_frames = 8;
+	entry_animation.state = 0;
+	entry_animation.speed_adjustment = 0.5;
+
+	return boss_entry_entity;
+}
+
+void AnimationSystem::trigger_full_boss_intro(const Entity& boss_entity) {
+	Animation& boss_animation = registry.get<Animation>(boss_entity);
+	boss_animation.max_frames = 32;
+	boss_animation.frame = 0;
+	registry.emplace<UndisplayEventAnimation>(boss_entity);
+}
+
+bool AnimationSystem::boss_intro_complete(const Entity& boss_entity)
+{
+	return (!registry.any_of<UndisplayEventAnimation> (boss_entity));
 }
 
 void AnimationSystem::player_spell_impact_animation(const Entity& enemy, DamageType spelltype) {
@@ -322,8 +364,7 @@ bool AnimationSystem::animation_events_completed() { return (registry.empty<Even
 
 void AnimationSystem::resolve_event_animations()
 {
-	for (auto [entity, event_animation, actual_animation] :
-		 registry.view<EventAnimation, Animation>().each()) {
+	for (auto [entity, event_animation, actual_animation] : registry.view<EventAnimation, Animation>().each()) {
 
 		// Checks if the animation frame had been reset to 0. If true, this means event animation has completed
 		// TODO: Change to be a different check, this current one is a bit iffy, and is reliant on there being at least
@@ -366,6 +407,21 @@ void AnimationSystem::resolve_undisplay_event_animations()
 		// two frames in all event animations (which is technically correct since it's an "animation", but a bit iffy)
 		if (actual_animation.frame < event_animation.frame) {
 			effect.visible = false;
+			registry.remove<UndisplayEventAnimation>(entity);
+		} else {
+			event_animation.frame = actual_animation.frame;
+		}
+	}
+
+	for (auto [entity, event_animation, actual_animation, render] :
+		 registry.view<UndisplayEventAnimation, Animation, RenderRequest>().each()) {
+
+		// Checks if the animation frame had been reset to 0. If true, this means event animation has completed
+		// TODO: Change to be a different check, this current one is a bit iffy, and is reliant on there being at least
+		// two frames in all event animations (which is technically correct since it's an "animation", but a bit iffy)
+		if (actual_animation.frame < event_animation.frame) {
+			render.visible = false;
+			registry.remove<UndisplayEventAnimation>(entity);
 		} else {
 			event_animation.frame = actual_animation.frame;
 		}
@@ -378,4 +434,29 @@ void AnimationSystem::animation_event_setup(Animation& animation, EventAnimation
 	EventAnimation.restore_speed = animation.speed_adjustment;
 	EventAnimation.restore_state = animation.state;
 	EventAnimation.restore_color = color;
+}
+
+void AnimationSystem::camera_update_position()
+{
+	// TODO: add checking to see if in the story/cutscene, if is then block the buffer tracking
+	camera_track_buffer();
+}
+
+void AnimationSystem::camera_track_buffer()
+{
+	vec2 window_size = screen_size * screen_scale;
+	Entity player = registry.view<Player>().front();
+	vec2 player_pos = MapUtility::map_position_to_world_position(registry.get<MapPosition>(player).position);
+
+	Entity camera = registry.view<Camera>().front();
+	WorldPosition& camera_world_pos = registry.get<WorldPosition>(camera);
+
+	vec2 buffer_top_left, buffer_down_right;
+
+	std::tie(buffer_top_left, buffer_down_right)
+		= CameraUtility::get_buffer_positions(camera_world_pos.position, window_size.x, window_size.y);
+
+	vec2 final_camera_pos
+		= get_camera_pos_from_buffer(camera_world_pos.position, player_pos, buffer_top_left, buffer_down_right);
+	move_camera_to(final_camera_pos);
 }

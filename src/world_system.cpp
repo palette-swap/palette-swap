@@ -23,7 +23,8 @@ WorldSystem::WorldSystem(Debug& debugging,
 						 std::shared_ptr<TurnSystem> turns,
 						 std::shared_ptr<AnimationSystem> animations,
 						 std::shared_ptr<UISystem> ui,
-						 std::shared_ptr<SoLoud::Soloud> so_loud)
+						 std::shared_ptr<SoLoud::Soloud> so_loud,
+						 std::shared_ptr<StorySystem> story)
 
 	: debugging(debugging)
 	, so_loud(std::move(so_loud))
@@ -35,6 +36,7 @@ WorldSystem::WorldSystem(Debug& debugging,
 	, map_generator(std::move(map))
 	, turns(std::move(turns))
 	, ui(std::move(ui))
+	, story(std::move(story))
 {
 	this->combat->init(rng, this->animations, this->map_generator);
 	this->combat->on_pickup([this](const Entity& item, size_t slot) { this->ui->add_to_inventory(item, slot); });
@@ -186,6 +188,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		}
 	}
 
+	story->step();
+
 	return true;
 }
 
@@ -239,9 +243,13 @@ void WorldSystem::restart_game()
 	// Restart the CombatSystem
 	combat->restart_game();
 
+	//Entity boss_entry_entity = animations->create_boss_entry_entity(EnemyType::KingMush, player_starting_point + uvec2(10, 2));
 	// Restart the UISystem
 	ui->restart_game();
 
+	// Restart the StorySystem
+	story->restart_game();
+	
 	turns->set_active_color(ColorState::Red);
 	so_loud->fadeVolume(bgm_red, -1, .25);
 	so_loud->fadeVolume(bgm_blue, 0, .25);
@@ -314,6 +322,10 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		return;
 	}
 
+	if (story->in_cutscene()) {
+		story->on_key(key, action, mod);
+		return;
+	}
 	// Sets player's attack/player arrow to the be the correct state
 
 	if (turns->ready_to_act(player)) {
@@ -415,6 +427,7 @@ void WorldSystem::check_debug_keys(int key, int action, int mod)
 	// for debugging levels
 	if (key == GLFW_KEY_N && (mod & GLFW_MOD_CONTROL) != 0 && action == GLFW_RELEASE) {
 		map_generator->load_next_level();
+		story->load_next_level();
 		return_arrow_to_player();
 	} else if (key == GLFW_KEY_B && (mod & GLFW_MOD_CONTROL) != 0 && action == GLFW_RELEASE) {
 		map_generator->load_last_level();
@@ -554,6 +567,7 @@ void WorldSystem::move_player(Direction direction)
 		}
 
 		map_generator->load_next_level();
+		story->load_next_level();
 		animations->set_all_inactive_colours(turns->get_inactive_color());
 	} else if (map_generator->is_last_level_tile(new_pos)) {
 		map_generator->load_last_level();
@@ -562,6 +576,7 @@ void WorldSystem::move_player(Direction direction)
 		// TODO: add different effects for trap tiles
 		registry.get<Stats>(player).health -= 10;
 	}
+	story->check_cutscene();
 }
 
 void WorldSystem::try_change_color()

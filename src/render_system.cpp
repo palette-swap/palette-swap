@@ -262,7 +262,8 @@ void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest& render
 		prepare_for_spritesheet(render_request.used_texture, shifted_offset, texture_offset.size);
 
 	} else if (render_request.used_effect == EFFECT_ASSET_ID::ENEMY
-			   || render_request.used_effect == EFFECT_ASSET_ID::PLAYER) {
+			   || render_request.used_effect == EFFECT_ASSET_ID::PLAYER
+				|| render_request.used_effect == EFFECT_ASSET_ID::BOSS_INTRO_SHADER) {
 
 		GLint in_position_loc = glGetAttribLocation(program, "in_position");
 		GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
@@ -822,7 +823,8 @@ void RenderSystem::draw()
 	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
 	gl_has_errors();
 	// Clearing backbuffer
-	glViewport(0, 0, screen_size_capped.x, screen_size_capped.y);
+	//glViewport(0, 0, screen_size_capped.x, RenderUtility::screen_size_capped.y);
+	glViewport(0, 0, screen_size.x, screen_size.y);
 	glDepthRange(0.00001, 10);
 	glClearColor(0.5, 0.5, 0.5, 1.0);
 	glClearDepth(1.f);
@@ -969,13 +971,6 @@ std::pair<vec2, vec2> RenderSystem::get_window_bounds()
 	Entity camera = registry.view<Camera>().front();
 	WorldPosition& camera_world_pos = registry.get<WorldPosition>(camera);
 
-	vec2 buffer_top_left, buffer_down_right;
-
-	std::tie(buffer_top_left, buffer_down_right)
-		= CameraUtility::get_buffer_positions(camera_world_pos.position, window_size.x, window_size.y);
-
-	update_camera_position(camera_world_pos, player_pos, buffer_top_left, buffer_down_right);
-
 	return { camera_world_pos.position - window_size / 2.f, camera_world_pos.position + window_size / 2.f };
 }
 
@@ -992,15 +987,15 @@ void RenderSystem::scale_on_scroll(float offset)
 	// scrolling backward -> zoom out
 	// max: 1.0, min: 0.2
 	float zoom = offset / 10;
-	if (debugging.in_debug_mode || (this->screen_scale - zoom > 0.1 && this->screen_scale - zoom <= 1.0)) {
-		this->screen_scale -= zoom;
+	if (debugging.in_debug_mode || (screen_scale - zoom > 0.1 && screen_scale - zoom <= 1.0)) {
+		screen_scale -= zoom;
 	}
 }
 
 void RenderSystem::on_resize(int width, int height)
 {
 	screen_size = { width, height };
-	screen_size_capped = { min(width, window_width_px), min(height, window_height_px) };
+	vec2 screen_size_capped = { min(width, window_width_px), min(height, window_height_px) };
 
 	glBindTexture(GL_TEXTURE_2D, off_screen_render_buffer_color);
 	glTexImage2D(

@@ -15,6 +15,7 @@
 #include "turn_system.hpp"
 #include "ui_system.hpp"
 #include "world_system.hpp"
+#include "story_system.hpp"
 
 
 using Clock = std::chrono::high_resolution_clock;
@@ -41,9 +42,12 @@ int main()
 	// UI System
 	std::shared_ptr<UISystem> ui = std::make_shared<UISystem>();
 
+	// Story System
+	std::shared_ptr<StorySystem> stories = std::make_shared<StorySystem>(animations);
+
 	// Global systems
 	Debug debugging;
-	WorldSystem world(debugging, combat, map, turns, animations, ui, so_loud);
+	WorldSystem world(debugging, combat, map, turns, animations, ui, so_loud, stories);
 	RenderSystem renderer(debugging);
 	PhysicsSystem physics(debugging, map);
 	AISystem ai(debugging, combat, map, turns, animations, so_loud);

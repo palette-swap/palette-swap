@@ -48,6 +48,7 @@ class RenderSystem {
 			textures_path("./Clone/Clone Spritesheet.png"),
 			textures_path("./02-Bosses/King Mush/King Mush Spritesheet.png"),
 			textures_path("./02-Bosses/King Mush/King Mush Attack Spritesheet.png"),
+			textures_path("./02-Bosses/King Mush/King Mush Entry Animation.png"),
 			textures_path("cannon_ball.png"),
 			textures_path("/01-Player/Spell Spritesheet.png"),
 			textures_path("tile_set_red.png"),
@@ -65,6 +66,7 @@ class RenderSystem {
 		shader_path("rectangle"),
 		shader_path("enemy"), 
 		shader_path("player"),
+		shader_path("boss_intro"),
 		shader_path("health_bar"),
 		shader_path("fancy_bar"),
 		shader_path("textured"),
@@ -86,6 +88,10 @@ class RenderSystem {
 	static constexpr float sprite_size = 1.f;
 	static constexpr float player_spritesheet_width = 8.f;
 	static constexpr float player_spritesheet_height = 4.f;
+	
+
+	static constexpr float entry_animation_height = 1.f;
+	static constexpr float entry_animation_width = 64.f;
 
 	// Static buffers
 	std::array<GLuint, geometry_count> vertex_buffers = {};
@@ -192,12 +198,8 @@ private:
 	GLuint off_screen_render_buffer_depth = 0;
 
 	Entity screen_state_entity = registry.create();
-	ivec2 screen_size = { window_width_px, window_height_px };
-	ivec2 screen_size_capped = { window_width_px, window_height_px };
 
 	Debug& debugging;
-	float screen_scale = 1; // Screen to pixel coordinates scale factor (for apple
-							// retina display?)
 };
 
 bool load_effect_from_file(const std::string& vs_path, const std::string& fs_path, GLuint& out_program);
