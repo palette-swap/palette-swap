@@ -248,7 +248,9 @@ void CombatSystem::kill(Entity attacker_entity, Entity target_entity)
 	}
 
 	if (Inventory* inventory = registry.try_get<Inventory>(attacker_entity)) {
-		inventory->resources.at((size_t)Resource::PaletteSwap)++;
+		if (inventory->resources.at((size_t)Resource::PaletteSwap) < 5) {
+			inventory->resources.at((size_t)Resource::PaletteSwap)++;
+		}
 	}
 
 	drop_loot(registry.get<MapPosition>(target_entity).position);

@@ -48,7 +48,7 @@ void UISystem::restart_game()
 				  Alignment::Start);
 
 	// Inventory background
-	create_background(groups[(size_t)Groups::Inventory], vec2(.5, .5), vec2(1, 1), 1.f, vec4(0, 0, 0, .8));
+	create_background(groups[(size_t)Groups::Inventory], vec2(.5, .5), vec2(1, 1), 1.f, vec4(0, 0, 0, .5));
 
 	// Inventory
 	auto inventory_size = static_cast<float>(Inventory::inventory_size);
