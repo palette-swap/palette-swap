@@ -614,6 +614,11 @@ void WorldSystem::try_change_color()
 // TODO: Integrate into turn state to only enable if player's turn is on
 void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 {
+	if (story->in_cutscene()) {
+		story->on_mouse_click(button, action);
+		return;
+	}
+
 	if (button == GLFW_MOUSE_BUTTON_LEFT) {
 		// Get screen position of mouse
 		dvec2 mouse_screen_pixels_pos = {};

@@ -19,7 +19,14 @@ StorySystem::StorySystem(std::shared_ptr<AnimationSystem> animation_sys_ptr)
 
 bool StorySystem::in_cutscene() { return current_cutscene_entity != entt::null; }
 
-void StorySystem::on_key(int key, int action, int)
+void StorySystem::on_mouse_click(int key, int action)
+{
+	if (action == GLFW_PRESS) {
+		proceed_conversation();
+	}
+}
+
+void StorySystem::on_key(int key, int action, int /*mod*/)
 {
 	// TODO: handle story on key: basically press any key will make the conversation proceed
 	if (action == GLFW_PRESS) {

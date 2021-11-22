@@ -13,6 +13,7 @@ class StorySystem {
 public:
 	StorySystem(std::shared_ptr<AnimationSystem> animation_sys_ptr);
 	bool in_cutscene();
+	void on_mouse_click(int button, int action);
 	void on_key(int key, int action, int /*mod*/);
 	void check_cutscene();
 	void step();
