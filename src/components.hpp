@@ -676,7 +676,7 @@ struct MapPosition {
 	void deserialize(Entity entity, const std::string& prefix, const rapidjson::Document& json);
 };
 
-struct MapSize {
+struct MapHitbox {
 	uvec2 area;
 	uvec2 center;
 };

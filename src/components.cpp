@@ -149,7 +149,7 @@ void MapPosition::deserialize(Entity entity, const std::string& prefix, const ra
 					   get_and_assert_value_from_json(prefix + "/tile_area/1", json)->GetUint() };
 		uvec2 center = { get_and_assert_value_from_json(prefix + "/tile_center/0", json)->GetUint(),
 						 get_and_assert_value_from_json(prefix + "/tile_center/1", json)->GetUint() };
-		registry.emplace<MapSize>(entity, area, center);
+		registry.emplace<MapHitbox>(entity, area, center);
 	}
 }
 

@@ -275,7 +275,7 @@ template <typename ColorExclusive> bool MapGeneratorSystem::walkable_and_free(uv
 		}
 	}
 	for (auto [entity, map_size, map_pos] :
-		registry.view<MapSize, MapPosition>(entt::exclude<Player, ColorExclusive, Item, ResourcePickup>).each()) {
+		registry.view<MapHitbox, MapPosition>(entt::exclude<Player, ColorExclusive, Item, ResourcePickup>).each()) {
 		auto it = MapArea(map_pos, map_size);
 		if (std::any_of(it.begin(), it.end(), [pos](const uvec2& other_pos) { return pos == other_pos; })) {
 			return false;

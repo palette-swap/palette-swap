@@ -15,7 +15,7 @@ MapUtility::MapAreaIterator::MapAreaIterator(uint min_x, uint max_x, uvec2 curre
 	, current_pos(current_pos)
 {
 }
-MapUtility::MapArea::MapArea(const MapPosition& map_pos, const MapSize& map_size)
+MapUtility::MapArea::MapArea(const MapPosition& map_pos, const MapHitbox& map_size)
 	: map_pos(map_pos)
 	, map_size(map_size)
 {

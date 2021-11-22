@@ -102,7 +102,7 @@ private:
 
 struct MapArea {
 
-	MapArea(const MapPosition& map_pos, const MapSize& map_size);
+	MapArea(const MapPosition& map_pos, const MapHitbox& map_size);
 
 	MapAreaIterator begin()
 	{
@@ -123,6 +123,6 @@ struct MapArea {
 
 private:
 	const MapPosition& map_pos;
-	const MapSize& map_size;
+	const MapHitbox& map_size;
 };
 } // namespace MapUtility
