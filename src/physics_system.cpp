@@ -43,7 +43,7 @@ void PhysicsSystem::step(float elapsed_ms, float /*window_width*/, float /*windo
 		Geometry::Circle collider = { world_pos.position, projectile.radius };
 		std::vector<uvec2> tiles
 			= MapUtility::get_surrounding_tiles(MapUtility::world_position_to_map_position(collider.center),
-												(int) floor(1 + projectile.radius * 2.f / MapUtility::tile_size));
+												(int)floor(1 + projectile.radius * 2.f / MapUtility::tile_size));
 
 		tiles.erase(std::remove_if(tiles.begin(),
 								   tiles.end(),
@@ -55,14 +55,14 @@ void PhysicsSystem::step(float elapsed_ms, float /*window_width*/, float /*windo
 					tiles.end());
 
 		// Check if the map position is occupied
-		for (auto [entity_j, map_position_j] :
-			 registry.view<MapPosition>(entt::exclude<Item, ResourcePickup>).each()) {
-			if (entity_j == projectile.shooter) {
-				continue;
-			}
-			if (std::find(tiles.begin(), tiles.end(), map_position_j.position) != tiles.end()) {
-				Collision::add(entity_i, entity_j);
-			}
+		Entity player
+			= registry.view<Player>().front();
+		PlayerInactivePerception& player_perception = registry.get<PlayerInactivePerception>(player);
+		ColorState& inactive_color = player_perception.inactive;
+		if (inactive_color == ColorState::Red) {
+			check_occupied<RedExclusive>(tiles, entity_i, projectile.shooter);
+		} else {
+			check_occupied<BlueExclusive>(tiles, entity_i, projectile.shooter);
 		}
 		for (uvec2 tile : tiles) {
 			// Check if projectile hits a wall
