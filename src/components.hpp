@@ -368,12 +368,16 @@ struct Attack {
 enum class Effect {
 	Shove = 0,
 	Stun = Shove + 1,
-	Count = Stun + 1,
+	EvasionDown = Stun + 1,
+	Immobilize = EvasionDown + 1,
+	Count = Immobilize + 1,
 };
 
 const std::array<std::string_view, (size_t)Effect::Count> effect_names = {
 	"Shove",
 	"Stun",
+	"EvasionDown",
+	"Immobilize",
 };
 
 struct EffectEntry {
@@ -384,6 +388,10 @@ struct EffectEntry {
 };
 
 struct Stunned {
+	int rounds = 1;
+};
+
+struct Immobilized {
 	int rounds = 1;
 };
 

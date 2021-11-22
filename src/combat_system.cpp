@@ -381,6 +381,18 @@ void CombatSystem::do_attack_effects(Entity attacker, Attack& attack, Entity tar
 				stunned.rounds = max(stunned.rounds, effect.magnitude);
 				break;
 			}
+			case Effect::EvasionDown: {
+				StatBoosts& boosts = registry.get_or_emplace<StatBoosts>(target);
+				int evasion_old = boosts.evasion;
+				boosts.evasion = max(boosts.evasion - effect.magnitude, min(boosts.evasion, -effect.magnitude));
+				registry.get<Stats>(target).evasion += boosts.evasion - evasion_old;
+				break;
+			}
+			case Effect::Immobilize: {
+				Immobilized& immobilized = registry.get_or_emplace<Immobilized>(target, effect.magnitude);
+				immobilized.rounds = max(immobilized.rounds, effect.magnitude);
+				break;
+			}
 			default:
 				break;
 			}

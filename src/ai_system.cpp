@@ -397,6 +397,13 @@ bool AISystem::move(const Entity& entity, const uvec2& map_pos)
 {
 	MapPosition& entity_map_pos = registry.get<MapPosition>(entity);
 
+	if (Immobilized* immobilized = registry.try_get<Immobilized>(entity)) {
+		if (--(immobilized->rounds) <= 0) {
+			registry.erase<Immobilized>(entity);
+		}
+		return false;
+	}
+
 	if (entity_map_pos.position != map_pos && map_generator->walkable(map_pos)) {
 		if (map_pos.x < entity_map_pos.position.x) {
 			animations->set_sprite_direction(entity, Sprite_Direction::SPRITE_LEFT);
