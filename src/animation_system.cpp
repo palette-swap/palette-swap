@@ -443,7 +443,6 @@ void AnimationSystem::resolve_travel_event_animations(float elapsed_ms)
 		 } else {
 			 float time_percent = travel_animation.total_time / travel_animation.max_time;
 
-			 // TODO Change to spline based on middle point and offset
 			 world_position.position = (travel_animation.end_point - travel_animation.start_point) * time_percent
 				 + travel_animation.start_point;
 		 }
