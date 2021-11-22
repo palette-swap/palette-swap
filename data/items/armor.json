@@ -1,23 +1,25 @@
 [
     {
         "name": "Leather Armor",
-        "tier": 0,
-        "slots": ["Armor"],
-        "stat_boosts": {
-            "evasion": 1
-        }
-    },
-    {
-        "name": "Scale Armor",
         "tier": 1,
         "slots": ["Armor"],
         "stat_boosts": {
+            "evasion": 1
+        },
+        "texture_offset": [0, 2]
+    },
+    {
+        "name": "Scale Armor",
+        "tier": 2,
+        "slots": ["Armor"],
+        "stat_boosts": {
             "evasion": 2
-        }
+        },
+        "texture_offset": [1, 2]
     },
     {
         "name": "Full Plate",
-        "tier": 2,
+        "tier": 3,
         "slots": ["Armor"],
         "stat_boosts": {
             "evasion": 3,
@@ -26,6 +28,7 @@
                 "Fire": 2,
                 "Cold": 2
             }
-        }
+        },
+        "texture_offset": [2, 2]
     }
 ]

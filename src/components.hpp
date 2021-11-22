@@ -118,10 +118,12 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 
 	CANNONBALL = KING_MUSH_ENTRY + 1,
 	SPELLS = CANNONBALL + 1,
-	TILE_SET = SPELLS + 1,
-	HELP_PIC = TILE_SET + 1,
+	TILE_SET_RED = SPELLS + 1,
+	TILE_SET_BLUE = TILE_SET_RED + 1,
+	HELP_PIC = TILE_SET_BLUE + 1,
 	END_PIC = HELP_PIC + 1,
-	TEXTURE_COUNT = END_PIC + 1,
+	ICONS = END_PIC + 1,
+	TEXTURE_COUNT = ICONS + 1,
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 
@@ -145,7 +147,10 @@ static constexpr std::array<vec2, texture_count> scaling_factors = {
 	vec2(MapUtility::tile_size * 0.5, MapUtility::tile_size * 0.5),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size* MapUtility::room_size, MapUtility::tile_size* MapUtility::room_size),
+	vec2(MapUtility::tile_size* MapUtility::room_size, MapUtility::tile_size* MapUtility::room_size),
 	vec2(MapUtility::tile_size* MapUtility::room_size * 3, MapUtility::tile_size* MapUtility::room_size * 2),
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
 };
 
 enum class EFFECT_ASSET_ID {
@@ -157,11 +162,13 @@ enum class EFFECT_ASSET_ID {
 	HEALTH = BOSS_INTRO_SHADER + 1,
 	FANCY_HEALTH = HEALTH + 1,
 	TEXTURED = FANCY_HEALTH + 1,
-	SPELL = TEXTURED + 1,
+	SPRITESHEET = TEXTURED + 1,
+	SPELL = SPRITESHEET + 1,
 	AOE = SPELL + 1,
 	WATER = AOE + 1,
 	TILE_MAP = WATER + 1,
-	EFFECT_COUNT = TILE_MAP + 1
+	TEXT_BUBBLE = TILE_MAP + 1,
+	EFFECT_COUNT = TEXT_BUBBLE + 1,
 };
 constexpr int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 
@@ -261,17 +268,9 @@ enum class EnemyBehaviour {
 };
 
 const std::array<EnemyBehaviour, (size_t)EnemyType::EnemyCount> enemy_type_to_behaviour = {
-	EnemyBehaviour::Dummy,
-	EnemyBehaviour::Cowardly,
-	EnemyBehaviour::Basic,
-	EnemyBehaviour::Defensive,
-	EnemyBehaviour::Aggressive, 
-	EnemyBehaviour::Basic,	   
-	EnemyBehaviour::Basic, 
-	EnemyBehaviour::Cowardly,
-	EnemyBehaviour::Aggressive, 
-	EnemyBehaviour::Defensive,
-	EnemyBehaviour::Summoner,
+	EnemyBehaviour::Dummy,		EnemyBehaviour::Cowardly,  EnemyBehaviour::Basic,	 EnemyBehaviour::Defensive,
+	EnemyBehaviour::Aggressive, EnemyBehaviour::Basic,	   EnemyBehaviour::Basic,	 EnemyBehaviour::Cowardly,
+	EnemyBehaviour::Aggressive, EnemyBehaviour::Defensive, EnemyBehaviour::Summoner,
 };
 
 // Small Enemy Behaviours (State Machines) uses the following states.
@@ -395,6 +394,8 @@ struct Attack {
 	void serialize(const std::string& prefix, rapidjson::Document& json) const;
 	void deserialize(const std::string& prefix, const rapidjson::Document& json);
 	void deserialize(const rapidjson::GenericObject<false, rapidjson::Value>& attack_json);
+
+	std::string get_description() const;
 };
 
 enum class Effect {
@@ -462,6 +463,8 @@ struct StatBoosts {
 	int evasion = 0;
 	DamageTypeList<int> damage_modifiers = { 0 };
 	void deserialize(const rapidjson::GenericObject<false, rapidjson::Value>& boosts);
+
+	std::string get_description() const;
 };
 
 enum class Slot {
@@ -480,11 +483,24 @@ const std::array<std::string_view, (size_t)Slot::Count> slot_names = {
 
 template <typename T> using SlotList = std::array<T, static_cast<size_t>(Slot::Count)>;
 
+enum class Resource {
+	HealthPotion = 0,
+	ManaPotion = HealthPotion + 1,
+	PaletteSwap = ManaPotion + 1,
+	Count = PaletteSwap + 1,
+};
+
+const std::array<std::string_view, (size_t)Resource::Count> resource_names = {
+	"Health Potion",
+	"Mana Potion",
+	"Palette Swap",
+};
+
 struct Inventory {
 	static constexpr size_t inventory_size = 12;
 	std::array<Entity, inventory_size> inventory;
 	SlotList<Entity> equipped;
-	size_t health_potions = 0;
+	std::array<size_t, (size_t)Resource::Count> resources = { 3, 1, 3 };
 	Inventory()
 		: inventory()
 		, equipped()
@@ -496,17 +512,21 @@ struct Inventory {
 	static Entity get(Entity entity, Slot slot);
 };
 
-struct HealthPotion {
+struct ResourcePickup {
+	Resource resource = Resource::HealthPotion;
 };
 
 struct Item {
 	Entity item_template;
+	std::string get_description(bool detailed) const;
 };
 
 struct ItemTemplate {
 	std::string name;
 	int tier = 0;
 	SlotList<bool> allowed_slots = { false };
+	ivec2 texture_offset = ivec2(0);
+	vec2 texture_size = vec2(MapUtility::tile_size);
 	void deserialize(Entity entity, const rapidjson::GenericObject<false, rapidjson::Value>& item);
 };
 
@@ -514,6 +534,7 @@ struct Weapon {
 	// TODO: Potentially replace with intelligent direct/indirect container
 	std::vector<Entity> given_attacks;
 	Attack& get_attack(size_t i) { return registry.get<Attack>(given_attacks.at(i)); }
+	std::string get_description();
 };
 //---------------------------------------------------------------------------
 //-------------------------		  ANIMATIONS        -------------------------
@@ -553,6 +574,11 @@ const std::array<int, (size_t)EnemyState::EnemyStateCount> enemy_state_to_animat
 
 // Render behind other elements in its grouping
 struct Background {
+};
+
+struct TextureOffset {
+	ivec2 offset;
+	vec2 size;
 };
 
 struct RenderRequest {
@@ -640,7 +666,7 @@ struct Collision {
 	static void add(Entity parent, Entity child);
 };
 
-struct Child {
+struct CollisionEntry {
 	Entity parent;
 	Entity next;
 	Entity target;
@@ -692,37 +718,8 @@ struct UIRenderRequest {
 
 	vec2 size;
 	float angle = 0;
-	Alignment alignment_x;
-	Alignment alignment_y;
-
-	UIRenderRequest(TEXTURE_ASSET_ID used_texture,
-					EFFECT_ASSET_ID used_effect,
-					GEOMETRY_BUFFER_ID used_geometry,
-					vec2 size,
-					float angle,
-					Alignment alignment_x,
-					Alignment alignment_y)
-		: used_texture(used_texture)
-		, used_effect(used_effect)
-		, used_geometry(used_geometry)
-		, size(size)
-		, angle(angle)
-		, alignment_x(alignment_x)
-		, alignment_y(alignment_y)
-	{
-	}
-
-	UIRenderRequest(EFFECT_ASSET_ID used_effect, vec2 size, float angle)
-		: used_effect(used_effect)
-		, size(size)
-		, angle(angle)
-		, alignment_x(Alignment::Center)
-		, alignment_y(Alignment::Center)
-	{
-		if (used_effect == EFFECT_ASSET_ID::LINE) {
-			used_geometry = GEOMETRY_BUFFER_ID::LINE;
-		}
-	}
+	Alignment alignment_x = Alignment::Center;
+	Alignment alignment_y = Alignment::Center;
 };
 
 enum class BarType {
@@ -745,13 +742,22 @@ struct UIElement {
 	}
 };
 
+enum class UILayer {
+	Boxes = 0,
+	Content = Boxes + 1,
+	TooltipBoxes = Content + 1,
+	TooltipContent = TooltipBoxes + 1,
+	Count = TooltipContent + 1
+};
+
 struct UIGroup {
 	bool visible = false;
-	Entity first_element = entt::null;
-	Entity first_text = entt::null;
+	std::array<Entity, (size_t)UILayer::Count> first_elements = {};
 
-	static void add_element(Entity group, Entity element, UIElement& ui_element);
-	static void add_text(Entity group, Entity text, UIElement& ui_element);
+	UIGroup() { first_elements.fill(entt::null); }
+
+	static void add_element(Entity group, Entity element, UIElement& ui_element, UILayer layer = UILayer::Boxes);
+	static void remove_element(Entity group, Entity element, UILayer layer = UILayer::Boxes);
 };
 
 struct UISlot {
@@ -769,6 +775,10 @@ struct EquipSlot {
 
 struct Draggable {
 	Entity container;
+};
+
+struct Tooltip {
+	Entity target;
 };
 
 struct InteractArea {
@@ -789,24 +799,9 @@ struct Line {
 struct Text {
 	std::string text;
 	uint16 font_size;
-	Alignment alignment_x;
-	Alignment alignment_y;
-
-	Text(std::string_view text, uint16 font_size, Alignment alignment_x, Alignment alignment_y)
-		: text(text)
-		, font_size(font_size)
-		, alignment_x(alignment_x)
-		, alignment_y(alignment_y)
-	{
-	}
-
-	Text(std::string text, uint16 font_size, Alignment alignment_x, Alignment alignment_y)
-		: text(std::move(text))
-		, font_size(font_size)
-		, alignment_x(alignment_x)
-		, alignment_y(alignment_y)
-	{
-	}
+	Alignment alignment_x = Alignment::Center;
+	Alignment alignment_y = Alignment::Center;
+	size_t border = 0;
 };
 
 extern bool operator==(const Text& t1, const Text& t2);
@@ -823,6 +818,9 @@ template <> struct std::hash<Text> {
 
 enum class ButtonAction {
 	SwitchToGroup,
+	TryHeal,
+	TryMana,
+	TryPalette,
 };
 
 struct Button {

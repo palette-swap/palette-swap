@@ -37,7 +37,7 @@ private:
 
 		// currently using a single seed seems to be enough, if we want more
 		// variety, we could use multiple seeds
-		RoomGenerationEngines(unsigned int seed)
+		explicit RoomGenerationEngines(unsigned int seed)
 		{
 			general_eng.seed(seed);
 			traps_eng.seed(seed);
