@@ -55,7 +55,8 @@ void PhysicsSystem::step(float elapsed_ms, float /*window_width*/, float /*windo
 					tiles.end());
 
 		// Check if the map position is occupied
-		for (auto [entity_j, map_position_j] : registry.view<MapPosition>().each()) {
+		for (auto [entity_j, map_position_j] :
+			 registry.view<MapPosition>(entt::exclude<Item, ResourcePickup>).each()) {
 			if (entity_j == projectile.shooter) {
 				continue;
 			}
