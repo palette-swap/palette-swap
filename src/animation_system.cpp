@@ -468,7 +468,12 @@ void AnimationSystem::camera_track_buffer()
 {
 	vec2 window_size = screen_size * screen_scale;
 	Entity player = registry.view<Player>().front();
+
 	vec2 player_pos = MapUtility::map_position_to_world_position(registry.get<MapPosition>(player).position);
+
+	if (registry.any_of<WorldPosition>(player)) {
+		player_pos = registry.get<WorldPosition>(player).position;
+	}
 
 	Entity camera = registry.view<Camera>().front();
 	WorldPosition& camera_world_pos = registry.get<WorldPosition>(camera);

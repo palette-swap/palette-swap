@@ -26,9 +26,9 @@ static constexpr float player_animation_speed = 1.2f;
 // Used for animation event speeds for the player
 static constexpr float player_melee_speed = 3.f;
 static constexpr float player_heavy_melee_speed = 1.f;
-static constexpr float player_running_speed = 3;
+static constexpr float player_running_speed = 4.f;
 static constexpr float player_blue_red_switch_speed = 1;
-static constexpr float player_tile_travel_time_ms = 100.f;
+static constexpr float player_tile_travel_time_ms = 80.f;
 
 // Used for boss action speeds
 static constexpr float boss_action_speed = 0.5f;
