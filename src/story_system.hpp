@@ -4,15 +4,17 @@
 #include "components.hpp"
 #include "story_init.hpp"
 #include "world_init.hpp"
+
 #include <deque>
-#include <unordered_map>
 #include <memory>
+#include <unordered_map>
 
 class StorySystem {
 
 public:
-	StorySystem(std::shared_ptr<AnimationSystem> animation_sys_ptr);
+	explicit StorySystem(std::shared_ptr<AnimationSystem> animation_sys_ptr);
 	bool in_cutscene();
+	void on_mouse_click(int button, int action);
 	void on_key(int key, int action, int /*mod*/);
 	void check_cutscene();
 	void step();

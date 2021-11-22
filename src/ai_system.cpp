@@ -48,7 +48,7 @@ void AISystem::step(float /*elapsed_ms*/)
 
 		// Released AOE squares are destroyed.
 		for (auto [aoe_square_entity, aoe_square] : registry.view<AOESquare>().each()) {
-			if (aoe_square.isReleased) {
+			if (aoe_square.is_released) {
 				registry.destroy(aoe_square_entity);
 			}
 		}
@@ -488,7 +488,7 @@ void AISystem::release_aoe(const std::vector<Entity>& aoe)
 
 		animations->trigger_aoe_attack_animation(aoe_square);
 		// Released AOE squares will be destroyed in the next turn.
-		registry.get<AOESquare>(aoe_square).isReleased = true;
+		registry.get<AOESquare>(aoe_square).is_released = true;
 	}
 }
 

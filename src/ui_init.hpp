@@ -3,7 +3,7 @@
 #include "components.hpp"
 #include "geometry.hpp"
 
-Entity create_ui_group(bool visible);
+Entity create_ui_group(bool visible, Groups identifier = Groups::Count);
 Entity create_fancy_healthbar(Entity ui_group,
 							  vec2 pos = vec2(.02f),
 							  vec2 size = vec2(.25f, .0625f),
@@ -32,10 +32,8 @@ Entity create_ui_text(Entity ui_group,
 					  Alignment alignment_x = Alignment::Center,
 					  Alignment alignment_y = Alignment::Center,
 					  uint16 font_size = 48);
-Entity create_ui_tooltip(Entity ui_group,
-					  vec2 screen_position,
-					  const std::string_view& text,
-					  uint16 font_size = 24);
+Entity create_ui_tooltip(Entity ui_group, vec2 screen_position, const std::string_view& text, uint16 font_size = 24);
+Entity create_world_tooltip(Entity ui_group, vec2 world_position, const std::string_view& text, uint16 font_size = 24);
 Entity create_background(Entity ui_group, vec2 pos, vec2 size, float opacity, vec4 fill_color);
 Entity create_button(Entity ui_group,
 					 vec2 screen_pos,

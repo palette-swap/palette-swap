@@ -12,10 +12,11 @@
 #include "map_generator_system.hpp"
 #include "physics_system.hpp"
 #include "render_system.hpp"
+#include "story_system.hpp"
 #include "turn_system.hpp"
+#include "tutorial_system.hpp"
 #include "ui_system.hpp"
 #include "world_system.hpp"
-#include "story_system.hpp"
 
 
 using Clock = std::chrono::high_resolution_clock;
@@ -45,9 +46,12 @@ int main()
 	// Story System
 	std::shared_ptr<StorySystem> stories = std::make_shared<StorySystem>(animations);
 
+	// Tutorial System
+	std::shared_ptr<TutorialSystem> tutorials = std::make_shared<TutorialSystem>();
+
 	// Global systems
 	Debug debugging;
-	WorldSystem world(debugging, combat, map, turns, animations, ui, so_loud, stories);
+	WorldSystem world(debugging, combat, map, turns, animations, ui, so_loud, stories, tutorials);
 	RenderSystem renderer(debugging);
 	PhysicsSystem physics(debugging, map);
 	AISystem ai(debugging, combat, map, turns, animations, so_loud);

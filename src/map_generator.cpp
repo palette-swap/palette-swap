@@ -62,7 +62,7 @@ add_enemy_to_level_snapshot(rapidjson::Document& level_snap_shot, ColorState tea
 
 	MapPosition map_position(map_pos);
 
-	int enemy_index = level_snap_shot["enemies"].Size();
+	rapidjson::SizeType enemy_index = level_snap_shot["enemies"].Size();
 	std::string enemy_prefix = "/enemies/" + std::to_string(enemy_index);
 	enemy_type.serialize(enemy_prefix, level_snap_shot);
 	enemy_stats.serialize(enemy_prefix + "/stats", level_snap_shot);
@@ -102,17 +102,17 @@ const static uint8_t void_tile = 10;
 const static uint8_t next_level_tile = 14;
 const static uint8_t last_level_tile = 20;
 const static std::array<uint8_t, 2> trap_tiles = { 28, 36 };
-const static uint8_t boundary_tile_top_left = 1;
-const static uint8_t boundary_tile_top = 2;
-const static uint8_t boundary_tile_top_right = 3;
-const static uint8_t boundary_tile_left = 9;
-const static uint8_t boundary_tile_right = 11;
-const static uint8_t boundary_tile_bot_left = 17;
-const static uint8_t boundary_tile_bot = 18;
-const static uint8_t boundary_tile_bot_right = 19;
+//const static uint8_t boundary_tile_top_left = 1;
+//const static uint8_t boundary_tile_top = 2;
+//const static uint8_t boundary_tile_top_right = 3;
+//const static uint8_t boundary_tile_left = 9;
+//const static uint8_t boundary_tile_right = 11;
+//const static uint8_t boundary_tile_bot_left = 17;
+//const static uint8_t boundary_tile_bot = 18;
+//const static uint8_t boundary_tile_bot_right = 19;
 
 // customized cellular automata algorithm to smooth the room out
-static void smooth_room(RoomLayout& curr_layout, int iterations, const std::set<int> critical_locations)
+static void smooth_room(RoomLayout& curr_layout, uint iterations, const std::set<int>& critical_locations)
 {
 	RoomLayout updated_layout = curr_layout;
 	auto get_neighbour_walls = [](int tile_row, int tile_col, const RoomLayout& room_layout) {
@@ -141,7 +141,7 @@ static void smooth_room(RoomLayout& curr_layout, int iterations, const std::set<
 			&& (tile_col == room_size - 1 || room_layout.at(tile_row * room_size + tile_col + 1) == solid_block_tile));
 	};
 
-	for (int i = 0; i < iterations; i++) {
+	for (uint i = 0; i < iterations; i++) {
 		// each iteration is broken into two steps, smoothing out and shrinking
 		// 1. smooth room out based on neighbouring tiles
 		for (int tile_position = 0; tile_position < curr_layout.size(); tile_position++) {
@@ -179,7 +179,7 @@ RoomLayout MapGenerator::generate_room(const std::set<Direction>& open_direction
 									   RoomType room_type,
 									   MapUtility::LevelGenConf level_gen_conf,
 									   RoomGenerationEngines random_engs,
-									   bool is_debugging)
+									   bool /*is_debugging*/)
 {
 	// the entrance size on each open side
 	const static int room_entrance_size = 2;
@@ -293,7 +293,6 @@ RoomLayout MapGenerator::generate_room(const std::set<Direction>& open_direction
 
 	// check if a tile is on the boundary, this is used for generating the boundary tiles(walls)
 	auto is_boundary_tile = [&](int room_tile_position) {
-		bool asdad = is_on_entrance_path(room_tile_position);
 		return (!is_on_entrance_path(room_tile_position)
 				&& ((room_tile_position / room_size == first_row) || (room_tile_position / room_size == last_row)
 					|| (room_tile_position % room_size == first_col) || (room_tile_position % room_size == last_col)));
@@ -404,11 +403,10 @@ RoomLayout MapGenerator::generate_room(const std::set<Direction>& open_direction
 
 			if (is_outside_tile(room_index)) {
 				room_layout.at(room_index) = static_cast<uint32_t>(void_tile);
-			} else if (is_boundary_tile(room_index)) {
-				room_layout.at(room_index) = static_cast<uint32_t>(solid_block_tile);
-			} else if ((room_type == RoomType::Critical)
-					&& (critical_locations.find(room_index) == critical_locations.end())
-					&& blocks_dist(random_engs.general_eng)) {
+			} else if (is_boundary_tile(room_index)
+					   || ((room_type == RoomType::Critical)
+						   && (critical_locations.find(room_index) == critical_locations.end())
+						   && blocks_dist(random_engs.general_eng))) {
 				room_layout.at(room_index) = static_cast<uint32_t>(solid_block_tile);
 			}
 		}
@@ -506,12 +504,12 @@ LevelConfiguration MapGenerator::generate_level(LevelGenConf level_gen_conf, boo
 	// randomly choose one of the four directions
 	std::uniform_int_distribution<int> direction_rand(0, 3);
 
-	while (current_length < level_gen_conf.level_path_length) {
+	while (static_cast<size_t>(current_length) < level_gen_conf.level_path_length) {
 		// 2. Explore a random direction that we haven't tried before, if we consumed all directions,
 		// backtrack to the last cell and continue this process
 		auto& current_directions_tried = directions_tried.back();
 		while (current_directions_tried.size() < 4) {
-			Direction direction = static_cast<Direction>(direction_rand(random_eng));
+			auto direction = static_cast<Direction>(direction_rand(random_eng));
 
 			// try a direction we haven't tried before
 			if (current_directions_tried.find(direction) != current_directions_tried.end()) {
@@ -620,7 +618,7 @@ LevelConfiguration MapGenerator::generate_level(LevelGenConf level_gen_conf, boo
 		if (side_room_dist(random_eng)) {
 			// iterate through all directions and see if we can find one available
 			for (uint8_t d = 0; d < 4; d++) {
-				Direction direction = static_cast<Direction>(d);
+				auto direction = static_cast<Direction>(d);
 				if (will_exceed_boundary(room_position, direction)) {
 					continue;
 				}

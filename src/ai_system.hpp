@@ -117,6 +117,8 @@ private:
 	// Base node: BTNode
 	class BTNode {
 	public:
+		virtual ~BTNode() = default;
+
 		virtual void init(Entity e) {};
 
 		virtual BTState process(Entity e, AISystem* ai) = 0;
@@ -143,7 +145,7 @@ private:
 		{
 		}
 
-		void init(Entity e) override { printf("Debug: SummonEnemies.init\n"); }
+		void init(Entity /*e*/) override { printf("Debug: SummonEnemies.init\n"); }
 
 		BTState process(Entity e, AISystem* ai) override
 		{
@@ -166,16 +168,16 @@ private:
 	// Leaf action node: AOEAttack
 	class AOEAttack : public BTNode {
 	public:
-		AOEAttack(const std::vector<ivec2>& area_pattern)
-			: m_isCharged(false)
-			, m_aoe_shape(area_pattern)
+		explicit AOEAttack(std::vector<ivec2> area_pattern)
+			: is_charged(false)
+			, m_aoe_shape(std::move(area_pattern))
 		{
 		}
 
-		void init(Entity e) override
+		void init(Entity /*e*/) override
 		{
 			printf("Debug: AOEAttack.init\n");
-			m_isCharged = false;
+			is_charged = false;
 			m_aoe.clear();
 		}
 
@@ -183,9 +185,9 @@ private:
 		{
 			printf("Debug: AOEAttack.process\n");
 
-			if (!m_isCharged) {
+			if (!is_charged) {
 				// Charging
-				m_isCharged = true;
+				is_charged = true;
 
 				// Compute AOE area using AOE shape and player position.
 				Entity player = registry.view<Player>().front();
@@ -194,7 +196,7 @@ private:
 				for (const ivec2& map_pos_offset : m_aoe_shape) {
 					const ivec2& map_pos = map_pos_offset + static_cast<ivec2>(player_map_pos);
 					if (map_pos.x >= 0 || map_pos.y >= 0) {
-						aoe_area.push_back(map_pos);
+						aoe_area.emplace_back(map_pos);
 					}
 				}
 
@@ -212,19 +214,18 @@ private:
 				ai->switch_enemy_state(e, EnemyState::Charging);
 
 				return handle_process_result(BTState::Running);
-			} else {
-				// Release AOE.
-				ai->release_aoe(m_aoe);
-
-				ai->switch_enemy_state(e, EnemyState::Idle);
-				ai->animations->boss_event_animation(e, 4);
-				ai->so_loud->play(ai->king_mush_aoe_wav);
-				return handle_process_result(BTState::Success);
 			}
+			// Release AOE.
+			ai->release_aoe(m_aoe);
+
+			ai->switch_enemy_state(e, EnemyState::Idle);
+			ai->animations->boss_event_animation(e, 4);
+			ai->so_loud->play(ai->king_mush_aoe_wav);
+			return handle_process_result(BTState::Success);
 		}
 
 	private:
-		bool m_isCharged;
+		bool is_charged;
 		std::vector<ivec2> m_aoe_shape;
 		std::vector<Entity> m_aoe;
 	};
@@ -232,7 +233,7 @@ private:
 	// Leaf action node: RegularAttack
 	class RegularAttack : public BTNode {
 	public:
-		void init(Entity e) override { printf("Debug: RegularAttack.init\n"); }
+		void init(Entity /*e*/) override { printf("Debug: RegularAttack.init\n"); }
 
 		BTState process(Entity e, AISystem* ai) override
 		{
@@ -257,12 +258,12 @@ private:
 	// Leaf action node: RecoverHealth
 	class RecoverHealth : public BTNode {
 	public:
-		RecoverHealth(float ratio)
+		explicit RecoverHealth(float ratio)
 			: m_ratio(ratio)
 		{
 		}
 
-		void init(Entity e) override { printf("Debug: RecoverHealth.init\n"); }
+		void init(Entity /*e*/) override { printf("Debug: RecoverHealth.init\n"); }
 
 		BTState process(Entity e, AISystem* ai) override
 		{
@@ -282,7 +283,7 @@ private:
 	// Leaf action node: DoNothing
 	class DoNothing : public BTNode {
 	public:
-		void init(Entity e) override { printf("Debug: DoNothing.init\n"); }
+		void init(Entity /*e*/) override { printf("Debug: DoNothing.init\n"); }
 
 		BTState process(Entity e, AISystem* ai) override
 		{
@@ -297,13 +298,13 @@ private:
 	// Composite logic node: Selector
 	class Selector : public BTNode {
 	public:
-		Selector(std::unique_ptr<BTNode> default_child)
+		explicit Selector(std::unique_ptr<BTNode> default_child)
 			: m_index(-1)
 			, m_default_child(std::move(default_child))
 		{
 		}
 
-		void add_precond_and_child(std::function<bool(Entity)> precond, std::unique_ptr<BTNode> child)
+		void add_precond_and_child(const std::function<bool(Entity)>& precond, std::unique_ptr<BTNode> child)
 		{
 			m_preconditions.push_back(precond);
 			m_children.push_back(std::move(child));
@@ -321,24 +322,23 @@ private:
 		BTState process(Entity e, AISystem* ai) override
 		{
 			printf("Debug: Selector.process\n");
-			BTState state;
 			if (m_index == -1) {
-				size_t i;
+				size_t i = 0;
 				for (i = 0; i < m_preconditions.size(); ++i) {
 					if (m_preconditions[i](e)) {
-						m_index = i;
+						m_index = static_cast<int>(i);
 						return handle_process_result(m_children[i]->process(e, ai));
 					}
 				}
-				m_index = i;
+				m_index = static_cast<int>(i);
 				return handle_process_result(m_default_child->process(e, ai));
-			} else {
-				if (m_index < m_preconditions.size()) {
-					return handle_process_result(m_children[m_index]->process(e, ai));
-				} else {
-					return handle_process_result(m_default_child->process(e, ai));
-				}
 			}
+
+			if (m_index < m_preconditions.size()) {
+				return handle_process_result(m_children[m_index]->process(e, ai));
+			}
+
+			return handle_process_result(m_default_child->process(e, ai));
 		}
 
 	private:
@@ -350,7 +350,7 @@ private:
 
 	class SummonerTree : public BTNode {
 	public:
-		SummonerTree(std::unique_ptr<BTNode> child)
+		explicit SummonerTree(std::unique_ptr<BTNode> child)
 			: m_child(std::move(child))
 		{
 		}
@@ -378,17 +378,17 @@ private:
 			// Selector - active
 			auto summon_enemies = std::make_unique<SummonEnemies>(EnemyType::Mushroom, 1);
 			std::vector<ivec2> aoe_shape;
-			aoe_shape.push_back(ivec2(0, 0));
-			aoe_shape.push_back(ivec2(0, -1));
-			aoe_shape.push_back(ivec2(-1, 0));
-			aoe_shape.push_back(ivec2(1, 0));
+			aoe_shape.emplace_back(0, 0);
+			aoe_shape.emplace_back(0, -1);
+			aoe_shape.emplace_back(-1, 0);
+			aoe_shape.emplace_back(1, 0);
 			auto aoe_attack = std::make_unique<AOEAttack>(aoe_shape);
 			auto regular_attack = std::make_unique<RegularAttack>();
 			auto selector_active = std::make_unique<Selector>(std::move(regular_attack));
 			Selector* p = selector_active.get();
 			selector_active->add_precond_and_child(
 				// Summoner summons enemies every fifth process during attack.
-				[p](Entity e) { return (p->get_process_count() % 5 == 0) && (p->get_process_count() != 0); },
+				[p](Entity /*e*/) { return (p->get_process_count() % 5 == 0) && (p->get_process_count() != 0); },
 				std::move(summon_enemies));
 			selector_active->add_precond_and_child(
 				// Summoner has 20% chance to make an AOESquare attack with the following AOE shape.
@@ -397,7 +397,7 @@ private:
 				// │xPx|
 				// |   |
 				// └───┘
-				[ai](Entity e) { return ai->chance_to_happen(0.20f); },
+				[ai](Entity /*e*/) { return ai->chance_to_happen(0.20f); },
 				std::move(aoe_attack));
 
 			// Selector - idle

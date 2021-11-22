@@ -400,7 +400,7 @@ void RenderSystem::draw_effect(Entity entity, const EffectRenderRequest& render_
 	if (render_request.used_effect == EFFECT_ASSET_ID::AOE) {
 		AOESquare& aoe_status = registry.get<AOESquare>(entity);
 		GLint actual_aoe = glGetUniformLocation(program, "actual_aoe");
-		glUniform1i(actual_aoe, aoe_status.actual_attack_displayed);
+		glUniform1i(actual_aoe, static_cast<GLint>(aoe_status.actual_attack_displayed));
 	}
 
 	GLuint texture_id = texture_gl_handles.at((GLuint)render_request.used_texture);
@@ -612,7 +612,7 @@ void RenderSystem::draw_text(Entity entity, const Text& text, const mat3& projec
 	}
 
 	// Scale to expected pixel size, apply screen scale so not affected by zoom
-	vec2 text_size = vec2(text_data->second.texture_width, text_data->second.texture_height) + 2.f * text.border;
+	vec2 text_size = vec2(text_data->second.texture_width, text_data->second.texture_height) + 2.f * static_cast<float>(text.border);
 	transform.scale(text_size * screen_scale
 					* get_ui_scale_factor());
 
@@ -639,7 +639,7 @@ void RenderSystem::draw_text(Entity entity, const Text& text, const mat3& projec
 
 	if (text.border > 0) {
 		GLint border_uloc = glGetUniformLocation(program, "fborder");
-		glUniform1ui(border_uloc, text.border);
+		glUniform1ui(border_uloc, static_cast<GLuint>(text.border));
 		gl_has_errors();
 	}
 
@@ -772,7 +772,7 @@ void RenderSystem::draw_to_screen()
 	gl_has_errors();
 	// Clearing backbuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, screen_size.x, screen_size.y);
+	glViewport(0, 0, (GLsizei)screen_size.x, (GLsizei)screen_size.y);
 	glDepthRange(0, 10);
 	glClearColor(0, 0, 0, 1.0);
 	glClearDepth(1.f);
@@ -824,7 +824,7 @@ void RenderSystem::draw()
 	gl_has_errors();
 	// Clearing backbuffer
 	//glViewport(0, 0, screen_size_capped.x, RenderUtility::screen_size_capped.y);
-	glViewport(0, 0, screen_size.x, screen_size.y);
+	glViewport(0, 0, (GLsizei)screen_size.x, (GLsizei)screen_size.y);
 	glDepthRange(0.00001, 10);
 	glClearColor(0.5, 0.5, 0.5, 1.0);
 	glClearDepth(1.f);
@@ -965,9 +965,6 @@ std::pair<vec2, vec2> RenderSystem::get_window_bounds()
 {
 	vec2 window_size = vec2(screen_size) * screen_scale;
 
-	Entity player = registry.view<Player>().front();
-	vec2 player_pos = MapUtility::map_position_to_world_position(registry.get<MapPosition>(player).position);
-
 	Entity camera = registry.view<Camera>().front();
 	WorldPosition& camera_world_pos = registry.get<WorldPosition>(camera);
 
@@ -980,7 +977,7 @@ float RenderSystem::get_ui_scale_factor() const
 	return min(ratios.x, ratios.y);
 }
 
-void RenderSystem::scale_on_scroll(float offset)
+void RenderSystem::scale_on_scroll(float offset) const
 {
 	// scale the camera based on scrolling offset
 	// scrolling forward -> zoom in
@@ -992,14 +989,21 @@ void RenderSystem::scale_on_scroll(float offset)
 	}
 }
 
-void RenderSystem::on_resize(int width, int height)
+void RenderSystem::on_resize(int width, int height) const
 {
 	screen_size = { width, height };
 	vec2 screen_size_capped = { min(width, window_width_px), min(height, window_height_px) };
 
 	glBindTexture(GL_TEXTURE_2D, off_screen_render_buffer_color);
-	glTexImage2D(
-		GL_TEXTURE_2D, 0, GL_RGBA, screen_size_capped.x, screen_size_capped.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+	glTexImage2D(GL_TEXTURE_2D,
+				 0,
+				 GL_RGBA,
+				 (GLsizei)screen_size_capped.x,
+				 (GLsizei)screen_size_capped.y,
+				 0,
+				 GL_RGBA,
+				 GL_UNSIGNED_BYTE,
+				 nullptr);
 	gl_has_errors();
 }
 

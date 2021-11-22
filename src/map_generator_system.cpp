@@ -127,8 +127,8 @@ void MapGeneratorSystem::load_generated_level_configurations()
 	}
 
 	// we are ready to generate the levels
-	for (int i = 0; i < level_generation_confs.size(); i++) {
-		level_configurations.emplace_back(MapGenerator::generate_level(level_generation_confs.at(i), false));
+	for (auto& conf : level_generation_confs) {
+		level_configurations.emplace_back(MapGenerator::generate_level(conf, false));
 	}
 }
 
