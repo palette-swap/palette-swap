@@ -31,7 +31,7 @@ void StorySystem::on_key(int key, int action, int)
 	}
 }
 
-void StorySystem::check_cutscene_invoktion()
+void StorySystem::check_cutscene()
 {
 	Entity player = registry.view<Player>().front();
 	vec2 player_pos = MapUtility::map_position_to_world_position(registry.get<MapPosition>(player).position);

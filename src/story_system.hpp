@@ -14,7 +14,7 @@ public:
 	StorySystem(std::shared_ptr<AnimationSystem> animation_sys_ptr);
 	bool in_cutscene();
 	void on_key(int key, int action, int /*mod*/);
-	void check_cutscene_invoktion();
+	void check_cutscene();
 	void step();
 	void trigger_animation(CutSceneType type);
 	void restart_game(const std::vector<Entity>& entities_for_cutscene);

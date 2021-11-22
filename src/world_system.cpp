@@ -554,7 +554,7 @@ void WorldSystem::move_player(Direction direction)
 		// TODO: add different effects for trap tiles
 		registry.get<Stats>(player).health -= 10;
 	}
-	story->check_cutscene_invoktion();
+	story->check_cutscene();
 }
 
 void WorldSystem::change_color()
