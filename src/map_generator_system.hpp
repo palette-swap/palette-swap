@@ -150,7 +150,8 @@ public:
 	bool is_last_level() const;
 
 	// Save current level and load the next level
-	void load_next_level();
+	// return true if next level exist and can be loaded
+	bool load_next_level();
 
 	// Save current level and load the last level
 	void load_last_level();

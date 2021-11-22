@@ -426,7 +426,9 @@ void WorldSystem::check_debug_keys(int key, int action, int mod)
 
 	// for debugging levels
 	if (key == GLFW_KEY_N && (mod & GLFW_MOD_CONTROL) != 0 && action == GLFW_RELEASE) {
-		map_generator->load_next_level();
+		if (!map_generator->load_next_level()) {
+			return;
+		}
 		story->load_next_level();
 		return_arrow_to_player();
 	} else if (key == GLFW_KEY_B && (mod & GLFW_MOD_CONTROL) != 0 && action == GLFW_RELEASE) {
