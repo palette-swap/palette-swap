@@ -574,7 +574,7 @@ struct Animation {
 	int state = 0;
 	// Adjusts animation rate to be faster or slower than default
 	// ie. faster things should change more frames. slower things should change less frames
-	float speed_adjustment = 1;
+	float speed_adjustment = 0.6f;
 	float elapsed_time = 0;
 };
 
@@ -593,13 +593,28 @@ struct EventAnimation {
 // NOTE: this is different from a regular event animation, and is used for temporary effects that will be removed
 // such as attack/spell effects on a square
 struct TransientEventAnimation {
-	bool turn_trigger = false;
 	int frame = 0;
 };
 
 // Denotes that an animation event should stop being displayed after completion, but not erased
+// Currently used for boss AOEs, as well as boss intro animations 
 struct UndisplayEventAnimation {
 	int frame = 0;
+};
+
+// Denotes an animation event that controls the travel display of an entity. Upon completion,
+// restores an entity to its previous state/speed, and removes the world position component from the associated
+// entity
+struct TravelEventAnimation {
+	int restore_state = 0;
+	float restore_speed = 1.f;
+
+	float total_time = 0.f;
+	float max_time = 200.f;
+
+	vec2 start_point = { 0, 0 };
+	vec2 middle_point = { 0, 0 };
+	vec2 end_point = { 0, 0 };
 };
 
 // Denotes that an entity has an textured asset, and should be rendered after regular assets (such as player/enemy)

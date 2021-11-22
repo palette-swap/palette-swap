@@ -17,6 +17,7 @@ static constexpr float damage_animation_speed = 1;
 // Moving forward the animation frames by enemy type may change
 static constexpr int enemy_num_frames = 4;
 static constexpr float enemy_attack_speed = 1.2f;
+static constexpr float enemy_tile_travel_time_ms = 100.f;
 
 // These values are used for the default setting for the player
 static constexpr int player_num_frames = 6;
@@ -24,10 +25,11 @@ static constexpr int player_weapon_states = 2;
 static constexpr float player_animation_speed = 1.2f;
 
 // Used for animation event speeds for the player
-static constexpr float player_melee_speed = 3.f;
+static constexpr float player_melee_speed = 2.f;
 static constexpr float player_heavy_melee_speed = 1.f;
-static constexpr float player_running_speed = 3;
+static constexpr float player_running_speed = 5.f;
 static constexpr float player_blue_red_switch_speed = 1;
+static constexpr float player_tile_travel_time_ms = 80.f;
 
 // Used for boss action speeds
 static constexpr float boss_action_speed = 0.5f;
@@ -93,6 +95,8 @@ public:
 	void set_enemy_state(const Entity& enemy, int state);
 	// triggers an enemy attack animation
 	void enemy_attack_animation(const Entity& enemy);
+	// transition animation between tiles for an enemy
+	void enemy_tile_transition(const Entity& enemy, uvec2 map_start_point, uvec2 map_end_point);
 	// Sets all inactive enemy colours to be a specific defaulted inactive colour
 	void set_all_inactive_colours(ColorState inactive_color);
 
@@ -111,7 +115,7 @@ public:
 	// Triggers attack animation for a entity specified as the player
 	void player_attack_animation(const Entity& player);
 	// Triggers running animation for a entity specified as the player
-	void player_running_animation(const Entity& player);
+	void player_running_animation(const Entity& player, uvec2 map_start_point, uvec2 map_end_point);
 	// Triggers player transition between red/blue
 	void player_red_blue_animation(const Entity& player, ColorState color);
 	// Sets a spell effect at the enemy's location
@@ -148,6 +152,10 @@ private:
 	// helper function, checks undisplay event animations to see if complete, If complete, the entity stops displaying 
 	// after completion of a single animation cycle
 	void resolve_undisplay_event_animations();
+	// helper function, updates travel event animations to see if complete. If complete, removes map position component
+	// and travel abunation component from associated entity, otherwise updates time, as well as map position of entity
+	// based on time update and spline equation
+	void resolve_travel_event_animations(float elapsed_ms);
 	// helper function for setting animation events
 	void animation_event_setup(Animation& animation, EventAnimation& EventAnimation, vec4& color);
 	// helper function for updating camera

@@ -396,12 +396,14 @@ bool AISystem::approach_nest(const Entity& entity, uint speed)
 bool AISystem::move(const Entity& entity, const uvec2& map_pos)
 {
 	MapPosition& entity_map_pos = registry.get<MapPosition>(entity);
+
 	if (entity_map_pos.position != map_pos && map_generator->walkable(map_pos)) {
 		if (map_pos.x < entity_map_pos.position.x) {
 			animations->set_sprite_direction(entity, Sprite_Direction::SPRITE_LEFT);
 		} else if (map_pos.x > entity_map_pos.position.x) {
 			animations->set_sprite_direction(entity, Sprite_Direction::SPRITE_RIGHT);
 		}
+		animations->enemy_tile_transition(entity, entity_map_pos.position, map_pos);
 		entity_map_pos.position = map_pos;
 		return true;
 	}

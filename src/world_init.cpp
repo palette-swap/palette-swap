@@ -143,8 +143,6 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 		registry.emplace<BlueExclusive>(entity);
 	}
 
-
-
 	return entity;
 }
 

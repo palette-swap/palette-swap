@@ -51,6 +51,7 @@ void AnimationSystem::update_animations(float elapsed_ms, ColorState inactive_co
 	resolve_event_animations();
 	resolve_transient_event_animations();
 	resolve_undisplay_event_animations();
+	resolve_travel_event_animations(elapsed_ms);
 }
 
 void AnimationSystem::set_sprite_direction(const Entity& sprite, Sprite_Direction direction)
@@ -143,6 +144,29 @@ void AnimationSystem::enemy_attack_animation(const Entity& enemy)
 	}
 }
 
+void AnimationSystem::enemy_tile_transition(const Entity& enemy, uvec2 map_start_point, uvec2 map_end_point)
+{
+	EnemyType enemy_type = registry.get<Enemy>(enemy).type;
+	Animation& enemy_animation = registry.get<Animation>(enemy);
+	TravelEventAnimation& enemy_transition = registry.emplace<TravelEventAnimation>(enemy);
+
+	enemy_transition.restore_speed = enemy_animation.speed_adjustment;
+	enemy_transition.restore_state = enemy_animation.state;
+	enemy_transition.start_point = MapUtility::map_position_to_world_position(map_start_point);
+	enemy_transition.end_point = MapUtility::map_position_to_world_position(map_end_point);
+	enemy_transition.middle_point = (enemy_transition.start_point + enemy_transition.end_point) * 0.5f;
+	enemy_transition.max_time = enemy_tile_travel_time_ms;
+
+	registry.emplace<WorldPosition>(enemy, enemy_transition.start_point);
+
+	// TODO: Change this to not be a hard check for mushrooms/slimes
+	// This has been added to be a git issue
+	if (enemy_type == EnemyType::Mushroom || enemy_type == EnemyType::Slime) {
+		enemy_transition.middle_point -= vec2(0, MapUtility::tile_size * 0.2f);
+	}
+		
+}
+
 void AnimationSystem::set_all_inactive_colours(ColorState inactive_color)
 {
 	Entity player = registry.view<Player>().front();
@@ -227,15 +251,22 @@ void AnimationSystem::player_attack_animation(const Entity& player)
 	}
 }
 
-void AnimationSystem::player_running_animation(const Entity& player)
+void AnimationSystem::player_running_animation(const Entity& player, uvec2 map_start_point, uvec2 map_end_point)
 {
 	assert(registry.any_of<Player>(player));
 	Animation& player_animation = registry.get<Animation>(player);
 
-	if (!registry.any_of<EventAnimation>(player)) {
-		EventAnimation& player_running = registry.emplace<EventAnimation>(player);
+	if (!registry.any_of<TravelEventAnimation>(player)) {
+		TravelEventAnimation& player_running = registry.emplace<TravelEventAnimation>(player);
 
-		this->animation_event_setup(player_animation, player_running, player_animation.display_color);
+		player_running.restore_speed = player_animation.speed_adjustment;
+		player_running.restore_state = player_animation.state;
+		player_running.start_point = MapUtility::map_position_to_world_position(map_start_point);
+		player_running.end_point = MapUtility::map_position_to_world_position(map_end_point);
+		player_running.middle_point = (player_running.start_point + player_running.end_point) * 0.5f;
+		player_running.max_time = player_tile_travel_time_ms;
+
+		registry.emplace<WorldPosition>(player, player_running.start_point);
 
 		// Sets animation state to be the beginning of the melee animation
 		player_animation.state = static_cast<int>(PlayerAnimationStates::Running);
@@ -360,7 +391,7 @@ void AnimationSystem::trigger_aoe_attack_animation(const Entity& aoe) {
 	registry.emplace<UndisplayEventAnimation>(aoe);
 }
 
-bool AnimationSystem::animation_events_completed() { return (registry.empty<EventAnimation, TransientEventAnimation>()); }
+bool AnimationSystem::animation_events_completed() { return (registry.empty<EventAnimation, TransientEventAnimation, TravelEventAnimation>()); }
 
 void AnimationSystem::resolve_event_animations()
 {
@@ -386,9 +417,6 @@ void AnimationSystem::resolve_transient_event_animations()
 {
 	for (auto [entity, event_animation, actual_animation] : registry.view<TransientEventAnimation, Animation>().each()) {
 
-		// Checks if the animation frame had been reset to 0. If true, this means event animation has completed
-		// TODO: Change to be a different check, this current one is a bit iffy, and is reliant on there being at least
-		// two frames in all event animations (which is technically correct since it's an "animation", but a bit iffy)
 		if (actual_animation.frame < event_animation.frame) {
 			registry.destroy(entity);
 		} else {
@@ -402,9 +430,6 @@ void AnimationSystem::resolve_undisplay_event_animations()
 	for (auto [entity, event_animation, actual_animation, effect] :
 		 registry.view<UndisplayEventAnimation, Animation, EffectRenderRequest>().each()) {
 
-		// Checks if the animation frame had been reset to 0. If true, this means event animation has completed
-		// TODO: Change to be a different check, this current one is a bit iffy, and is reliant on there being at least
-		// two frames in all event animations (which is technically correct since it's an "animation", but a bit iffy)
 		if (actual_animation.frame < event_animation.frame) {
 			effect.visible = false;
 			registry.remove<UndisplayEventAnimation>(entity);
@@ -416,15 +441,54 @@ void AnimationSystem::resolve_undisplay_event_animations()
 	for (auto [entity, event_animation, actual_animation, render] :
 		 registry.view<UndisplayEventAnimation, Animation, RenderRequest>().each()) {
 
-		// Checks if the animation frame had been reset to 0. If true, this means event animation has completed
-		// TODO: Change to be a different check, this current one is a bit iffy, and is reliant on there being at least
-		// two frames in all event animations (which is technically correct since it's an "animation", but a bit iffy)
 		if (actual_animation.frame < event_animation.frame) {
 			render.visible = false;
 			registry.remove<UndisplayEventAnimation>(entity);
 		} else {
 			event_animation.frame = actual_animation.frame;
 		}
+	}
+}
+
+void AnimationSystem::resolve_travel_event_animations(float elapsed_ms) 
+{
+	for (auto [entity, travel_animation, actual_animation, world_position] :
+		 registry.view<TravelEventAnimation, Animation, WorldPosition>().each()) {
+
+		 travel_animation.total_time += elapsed_ms;
+
+		 if (travel_animation.total_time >= travel_animation.max_time) {
+			 actual_animation.state = travel_animation.restore_state;
+			 actual_animation.speed_adjustment = travel_animation.restore_speed;
+
+			 // Removes world position from entity, should return entity to map position
+			 registry.remove<TravelEventAnimation, WorldPosition>(entity);
+		 } else {
+			 float time_percent = travel_animation.total_time / travel_animation.max_time;
+
+			 if (registry.any_of<Player>(entity)) {
+				 world_position.position = (travel_animation.end_point - travel_animation.start_point) * time_percent
+					 + travel_animation.start_point;
+			 } else {
+
+					 if (time_percent <= 0.5f) {
+						 float norm_time = time_percent / 0.5f;
+						 float y_offset = travel_animation.middle_point.y - travel_animation.start_point.y;
+						 world_position.position.y = travel_animation.start_point.y
+							 + y_offset * (-norm_time * norm_time) * (2 * norm_time - 3);
+					 } else {
+						 float norm_time = (1.f - time_percent) / 0.5f;
+						 float y_offset = travel_animation.middle_point.y - travel_animation.end_point.y;
+						 world_position.position.y = travel_animation.middle_point.y
+							 - y_offset * ((norm_time * norm_time) * (2 * norm_time - 3) + 1) ;
+					 }
+
+					 world_position.position.x
+						 = (travel_animation.end_point.x - travel_animation.start_point.x) * time_percent
+						 + travel_animation.start_point.x;
+			 }
+			 
+		 }
 	}
 }
 
@@ -446,7 +510,12 @@ void AnimationSystem::camera_track_buffer()
 {
 	vec2 window_size = screen_size * screen_scale;
 	Entity player = registry.view<Player>().front();
+
 	vec2 player_pos = MapUtility::map_position_to_world_position(registry.get<MapPosition>(player).position);
+
+	if (registry.any_of<WorldPosition>(player)) {
+		player_pos = registry.get<WorldPosition>(player).position;
+	}
 
 	Entity camera = registry.view<Camera>().front();
 	WorldPosition& camera_world_pos = registry.get<WorldPosition>(camera);

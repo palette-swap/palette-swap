@@ -550,8 +550,8 @@ void WorldSystem::move_player(Direction direction)
 		return;
 	}
 
-	// Allows player to run if all checks have been passed
-	animations->player_running_animation(player);
+	// Allows player to run if all checks have been passed, inputs running direction as an animation event
+	animations->player_running_animation(player, map_pos.position, new_pos);
 
 	// Temp update for arrow position
 	if (!player_arrow_fired) {
