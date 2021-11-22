@@ -470,12 +470,7 @@ void AnimationSystem::resolve_travel_event_animations(float elapsed_ms)
 				 world_position.position = (travel_animation.end_point - travel_animation.start_point) * time_percent
 					 + travel_animation.start_point;
 			 } else {
-				 // Applies a spline equation to dictate movement if moving left or right
-				 if (travel_animation.start_point.x == travel_animation.end_point.x) {
-					 world_position.position
-						 = (travel_animation.end_point - travel_animation.start_point) * time_percent
-						 + travel_animation.start_point;
-				 } else {
+
 					 if (time_percent <= 0.5f) {
 						 float norm_time = time_percent / 0.5f;
 						 float y_offset = travel_animation.middle_point.y - travel_animation.start_point.y;
@@ -491,8 +486,6 @@ void AnimationSystem::resolve_travel_event_animations(float elapsed_ms)
 					 world_position.position.x
 						 = (travel_animation.end_point.x - travel_animation.start_point.x) * time_percent
 						 + travel_animation.start_point.x;
-				 }
-
 			 }
 			 
 		 }
