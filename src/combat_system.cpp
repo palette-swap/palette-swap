@@ -99,11 +99,20 @@ bool CombatSystem::try_drink_potion(Entity player)
 
 bool CombatSystem::is_valid_attack(Entity attacker, Attack& attack, uvec2 target)
 {
+	ColorState& inactive_color = registry.get<PlayerInactivePerception>(registry.view<Player>().front()).inactive;
+	if (inactive_color == ColorState::Red) {
+		return is_valid_attack<RedExclusive>(attacker, attack, target);
+	}
+	return is_valid_attack<BlueExclusive>(attacker, attack, target);
+}
+
+template <typename ColorExclusive> bool CombatSystem::is_valid_attack(Entity attacker, Attack& attack, uvec2 target)
+{
 	if (!can_reach(attacker, attack, target) || registry.get<Stats>(attacker).mana < attack.mana_cost) {
 		return false;
 	}
 	uvec2 attacker_pos = registry.get<MapPosition>(attacker).position;
-	for (const auto& target_entity : registry.view<Enemy, Stats>()) {
+	for (const auto& target_entity : registry.view<Enemy, Stats>(entt::exclude<ColorExclusive>)) {
 		if (attack.is_in_range(attacker_pos, target, registry.get<MapPosition>(target_entity).position)) {
 
 			return true;
@@ -114,13 +123,22 @@ bool CombatSystem::is_valid_attack(Entity attacker, Attack& attack, uvec2 target
 
 bool CombatSystem::do_attack(Entity attacker, Attack& attack, uvec2 target)
 {
+	ColorState& inactive_color = registry.get<PlayerInactivePerception>(registry.view<Player>().front()).inactive;
+	if (inactive_color == ColorState::Red) {
+		return do_attack<RedExclusive>(attacker, attack, target);
+	}
+	return do_attack<BlueExclusive>(attacker, attack, target);
+}
+
+template <typename ColorExclusive> bool CombatSystem::do_attack(Entity attacker, Attack& attack, uvec2 target)
+{
 	if (!can_reach(attacker, attack, target) || registry.get<Stats>(attacker).mana < attack.mana_cost) {
 		return false;
 	}
 	registry.get<Stats>(attacker).mana -= attack.mana_cost;
 	bool success = false;
 	MapPosition& attacker_pos = registry.get<MapPosition>(attacker);
-	for (const auto& target_entity : registry.view<Enemy, Stats>()) {
+	for (const auto& target_entity : registry.view<Enemy, Stats>(entt::exclude<ColorExclusive>)) {
 		if (attack.is_in_range(attacker_pos.position, target, registry.get<MapPosition>(target_entity).position)) {
 			success |= do_attack(attacker, attack, target_entity);
 		}
