@@ -122,7 +122,10 @@ GLFWwindow* WorldSystem::create_window(int width, int height)
 	bgm_blue_wav.setLooping(true);
 
 	light_sword_wav.load(audio_path("sword1.wav").c_str());
-	cannon_wav.load(audio_path("cannon.wav").c_str());
+	fire_spell_wav.load(audio_path("fireball.wav").c_str());
+	ice_spell_wav.load(audio_path("ice.wav").c_str());
+	earth_spell_wav.load(audio_path("earth.wav").c_str());
+	wind_spell_wav.load(audio_path("wind.wav").c_str());
 
 
 	return window;
@@ -629,7 +632,23 @@ void WorldSystem::try_fire_projectile(Attack& attack)
 	// TODO: Add better arrow physics potentially?
 	// arrow_velocity.velocity
 	//	= { sin(arrow_motion.angle) * projectile_speed, -cos(arrow_motion.angle) * projectile_speed };
-	so_loud->play(cannon_wav);
+	switch (ui->get_current_attack().damage_type)
+	{
+	case DamageType::Fire :
+		so_loud->play(fire_spell_wav);
+		break;
+	case DamageType::Cold :
+		so_loud->play(ice_spell_wav);
+		break;
+	case DamageType::Earth :
+		so_loud->play(earth_spell_wav);
+		break;
+	case DamageType::Wind :
+		so_loud->play(wind_spell_wav);
+		break;
+	default:
+		break;
+	}
 }
 
 void WorldSystem::try_adjacent_attack(Attack& attack)

@@ -13,7 +13,7 @@ Entity create_player(uvec2 pos)
 
 	// Setup Casting
 	Entity fireball_entity = registry.create();
-	Attack& fireball = registry.emplace<Attack>(fireball_entity, "Fireball", -3, 10, 10, 20, DamageType::Fire, TargetingType::Projectile, -1);
+	Attack& fireball = registry.emplace<Attack>(fireball_entity, "Fireball", -3, 10, 20, 30, DamageType::Fire, TargetingType::Projectile, -1);
 	fireball.mana_cost = 25;
 	inventory.equipped.at(static_cast<uint8>(Slot::Spell1))
 		= create_spell("Fireball", std::vector<Entity>({ fireball_entity }));
@@ -76,6 +76,13 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 	enemy.nest_map_pos = map_pos;
 
 	switch (type) {
+
+	case EnemyType::TrainingDummy:
+		enemy.radius = 0;
+		enemy.speed = 0;
+		enemy.attack_range = 0;
+		break;
+
 	case EnemyType::Slime:
 		enemy.radius = 3;
 		enemy.speed = 1;
