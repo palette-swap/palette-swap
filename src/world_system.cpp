@@ -281,7 +281,6 @@ void WorldSystem::handle_collisions()
 				Enemy& enemy = registry.get<Enemy>(entity_other);
 				ColorState enemy_color = enemy.team;
 				if (!did_attack && enemy_color != turns->get_inactive_color() && ui->has_current_attack()) {
-					animations->player_spell_impact_animation(entity_other, ui->get_current_attack().damage_type);
 					did_attack = combat->do_attack(
 						player, ui->get_current_attack(), registry.get<MapPosition>(entity_other).position);
 				}

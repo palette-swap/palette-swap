@@ -117,15 +117,15 @@ template <typename ColorExclusive> bool CombatSystem::is_valid_attack(Entity att
 	uvec2 attacker_pos = registry.get<MapPosition>(attacker).position;
 	auto view = registry.view<MapPosition, Enemy, Stats>(entt::exclude<ColorExclusive>);
 	for (const Entity target_entity : view) {
-		if (attack.is_in_range(attacker_pos, target, view.get<MapPosition>(target_entity).position)) {
+		if (attack.is_in_range(attacker_pos, target, view.template get<MapPosition>(target_entity).position)) {
 
 			return true;
 		}
 	}
 	auto view_big = registry.view<MapPosition, MapHitbox, Enemy, Stats>(entt::exclude<ColorExclusive>);
 	for (const Entity target_entity : view_big) {
-		for (auto square :
-			 MapUtility::MapArea(view_big.get<MapPosition>(target_entity), view_big.get<MapHitbox>(target_entity))) {
+		for (auto square : MapUtility::MapArea(view_big.template get<MapPosition>(target_entity),
+											   view_big.template get<MapHitbox>(target_entity))) {
 			if (attack.is_in_range(attacker_pos, target, square)) {
 				return true;
 			}
@@ -151,18 +151,25 @@ template <typename ColorExclusive> bool CombatSystem::do_attack(Entity attacker,
 	registry.get<Stats>(attacker).mana -= attack.mana_cost;
 	bool success = false;
 	uvec2 attacker_pos = registry.get<MapPosition>(attacker).position;
+	auto try_attack = [&](Entity target_entity, uvec2 pos) -> bool {
+		if (attack.is_in_range(attacker_pos, target, pos)) {
+			if (attack.mana_cost != 0) {
+				animations->player_spell_impact_animation(target_entity, attack.damage_type);
+			}
+			success |= do_attack(attacker, attack, target_entity);
+			return true;
+		}
+		return false;
+	};
 	auto view = registry.view<MapPosition, Enemy, Stats>(entt::exclude<MapHitbox, ColorExclusive>);
 	for (const Entity target_entity : view) {
-		if (attack.is_in_range(attacker_pos, target, view.get<MapPosition>(target_entity).position)) {
-			success |= do_attack(attacker, attack, target_entity);
-		}
+		try_attack(target_entity, view.template get<MapPosition>(target_entity).position);
 	}
 	auto view_big = registry.view<MapPosition, MapHitbox, Enemy, Stats>(entt::exclude<ColorExclusive>);
 	for (const Entity target_entity : view_big) {
-		for (auto square :
-			 MapUtility::MapArea(view_big.get<MapPosition>(target_entity), view_big.get<MapHitbox>(target_entity))) {
-			if (attack.is_in_range(attacker_pos, target, square)) {
-				success |= do_attack(attacker, attack, target_entity);
+		for (auto square : MapUtility::MapArea(view_big.template get<MapPosition>(target_entity),
+											   view_big.template get<MapHitbox>(target_entity))) {
+			if (try_attack(target_entity, square)) {
 				break;
 			}
 		}
