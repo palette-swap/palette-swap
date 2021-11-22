@@ -6,7 +6,7 @@ in vec2 vpos;
 
 // Application data
 uniform vec4 fcolor;
-uniform vec4 fcolor_fill = vec4(0);
+uniform vec4 fcolor_fill;
 uniform vec2 scale;
 uniform float thickness;
 
