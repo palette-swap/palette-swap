@@ -241,6 +241,12 @@ void WorldSystem::restart_game()
 
 	// Restart the UISystem
 	ui->restart_game();
+
+	turns->set_active_color(ColorState::Red);
+	so_loud->fadeVolume(bgm_red, -1, .25);
+	so_loud->fadeVolume(bgm_blue, 0, .25);
+	animations->player_red_blue_animation(player, ColorState::Red);
+	animations->set_all_inactive_colours(ColorState::Blue);
 }
 
 // Compute collisions between entities
