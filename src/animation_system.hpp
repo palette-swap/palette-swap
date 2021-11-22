@@ -28,7 +28,7 @@ static constexpr float player_melee_speed = 3.f;
 static constexpr float player_heavy_melee_speed = 1.f;
 static constexpr float player_running_speed = 3;
 static constexpr float player_blue_red_switch_speed = 1;
-static constexpr float player_tile_travel_time_ms = 300.f;
+static constexpr float player_tile_travel_time_ms = 100.f;
 
 // Used for boss action speeds
 static constexpr float boss_action_speed = 0.5f;
@@ -112,7 +112,7 @@ public:
 	// Triggers attack animation for a entity specified as the player
 	void player_attack_animation(const Entity& player);
 	// Triggers running animation for a entity specified as the player
-	void player_running_animation(const Entity& player);
+	void player_running_animation(const Entity& player, uvec2 map_start_point, uvec2 map_end_point);
 	// Triggers player transition between red/blue
 	void player_red_blue_animation(const Entity& player, ColorState color);
 	// Sets a spell effect at the enemy's location

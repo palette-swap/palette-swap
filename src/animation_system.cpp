@@ -228,15 +228,22 @@ void AnimationSystem::player_attack_animation(const Entity& player)
 	}
 }
 
-void AnimationSystem::player_running_animation(const Entity& player)
+void AnimationSystem::player_running_animation(const Entity& player, uvec2 map_start_point, uvec2 map_end_point)
 {
 	assert(registry.any_of<Player>(player));
 	Animation& player_animation = registry.get<Animation>(player);
 
-	if (!registry.any_of<EventAnimation>(player)) {
-		EventAnimation& player_running = registry.emplace<EventAnimation>(player);
+	if (!registry.any_of<TravelEventAnimation>(player)) {
+		TravelEventAnimation& player_running = registry.emplace<TravelEventAnimation>(player);
 
-		this->animation_event_setup(player_animation, player_running, player_animation.display_color);
+		player_running.restore_speed = player_animation.speed_adjustment;
+		player_running.restore_state = player_animation.state;
+		player_running.start_point = MapUtility::map_position_to_world_position(map_start_point);
+		player_running.end_point = MapUtility::map_position_to_world_position(map_end_point);
+		player_running.middle_point = (player_running.start_point + player_running.end_point) * 0.5f;
+		player_running.max_time = player_tile_travel_time_ms;
+
+		registry.emplace<WorldPosition>(player, player_running.start_point);
 
 		// Sets animation state to be the beginning of the melee animation
 		player_animation.state = static_cast<int>(PlayerAnimationStates::Running);
@@ -361,7 +368,7 @@ void AnimationSystem::trigger_aoe_attack_animation(const Entity& aoe) {
 	registry.emplace<UndisplayEventAnimation>(aoe);
 }
 
-bool AnimationSystem::animation_events_completed() { return (registry.empty<EventAnimation, TransientEventAnimation>()); }
+bool AnimationSystem::animation_events_completed() { return (registry.empty<EventAnimation, TransientEventAnimation, TravelEventAnimation>()); }
 
 void AnimationSystem::resolve_event_animations()
 {
@@ -428,7 +435,6 @@ void AnimationSystem::resolve_travel_event_animations(float elapsed_ms)
 		 travel_animation.total_time += elapsed_ms;
 
 		 if (travel_animation.total_time >= travel_animation.max_time) {
-			 actual_animation.frame = 0;
 			 actual_animation.state = travel_animation.restore_state;
 			 actual_animation.speed_adjustment = travel_animation.restore_speed;
 
