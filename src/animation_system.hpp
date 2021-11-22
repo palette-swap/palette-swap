@@ -28,6 +28,7 @@ static constexpr float player_melee_speed = 3.f;
 static constexpr float player_heavy_melee_speed = 1.f;
 static constexpr float player_running_speed = 3;
 static constexpr float player_blue_red_switch_speed = 1;
+static constexpr float player_tile_travel_time_ms = 300.f;
 
 // Used for boss action speeds
 static constexpr float boss_action_speed = 0.5f;
@@ -148,6 +149,10 @@ private:
 	// helper function, checks undisplay event animations to see if complete, If complete, the entity stops displaying 
 	// after completion of a single animation cycle
 	void resolve_undisplay_event_animations();
+	// helper function, updates travel event animations to see if complete. If complete, removes map position component
+	// and travel abunation component from associated entity, otherwise updates time, as well as map position of entity
+	// based on time update and spline equation
+	void resolve_travel_event_animations(float elapsed_ms);
 	// helper function for setting animation events
 	void animation_event_setup(Animation& animation, EventAnimation& EventAnimation, vec4& color);
 	// helper function for updating camera

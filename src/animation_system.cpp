@@ -51,6 +51,7 @@ void AnimationSystem::update_animations(float elapsed_ms, ColorState inactive_co
 	resolve_event_animations();
 	resolve_transient_event_animations();
 	resolve_undisplay_event_animations();
+	resolve_travel_event_animations(elapsed_ms);
 }
 
 void AnimationSystem::set_sprite_direction(const Entity& sprite, Sprite_Direction direction)
@@ -386,9 +387,6 @@ void AnimationSystem::resolve_transient_event_animations()
 {
 	for (auto [entity, event_animation, actual_animation] : registry.view<TransientEventAnimation, Animation>().each()) {
 
-		// Checks if the animation frame had been reset to 0. If true, this means event animation has completed
-		// TODO: Change to be a different check, this current one is a bit iffy, and is reliant on there being at least
-		// two frames in all event animations (which is technically correct since it's an "animation", but a bit iffy)
 		if (actual_animation.frame < event_animation.frame) {
 			registry.destroy(entity);
 		} else {
@@ -402,9 +400,6 @@ void AnimationSystem::resolve_undisplay_event_animations()
 	for (auto [entity, event_animation, actual_animation, effect] :
 		 registry.view<UndisplayEventAnimation, Animation, EffectRenderRequest>().each()) {
 
-		// Checks if the animation frame had been reset to 0. If true, this means event animation has completed
-		// TODO: Change to be a different check, this current one is a bit iffy, and is reliant on there being at least
-		// two frames in all event animations (which is technically correct since it's an "animation", but a bit iffy)
 		if (actual_animation.frame < event_animation.frame) {
 			effect.visible = false;
 			registry.remove<UndisplayEventAnimation>(entity);
@@ -416,15 +411,36 @@ void AnimationSystem::resolve_undisplay_event_animations()
 	for (auto [entity, event_animation, actual_animation, render] :
 		 registry.view<UndisplayEventAnimation, Animation, RenderRequest>().each()) {
 
-		// Checks if the animation frame had been reset to 0. If true, this means event animation has completed
-		// TODO: Change to be a different check, this current one is a bit iffy, and is reliant on there being at least
-		// two frames in all event animations (which is technically correct since it's an "animation", but a bit iffy)
 		if (actual_animation.frame < event_animation.frame) {
 			render.visible = false;
 			registry.remove<UndisplayEventAnimation>(entity);
 		} else {
 			event_animation.frame = actual_animation.frame;
 		}
+	}
+}
+
+void AnimationSystem::resolve_travel_event_animations(float elapsed_ms) 
+{
+	for (auto [entity, travel_animation, actual_animation, world_position] :
+		 registry.view<TravelEventAnimation, Animation, WorldPosition>().each()) {
+
+		 travel_animation.total_time += elapsed_ms;
+
+		 if (travel_animation.total_time >= travel_animation.max_time) {
+			 actual_animation.frame = 0;
+			 actual_animation.state = travel_animation.restore_state;
+			 actual_animation.speed_adjustment = travel_animation.restore_speed;
+
+			 // Removes world position from entity, should return entity to map position
+			 registry.remove<TravelEventAnimation, WorldPosition>(entity);
+		 } else {
+			 float time_percent = travel_animation.total_time / travel_animation.max_time;
+
+			 // TODO Change to spline based on middle point and offset
+			 world_position.position = (travel_animation.end_point - travel_animation.start_point) * time_percent
+				 + travel_animation.start_point;
+		 }
 	}
 }
 
