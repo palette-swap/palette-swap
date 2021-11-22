@@ -834,8 +834,9 @@ enum class CutSceneType {
 };
 // CutScene
 struct CutScene {
+	Entity actual_entity;
+	Entity cutscene_ui;
 	CutSceneType type;
 	float radius;
-	Entity cutscene_ui;
 	std::string texts;
 };

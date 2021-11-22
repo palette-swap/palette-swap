@@ -180,10 +180,13 @@ static void load_enemy(unsigned int enemy_index, const rapidjson::Document& json
 
 	Animation& enemy_animation = registry.emplace<Animation>(entity);
 
+	bool visible = true;
+
 	// Need to replace with a different component denoting a boss enemy
 	if (enemy_component.type == EnemyType::KingMush) {
 		enemy_animation.max_frames = 8;
 		enemy_animation.speed_adjustment = 0.6;
+		visible = false;
 	} else {
 		enemy_animation.max_frames = 4;
 	}
@@ -193,7 +196,7 @@ static void load_enemy(unsigned int enemy_index, const rapidjson::Document& json
 									enemy_type_textures.at(static_cast<int>(enemy_component.type)),
 									EFFECT_ASSET_ID::ENEMY,
 									GEOMETRY_BUFFER_ID::SMALL_SPRITE,
-									true);
+									visible);
 	if (enemy_component.team == ColorState::Red) {
 		enemy_animation.color = ColorState::Red;
 		enemy_animation.display_color = { AnimationUtility::default_enemy_red, 1 };

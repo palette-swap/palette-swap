@@ -2,17 +2,13 @@
 #include <sstream>
 #include <vector>
 
-void StorySystem::restart_game(const std::vector<Entity>& entities_for_cutscene)
+void StorySystem::restart_game()
 {
 	current_cutscene_entity = entt::null;
 	boss_created = false;
 	for (auto [entity, cutscene] : registry.view<CutScene>().each()) {
 		registry.remove_all(cutscene.cutscene_ui);
 		registry.remove_all(entity);
-	}
-	// register cutscene for the boss
-	for (auto entity : entities_for_cutscene) {
-		create_cutscene(entity, CutSceneType::BossEntry, 256, std::string("This is the boss. Beat it!"));
 	}
 }
 
@@ -51,7 +47,8 @@ void StorySystem::step()
 	}
 
 	if (animations->boss_intro_complete(current_cutscene_entity) && !boss_created) {
-		create_enemy(ColorState::All, EnemyType::KingMush, registry.get<MapPosition>(current_cutscene_entity).position);
+		Entity actual_entity = registry.get<CutScene>(current_cutscene_entity).actual_entity;
+		registry.get<RenderRequest>(actual_entity).visible = true;
 		boss_created = true;
 	}
 	CutScene c = registry.get<CutScene>(current_cutscene_entity);
@@ -154,5 +151,15 @@ void StorySystem::trigger_animation(CutSceneType type)
 		break;
 	default:
 		break;
+	}
+}
+
+void StorySystem::load_next_level() { 
+	for (auto [entity, enemy] : registry.view<Enemy>().each()) {
+		if (enemy.type == EnemyType::KingMush) {
+			vec2 position = registry.get<MapPosition>(entity).position;
+			auto entry_entity = animations->create_boss_entry_entity(EnemyType::KingMush, position);
+			create_cutscene(entry_entity, entity, CutSceneType::BossEntry, 350, "This is the boss. Beat it!");
+		}
 	}
 }

@@ -243,12 +243,12 @@ void WorldSystem::restart_game()
 	// Restart the CombatSystem
 	combat->restart_game();
 
-	Entity boss_entry_entity = animations->create_boss_entry_entity(EnemyType::KingMush, player_starting_point + uvec2(10, 2));
+	//Entity boss_entry_entity = animations->create_boss_entry_entity(EnemyType::KingMush, player_starting_point + uvec2(10, 2));
 	// Restart the UISystem
 	ui->restart_game();
 
 	// Restart the StorySystem
-	story->restart_game({ boss_entry_entity });
+	story->restart_game();
 	
 	turns->set_active_color(ColorState::Red);
 	so_loud->fadeVolume(bgm_red, -1, .25);
@@ -427,6 +427,7 @@ void WorldSystem::check_debug_keys(int key, int action, int mod)
 	// for debugging levels
 	if (key == GLFW_KEY_N && (mod & GLFW_MOD_CONTROL) != 0 && action == GLFW_RELEASE) {
 		map_generator->load_next_level();
+		story->load_next_level();
 		return_arrow_to_player();
 	} else if (key == GLFW_KEY_B && (mod & GLFW_MOD_CONTROL) != 0 && action == GLFW_RELEASE) {
 		map_generator->load_last_level();
@@ -566,6 +567,7 @@ void WorldSystem::move_player(Direction direction)
 		}
 
 		map_generator->load_next_level();
+		story->load_next_level();
 		animations->set_all_inactive_colours(turns->get_inactive_color());
 	} else if (map_generator->is_last_level_tile(new_pos)) {
 		map_generator->load_last_level();

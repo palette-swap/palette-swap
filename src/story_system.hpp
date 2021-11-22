@@ -17,7 +17,8 @@ public:
 	void check_cutscene();
 	void step();
 	void trigger_animation(CutSceneType type);
-	void restart_game(const std::vector<Entity>& entities_for_cutscene);
+	void load_next_level();
+	void restart_game();
 
 private:
 	Entity current_cutscene_entity = entt::null;
