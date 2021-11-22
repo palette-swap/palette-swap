@@ -511,11 +511,11 @@ void MapGeneratorSystem::clear_level() const
 	}
 }
 
-void MapGeneratorSystem::load_next_level()
+bool MapGeneratorSystem::load_next_level()
 {
 	if (is_last_level()) {
 		fprintf(stderr, "is already on last level");
-		assert(false && "cannot load any new levels");
+		return false;
 	}
 
 	if (current_level != -1) {
@@ -524,6 +524,7 @@ void MapGeneratorSystem::load_next_level()
 		clear_level();
 	}
 	load_level(++current_level);
+	return true;
 }
 
 void MapGeneratorSystem::load_last_level()
