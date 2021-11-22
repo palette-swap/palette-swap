@@ -8,7 +8,7 @@ static void move_camera_to(const vec2& dest)
 	camera_world_pos.position = dest;
 }
 
-static const vec2 get_camera_pos_from_buffer(const vec2& camera_pos,
+static vec2 get_camera_pos_from_buffer(const vec2& camera_pos,
 											 const vec2& player_pos,
 											 const vec2& buffer_top_left,
 											 const vec2& buffer_down_right)

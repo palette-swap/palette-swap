@@ -86,7 +86,7 @@ private:
 	const std::string& get_level_snap_shot(int level) const;
 	const std::vector<MapUtility::RoomLayout>& get_level_room_layouts(int level) const;
 
-	int current_level;
+	int current_level = 0;
 
 	// get the tile texture id, of the position on the current level
 	MapUtility::TileID get_tile_id_from_map_pos(uvec2 pos) const;
@@ -114,7 +114,7 @@ private:
 	// these two backups are for recovering from map editing mode, can also be potentially
 	// used for save and load
 	std::vector<MapUtility::LevelConfiguration> level_configurations_backup;
-	int current_level_backup;
+	int current_level_backup = 0;
 
 public:
 	explicit MapGeneratorSystem(std::shared_ptr<TurnSystem> turns);

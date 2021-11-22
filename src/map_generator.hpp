@@ -14,9 +14,11 @@ class MapGenerator {
 public:
 	// delete constructors to make the class static
 	MapGenerator() = delete;
+	~MapGenerator() = default;
 	MapGenerator(const MapGenerator&) = delete;
 	MapGenerator(const MapGenerator&&) = delete;
 	MapGenerator operator=(const MapGenerator&) = delete;
+	MapGenerator& operator=(MapGenerator&&) = delete;
 
 private:
 	// room types for procedural generation

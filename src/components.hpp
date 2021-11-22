@@ -279,7 +279,7 @@ struct Enemy {
 struct AOESquare {
 	// Released AOE square will be destroyed in the next turn.
 	bool actual_attack_displayed = false;
-	bool isReleased = false;
+	bool is_released = false;
 };
 
 struct RedExclusive {

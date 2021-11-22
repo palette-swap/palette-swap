@@ -127,8 +127,8 @@ void MapGeneratorSystem::load_generated_level_configurations()
 	}
 
 	// we are ready to generate the levels
-	for (int i = 0; i < level_generation_confs.size(); i++) {
-		level_configurations.emplace_back(MapGenerator::generate_level(level_generation_confs.at(i), false));
+	for (auto& conf : level_generation_confs) {
+		level_configurations.emplace_back(MapGenerator::generate_level(conf, false));
 	}
 }
 
@@ -185,7 +185,7 @@ static void load_enemy(unsigned int enemy_index, const rapidjson::Document& json
 	// Need to replace with a different component denoting a boss enemy
 	if (enemy_component.type == EnemyType::KingMush) {
 		enemy_animation.max_frames = 8;
-		enemy_animation.speed_adjustment = 0.6;
+		enemy_animation.speed_adjustment = 0.6f;
 		visible = false;
 	} else {
 		enemy_animation.max_frames = 4;

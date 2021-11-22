@@ -56,11 +56,11 @@ struct LevelGenConf {
 };
 
 struct MapAreaIterator {
-	using iterator_category = std::input_iterator_tag;
-	using difference_type = vec2;
-	using value_type = const uvec2;
-	using pointer = value_type*;
-	using reference = value_type&;
+	using iterator_category = std::input_iterator_tag; // NOLINT(readability-identifier-naming)
+	using difference_type = vec2; // NOLINT(readability-identifier-naming)
+	using value_type = const uvec2; // NOLINT(readability-identifier-naming)
+	using pointer = value_type*; // NOLINT(readability-identifier-naming)
+	using reference = value_type&; // NOLINT(readability-identifier-naming)
 
 	reference operator*() const { return current_pos; }
 	pointer operator->() { return &current_pos; }
@@ -104,14 +104,14 @@ struct MapArea {
 
 	MapArea(const MapPosition& map_pos, const MapHitbox& map_size);
 
-	MapAreaIterator begin()
+	MapAreaIterator begin() const
 	{
 		uvec2 current_pos;
 		current_pos.x = (map_pos.position.x >= map_size.center.x) ? map_pos.position.x - map_size.center.x : 0;
 		current_pos.y = (map_pos.position.y >= map_size.center.y) ? map_pos.position.y - map_size.center.y : 0;
 		return MapAreaIterator(current_pos.x, current_pos.x + map_size.area.x - 1, current_pos);
 	}
-	MapAreaIterator end()
+	MapAreaIterator end() const
 	{
 		uvec2 current_pos;
 		current_pos.x = (map_pos.position.x >= map_size.center.x) ? map_pos.position.x - map_size.center.x : 0;

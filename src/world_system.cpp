@@ -42,7 +42,7 @@ WorldSystem::WorldSystem(Debug& debugging,
 {
 	this->combat->init(rng, this->animations, this->map_generator, this->tutorials);
 	this->combat->on_pickup([this](const Entity& item, size_t slot) { this->ui->add_to_inventory(item, slot); });
-	this->combat->on_death([this](const Entity& entity) { this->ui->update_resource_count(); });
+	this->combat->on_death([this](const Entity& /*entity*/) { this->ui->update_resource_count(); });
 	this->ui->on_show_world([this]() { return_arrow_to_player(); });
 }
 

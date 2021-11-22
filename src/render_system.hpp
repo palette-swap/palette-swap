@@ -132,8 +132,8 @@ public:
 	vec2 screen_position_to_world_position(vec2 screen_pos);
 
 	// WorldSystem callbacks for window changes
-	void scale_on_scroll(float offset);
-	void on_resize(int width, int height);
+	void scale_on_scroll(float offset) const;
+	void on_resize(int width, int height) const;
 
 	vec2 get_screen_size() { return screen_size; }
 

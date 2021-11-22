@@ -11,12 +11,10 @@
 #include <sstream>
 
 // World initialization
-bool RenderSystem::init(
-	int width, int height, GLFWwindow* window_arg, std::shared_ptr<MapGeneratorSystem> map)
+bool RenderSystem::init(int width, int /*height*/, GLFWwindow* window_arg, std::shared_ptr<MapGeneratorSystem> map)
 {
 	map_generator = std::move(map);
 	this->window = window_arg;
-	this->debugging = debugging;
 
 	glfwMakeContextCurrent(window);
 	glfwSwapInterval(1); // vsync

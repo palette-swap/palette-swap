@@ -12,11 +12,11 @@
 #include "map_generator_system.hpp"
 #include "physics_system.hpp"
 #include "render_system.hpp"
+#include "story_system.hpp"
 #include "turn_system.hpp"
 #include "tutorial_system.hpp"
 #include "ui_system.hpp"
 #include "world_system.hpp"
-#include "story_system.hpp"
 
 
 using Clock = std::chrono::high_resolution_clock;

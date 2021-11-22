@@ -7,8 +7,8 @@ void StorySystem::restart_game()
 	current_cutscene_entity = entt::null;
 	boss_created = false;
 	for (auto [entity, cutscene] : registry.view<CutScene>().each()) {
-		registry.remove_all(cutscene.cutscene_ui);
-		registry.remove_all(entity);
+		registry.destroy(cutscene.cutscene_ui);
+		registry.destroy(entity);
 	}
 }
 
@@ -19,14 +19,14 @@ StorySystem::StorySystem(std::shared_ptr<AnimationSystem> animation_sys_ptr)
 
 bool StorySystem::in_cutscene() { return current_cutscene_entity != entt::null; }
 
-void StorySystem::on_mouse_click(int key, int action)
+void StorySystem::on_mouse_click(int /*button*/, int action)
 {
 	if (action == GLFW_PRESS) {
 		proceed_conversation();
 	}
 }
 
-void StorySystem::on_key(int key, int action, int /*mod*/)
+void StorySystem::on_key(int /*key*/, int action, int /*mod*/)
 {
 	// TODO: handle story on key: basically press any key will make the conversation proceed
 	if (action == GLFW_PRESS) {
@@ -60,7 +60,7 @@ void StorySystem::step()
 	}
 	CutScene c = registry.get<CutScene>(current_cutscene_entity);
 	if (!registry.get<UIGroup>(c.cutscene_ui).visible && animations->boss_intro_complete(current_cutscene_entity)) {
-		registry.remove_all(current_cutscene_entity);
+		registry.destroy(current_cutscene_entity);
 		current_cutscene_entity = entt::null;
 		boss_created = false;
 	}
@@ -105,7 +105,7 @@ void StorySystem::proceed_conversation()
 	conversations.pop_front();
 
 	for (char c : text_in_frame) {
-		text_frames.push_back(std::string(1, c));
+		text_frames.emplace_back(1, c);
 	}
 }
 
