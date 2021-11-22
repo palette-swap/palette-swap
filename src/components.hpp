@@ -785,6 +785,18 @@ struct Draggable {
 struct Tooltip {
 	Entity target;
 };
+enum class TutorialTooltip {
+	ItemDropped = 0,
+	ItemPickedUp = ItemDropped + 1,
+	UseResource = ItemPickedUp + 1,
+	ReadyToEquip = UseResource + 1,
+	OpenedInventory = ReadyToEquip + 1,
+	Count = OpenedInventory + 1,
+};
+
+struct TutorialTarget {
+	TutorialTooltip tooltip;
+};
 
 struct InteractArea {
 	vec2 size;

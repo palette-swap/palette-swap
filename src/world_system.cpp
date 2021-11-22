@@ -24,7 +24,8 @@ WorldSystem::WorldSystem(Debug& debugging,
 						 std::shared_ptr<AnimationSystem> animations,
 						 std::shared_ptr<UISystem> ui,
 						 std::shared_ptr<SoLoud::Soloud> so_loud,
-						 std::shared_ptr<StorySystem> story)
+						 std::shared_ptr<StorySystem> story,
+						 std::shared_ptr<TutorialSystem> tutorials)
 
 	: debugging(debugging)
 	, so_loud(std::move(so_loud))
@@ -37,6 +38,7 @@ WorldSystem::WorldSystem(Debug& debugging,
 	, turns(std::move(turns))
 	, ui(std::move(ui))
 	, story(std::move(story))
+	, tutorials(std::move(tutorials))
 {
 	this->combat->init(rng, this->animations, this->map_generator);
 	this->combat->on_pickup([this](const Entity& item, size_t slot) { this->ui->add_to_inventory(item, slot); });
@@ -249,6 +251,9 @@ void WorldSystem::restart_game()
 
 	// Restart the StorySystem
 	story->restart_game();
+
+	// Restart the TutorialSystem
+	tutorials->restart_game();
 	
 	turns->set_active_color(ColorState::Red);
 	so_loud->fadeVolume(bgm_red, -1, .25);
