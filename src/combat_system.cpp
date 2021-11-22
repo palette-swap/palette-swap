@@ -115,10 +115,20 @@ template <typename ColorExclusive> bool CombatSystem::is_valid_attack(Entity att
 		return false;
 	}
 	uvec2 attacker_pos = registry.get<MapPosition>(attacker).position;
-	for (const auto& target_entity : registry.view<Enemy, Stats>(entt::exclude<ColorExclusive>)) {
-		if (attack.is_in_range(attacker_pos, target, registry.get<MapPosition>(target_entity).position)) {
+	auto view = registry.view<MapPosition, Enemy, Stats>(entt::exclude<ColorExclusive>);
+	for (const Entity target_entity : view) {
+		if (attack.is_in_range(attacker_pos, target, view.get<MapPosition>(target_entity).position)) {
 
 			return true;
+		}
+	}
+	auto view_big = registry.view<MapPosition, MapHitbox, Enemy, Stats>(entt::exclude<ColorExclusive>);
+	for (const Entity target_entity : view_big) {
+		for (auto square :
+			 MapUtility::MapArea(view_big.get<MapPosition>(target_entity), view_big.get<MapHitbox>(target_entity))) {
+			if (attack.is_in_range(attacker_pos, target, square)) {
+				return true;
+			}
 		}
 	}
 	return false;
@@ -140,10 +150,21 @@ template <typename ColorExclusive> bool CombatSystem::do_attack(Entity attacker,
 	}
 	registry.get<Stats>(attacker).mana -= attack.mana_cost;
 	bool success = false;
-	MapPosition& attacker_pos = registry.get<MapPosition>(attacker);
-	for (const auto& target_entity : registry.view<Enemy, Stats>(entt::exclude<ColorExclusive>)) {
-		if (attack.is_in_range(attacker_pos.position, target, registry.get<MapPosition>(target_entity).position)) {
+	uvec2 attacker_pos = registry.get<MapPosition>(attacker).position;
+	auto view = registry.view<MapPosition, Enemy, Stats>(entt::exclude<MapHitbox, ColorExclusive>);
+	for (const Entity target_entity : view) {
+		if (attack.is_in_range(attacker_pos, target, view.get<MapPosition>(target_entity).position)) {
 			success |= do_attack(attacker, attack, target_entity);
+		}
+	}
+	auto view_big = registry.view<MapPosition, MapHitbox, Enemy, Stats>(entt::exclude<ColorExclusive>);
+	for (const Entity target_entity : view_big) {
+		for (auto square :
+			 MapUtility::MapArea(view_big.get<MapPosition>(target_entity), view_big.get<MapHitbox>(target_entity))) {
+			if (attack.is_in_range(attacker_pos, target, square)) {
+				success |= do_attack(attacker, attack, target_entity);
+				break;
+			}
 		}
 	}
 	return success;
