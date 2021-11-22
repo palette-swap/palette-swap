@@ -181,16 +181,23 @@ void Enemy::deserialize(const std::string& prefix, const rapidjson::Document& js
 
 bool Attack::is_in_range(uvec2 source, uvec2 target, uvec2 pos) const
 {
+	dvec2 area = dvec2(parallel_size - 1, perpendicular_size - 1);
 	dvec2 distance = dvec2(target) - dvec2(pos);
 	dvec2 attack_direction = dvec2(target) - dvec2(source);
 	double attack_angle = atan2(attack_direction.y, attack_direction.x);
-	dvec2 aligned_distance = glm::rotate(distance, -attack_angle);
+	dvec2 aligned_distance = round(abs(glm::rotate(distance, -attack_angle)));
 	if (pattern == AttackPattern::Rectangle) {
-		return aligned_distance.x <= static_cast<double>(parallel_size)
-			&& aligned_distance.y <= static_cast<double>(perpendicular_size);
+		return abs(aligned_distance.x) <= area.x && abs(aligned_distance.y) <= area.y;
 	}
 	if (pattern == AttackPattern::Circle) {
-		return pow(aligned_distance.x / parallel_size, 2) + pow(aligned_distance.y / perpendicular_size, 2) <= 1;
+		auto make_square = [](double dist, double max) {
+			if (max == 0) {
+				return dist == 0 ? 0.0 : 2.0;
+			}
+			return pow(dist / max, 2);
+		};
+		dvec2 dist_squared = { make_square(aligned_distance.x, area.x), make_square(aligned_distance.y, area.y) };
+		return dist_squared.x + dist_squared.y <= 1;
 	}
 	return true;
 }
@@ -335,32 +342,45 @@ void Collision::add(Entity parent, Entity child)
 	Collision* collision = registry.try_get<Collision>(parent);
 	if (collision == nullptr) {
 		collision = &(registry.emplace<Collision>(parent, registry.create()));
-		registry.emplace<Child>(collision->children, parent, entt::null, child);
+		registry.emplace<CollisionEntry>(collision->children, parent, entt::null, child);
 	} else {
 		Entity new_collision = registry.create();
-		registry.emplace<Child>(new_collision, parent, collision->children, child);
+		registry.emplace<CollisionEntry>(new_collision, parent, collision->children, child);
 		collision->children = new_collision;
 	}
 }
 
-void UIGroup::add_element(Entity group, Entity element, UIElement& ui_element)
+void UIGroup::add_element(Entity group, Entity element, UIElement& ui_element, UILayer layer)
 {
 	if (group == entt::null) {
 		return;
 	}
 	UIGroup& g = registry.get<UIGroup>(group);
-	ui_element.next = g.first_element;
-	g.first_element = element;
+	ui_element.next = g.first_elements.at((size_t)layer);
+	g.first_elements.at((size_t)layer) = element;
 }
 
-void UIGroup::add_text(Entity group, Entity text, UIElement& ui_element)
+void UIGroup::remove_element(Entity group, Entity element, UILayer layer)
 {
 	if (group == entt::null) {
 		return;
 	}
 	UIGroup& g = registry.get<UIGroup>(group);
-	ui_element.next = g.first_text;
-	g.first_text = text;
+	Entity prev = g.first_elements.at((size_t)layer);
+	Entity curr = registry.get<UIElement>(prev).next;
+	if (prev == element) {
+		g.first_elements.at((size_t)layer) = registry.get<UIElement>(prev).next;
+		return;
+	}
+	while (curr != entt::null) {
+		if (curr == element) {
+			registry.get<UIElement>(prev).next = registry.get<UIElement>(curr).next;
+			return;
+		}
+		UIElement& element = registry.get<UIElement>(curr);
+		prev = curr;
+		curr = element.next;
+	}
 }
 
 Entity Inventory::get(Entity entity, Slot slot) { return registry.get<Inventory>(entity).equipped.at((size_t)slot); }
@@ -396,6 +416,13 @@ void ItemTemplate::deserialize(Entity entity, const rapidjson::GenericObject<fal
 		StatBoosts& stat_boosts = registry.emplace<StatBoosts>(entity);
 		stat_boosts.deserialize(item["stat_boosts"].GetObj());
 	}
+
+	if (item.HasMember("texture_offset")) {
+		texture_offset = vec2(item["texture_offset"][0].GetInt(), item["texture_offset"][1].GetInt());
+		if (item.HasMember("texture_size")) {
+			texture_size = vec2(item["texture_size"][0].GetInt(), item["texture_size"][1].GetInt());
+		}
+	}
 }
 
 void StatBoosts::deserialize(const rapidjson::GenericObject<false, rapidjson::Value>& boosts) {
@@ -422,4 +449,108 @@ void StatBoosts::deserialize(const rapidjson::GenericObject<false, rapidjson::Va
 			}
 		}
 	}
+}
+
+std::string Item::get_description(bool detailed) const
+{
+	ItemTemplate& item = registry.get<ItemTemplate>(item_template);
+	std::string description = item.name;
+
+	description += " - Tier " + std::to_string(item.tier);
+
+	if (!detailed) {
+		return description;
+	}
+	
+	if (StatBoosts* boosts = registry.try_get<StatBoosts>(item_template)) {
+		description += boosts->get_description();
+	}
+
+	if (Weapon* weapon = registry.try_get<Weapon>(item_template)) {
+		description += weapon->get_description();
+	}
+
+	return description;
+}
+
+std::string int_to_signed_string(int i) { return ((i >= 0) ? '+' : '-') + std::to_string(i); }
+
+std::string StatBoosts::get_description() const
+{
+	std::string description;
+	if (health != 0) {
+		description += "\n" + int_to_signed_string(health) + " health";
+	}
+	if (mana != 0) {
+		description += "\n" + int_to_signed_string(mana) + " mana";
+	}
+	if (to_hit_bonus != 0) {
+		description += "\n" + int_to_signed_string(to_hit_bonus) + " to hit";
+	}
+	if (damage_bonus != 0) {
+		description += "\n" + int_to_signed_string(damage_bonus) + " dmg";
+	}
+	if (evasion != 0) {
+		description += "\n" + int_to_signed_string(evasion) + " evasion";
+	}
+	for (size_t i = 0; i < (size_t)DamageType::Count; i++) {
+		int mod = damage_modifiers.at(i);
+		if (mod != 0) {
+			description += "\n" + std::to_string(abs(mod)) + " ";
+			description += damage_type_names.at(i);
+			description += (mod < 0) ? " resistance" : " vulnerability";
+		}
+	}
+	return description;
+}
+
+std::string Weapon::get_description() {
+	std::string description = "\n-Attacks-";
+	for (auto attack_entity : given_attacks) {
+		description += "\n" + registry.get<Attack>(attack_entity).get_description();
+	}
+	return description;
+}
+
+std::string Attack::get_description() const {
+	using std::to_string;
+	std::string description = name + "\n  ";
+	if (mana_cost != 0) {
+		description += to_string(mana_cost) + " mana\n  ";
+	}
+
+	// To hit
+	description += to_string(to_hit_min) + "-" + to_string(to_hit_max) + " to hit\n  ";
+
+	// Damage
+	description += to_string(damage_min) + "-" + to_string(damage_max) + " ";
+	description += damage_type_names.at((size_t)damage_type);
+	description += " dmg\n  ";
+
+	if (targeting_type == TargetingType::Adjacent) {
+		if (range > 1) {
+			description += "range " + to_string(range) + "\n  ";
+		}
+		if (perpendicular_size > 1 || parallel_size > 1) {
+			description += to_string(parallel_size) + "x" + to_string(perpendicular_size) + " area\n  ";
+		}
+	} else {
+		description += "projectile\n  ";
+	}
+
+	Entity curr = effects;
+	while (curr != entt::null) {
+		EffectEntry& effect = registry.get<EffectEntry>(curr);
+		description += to_string(static_cast<int>(effect.chance * 100.f)) + "% ";
+		description += effect_names.at((size_t)effect.effect);
+		description += " " + to_string(effect.magnitude) + "\n  ";
+		curr = effect.next_effect;
+	}
+
+	// Remove trailing "\n  "
+	description.pop_back();
+	description.pop_back();
+	description.pop_back();
+
+	return description;
 }

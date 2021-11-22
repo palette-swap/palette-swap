@@ -382,7 +382,7 @@ bool load_effect_from_file(const std::string& vs_path, const std::string& fs_pat
 		return false;
 	}
 	if (!gl_compile_shader(fragment)) {
-		fprintf(stderr, "Vertex compilation failed");
+		fprintf(stderr, "Fragment compilation failed");
 		assert(false);
 		return false;
 	}

@@ -8,35 +8,30 @@ void UISystem::on_key(int key, int action, int /*mod*/)
 {
 	if (!registry.get<UIGroup>(groups[(size_t)Groups::MainMenu]).visible) {
 		if (action == GLFW_PRESS && key == GLFW_KEY_I) {
-			try_settle_held();
-			UIGroup& group = registry.get<UIGroup>(groups[(size_t)Groups::Inventory]);
-			group.visible = !group.visible;
-			registry.get<UIGroup>(groups[(size_t)Groups::HUD]).visible = !group.visible;
+			if (player_can_act()) {
+				switch_to_group(groups[(size_t)Groups::Inventory]);
+			} else {
+				switch_to_group(groups[(size_t)Groups::HUD]);
+			}
 		}
 		if (action == GLFW_PRESS && key == GLFW_KEY_ESCAPE) {
-			try_settle_held();
-			UIGroup& group = registry.get<UIGroup>(groups[(size_t)Groups::Inventory]);
-			group.visible = false;
-			registry.get<UIGroup>(groups[(size_t)Groups::HUD]).visible = true;
+			switch_to_group(groups[(size_t)Groups::HUD]);
 		}
 	}
 
 	// Change attack
-	// TODO: Generalize for many attacks, check out of bounds
 	// Key Codes for 1-9
 	if (49 <= key && key <= 57) {
-		if (key - 49 < 4) {
-			size_t index = ((size_t)key) - 49;
-			for (Slot slot : attacks_slots) {
-				Entity weapon_entity = Inventory::get(registry.view<Player>().front(), slot);
-				if (weapon_entity != entt::null) {
-					Weapon& weapon = registry.get<Weapon>(weapon_entity);
-					if (index < weapon.given_attacks.size()) {
-						set_current_attack(slot, index);
-						break;
-					}
-					index -= weapon.given_attacks.size();
+		size_t index = ((size_t)key) - 49;
+		for (Slot slot : attacks_slots) {
+			Entity weapon_entity = Inventory::get(registry.view<Player>().front(), slot);
+			if (weapon_entity != entt::null) {
+				Weapon& weapon = registry.get<Weapon>(weapon_entity);
+				if (index < weapon.given_attacks.size()) {
+					set_current_attack(slot, index);
+					break;
 				}
+				index -= weapon.given_attacks.size();
 			}
 		}
 	}
@@ -67,6 +62,44 @@ void UISystem::try_settle_held()
 		held_pos.position = container_pos.position;
 	}
 	held_under_mouse = entt::null;
+}
+
+void UISystem::switch_to_group(Entity group)
+{
+	try_settle_held();
+	destroy_tooltip();
+	for (auto [entity, other_group] : registry.view<UIGroup>().each()) {
+		other_group.visible = entity == group || entity == groups[(size_t)Groups::Tooltips];
+	}
+	if (group == groups[(size_t)Groups::HUD]) {
+		for (auto& callback : show_world_callbacks) {
+			callback();
+		}
+	}
+}
+
+void UISystem::destroy_tooltip()
+{
+	if (tooltip == entt::null) {
+		return;
+	}
+	UIGroup::remove_element(groups[(size_t)Groups::Tooltips], tooltip, UILayer::TooltipContent);
+	registry.destroy(tooltip);
+	tooltip = entt::null;
+}
+
+void UISystem::align_tooltip(vec2 new_pos)
+{
+	if (tooltip == entt::null) {
+		return;
+	}
+
+	Text& text = registry.get<Text>(tooltip);
+	text.alignment_x = (new_pos.x > .5) ? Alignment::End : Alignment::Start;
+	text.alignment_y = (new_pos.y > .5) ? Alignment::End : Alignment::Start;
+
+	registry.get<ScreenPosition>(tooltip).position
+		= new_pos + vec2(0, .03 * (int)text.alignment_y);
 }
 
 bool UISystem::can_insert_into_slot(Entity item, Entity container)
@@ -127,14 +160,37 @@ bool UISystem::swap_or_move_item(ScreenPosition& container_pos,
 
 void UISystem::do_action(Button& button)
 {
-	if (button.action == ButtonAction::SwitchToGroup) {
-		for (auto [entity, group] : registry.view<UIGroup>().each()) {
-			group.visible = entity == button.action_target;
+	switch (button.action) {
+	case ButtonAction::SwitchToGroup: {
+		switch_to_group(button.action_target);
+		break;
+	}
+	case ButtonAction::TryHeal:
+	case ButtonAction::TryMana: {
+		Inventory& inventory = registry.get<Inventory>(button.action_target);
+		Resource resource = (button.action == ButtonAction::TryHeal) ? Resource::HealthPotion : Resource::ManaPotion;
+		if (inventory.resources.at((size_t)resource) > 0) {
+			Stats& stats = registry.get<Stats>(button.action_target);
+			if (resource == Resource::HealthPotion) {
+				stats.health = stats.health_max;
+			} else {
+				stats.mana = stats.mana_max;
+			}
+			inventory.resources.at((size_t)resource)--;
+			update_resource_count();
 		}
+		break;
+	}
+	case ButtonAction::TryPalette: {
+		try_change_color();
+		break;
+	}
+	default:
+		break;
 	}
 }
 
-void UISystem::on_left_click(int action, dvec2 mouse_screen_pos)
+bool UISystem::on_left_click(int action, dvec2 mouse_screen_pos)
 {
 	if (action == GLFW_PRESS) {
 		for (auto [entity, draggable, element, screen_pos, interact_area] :
@@ -142,29 +198,90 @@ void UISystem::on_left_click(int action, dvec2 mouse_screen_pos)
 			if (element.visible && registry.get<UIGroup>(element.group).visible
 				&& Geometry::Rectangle(screen_pos.position, interact_area.size).contains(vec2(mouse_screen_pos))) {
 				held_under_mouse = entity;
-				return;
+				destroy_tooltip();
+				return true;
 			}
 		}
 		for (auto [entity, element, pos, request, button] :
 			 registry.view<UIElement, ScreenPosition, UIRenderRequest, Button>().each()) {
+			vec2 size_scale = request.size * ((request.used_effect == EFFECT_ASSET_ID::RECTANGLE) ? 1.f : .5f);
 			Geometry::Rectangle button_rect = Geometry::Rectangle(
-				pos.position + vec2((float)request.alignment_x, (float)request.alignment_y) * request.size * .5f,
-				request.size);
+				pos.position
+					+ vec2((float)request.alignment_x, (float)request.alignment_y) * .5f * size_scale,
+				 size_scale);
 			if (element.visible && registry.get<UIGroup>(element.group).visible
 				&& button_rect.contains(vec2(mouse_screen_pos))) {
 				do_action(button);
-				return;
+				return true;
 			}
 		}
 	} else if (action == GLFW_RELEASE && held_under_mouse != entt::null) {
 		try_settle_held();
 	}
+	return false;
 }
 
 void UISystem::on_mouse_move(vec2 mouse_screen_pos)
 {
 	if (held_under_mouse != entt::null) {
 		registry.get<ScreenPosition>(held_under_mouse).position = mouse_screen_pos;
+		return;
+	}
+
+	if (tooltip != entt::null) {
+		Entity target = registry.get<Tooltip>(tooltip).target;
+
+		if (!registry.valid(target)) {
+			destroy_tooltip();
+			return;
+		}
+
+		bool on_target = false;
+		if (ScreenPosition* pos = registry.try_get<ScreenPosition>(target)) {
+			on_target = Geometry::Rectangle(pos->position, registry.get<UIRenderRequest>(target).size)
+							.contains(mouse_screen_pos);
+		} else if (MapPosition* pos = registry.try_get<MapPosition>(target)) {
+			on_target = MapUtility::world_position_to_map_position(
+							renderer->screen_position_to_world_position(mouse_screen_pos))
+				== pos->position;
+		}
+		if (on_target) {
+			align_tooltip(mouse_screen_pos);
+		} else {
+			destroy_tooltip();
+		}
+		return;
+	}
+
+	auto create_tooltip = [&](const std::string_view& text, Entity entity) {
+		tooltip = create_ui_tooltip(groups[(size_t)Groups::Tooltips], mouse_screen_pos, text, 24u);
+		registry.emplace<Tooltip>(tooltip, entity);
+		align_tooltip(mouse_screen_pos);
+	};
+
+	for (auto [entity, item, pos, request, element] :
+		 registry.group<Item>(entt::get<ScreenPosition, UIRenderRequest, UIElement>).each()) {
+		if (element.visible && Geometry::Rectangle(pos.position, request.size).contains(mouse_screen_pos)
+			&& registry.get<UIGroup>(element.group).visible) {
+			create_tooltip(item.get_description(true), entity);
+			return;
+		}
+	}
+	if (player_can_act()) {
+		uvec2 mouse_map_pos
+			= MapUtility::world_position_to_map_position(renderer->screen_position_to_world_position(mouse_screen_pos));
+		for (auto [entity, item, pos, request] : registry.view<Item, MapPosition, RenderRequest>().each()) {
+			if (request.visible && pos.position == mouse_map_pos) {
+				create_tooltip(item.get_description(false), entity);
+				return;
+			}
+		}
+		for (auto [entity, pickup, pos, request] : registry.view<ResourcePickup, MapPosition, RenderRequest>().each()) {
+			if (request.visible && pos.position == mouse_map_pos) {
+				create_tooltip(resource_names.at((size_t)pickup.resource), entity);
+				return;
+			}
+		}
 	}
 }
 
@@ -189,13 +306,18 @@ Attack& UISystem::get_current_attack()
 		.get_attack(current_attack);
 }
 
+void UISystem::on_show_world(const std::function<void()>& on_show_world_callback)
+{
+	show_world_callbacks.push_back(on_show_world_callback);
+}
+
 void UISystem::add_to_inventory(Entity item, size_t slot)
 {
 	if (item == entt::null) {
 		return;
 	}
 	if (slot == MAXSIZE_T) {
-		update_potion_count();
+		update_resource_count();
 		return;
 	}
 	auto view = registry.view<InventorySlot>();
@@ -208,10 +330,12 @@ void UISystem::add_to_inventory(Entity item, size_t slot)
 	create_ui_item(groups[(size_t)Groups::Inventory], (*matching_slot), item);
 }
 
-void UISystem::update_potion_count()
+void UISystem::update_resource_count()
 {
-	registry.get<Text>(health_potion_display).text
-		= std::to_string(registry.get<Inventory>(registry.view<Player>().front()).health_potions);
+	for (size_t i = 0; i < (size_t)Resource::Count; i++) {
+		registry.get<Text>(resource_displays.at(i)).text
+			= std::to_string(registry.get<Inventory>(registry.view<Player>().front()).resources.at(i));
+	}
 }
 
 void UISystem::set_current_attack(Slot slot, size_t attack)
