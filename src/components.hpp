@@ -604,7 +604,7 @@ struct Animation {
 	int state = 0;
 	// Adjusts animation rate to be faster or slower than default
 	// ie. faster things should change more frames. slower things should change less frames
-	float speed_adjustment = 1;
+	float speed_adjustment = 0.6f;
 	float elapsed_time = 0;
 };
 
