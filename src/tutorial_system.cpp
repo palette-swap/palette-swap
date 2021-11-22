@@ -25,6 +25,7 @@ void TutorialSystem::trigger_tooltip(TutorialTooltip tip, Entity target)
 		alignments.second = Alignment::End;
 		pos = MapUtility::map_position_to_world_position(registry.get<MapPosition>(target).position)
 			+ vec2(0, -MapUtility::tile_size / 2.f);
+		group = UIGroup::find(Groups::HUD);
 		break;
 	case TutorialTooltip::ItemPickedUp: {
 		message = "Click to open Inventory\n(Or press 'I')";
@@ -32,6 +33,7 @@ void TutorialSystem::trigger_tooltip(TutorialTooltip tip, Entity target)
 		target = get_tooltip_target(tip);
 		pos = registry.get<ScreenPosition>(target).position + registry.get<UIRenderRequest>(target).size * vec2(-1, 1);
 		is_world = false;
+		group = UIGroup::find(Groups::HUD);
 		break;
 	}
 	case TutorialTooltip::UseResource: {
@@ -40,6 +42,7 @@ void TutorialSystem::trigger_tooltip(TutorialTooltip tip, Entity target)
 		target = get_tooltip_target(tip);
 		pos = registry.get<ScreenPosition>(target).position + vec2(0, .03);
 		is_world = false;
+		group = UIGroup::find(Groups::HUD);
 		break;
 	}
 	case TutorialTooltip::ReadyToEquip: {
@@ -47,6 +50,7 @@ void TutorialSystem::trigger_tooltip(TutorialTooltip tip, Entity target)
 		alignments.second = Alignment::Start;
 		pos = registry.get<ScreenPosition>(target).position + registry.get<UIRenderRequest>(target).size * vec2(0, .5);
 		is_world = false;
+		group = UIGroup::find(Groups::Inventory);
 		break;
 	}
 	case TutorialTooltip::OpenedInventory: {
@@ -55,6 +59,7 @@ void TutorialSystem::trigger_tooltip(TutorialTooltip tip, Entity target)
 		target = get_tooltip_target(tip);
 		pos = registry.get<ScreenPosition>(target).position + registry.get<UIRenderRequest>(target).size * vec2(1, .5);
 		is_world = false;
+		group = UIGroup::find(Groups::Inventory);
 		break;
 	}
 	}

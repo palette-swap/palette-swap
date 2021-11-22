@@ -10,12 +10,16 @@ void UISystem::on_key(int key, int action, int /*mod*/)
 		if (action == GLFW_PRESS && key == GLFW_KEY_I) {
 			if (player_can_act()) {
 				switch_to_group(groups[(size_t)Groups::Inventory]);
+				tutorials->destroy_tooltip(TutorialTooltip::ItemPickedUp);
+				tutorials->trigger_tooltip(TutorialTooltip::OpenedInventory, entt::null);
 			} else {
 				switch_to_group(groups[(size_t)Groups::HUD]);
+				tutorials->destroy_tooltip(TutorialTooltip::OpenedInventory);
 			}
 		}
 		if (action == GLFW_PRESS && key == GLFW_KEY_ESCAPE) {
 			switch_to_group(groups[(size_t)Groups::HUD]);
+			tutorials->destroy_tooltip(TutorialTooltip::OpenedInventory);
 		}
 	}
 
@@ -179,10 +183,12 @@ void UISystem::do_action(Button& button)
 			inventory.resources.at((size_t)resource)--;
 			update_resource_count();
 		}
+		tutorials->destroy_tooltip(TutorialTooltip::UseResource);
 		break;
 	}
 	case ButtonAction::TryPalette: {
 		try_change_color();
+		tutorials->destroy_tooltip(TutorialTooltip::UseResource);
 		break;
 	}
 	default:
@@ -199,6 +205,7 @@ bool UISystem::on_left_click(int action, dvec2 mouse_screen_pos)
 				&& Geometry::Rectangle(screen_pos.position, interact_area.size).contains(vec2(mouse_screen_pos))) {
 				held_under_mouse = entity;
 				destroy_tooltip();
+				tutorials->destroy_tooltip(TutorialTooltip::ReadyToEquip);
 				return true;
 			}
 		}
@@ -327,7 +334,8 @@ void UISystem::add_to_inventory(Entity item, size_t slot)
 	if (matching_slot == view.end()) {
 		return;
 	}
-	create_ui_item(groups[(size_t)Groups::Inventory], (*matching_slot), item);
+	Entity ui_item = create_ui_item(groups[(size_t)Groups::Inventory], (*matching_slot), item);
+	tutorials->trigger_tooltip(TutorialTooltip::ReadyToEquip, ui_item);
 }
 
 void UISystem::update_resource_count()

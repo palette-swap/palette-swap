@@ -5,6 +5,7 @@
 
 #include "animation_system.hpp"
 #include "map_generator_system.hpp"
+#include "tutorial_system.hpp"
 
 #include "common.hpp"
 #include "components.hpp"
@@ -13,7 +14,8 @@ class CombatSystem {
 public:
 	void init(std::shared_ptr<std::default_random_engine> global_rng,
 			  std::shared_ptr<AnimationSystem> animation_system,
-			  std::shared_ptr<MapGeneratorSystem> map_generator_system);
+			  std::shared_ptr<MapGeneratorSystem> map_generator_system,
+			  std::shared_ptr<TutorialSystem> tutorial_system);
 
 	void restart_game();
 
@@ -58,6 +60,7 @@ private:
 
 	std::shared_ptr<AnimationSystem> animations;
 	std::shared_ptr<MapGeneratorSystem> map;
+	std::shared_ptr<TutorialSystem> tutorials;
 
 	size_t loot_count = 0;
 	std::vector<std::vector<Entity>> loot_table;

@@ -1,8 +1,12 @@
 #include "ui_init.hpp"
 #include "ui_system.hpp"
 
-void UISystem::init(RenderSystem* render_system, std::function<void()> try_change_color) {
+void UISystem::init(RenderSystem* render_system,
+					std::shared_ptr<TutorialSystem> tutorial_system,
+					std::function<void()> try_change_color)
+{
 	renderer = render_system;
+	tutorials = std::move(tutorial_system);
 	this->try_change_color = std::move(try_change_color);
 }
 
@@ -14,7 +18,9 @@ void UISystem::restart_game()
 	held_under_mouse = entt::null;
 	destroy_tooltip();
 
-	groups = { create_ui_group(false), create_ui_group(false), create_ui_group(true), create_ui_group(true) };
+	for (size_t i = 0; i < (size_t)Groups::Count; i++) {
+		groups.at(i) = create_ui_group(i > 1, (Groups)i);
+	}
 
 	Entity player = registry.view<Player>().front();
 
@@ -30,22 +36,24 @@ void UISystem::restart_game()
 		create_ui_counter(groups[(size_t)Groups::HUD], Resource::ManaPotion, ivec2(1, 4), 1, vec2(.325f, .05125f)),
 		create_ui_counter(groups[(size_t)Groups::HUD], Resource::PaletteSwap, ivec2(0, 5), 3, vec2(.36f, .05125f)),
 	};
+	registry.emplace<TutorialTarget>(resource_displays.at(1), TutorialTooltip::UseResource);
 	// Attack Display
 	Inventory& inventory = registry.get<Inventory>(player);
 	attack_display = create_ui_text(
 		groups[(size_t)Groups::HUD], vec2(0, 1), make_attack_display_text(), Alignment::Start, Alignment::End);
 
 	// Inventory button
-	create_button(groups[(size_t)Groups::HUD],
-				  vec2(.98, .02),
-				  vec2(.1, .07),
-				  vec4(.1, .1, .1, 1),
-				  ButtonAction::SwitchToGroup,
-				  groups[(size_t)Groups::Inventory],
-				  "Inventory",
-				  48u,
-				  Alignment::End,
-				  Alignment::Start);
+	Entity open_inventory = create_button(groups[(size_t)Groups::HUD],
+										  vec2(.98, .02),
+										  vec2(.1, .07),
+										  vec4(.1, .1, .1, 1),
+										  ButtonAction::SwitchToGroup,
+										  groups[(size_t)Groups::Inventory],
+										  "Inventory",
+										  48u,
+										  Alignment::End,
+										  Alignment::Start);
+	registry.emplace<TutorialTarget>(open_inventory, TutorialTooltip::ItemPickedUp);
 
 	// Inventory background
 	create_background(groups[(size_t)Groups::Inventory], vec2(.5, .5), vec2(1, 1), 1.f, vec4(0, 0, 0, .5));
@@ -69,7 +77,7 @@ void UISystem::restart_game()
 	}
 
 	// Close Inventory button
-	create_button(groups[(size_t)Groups::Inventory],
+	Entity close_inventory = create_button(groups[(size_t)Groups::Inventory],
 				  vec2(.02 * window_height_px / window_width_px, .02),
 				  vec2(.07 * window_height_px / window_width_px, .07),
 				  vec4(.1, .1, .1, 1),
@@ -79,6 +87,7 @@ void UISystem::restart_game()
 				  48u,
 				  Alignment::Start,
 				  Alignment::Start);
+	registry.emplace<TutorialTarget>(close_inventory, TutorialTooltip::OpenedInventory);
 
 	// Menu background
 	create_background(groups[(size_t)Groups::MainMenu], vec2(.25, .5), vec2(.5, 1), 1.f, vec4(.6, .1, .1, 1));
@@ -97,10 +106,12 @@ void UISystem::restart_game()
 				  "Start");
 }
 
-Entity create_ui_group(bool visible)
+Entity create_ui_group(bool visible, Groups identifier)
 {
 	Entity entity = registry.create();
-	registry.emplace<UIGroup>(entity).visible = visible;
+	UIGroup& group = registry.emplace<UIGroup>(entity);
+	group.visible = visible;
+	group.identifier = identifier;
 	return entity;
 }
 
@@ -252,6 +263,17 @@ Entity create_ui_tooltip(Entity ui_group, vec2 screen_position, const std::strin
 {
 	Entity entity = registry.create();
 	registry.emplace<ScreenPosition>(entity, screen_position);
+	registry.emplace<Color>(entity, vec3(1.f));
+	registry.emplace<Text>(entity, std::string(text), font_size).border = 12;
+	UIGroup::add_element(
+		ui_group, entity, registry.emplace<UIElement>(entity, ui_group, true), UILayer::TooltipContent);
+	return entity;
+}
+
+Entity create_world_tooltip(Entity ui_group, vec2 world_position, const std::string_view& text, uint16 font_size)
+{
+	Entity entity = registry.create();
+	registry.emplace<WorldPosition>(entity, world_position);
 	registry.emplace<Color>(entity, vec3(1.f));
 	registry.emplace<Text>(entity, std::string(text), font_size).border = 12;
 	UIGroup::add_element(

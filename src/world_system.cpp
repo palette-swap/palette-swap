@@ -40,7 +40,7 @@ WorldSystem::WorldSystem(Debug& debugging,
 	, story(std::move(story))
 	, tutorials(std::move(tutorials))
 {
-	this->combat->init(rng, this->animations, this->map_generator);
+	this->combat->init(rng, this->animations, this->map_generator, this->tutorials);
 	this->combat->on_pickup([this](const Entity& item, size_t slot) { this->ui->add_to_inventory(item, slot); });
 	this->combat->on_death([this](const Entity& entity) { this->ui->update_resource_count(); });
 	this->ui->on_show_world([this]() { return_arrow_to_player(); });
@@ -138,7 +138,7 @@ GLFWwindow* WorldSystem::create_window(int width, int height)
 void WorldSystem::init(RenderSystem* renderer_arg)
 {
 	this->renderer = renderer_arg;
-	ui->init(renderer_arg, [this]() { try_change_color(); });
+	ui->init(renderer_arg, tutorials, [this]() { try_change_color(); });
 
 	// Playing background music indefinitely
 	bgm_red = so_loud->play(bgm_red_wav);
@@ -374,6 +374,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		}
 		case GLFW_KEY_LEFT_SHIFT: {
 			if (turns->ready_to_act(player) && combat->try_pickup_items(player)) {
+				tutorials->destroy_tooltip(TutorialTooltip::ItemDropped);
 				turns->skip_team_action(player);
 			}
 			break;
@@ -650,6 +651,7 @@ void WorldSystem::try_fire_projectile(Attack& attack)
 		|| !turns->execute_team_action(player)) {
 		return;
 	}
+	tutorials->trigger_tooltip(TutorialTooltip::UseResource, entt::null);
 	player_arrow_fired = true;
 	// Arrow becomes a projectile the moment it leaves the player, not while it's direction is being selected
 	ActiveProjectile& arrow_projectile = registry.emplace<ActiveProjectile>(player_arrow, player);

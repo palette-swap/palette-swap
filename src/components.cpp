@@ -391,6 +391,16 @@ void UIGroup::remove_element(Entity group, Entity element, UILayer layer)
 	}
 }
 
+Entity UIGroup::find(Groups group)
+{
+	for (auto [entity, group_component] : registry.view<UIGroup>().each()) {
+		if (group_component.identifier == group) {
+			return entity;
+		}
+	}
+	return entt::null;
+}
+
 Entity Inventory::get(Entity entity, Slot slot) { return registry.get<Inventory>(entity).equipped.at((size_t)slot); }
 
 void ItemTemplate::deserialize(Entity entity, const rapidjson::GenericObject<false, rapidjson::Value>& item)

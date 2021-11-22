@@ -755,14 +755,25 @@ enum class UILayer {
 	Count = TooltipContent + 1
 };
 
+enum class Groups {
+	HUD = 0,
+	Inventory = HUD + 1,
+	MainMenu = Inventory + 1,
+	Tooltips = MainMenu + 1,
+	Count = Tooltips + 1,
+};
+
 struct UIGroup {
 	bool visible = false;
 	std::array<Entity, (size_t)UILayer::Count> first_elements = {};
+	Groups identifier = Groups::Count;
 
 	UIGroup() { first_elements.fill(entt::null); }
 
 	static void add_element(Entity group, Entity element, UIElement& ui_element, UILayer layer = UILayer::Boxes);
 	static void remove_element(Entity group, Entity element, UILayer layer = UILayer::Boxes);
+
+	static Entity find(Groups group);
 };
 
 struct UISlot {

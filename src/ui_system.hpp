@@ -3,11 +3,12 @@
 #include "components.hpp"
 
 #include "render_system.hpp"
+#include "tutorial_system.hpp"
 
 class UISystem {
 public:
 
-	void init(RenderSystem* render_system, std::function<void()> change_color);
+	void init(RenderSystem* render_system, std::shared_ptr<TutorialSystem> tutorial_system, std::function<void()> change_color);
 
 	void restart_game();
 
@@ -58,19 +59,12 @@ private:
 	std::array<Entity, (size_t)Resource::Count> resource_displays = { entt::null };
 	Entity attack_display = entt::null;
 
-	enum class Groups {
-		HUD = 0,
-		Inventory = HUD + 1,
-		MainMenu = Inventory + 1,
-		Tooltips = MainMenu + 1,
-		Count = Tooltips + 1,
-	};
-
 	std::array<Entity, (size_t)Groups::Count> groups = { entt::null };
 	Entity held_under_mouse = entt::null;
 	Entity tooltip = entt::null;
 
 	RenderSystem* renderer;
+	std::shared_ptr<TutorialSystem> tutorials;
 	std::function<void()> try_change_color;
 
 	std::vector<std::function<void()>> show_world_callbacks;

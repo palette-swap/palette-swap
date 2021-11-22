@@ -9,11 +9,13 @@
 
 void CombatSystem::init(std::shared_ptr<std::default_random_engine> global_rng,
 						std::shared_ptr<AnimationSystem> animation_system,
-						std::shared_ptr<MapGeneratorSystem> map_generator_system)
+						std::shared_ptr<MapGeneratorSystem> map_generator_system,
+						std::shared_ptr<TutorialSystem> tutorial_system)
 {
 	this->rng = std::move(global_rng);
 	this->animations = std::move(animation_system);
 	this->map = std::move(map_generator_system);
+	this->tutorials = std::move(tutorial_system);
 
 	load_items();
 }
@@ -77,6 +79,7 @@ bool CombatSystem::try_pickup_items(Entity player)
 					for (const auto& callback : pickup_callbacks) {
 						callback(inventory.inventory.at(i), i);
 					}
+					tutorials->trigger_tooltip(TutorialTooltip::ItemPickedUp, entt::null);
 					return true;
 				}
 			}
@@ -239,6 +242,7 @@ void CombatSystem::drop_loot(uvec2 position)
 			potion, TEXTURE_ASSET_ID::ICONS, EFFECT_ASSET_ID::SPRITESHEET, GEOMETRY_BUFFER_ID::SPRITE, true);
 		registry.emplace<TextureOffset>(potion, ivec2(mana ? 1 : 0, 4), vec2(32, 32));
 		registry.emplace<Color>(potion, vec3(1));
+		tutorials->trigger_tooltip(TutorialTooltip::ItemDropped, potion);
 		return;
 	}
 	Entity template_entity = loot_list.at(looted++ % loot_list.size());
@@ -250,6 +254,7 @@ void CombatSystem::drop_loot(uvec2 position)
 		loot, TEXTURE_ASSET_ID::ICONS, EFFECT_ASSET_ID::SPRITESHEET, GEOMETRY_BUFFER_ID::SPRITE, true);
 	registry.emplace<TextureOffset>(loot, item.texture_offset, item.texture_size);
 	registry.emplace<Color>(loot, vec3(1));
+	tutorials->trigger_tooltip(TutorialTooltip::ItemDropped, loot);
 }
 
 void CombatSystem::kill(Entity attacker_entity, Entity target_entity)
