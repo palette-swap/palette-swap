@@ -170,7 +170,7 @@ static void load_enemy(unsigned int enemy_index, const rapidjson::Document& json
 	enemy_component.behaviour = enemy_type_to_behaviour.at(static_cast<int>(enemy_component.type));
 
 	MapPosition& map_position_component = registry.emplace<MapPosition>(entity, uvec2(0, 0));
-	map_position_component.deserialize(enemy_prefix, json_doc);
+	map_position_component.deserialize(entity, enemy_prefix, json_doc);
 
 	Stats& stats = registry.emplace<Stats>(entity);
 	stats.deserialize(enemy_prefix + "/stats", json_doc);
@@ -261,20 +261,31 @@ bool MapGeneratorSystem::walkable(uvec2 pos) const
 
 bool MapGeneratorSystem::walkable_and_free(uvec2 pos, bool check_active_color) const
 {
+	ColorState active_color = turns->get_active_color();
+	return ((active_color == ColorState::Red) != check_active_color) ? walkable_and_free<RedExclusive>(pos)
+																	 : walkable_and_free<BlueExclusive>(pos);
+}
+
+template <typename ColorExclusive> bool MapGeneratorSystem::walkable_and_free(uvec2 pos) const
+{
 	if (!walkable(pos)) {
 		return false;
 	}
-	ColorState active_color = turns->get_active_color();
-	if ((active_color == ColorState::Red) != check_active_color) {
-		return !std::any_of(
-			registry.view<MapPosition>(entt::exclude<Player, RedExclusive, Item, ResourcePickup>).begin(),
-			registry.view<MapPosition>(entt::exclude<Player, RedExclusive, Item, ResourcePickup>).end(),
-			[pos](const Entity e) { return registry.get<MapPosition>(e).position == pos; });
+	for (auto [entity, map_pos] :
+		registry.view<MapPosition>(entt::exclude<Player, ColorExclusive, Item, ResourcePickup>).each()) {
+		if (map_pos.position == pos) {
+			return false;
+		}
 	}
+	for (auto [entity, map_size, map_pos] :
+		registry.view<MapHitbox, MapPosition>(entt::exclude<Player, ColorExclusive, Item, ResourcePickup>).each()) {
+		auto it = MapArea(map_pos, map_size);
+		if (std::any_of(it.begin(), it.end(), [pos](const uvec2& other_pos) { return pos == other_pos; })) {
+			return false;
+		}
+	}
+	return true;
 
-	return !std::any_of(registry.view<MapPosition>(entt::exclude<Player, BlueExclusive, Item, ResourcePickup>).begin(),
-						registry.view<MapPosition>(entt::exclude<Player, BlueExclusive, Item, ResourcePickup>).end(),
-						[pos](const Entity e) { return registry.get<MapPosition>(e).position == pos; });
 }
 
 bool MapGeneratorSystem::is_wall(uvec2 pos) const
@@ -466,7 +477,8 @@ void MapGeneratorSystem::load_level(int level)
 	}
 
 	// update player position
-	registry.get<MapPosition>(registry.view<Player>().front()).deserialize("/player", json_doc);
+	Entity player = registry.view<Player>().front();
+	registry.get<MapPosition>(player).deserialize(player , "/player", json_doc);
 
 	if (level == 0) {
 		if (!registry.valid(help_picture) || !registry.any_of<RenderRequest>(help_picture)) {

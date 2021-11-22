@@ -9,6 +9,17 @@ static const rapidjson::Value* get_value_from_json(const std::string& prefix, co
 	return value;
 }
 
+MapUtility::MapAreaIterator::MapAreaIterator(uint min_x, uint max_x, uvec2 current_pos)
+	: min_x(min_x)
+	, max_x(max_x)
+	, current_pos(current_pos)
+{
+}
+MapUtility::MapArea::MapArea(const MapPosition& map_pos, const MapHitbox& map_size)
+	: map_pos(map_pos)
+	, map_size(map_size)
+{
+}
 void MapUtility::LevelGenConf::serialize(const std::string& prefix, rapidjson::Document& json) const
 {
 	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/seed").c_str()), seed);

@@ -3,6 +3,7 @@
 // stlib
 #include <array>
 #include <fstream> // stdout, stderr..
+#include <iterator>
 #include <string>
 #include <string_view>
 #include <tuple>
