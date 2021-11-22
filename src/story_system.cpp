@@ -5,6 +5,7 @@
 void StorySystem::restart_game(const std::vector<Entity>& entities_for_cutscene)
 {
 	current_cutscene_entity = entt::null;
+	boss_created = false;
 	for (auto [entity, cutscene] : registry.view<CutScene>().each()) {
 		registry.remove_all(cutscene.cutscene_ui);
 		registry.remove_all(entity);
@@ -49,6 +50,16 @@ void StorySystem::step()
 		return;
 	}
 
+	if (animations->boss_intro_complete(current_cutscene_entity) && !boss_created) {
+		create_enemy(ColorState::All, EnemyType::KingMush, registry.get<MapPosition>(current_cutscene_entity).position);
+		boss_created = true;
+	}
+	CutScene c = registry.get<CutScene>(current_cutscene_entity);
+	if (!registry.get<UIGroup>(c.cutscene_ui).visible && animations->boss_intro_complete(current_cutscene_entity)) {
+		registry.remove_all(current_cutscene_entity);
+		current_cutscene_entity = entt::null;
+		boss_created = false;
+	}
 	render_text_each_frame();
 }
 
@@ -77,10 +88,12 @@ void StorySystem::proceed_conversation()
 	CutScene& c = registry.get<CutScene>(current_cutscene_entity);
 	Entity ui_entity = c.cutscene_ui;
 
-	if (conversations.empty()) {
+	if (conversations.empty() && text_frames.empty()) {
 		registry.get<UIGroup>(ui_entity).visible = false;
-		registry.remove<CutScene>(current_cutscene_entity);
-		current_cutscene_entity = entt::null;
+		return;
+	}
+
+	if (conversations.empty()) {
 		return;
 	}
 
@@ -97,7 +110,7 @@ bool StorySystem::in_cutscene_animation()
 	assert(current_cutscene_entity != entt::null);
 	if (registry.any_of<Animation>(current_cutscene_entity)) {
 		Animation a = registry.get<Animation>(current_cutscene_entity);
-		return a.frame < a.max_frames;
+		return a.frame <= a.max_frames - 2;
 	}
 	return false;
 }

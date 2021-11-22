@@ -3,6 +3,7 @@
 #include "animation_system.hpp"
 #include "components.hpp"
 #include "story_init.hpp"
+#include "world_init.hpp"
 #include <deque>
 #include <unordered_map>
 #include <memory>
@@ -33,4 +34,6 @@ private:
 	static constexpr uint max_word_in_conversation = 7;
 
 	std::shared_ptr<AnimationSystem> animations;
+
+	bool boss_created = false;
 };
