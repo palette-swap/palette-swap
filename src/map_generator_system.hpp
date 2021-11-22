@@ -91,7 +91,7 @@ private:
 	// get the tile texture id, of the position on the current level
 	MapUtility::TileID get_tile_id_from_map_pos(uvec2 pos) const;
 
-	std::vector<uvec2> bfs(uvec2 start_pos, uvec2 target) const;
+	std::vector<uvec2> bfs(Entity entity, uvec2 start_pos, uvec2 target) const;
 
 	// Take current level snapshot
 	void snapshot_level();
@@ -129,16 +129,16 @@ public:
 	// Check if a position on the map is walkable for the player
 	bool walkable(uvec2 pos) const;
 
-	// Check if a position on the map is walkable for the player and there's currently no entity in it
-	bool walkable_and_free(uvec2 pos, bool check_active_color = true) const;
-	template <typename ColorExclusive> bool walkable_and_free(uvec2 pos) const;
+	// Check if a position on the map is walkable for the given entity
+	bool walkable_and_free(Entity entity, uvec2 pos, bool check_active_color = true) const;
+	template <typename ColorExclusive> bool walkable_and_free(Entity entity, uvec2 pos) const;
 
 	// Check if a position on the map is a wall
 	bool is_wall(uvec2 pos) const;
 
 	// Computes the shortest path from start to the first element of end that it encounters via BFS
 	// Returns the path, or an empty vector if no path was found
-	std::vector<uvec2> shortest_path(uvec2 start, uvec2 target, bool use_a_star = true) const;
+	std::vector<uvec2> shortest_path(Entity entity, uvec2 start, uvec2 target, bool use_a_star = true) const;
 
 	MapUtility::TileID get_tile_id_from_room(int level, MapUtility::RoomID room_id, uint8_t row, uint8_t col) const;
 

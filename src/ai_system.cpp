@@ -367,7 +367,7 @@ bool AISystem::approach_player(const Entity& entity, uint speed)
 	const uvec2 player_map_pos = registry.get<MapPosition>(registry.view<Player>().front()).position;
 	const uvec2 entity_map_pos = registry.get<MapPosition>(entity).position;
 
-	std::vector<uvec2> shortest_path = map_generator->shortest_path(entity_map_pos, player_map_pos);
+	std::vector<uvec2> shortest_path = map_generator->shortest_path(entity, entity_map_pos, player_map_pos);
 	if (shortest_path.size() > 2) {
 		uvec2 next_map_pos = shortest_path[min((size_t)speed, (shortest_path.size() - 2))];
 		return move(entity, next_map_pos);
@@ -381,7 +381,7 @@ bool AISystem::approach_nest(const Entity& entity, uint speed)
 	const uvec2& entity_map_pos = registry.get<MapPosition>(entity).position;
 	const uvec2& nest_map_pos = registry.get<Enemy>(entity).nest_map_pos;
 
-	std::vector<uvec2> shortest_path = map_generator->shortest_path(entity_map_pos, nest_map_pos);
+	std::vector<uvec2> shortest_path = map_generator->shortest_path(entity, entity_map_pos, nest_map_pos);
 	if (shortest_path.size() > 1) {
 		uvec2 next_map_pos = shortest_path[min((size_t)speed, (shortest_path.size() - 1))];
 		// A special case that the player occupies the nest, so the entity won't move in (overlap).
@@ -474,7 +474,7 @@ void AISystem::summon_enemies(const Entity& entity, EnemyType enemy_type, int nu
 
 	for (size_t i = 0; i < num; ++i) {
 		uvec2 new_map_pos = { map_pos.position.x - 2 - i, map_pos.position.y};
-		if (map_generator->walkable_and_free(new_map_pos)) {
+		if (map_generator->walkable_and_free(entt::null, new_map_pos)) {
 			create_enemy(turns->get_active_color(), enemy_type, new_map_pos);
 		}
 	}
@@ -509,15 +509,16 @@ void AISystem::draw_pathing_debug()
 
 			if (enemy.state == EnemyState::Flinched) {
 				const uvec2& nest_map_pos = enemy.nest_map_pos;
-				std::vector<uvec2> shortest_path = map_generator->shortest_path(entity_map_pos, nest_map_pos);
+				std::vector<uvec2> shortest_path
+					= map_generator->shortest_path(enemy_entity, entity_map_pos, nest_map_pos);
 
 				for (const uvec2& path_point : shortest_path) {
 					create_path_point(MapUtility::map_position_to_world_position(path_point));
 				}
 			} else if (enemy.state == EnemyState::Active && is_player_spotted(enemy_entity)) {
 				Entity player = registry.view<Player>().front();
-				std::vector<uvec2> shortest_path
-					= map_generator->shortest_path(entity_map_pos, registry.get<MapPosition>(player).position);
+				std::vector<uvec2> shortest_path = map_generator->shortest_path(
+					enemy_entity, entity_map_pos, registry.get<MapPosition>(player).position);
 
 				for (const uvec2& path_point : shortest_path) {
 					create_path_point(MapUtility::map_position_to_world_position(path_point));

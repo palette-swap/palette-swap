@@ -259,27 +259,30 @@ bool MapGeneratorSystem::walkable(uvec2 pos) const
 	return walkable_tiles().find(get_tile_id_from_map_pos(pos)) != walkable_tiles().end();
 }
 
-bool MapGeneratorSystem::walkable_and_free(uvec2 pos, bool check_active_color) const
+bool MapGeneratorSystem::walkable_and_free(Entity entity, uvec2 pos, bool check_active_color) const
 {
 	ColorState active_color = turns->get_active_color();
-	return ((active_color == ColorState::Red) != check_active_color) ? walkable_and_free<RedExclusive>(pos)
-																	 : walkable_and_free<BlueExclusive>(pos);
+	return ((active_color == ColorState::Red) != check_active_color) ? walkable_and_free<RedExclusive>(entity, pos)
+																	 : walkable_and_free<BlueExclusive>(entity, pos);
 }
 
-template <typename ColorExclusive> bool MapGeneratorSystem::walkable_and_free(uvec2 pos) const
+template <typename ColorExclusive> bool MapGeneratorSystem::walkable_and_free(Entity entity, uvec2 pos) const
 {
 	if (!walkable(pos)) {
 		return false;
 	}
-	for (auto [entity, map_pos] :
-		registry.view<MapPosition>(entt::exclude<Player, ColorExclusive, Item, ResourcePickup>).each()) {
-		if (map_pos.position == pos) {
+	for (auto [entity_other, map_pos] :
+		registry.view<MapPosition>(entt::exclude<ColorExclusive, Item, ResourcePickup>).each()) {
+		if (entity != entity_other && map_pos.position == pos) {
 			return false;
 		}
 	}
-	for (auto [entity, map_size, map_pos] :
-		registry.view<MapHitbox, MapPosition>(entt::exclude<Player, ColorExclusive, Item, ResourcePickup>).each()) {
+	for (auto [entity_other, map_size, map_pos] :
+		registry.view<MapHitbox, MapPosition>(entt::exclude<ColorExclusive, Item, ResourcePickup>).each()) {
 		auto it = MapArea(map_pos, map_size);
+		if (entity == entity_other) {
+			continue;
+		}
 		if (std::any_of(it.begin(), it.end(), [pos](const uvec2& other_pos) { return pos == other_pos; })) {
 			return false;
 		}
@@ -312,10 +315,10 @@ std::vector<uvec2> make_path(std::unordered_map<uvec2, uvec2>& parent, uvec2 sta
 }
 
 // See https://en.wikipedia.org/wiki/A*_search_algorithm for algorithm reference
-std::vector<uvec2> MapGeneratorSystem::shortest_path(uvec2 start_pos, uvec2 target, bool use_a_star) const
+std::vector<uvec2> MapGeneratorSystem::shortest_path(Entity entity, uvec2 start_pos, uvec2 target, bool use_a_star) const
 {
 	if (!use_a_star) {
-		return bfs(start_pos, target);
+		return bfs(entity, start_pos, target);
 	}
 	std::unordered_map<uvec2, uvec2> parent;
 	std::unordered_map<uvec2, float> min_score;
@@ -345,7 +348,7 @@ std::vector<uvec2> MapGeneratorSystem::shortest_path(uvec2 start_pos, uvec2 targ
 								 uvec2(curr.first.x - 1, curr.first.y),
 								 curr.first + uvec2(0, 1),
 								 uvec2(curr.first.x, curr.first.y - 1) }) {
-			if (!walkable_and_free(neighbour) && neighbour != target) {
+			if (!walkable_and_free(entity, neighbour) && neighbour != target) {
 				continue;
 			}
 			float tentative_score = curr.second + 1.f; // NOTE: Can support variable costs here
@@ -365,7 +368,7 @@ std::vector<uvec2> MapGeneratorSystem::shortest_path(uvec2 start_pos, uvec2 targ
 }
 
 // See https://en.wikipedia.org/wiki/Breadth-first_search for algorithm reference
-std::vector<uvec2> MapGeneratorSystem::bfs(uvec2 start_pos, uvec2 target) const
+std::vector<uvec2> MapGeneratorSystem::bfs(Entity entity, uvec2 start_pos, uvec2 target) const
 {
 	std::queue<uvec2> frontier;
 	// Presence in parent will also be used to track visited
@@ -385,7 +388,7 @@ std::vector<uvec2> MapGeneratorSystem::bfs(uvec2 start_pos, uvec2 target) const
 		for (uvec2 neighbour :
 			 { curr + uvec2(1, 0), uvec2(curr.x - 1, curr.y), curr + uvec2(0, 1), uvec2(curr.x, curr.y - 1) }) {
 			// Check if neighbour is not already visited, and is walkable
-			if (neighbour == target || (walkable_and_free(neighbour) && parent.find(neighbour) == parent.end())) {
+			if (neighbour == target || (walkable_and_free(entity, neighbour) && parent.find(neighbour) == parent.end())) {
 				// Enqueue neighbour
 				frontier.push(neighbour);
 				// Set curr as the parent of neighbour

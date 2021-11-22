@@ -403,6 +403,10 @@ void CombatSystem::do_attack_effects(Entity attacker, Attack& attack, Entity tar
 
 void CombatSystem::try_shove(Entity attacker, EffectEntry& effect, Entity target)
 {
+	if (registry.any_of<MapHitbox>(target)) {
+		// Can't shove big creatures
+		return;
+	}
 	MapPosition& a_pos = registry.get<MapPosition>(attacker);
 	MapPosition& t_pos = registry.get<MapPosition>(target);
 	vec2 distance = glm::normalize(vec2(t_pos.position) - vec2(a_pos.position)) * static_cast<float>(effect.magnitude);
@@ -414,7 +418,8 @@ void CombatSystem::try_shove(Entity attacker, EffectEntry& effect, Entity target
 		// Each of these helpers moves the player 1 unit along its respective axis if the map allows it
 		// and returns whether or not it worked
 		auto try_x = [&]() -> bool {
-			if (abs(shift.x) > 0 && map->walkable_and_free(uvec2(t_pos.position.x + shift_sign.x, t_pos.position.y))) {
+			if (abs(shift.x) > 0
+				&& map->walkable_and_free(target, uvec2(t_pos.position.x + shift_sign.x, t_pos.position.y))) {
 				t_pos.position.x += shift_sign.x;
 				shift.x -= shift_sign.x;
 				return true;
@@ -422,7 +427,7 @@ void CombatSystem::try_shove(Entity attacker, EffectEntry& effect, Entity target
 			return false;
 		};
 		auto try_y = [&]() -> bool {
-			if (abs(shift.y) > 0 && map->walkable_and_free(uvec2(t_pos.position.x, t_pos.position.y + shift_sign.y))) {
+			if (abs(shift.y) > 0 && map->walkable_and_free(target, uvec2(t_pos.position.x, t_pos.position.y + shift_sign.y))) {
 				t_pos.position.y += shift_sign.y;
 				shift.y -= shift_sign.y;
 				return true;
