@@ -84,7 +84,8 @@ void UISystem::switch_to_group(Entity group)
 
 void UISystem::destroy_tooltip()
 {
-	if (tooltip == entt::null) {
+	if (!registry.valid(tooltip)) {
+		tooltip = entt::null;
 		return;
 	}
 	UIGroup::remove_element(groups[(size_t)Groups::Tooltips], tooltip, UILayer::TooltipContent);
