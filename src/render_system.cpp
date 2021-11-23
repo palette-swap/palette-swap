@@ -827,8 +827,7 @@ void RenderSystem::draw()
 	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
 	gl_has_errors();
 	// Clearing backbuffer
-	//glViewport(0, 0, screen_size_capped.x, RenderUtility::screen_size_capped.y);
-	glViewport(0, 0, screen_size_capped().x, screen_size_capped().y);
+	glViewport(0, 0, (GLsizei)screen_size_capped().x, (GLsizei)screen_size_capped().y);
 	glDepthRange(0.00001, 10);
 	if (inactive_color == ColorState::Blue) {
 		glClearColor(57.f / 256, 51.f / 256, 81.f / 256, 1.0);

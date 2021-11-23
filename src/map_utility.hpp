@@ -76,7 +76,7 @@ struct MapAreaIterator {
 		return *this;
 	}
 
-	MapAreaIterator operator++(int)
+	const MapAreaIterator operator++(int)
 	{
 		MapAreaIterator tmp = *this;
 		++(*this);

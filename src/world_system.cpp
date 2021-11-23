@@ -480,21 +480,20 @@ bool WorldSystem::check_debug_keys(int key, int action, int mod)
 			map_generator->decrease_enemy_density();
 		}
 		return true;
-	} else {
-		// for debugging levels
-		if (key == GLFW_KEY_N && (mod & GLFW_MOD_CONTROL) != 0 && action == GLFW_RELEASE) {
-			if (!map_generator->load_next_level()) {
-				return false;
-			}
-			story->load_next_level();
-			return_arrow_to_player();
-		} else if (key == GLFW_KEY_B && (mod & GLFW_MOD_CONTROL) != 0 && action == GLFW_RELEASE) {
-			if (!map_generator->load_last_level()) {
-				return false;
-			}
-			story->load_next_level();
-			return_arrow_to_player();
+	}
+	// for debugging levels
+	if (key == GLFW_KEY_N && (mod & GLFW_MOD_CONTROL) != 0 && action == GLFW_RELEASE) {
+		if (!map_generator->load_next_level()) {
+			return false;
 		}
+		story->load_next_level();
+		return_arrow_to_player();
+	} else if (key == GLFW_KEY_B && (mod & GLFW_MOD_CONTROL) != 0 && action == GLFW_RELEASE) {
+		if (!map_generator->load_last_level()) {
+			return false;
+		}
+		story->load_next_level();
+		return_arrow_to_player();
 	}
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_M) {
 		is_editing_map = true;

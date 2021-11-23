@@ -135,9 +135,9 @@ public:
 	void scale_on_scroll(float offset);
 	void on_resize(int width, int height);
 
-	float get_screen_scale() { return screen_scale; }
-	vec2 get_screen_size() { return screen_size; }
-	vec2 screen_size_capped()
+	float get_screen_scale() const { return screen_scale; }
+	vec2 get_screen_size() const { return screen_size; }
+	vec2 screen_size_capped() const
 	{
 		return { min(screen_size.x, (float)window_width_px), min(screen_size.y, (float)window_height_px) };
 	}
