@@ -128,8 +128,8 @@ public:
 	void draw_ui(const mat3& projection);
 
 	mat3 create_projection_matrix();
-	vec2 mouse_position_to_world_position(dvec2 mouse_pos);
-	vec2 screen_position_to_world_position(vec2 screen_pos);
+	vec2 mouse_pos_to_screen_pos(dvec2 mouse_pos) const;
+	vec2 screen_position_to_world_position(vec2 screen_pos) const;
 
 	// WorldSystem callbacks for window changes
 	void scale_on_scroll(float offset);
@@ -158,13 +158,13 @@ private:
 	////////////////////////////////////////////////////////
 	// General helper functions
 	// Get world position of top left and bottom right of screen
-	std::pair<vec2, vec2> get_window_bounds();
+	std::pair<vec2, vec2> get_window_bounds() const;
 	// Get UI scale based on difference between current window size and default
 	float get_ui_scale_factor() const;
 	// Helper to get position transform
-	Transform get_transform(Entity entity);
+	Transform get_transform(Entity entity) const;
 	// Helper to get position transform without rotation
-	Transform get_transform_no_rotation(Entity entity);
+	Transform get_transform_no_rotation(Entity entity) const;
 
 	// Helper to ready to draw the Textured effect
 	void prepare_for_textured(GLuint texture_id);

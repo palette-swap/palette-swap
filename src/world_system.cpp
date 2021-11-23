@@ -500,7 +500,7 @@ void WorldSystem::check_debug_keys(int key, int action, int mod)
 // TODO: Integrate into turn state to only enable if player's turn is on
 void WorldSystem::on_mouse_move(vec2 mouse_position)
 {
-	vec2 mouse_screen_pos = mouse_position / renderer->get_screen_size();
+	vec2 mouse_screen_pos = renderer->mouse_pos_to_screen_pos(mouse_position);
 	if (ui->player_can_act() && !player_arrow_fired) {
 
 		vec2 mouse_world_position = renderer->screen_position_to_world_position(mouse_screen_pos);
@@ -625,7 +625,7 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 		// Get screen position of mouse
 		dvec2 mouse_screen_pixels_pos = {};
 		glfwGetCursorPos(window, &mouse_screen_pixels_pos.x, &mouse_screen_pixels_pos.y);
-		bool used = ui->on_left_click(action, mouse_screen_pixels_pos / dvec2(renderer->get_screen_size()));
+		bool used = ui->on_left_click(action, renderer->mouse_pos_to_screen_pos(mouse_screen_pixels_pos));
 
 		if (!used && ui->player_can_act() && action == GLFW_PRESS) {
 			if (turns->get_active_team() != player || !ui->has_current_attack()) {
@@ -702,7 +702,7 @@ void WorldSystem::try_adjacent_attack(Attack& attack)
 	glfwGetCursorPos(window, &mouse_pos.x, &mouse_pos.y);
 
 	// Convert to world pos
-	vec2 mouse_world_pos = renderer->mouse_position_to_world_position(mouse_pos);
+	vec2 mouse_world_pos = renderer->screen_position_to_world_position(renderer->mouse_pos_to_screen_pos(mouse_pos));
 
 	// Get map_positions to compare
 	uvec2 mouse_map_pos = MapUtility::world_position_to_map_position(mouse_world_pos);

@@ -6,7 +6,7 @@
 #include <glm/gtc/type_ptr.hpp> // Allows nice passing of values to GL functions
 #pragma warning(pop)
 
-Transform RenderSystem::get_transform(Entity entity)
+Transform RenderSystem::get_transform(Entity entity) const
 {
 	Transform transform;
 	if (registry.any_of<WorldPosition>(entity)) {
@@ -21,13 +21,12 @@ Transform RenderSystem::get_transform(Entity entity)
 		MapPosition& map_position = registry.get<MapPosition>(entity);
 		transform.translate(MapUtility::map_position_to_world_position(map_position.position));
 	} else {
-		transform.translate(
-			screen_position_to_world_position(registry.get<ScreenPosition>(entity).position));
+		transform.translate(screen_position_to_world_position(registry.get<ScreenPosition>(entity).position));
 	}
 	return transform;
 }
 
-Transform RenderSystem::get_transform_no_rotation(Entity entity)
+Transform RenderSystem::get_transform_no_rotation(Entity entity) const
 {
 	Transform transform;
 	if (registry.any_of<MapPosition>(entity)) {
@@ -952,16 +951,32 @@ mat3 RenderSystem::create_projection_matrix()
 	return { { sx, 0.f, 0.f }, { 0.f, sy, 0.f }, { tx, ty, 1.f } };
 }
 
-vec2 RenderSystem::mouse_position_to_world_position(dvec2 mouse_pos) {
-	return screen_position_to_world_position(vec2(mouse_pos) / vec2(screen_size));
+vec2 RenderSystem::mouse_pos_to_screen_pos(dvec2 mouse_pos) const
+{
+	vec2 screen_pos = vec2(mouse_pos) / vec2(screen_size);
+	vec2 ratios = vec2(screen_size) / vec2(window_default_size);
+	float shrink_factor = min(ratios.x, ratios.y) / max(ratios.x, ratios.y);
+	if (ratios.x > ratios.y) {
+		screen_pos.x = (screen_pos.x - (1 - shrink_factor) / 2.f) / shrink_factor;
+	} else {
+		screen_pos.y = (screen_pos.y - (1 - shrink_factor) / 2.f) / shrink_factor;
+	}
+	return screen_pos;
 }
 
-vec2 RenderSystem::screen_position_to_world_position(vec2 screen_pos)
+vec2 RenderSystem::screen_position_to_world_position(vec2 screen_pos) const
 {
+	vec2 ratios = vec2(screen_size) / vec2(window_default_size);
+	float shrink_factor = min(ratios.x, ratios.y) / max(ratios.x, ratios.y);
+	if (ratios.x > ratios.y) {
+		screen_pos.x = screen_pos.x * shrink_factor + (1 - shrink_factor) / 2.f;
+	} else {
+		screen_pos.y = screen_pos.y * shrink_factor + (1 - shrink_factor) / 2.f;
+	}
 	return screen_pos * screen_scale * screen_size + get_window_bounds().first;
 }
 
-std::pair<vec2, vec2> RenderSystem::get_window_bounds()
+std::pair<vec2, vec2> RenderSystem::get_window_bounds() const
 {
 	vec2 window_size = vec2(screen_size) * screen_scale;
 
