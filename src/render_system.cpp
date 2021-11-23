@@ -6,7 +6,7 @@
 #include <glm/gtc/type_ptr.hpp> // Allows nice passing of values to GL functions
 #pragma warning(pop)
 
-Transform RenderSystem::get_transform(Entity entity)
+Transform RenderSystem::get_transform(Entity entity) const
 {
 	Transform transform;
 	if (registry.any_of<WorldPosition>(entity)) {
@@ -21,13 +21,12 @@ Transform RenderSystem::get_transform(Entity entity)
 		MapPosition& map_position = registry.get<MapPosition>(entity);
 		transform.translate(MapUtility::map_position_to_world_position(map_position.position));
 	} else {
-		transform.translate(
-			screen_position_to_world_position(registry.get<ScreenPosition>(entity).position));
+		transform.translate(screen_position_to_world_position(registry.get<ScreenPosition>(entity).position));
 	}
 	return transform;
 }
 
-Transform RenderSystem::get_transform_no_rotation(Entity entity)
+Transform RenderSystem::get_transform_no_rotation(Entity entity) const
 {
 	Transform transform;
 	if (registry.any_of<MapPosition>(entity)) {
@@ -819,14 +818,22 @@ void RenderSystem::draw_to_screen()
 // http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-14-render-to-texture/
 void RenderSystem::draw()
 {
+	// Grabs player's perception of which colour is "inactive"
+	Entity player = registry.view<Player>().front();
+	PlayerInactivePerception& player_perception = registry.get<PlayerInactivePerception>(player);
+	ColorState& inactive_color = player_perception.inactive;
+
 	// First render to the custom framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
 	gl_has_errors();
 	// Clearing backbuffer
-	//glViewport(0, 0, screen_size_capped.x, RenderUtility::screen_size_capped.y);
-	glViewport(0, 0, (GLsizei)screen_size.x, (GLsizei)screen_size.y);
+	glViewport(0, 0, (GLsizei)screen_size_capped().x, (GLsizei)screen_size_capped().y);
 	glDepthRange(0.00001, 10);
-	glClearColor(0.5, 0.5, 0.5, 1.0);
+	if (inactive_color == ColorState::Blue) {
+		glClearColor(57.f / 256, 51.f / 256, 81.f / 256, 1.0);
+	} else {
+		glClearColor(58.f / 256, 66.f / 256, 60.f / 256, 1.0);
+	}
 	glClearDepth(1.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_BLEND);
@@ -836,11 +843,6 @@ void RenderSystem::draw()
 							  // sprites back to front
 	gl_has_errors();
 	mat3 projection_2d = create_projection_matrix();
-
-	// Grabs player's perception of which colour is "inactive"
-	Entity player = registry.view<Player>().front();
-	PlayerInactivePerception& player_perception = registry.get<PlayerInactivePerception>(player);
-	ColorState& inactive_color = player_perception.inactive;
 
 	draw_map(projection_2d, inactive_color == ColorState::Blue ? ColorState::Red : ColorState::Blue);
 
@@ -952,16 +954,32 @@ mat3 RenderSystem::create_projection_matrix()
 	return { { sx, 0.f, 0.f }, { 0.f, sy, 0.f }, { tx, ty, 1.f } };
 }
 
-vec2 RenderSystem::mouse_position_to_world_position(dvec2 mouse_pos) {
-	return screen_position_to_world_position(vec2(mouse_pos) / vec2(screen_size));
-}
-
-vec2 RenderSystem::screen_position_to_world_position(vec2 screen_pos)
+vec2 RenderSystem::mouse_pos_to_screen_pos(dvec2 mouse_pos) const
 {
-	return screen_pos * screen_scale * vec2(screen_size) + get_window_bounds().first;
+	vec2 screen_pos = vec2(mouse_pos) / vec2(screen_size);
+	vec2 ratios = vec2(screen_size) / vec2(window_default_size);
+	float shrink_factor = min(ratios.x, ratios.y) / max(ratios.x, ratios.y);
+	if (ratios.x > ratios.y) {
+		screen_pos.x = (screen_pos.x - (1 - shrink_factor) / 2.f) / shrink_factor;
+	} else {
+		screen_pos.y = (screen_pos.y - (1 - shrink_factor) / 2.f) / shrink_factor;
+	}
+	return screen_pos;
 }
 
-std::pair<vec2, vec2> RenderSystem::get_window_bounds()
+vec2 RenderSystem::screen_position_to_world_position(vec2 screen_pos) const
+{
+	vec2 ratios = vec2(screen_size) / vec2(window_default_size);
+	float shrink_factor = min(ratios.x, ratios.y) / max(ratios.x, ratios.y);
+	if (ratios.x > ratios.y) {
+		screen_pos.x = screen_pos.x * shrink_factor + (1 - shrink_factor) / 2.f;
+	} else {
+		screen_pos.y = screen_pos.y * shrink_factor + (1 - shrink_factor) / 2.f;
+	}
+	return screen_pos * screen_scale * screen_size + get_window_bounds().first;
+}
+
+std::pair<vec2, vec2> RenderSystem::get_window_bounds() const
 {
 	vec2 window_size = vec2(screen_size) * screen_scale;
 
@@ -977,7 +995,7 @@ float RenderSystem::get_ui_scale_factor() const
 	return min(ratios.x, ratios.y);
 }
 
-void RenderSystem::scale_on_scroll(float offset) const
+void RenderSystem::scale_on_scroll(float offset)
 {
 	// scale the camera based on scrolling offset
 	// scrolling forward -> zoom in
@@ -989,17 +1007,16 @@ void RenderSystem::scale_on_scroll(float offset) const
 	}
 }
 
-void RenderSystem::on_resize(int width, int height) const
+void RenderSystem::on_resize(int width, int height)
 {
 	screen_size = { width, height };
-	vec2 screen_size_capped = { min(width, window_width_px), min(height, window_height_px) };
 
 	glBindTexture(GL_TEXTURE_2D, off_screen_render_buffer_color);
 	glTexImage2D(GL_TEXTURE_2D,
 				 0,
 				 GL_RGBA,
-				 (GLsizei)screen_size_capped.x,
-				 (GLsizei)screen_size_capped.y,
+				 (GLsizei)screen_size_capped().x,
+				 (GLsizei)screen_size_capped().y,
 				 0,
 				 GL_RGBA,
 				 GL_UNSIGNED_BYTE,

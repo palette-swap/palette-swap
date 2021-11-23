@@ -68,7 +68,7 @@ private:
 	void on_resize(int width, int height);
 
 	// Key helpers
-	void check_debug_keys(int key, int action, int mod);
+	bool check_debug_keys(int key, int action, int mod);
 
 	// Mouse Click helpers
 	void try_fire_projectile(Attack& attack);

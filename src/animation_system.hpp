@@ -3,6 +3,9 @@
 
 #include "common.hpp"
 #include "components.hpp"
+
+#include "render_system.hpp"
+
 // Total number of frames in a spritesheet. Currently used for some test spritesheets.
 // Number of actual frames can be adapted to vary from asset to asset
 // TODO: change number of frames for an animation to vary based on the asset
@@ -77,7 +80,7 @@ class AnimationSystem {
 
 public:
 	// Initializes the animation system
-	void init();
+	void init(RenderSystem* render_system);
 
 	// Updates all animated entities based on elapsed time, changes their frame based on the time
 	void update_animations(float elapsed_ms, ColorState inactive_color);	
@@ -163,6 +166,8 @@ private:
 	
 	// helper function for update the camera to track the buffer
 	void camera_track_buffer();
+
+	RenderSystem* renderer;
 };
 
 

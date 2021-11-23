@@ -13,6 +13,10 @@
 
 #include "soloud_wav.h"
 
+static void debug_log(std::string string) {
+	// printf(string);
+}
+
 class AISystem {
 public:
 	AISystem(const Debug& debugging,
@@ -112,7 +116,17 @@ private:
 	// This allows behaviour tree have access to the members of AISystem, while avoiding circuilar dependency.
 
 	// The return type of behaviour tree processing.
-	enum class BTState { Running, Success, Failure };
+	enum class BTState {
+		Running = 0,
+		Success = 1,
+		Failure = 2,
+		Count = 3,
+	};
+	static constexpr std::array<const std::string_view, (size_t)BTState::Count> state_names = {
+		"Running",
+		"Success",
+		"Failure",
+	};
 
 	// Base node: BTNode
 	class BTNode {
@@ -145,11 +159,14 @@ private:
 		{
 		}
 
-		void init(Entity /*e*/) override { printf("Debug: SummonEnemies.init\n"); }
+		void init(Entity /*e*/) override
+		{
+			debug_log("Debug: SummonEnemies.init\n");
+		}
 
 		BTState process(Entity e, AISystem* ai) override
 		{
-			printf("Debug: SummonEnemies.process\n");
+			debug_log("Debug: SummonEnemies.process\n");
 
 			ai->summon_enemies(e, m_type, m_num);
 
@@ -176,14 +193,14 @@ private:
 
 		void init(Entity /*e*/) override
 		{
-			printf("Debug: AOEAttack.init\n");
+			debug_log("Debug: AOEAttack.init\n");
 			is_charged = false;
 			m_aoe.clear();
 		}
 
 		BTState process(Entity e, AISystem* ai) override
 		{
-			printf("Debug: AOEAttack.process\n");
+			debug_log("Debug: AOEAttack.process\n");
 
 			if (!is_charged) {
 				// Charging
@@ -233,11 +250,11 @@ private:
 	// Leaf action node: RegularAttack
 	class RegularAttack : public BTNode {
 	public:
-		void init(Entity /*e*/) override { printf("Debug: RegularAttack.init\n"); }
+		void init(Entity /*e*/) override { debug_log("Debug: RegularAttack.init\n"); }
 
 		BTState process(Entity e, AISystem* ai) override
 		{
-			printf("Debug: RegularAttack.process\n");
+			debug_log("Debug: RegularAttack.process\n");
 
 			ai->attack_player(e);
 
@@ -263,11 +280,11 @@ private:
 		{
 		}
 
-		void init(Entity /*e*/) override { printf("Debug: RecoverHealth.init\n"); }
+		void init(Entity /*e*/) override { debug_log("Debug: RecoverHealth.init\n"); }
 
 		BTState process(Entity e, AISystem* ai) override
 		{
-			printf("Debug: RecoverHealth.process\n");
+			debug_log("Debug: RecoverHealth.process\n");
 
 			ai->recover_health(e, m_ratio);
 
@@ -283,11 +300,11 @@ private:
 	// Leaf action node: DoNothing
 	class DoNothing : public BTNode {
 	public:
-		void init(Entity /*e*/) override { printf("Debug: DoNothing.init\n"); }
+		void init(Entity /*e*/) override { debug_log("Debug: DoNothing.init\n"); }
 
 		BTState process(Entity e, AISystem* ai) override
 		{
-			printf("Debug: DoNothing.process\n");
+			debug_log("Debug: DoNothing.process\n");
 
 			ai->switch_enemy_state(e, EnemyState::Idle);
 
@@ -311,7 +328,7 @@ private:
 		}
 
 		void init(Entity e) override {
-			printf("Debug: Selector.init\n");
+			debug_log("Debug: Selector.init\n");
 			m_index = -1;
 			for (const auto& child: m_children) {
 				child->init(e);
@@ -321,7 +338,7 @@ private:
 
 		BTState process(Entity e, AISystem* ai) override
 		{
-			printf("Debug: Selector.process\n");
+			debug_log("Debug: Selector.process\n");
 			if (m_index == -1) {
 				size_t i = 0;
 				for (i = 0; i < m_preconditions.size(); ++i) {
@@ -357,19 +374,18 @@ private:
 
 		void init(Entity e) override
 		{
-			printf("Debug: SummonerTree.init\n");
+			debug_log("Debug: SummonerTree.init\n");
 			m_child->init(e);
 		}
 
 		BTState process(Entity e, AISystem* ai) override
 		{
-			printf("--------------------------------------------------\n");
-			printf("Debug: SummonerTree.process\n");
+			debug_log("--------------------------------------------------\n");
+			debug_log("Debug: SummonerTree.process\n");
 			BTState state = m_child->process(e, ai);
-			printf("Debug: State after process = %s\n",
-				   state == BTState::Running	   ? "Running"
-					   : state == BTState::Success ? "Success"
-												   : "Failure");
+			std::string message = "Debug: State after process = ";
+			message += state_names.at((size_t)state);
+			debug_log(message + "\n");
 			return handle_process_result(state);
 		}
 

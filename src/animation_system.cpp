@@ -25,7 +25,7 @@ static vec2 get_camera_pos_from_buffer(const vec2& camera_pos,
 	return final_pos;
 }
 
-void AnimationSystem::init() {}
+void AnimationSystem::init(RenderSystem* render_system) { renderer = render_system; }
 
 void AnimationSystem::update_animations(float elapsed_ms, ColorState inactive_color)
 {
@@ -508,7 +508,7 @@ void AnimationSystem::camera_update_position()
 
 void AnimationSystem::camera_track_buffer()
 {
-	vec2 window_size = screen_size * screen_scale;
+	vec2 window_size = renderer->get_screen_size() * renderer->get_screen_scale();
 	Entity player = registry.view<Player>().front();
 
 	vec2 player_pos = MapUtility::map_position_to_world_position(registry.get<MapPosition>(player).position);

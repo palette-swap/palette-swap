@@ -35,9 +35,11 @@ AISystem::AISystem(const Debug& debugging,
 		[this](const Entity& attacker, const Entity& target) { this->do_attack_callback(attacker, target); });
 
 	this->combat->on_death([this](const Entity& entity) {
-		// If entity is a boss, remove its behaviour tree.
+		// If entity is a boss, remove its behaviour tree and AOE squares.
 		if (bosses.find(entity) != bosses.end()) {
 			bosses.erase(entity);
+			auto view = registry.view<AOESquare>();
+			registry.destroy(view.begin(), view.end());
 		}
 	});
 }

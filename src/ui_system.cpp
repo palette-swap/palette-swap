@@ -11,15 +11,12 @@ void UISystem::on_key(int key, int action, int /*mod*/)
 			if (player_can_act()) {
 				switch_to_group(groups[(size_t)Groups::Inventory]);
 				tutorials->destroy_tooltip(TutorialTooltip::ItemPickedUp);
-				tutorials->trigger_tooltip(TutorialTooltip::OpenedInventory, entt::null);
 			} else {
 				switch_to_group(groups[(size_t)Groups::HUD]);
-				tutorials->destroy_tooltip(TutorialTooltip::OpenedInventory);
 			}
 		}
 		if (action == GLFW_PRESS && key == GLFW_KEY_ESCAPE) {
 			switch_to_group(groups[(size_t)Groups::HUD]);
-			tutorials->destroy_tooltip(TutorialTooltip::OpenedInventory);
 		}
 	}
 
@@ -70,6 +67,7 @@ void UISystem::try_settle_held()
 
 void UISystem::switch_to_group(Entity group)
 {
+	bool was_inventory = registry.get<UIGroup>(groups[(size_t)Groups::Inventory]).visible;
 	try_settle_held();
 	destroy_tooltip();
 	for (auto [entity, other_group] : registry.view<UIGroup>().each()) {
@@ -79,6 +77,12 @@ void UISystem::switch_to_group(Entity group)
 		for (auto& callback : show_world_callbacks) {
 			callback();
 		}
+		if (was_inventory) {
+			tutorials->destroy_tooltip(TutorialTooltip::OpenedInventory);
+		}
+	}
+	if (group == groups[(size_t)Groups::Inventory]) {
+		tutorials->trigger_tooltip(TutorialTooltip::OpenedInventory, entt::null);
 	}
 }
 

@@ -128,14 +128,19 @@ public:
 	void draw_ui(const mat3& projection);
 
 	mat3 create_projection_matrix();
-	vec2 mouse_position_to_world_position(dvec2 mouse_pos);
-	vec2 screen_position_to_world_position(vec2 screen_pos);
+	vec2 mouse_pos_to_screen_pos(dvec2 mouse_pos) const;
+	vec2 screen_position_to_world_position(vec2 screen_pos) const;
 
 	// WorldSystem callbacks for window changes
-	void scale_on_scroll(float offset) const;
-	void on_resize(int width, int height) const;
+	void scale_on_scroll(float offset);
+	void on_resize(int width, int height);
 
-	vec2 get_screen_size() { return screen_size; }
+	float get_screen_scale() const { return screen_scale; }
+	vec2 get_screen_size() const { return screen_size; }
+	vec2 screen_size_capped() const
+	{
+		return { min(screen_size.x, (float)window_width_px), min(screen_size.y, (float)window_height_px) };
+	}
 
 private:
 	////////////////////////////////////////////////////////
@@ -153,13 +158,13 @@ private:
 	////////////////////////////////////////////////////////
 	// General helper functions
 	// Get world position of top left and bottom right of screen
-	std::pair<vec2, vec2> get_window_bounds();
+	std::pair<vec2, vec2> get_window_bounds() const;
 	// Get UI scale based on difference between current window size and default
 	float get_ui_scale_factor() const;
 	// Helper to get position transform
-	Transform get_transform(Entity entity);
+	Transform get_transform(Entity entity) const;
 	// Helper to get position transform without rotation
-	Transform get_transform_no_rotation(Entity entity);
+	Transform get_transform_no_rotation(Entity entity) const;
 
 	// Helper to ready to draw the Textured effect
 	void prepare_for_textured(GLuint texture_id);
@@ -196,6 +201,10 @@ private:
 	GLuint frame_buffer = 0;
 	GLuint off_screen_render_buffer_color = 0;
 	GLuint off_screen_render_buffer_depth = 0;
+
+	
+	float screen_scale = window_default_scale;
+	vec2 screen_size = { window_width_px, window_height_px };
 
 	Entity screen_state_entity = registry.create();
 

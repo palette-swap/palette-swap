@@ -530,16 +530,17 @@ bool MapGeneratorSystem::load_next_level()
 	return true;
 }
 
-void MapGeneratorSystem::load_last_level()
+bool MapGeneratorSystem::load_last_level()
 {
 	if (current_level == 0) {
 		fprintf(stderr, "is already on first level");
-		assert(false && "cannot load any new levels");
+		return false;
 	}
 
 	snapshot_level();
 	clear_level();
 	load_level(--current_level);
+	return true;
 }
 
 void MapGeneratorSystem::load_initial_level()
@@ -654,10 +655,11 @@ void MapGeneratorSystem::edit_next_level()
 	current_level++;
 
 	std::cout << "current level: " << current_level << std::endl;
-	if (current_level >= level_configurations.size()) {
-		assert(level_configurations.size() - num_predefined_levels == level_generation_confs.size());
+	if (current_level >= level_configurations.size() - 1) {
+		assert(level_configurations.size() - num_predefined_levels - 1 == level_generation_confs.size());
 		level_generation_confs.emplace_back(LevelGenConf());
-		level_configurations.emplace_back(
+		level_configurations.insert(
+			level_configurations.end() - 1,
 			MapGenerator::generate_level(level_generation_confs.at(current_level - num_predefined_levels), true));
 	}
 	load_level(current_level);

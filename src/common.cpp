@@ -73,5 +73,3 @@ bool gl_has_errors()
 }
 
 entt::registry registry;// NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
-vec2 screen_size = { window_width_px, window_height_px }; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
-float screen_scale = window_default_scale; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
