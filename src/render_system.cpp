@@ -824,7 +824,7 @@ void RenderSystem::draw()
 	gl_has_errors();
 	// Clearing backbuffer
 	//glViewport(0, 0, screen_size_capped.x, RenderUtility::screen_size_capped.y);
-	glViewport(0, 0, (GLsizei)screen_size.x, (GLsizei)screen_size.y);
+	glViewport(0, 0, screen_size_capped().x, screen_size_capped().y);
 	glDepthRange(0.00001, 10);
 	glClearColor(0.5, 0.5, 0.5, 1.0);
 	glClearDepth(1.f);
@@ -958,7 +958,7 @@ vec2 RenderSystem::mouse_position_to_world_position(dvec2 mouse_pos) {
 
 vec2 RenderSystem::screen_position_to_world_position(vec2 screen_pos)
 {
-	return screen_pos * screen_scale * vec2(screen_size) + get_window_bounds().first;
+	return screen_pos * screen_scale * screen_size + get_window_bounds().first;
 }
 
 std::pair<vec2, vec2> RenderSystem::get_window_bounds()
@@ -977,7 +977,7 @@ float RenderSystem::get_ui_scale_factor() const
 	return min(ratios.x, ratios.y);
 }
 
-void RenderSystem::scale_on_scroll(float offset) const
+void RenderSystem::scale_on_scroll(float offset)
 {
 	// scale the camera based on scrolling offset
 	// scrolling forward -> zoom in
@@ -989,17 +989,16 @@ void RenderSystem::scale_on_scroll(float offset) const
 	}
 }
 
-void RenderSystem::on_resize(int width, int height) const
+void RenderSystem::on_resize(int width, int height)
 {
 	screen_size = { width, height };
-	vec2 screen_size_capped = { min(width, window_width_px), min(height, window_height_px) };
 
 	glBindTexture(GL_TEXTURE_2D, off_screen_render_buffer_color);
 	glTexImage2D(GL_TEXTURE_2D,
 				 0,
 				 GL_RGBA,
-				 (GLsizei)screen_size_capped.x,
-				 (GLsizei)screen_size_capped.y,
+				 (GLsizei)screen_size_capped().x,
+				 (GLsizei)screen_size_capped().y,
 				 0,
 				 GL_RGBA,
 				 GL_UNSIGNED_BYTE,

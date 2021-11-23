@@ -132,10 +132,15 @@ public:
 	vec2 screen_position_to_world_position(vec2 screen_pos);
 
 	// WorldSystem callbacks for window changes
-	void scale_on_scroll(float offset) const;
-	void on_resize(int width, int height) const;
+	void scale_on_scroll(float offset);
+	void on_resize(int width, int height);
 
+	float get_screen_scale() { return screen_scale; }
 	vec2 get_screen_size() { return screen_size; }
+	vec2 screen_size_capped()
+	{
+		return { min(screen_size.x, (float)window_width_px), min(screen_size.y, (float)window_height_px) };
+	}
 
 private:
 	////////////////////////////////////////////////////////
@@ -196,6 +201,10 @@ private:
 	GLuint frame_buffer = 0;
 	GLuint off_screen_render_buffer_color = 0;
 	GLuint off_screen_render_buffer_depth = 0;
+
+	
+	float screen_scale = window_default_scale;
+	vec2 screen_size = { window_width_px, window_height_px };
 
 	Entity screen_state_entity = registry.create();
 

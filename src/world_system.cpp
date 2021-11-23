@@ -139,6 +139,7 @@ void WorldSystem::init(RenderSystem* renderer_arg)
 {
 	this->renderer = renderer_arg;
 	ui->init(renderer_arg, tutorials, [this]() { try_change_color(); });
+	animations->init(renderer_arg);
 
 	// Playing background music indefinitely
 	bgm_red = so_loud->play(bgm_red_wav);
