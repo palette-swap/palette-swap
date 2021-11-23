@@ -203,6 +203,9 @@ void WorldSystem::restart_game()
 	std::cout << "Alive: " << registry.alive() << std::endl;
 	printf("Restarting\n");
 
+	// Exit map editing mode
+	is_editing_map = false;
+
 	// Reset the game end
 	end_of_game = false;
 
@@ -318,11 +321,12 @@ void WorldSystem::return_arrow_to_player()
 // On key callback
 void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 {
+	if (check_debug_keys(key, action, mod)) {
+		return;
+	}
 	if (turns->ready_to_act(player)) {
 		ui->on_key(key, action, mod);
 	}
-
-	check_debug_keys(key, action, mod);
 	if (!ui->player_can_act()) {
 		return;
 	}
@@ -391,9 +395,8 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 	}
 }
 
-void WorldSystem::check_debug_keys(int key, int action, int mod)
+bool WorldSystem::check_debug_keys(int key, int action, int mod)
 {
-
 	// Resetting game
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_ALT) != 0 && key == GLFW_KEY_R) {
 		// int w, h;
@@ -430,26 +433,11 @@ void WorldSystem::check_debug_keys(int key, int action, int mod)
 	current_volume = fmax(0.f, current_volume);
 	so_loud->setGlobalVolume(current_volume);
 
-	// for debugging levels
-	if (key == GLFW_KEY_N && (mod & GLFW_MOD_CONTROL) != 0 && action == GLFW_RELEASE) {
-		if (!map_generator->load_next_level()) {
-			return;
-		}
-		story->load_next_level();
-		return_arrow_to_player();
-	} else if (key == GLFW_KEY_B && (mod & GLFW_MOD_CONTROL) != 0 && action == GLFW_RELEASE) {
-		if (!map_generator->load_last_level()) {
-			return;
-		}
-		story->load_next_level();
-		return_arrow_to_player();
-	}
-
 	if (is_editing_map) {
 		if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_M) {
 			is_editing_map = false;
 			map_generator->stop_editing_level();
-			return;
+			return false;
 		}
 
 		if (key == GLFW_KEY_Q && (action == GLFW_REPEAT || action == GLFW_PRESS)) {
@@ -491,11 +479,29 @@ void WorldSystem::check_debug_keys(int key, int action, int mod)
 		} else if (key == GLFW_KEY_H && (action == GLFW_RELEASE)) {
 			map_generator->decrease_enemy_density();
 		}
+		return true;
+	} else {
+		// for debugging levels
+		if (key == GLFW_KEY_N && (mod & GLFW_MOD_CONTROL) != 0 && action == GLFW_RELEASE) {
+			if (!map_generator->load_next_level()) {
+				return false;
+			}
+			story->load_next_level();
+			return_arrow_to_player();
+		} else if (key == GLFW_KEY_B && (mod & GLFW_MOD_CONTROL) != 0 && action == GLFW_RELEASE) {
+			if (!map_generator->load_last_level()) {
+				return false;
+			}
+			story->load_next_level();
+			return_arrow_to_player();
+		}
 	}
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_M) {
 		is_editing_map = true;
 		map_generator->start_editing_level();
+		return true;
 	}
+	return false;
 }
 
 // Tracks position of cursor, points arrow at potential fire location
@@ -530,7 +536,7 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 
 void WorldSystem::move_player(Direction direction)
 {
-	if (turns->get_active_team() != player || is_editing_map) {
+	if (turns->get_active_team() != player) {
 		return;
 	}
 
