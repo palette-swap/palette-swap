@@ -818,6 +818,11 @@ void RenderSystem::draw_to_screen()
 // http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-14-render-to-texture/
 void RenderSystem::draw()
 {
+	// Grabs player's perception of which colour is "inactive"
+	Entity player = registry.view<Player>().front();
+	PlayerInactivePerception& player_perception = registry.get<PlayerInactivePerception>(player);
+	ColorState& inactive_color = player_perception.inactive;
+
 	// First render to the custom framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
 	gl_has_errors();
@@ -825,7 +830,11 @@ void RenderSystem::draw()
 	//glViewport(0, 0, screen_size_capped.x, RenderUtility::screen_size_capped.y);
 	glViewport(0, 0, screen_size_capped().x, screen_size_capped().y);
 	glDepthRange(0.00001, 10);
-	glClearColor(0.5, 0.5, 0.5, 1.0);
+	if (inactive_color == ColorState::Blue) {
+		glClearColor(57.f / 256, 51.f / 256, 81.f / 256, 1.0);
+	} else {
+		glClearColor(58.f / 256, 66.f / 256, 60.f / 256, 1.0);
+	}
 	glClearDepth(1.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_BLEND);
@@ -835,11 +844,6 @@ void RenderSystem::draw()
 							  // sprites back to front
 	gl_has_errors();
 	mat3 projection_2d = create_projection_matrix();
-
-	// Grabs player's perception of which colour is "inactive"
-	Entity player = registry.view<Player>().front();
-	PlayerInactivePerception& player_perception = registry.get<PlayerInactivePerception>(player);
-	ColorState& inactive_color = player_perception.inactive;
 
 	draw_map(projection_2d, inactive_color == ColorState::Blue ? ColorState::Red : ColorState::Blue);
 
