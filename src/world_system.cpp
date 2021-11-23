@@ -278,7 +278,7 @@ void WorldSystem::handle_collisions()
 			// Currently, arrows can hit anything with a hittable component, which will include walls and enemies
 			// Attack the other entity if it can be attacked
 			// Checks if the other enemy is a red/blue enemy
-			if (registry.all_of<Hittable, Stats, Enemy>(entity_other)) {
+			if (registry.valid(entity_other) && registry.all_of<Hittable, Stats, Enemy>(entity_other)) {
 				Enemy& enemy = registry.get<Enemy>(entity_other);
 				ColorState enemy_color = enemy.team;
 				if (!did_attack && enemy_color != turns->get_inactive_color() && ui->has_current_attack()) {
