@@ -530,16 +530,17 @@ bool MapGeneratorSystem::load_next_level()
 	return true;
 }
 
-void MapGeneratorSystem::load_last_level()
+bool MapGeneratorSystem::load_last_level()
 {
 	if (current_level == 0) {
 		fprintf(stderr, "is already on first level");
-		assert(false && "cannot load any new levels");
+		return false;
 	}
 
 	snapshot_level();
 	clear_level();
 	load_level(--current_level);
+	return true;
 }
 
 void MapGeneratorSystem::load_initial_level()

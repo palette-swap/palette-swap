@@ -155,7 +155,7 @@ public:
 	bool load_next_level();
 
 	// Save current level and load the last level
-	void load_last_level();
+	bool load_last_level();
 
 	// Load the first level
 	void load_initial_level();

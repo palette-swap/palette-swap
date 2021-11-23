@@ -438,7 +438,10 @@ void WorldSystem::check_debug_keys(int key, int action, int mod)
 		story->load_next_level();
 		return_arrow_to_player();
 	} else if (key == GLFW_KEY_B && (mod & GLFW_MOD_CONTROL) != 0 && action == GLFW_RELEASE) {
-		map_generator->load_last_level();
+		if (!map_generator->load_last_level()) {
+			return;
+		}
+		story->load_next_level();
 		return_arrow_to_player();
 	}
 
