@@ -102,14 +102,6 @@ const static uint8_t void_tile = 10;
 const static uint8_t next_level_tile = 14;
 const static uint8_t last_level_tile = 20;
 const static std::array<uint8_t, 2> trap_tiles = { 28, 36 };
-//const static uint8_t boundary_tile_top_left = 1;
-//const static uint8_t boundary_tile_top = 2;
-//const static uint8_t boundary_tile_top_right = 3;
-//const static uint8_t boundary_tile_left = 9;
-//const static uint8_t boundary_tile_right = 11;
-//const static uint8_t boundary_tile_bot_left = 17;
-//const static uint8_t boundary_tile_bot = 18;
-//const static uint8_t boundary_tile_bot_right = 19;
 
 // customized cellular automata algorithm to smooth the room out
 static void smooth_room(RoomLayout& curr_layout, uint iterations, const std::set<int>& critical_locations)
@@ -131,14 +123,6 @@ static void smooth_room(RoomLayout& curr_layout, uint iterations, const std::set
 			}
 		}
 		return wall_count;
-	};
-
-	auto can_become_void = [](int tile_row, int tile_col, const RoomLayout& room_layout) {
-		return (
-			(tile_row == 0 || room_layout.at((tile_row - 1) * room_size + tile_col) == solid_block_tile)
-			&& (tile_row == room_size - 1 || room_layout.at((tile_row + 1) * room_size + tile_col) == solid_block_tile)
-			&& (tile_col == 0 || room_layout.at(tile_row * room_size + tile_col - 1) == solid_block_tile)
-			&& (tile_col == room_size - 1 || room_layout.at(tile_row * room_size + tile_col + 1) == solid_block_tile));
 	};
 
 	for (uint i = 0; i < iterations; i++) {
@@ -167,7 +151,7 @@ static void smooth_room(RoomLayout& curr_layout, uint iterations, const std::set
 			int tile_col = tile_position % 10;
 			int num_walls_around = get_neighbour_walls(tile_row, tile_col, updated_layout);
 
-			if (num_walls_around == 8 || can_become_void(tile_row, tile_col, updated_layout)) {
+			if (num_walls_around == 8) {
 				updated_layout.at(tile_position) = void_tile;
 			}
 		}
@@ -175,17 +159,139 @@ static void smooth_room(RoomLayout& curr_layout, uint iterations, const std::set
 	}
 }
 
+// TODO: update to a decent mas
+const static uint8_t room_wall_mask = solid_block_tile;
+const static uint8_t room_outside_mask = void_tile;
+
+// room entrance size on each open side
+const static int room_entrance_size = 2;
+// the start and end position of the entrance
+const static int room_entrance_start = (room_size - room_entrance_size) / 2;
+const static int room_entrance_end = (room_size + room_entrance_size) / 2 - 1;
+
+// there are a total of 12 types of boundary tiles, 4 are stright block tiles, each has a staight line
+// on each direction, the other 8 are corner tiles, which will be decided by how 2 of the four straight tiles are placed
+const static uint8_t boundary_tile_top = 2;
+const static uint8_t boundary_tile_left = 9;
+const static uint8_t boundary_tile_bot = 18;
+const static uint8_t boundary_tile_right = 11;
+// inner corner tiles
+const static uint8_t boundary_tile_inner_tl = 1; // top left
+const static uint8_t boundary_tile_inner_tr = 3; // top right
+const static uint8_t boundary_tile_inner_bl = 17; // bot left
+const static uint8_t boundary_tile_inner_br = 19; // bot right
+// outer corner tiles
+const static uint8_t boundary_tile_outer_tl = 25; // top left
+const static uint8_t boundary_tile_outer_tr = 26; // top right
+const static uint8_t boundary_tile_outer_bl = 33; // bot left
+const static uint8_t boundary_tile_outer_br = 34; // bot right
+
+// update boundary tiles to render more naturally, purely for visual effects
+const static void update_boundary_tiles(RoomLayout &room_layout, const std::set<Direction>& open_directions)
+{
+	RoomLayout original_room_layout = room_layout;
+	for (size_t i = 0; i < original_room_layout.size(); i++) {
+		uint8_t tile_mask = original_room_layout.at(i);
+		if (tile_mask != room_wall_mask) {
+			continue;
+		}
+		size_t tile_row = i / room_size;
+		size_t tile_col = i % room_size;
+		if (tile_row < 1 || original_room_layout.at(i - room_size) == room_outside_mask) {
+			if (tile_col < 1 || original_room_layout.at(i - 1) == room_outside_mask) {
+				room_layout.at(i) = boundary_tile_inner_tl;
+			} else if (tile_col + 1 > room_size - 1 || original_room_layout.at(i + 1) == room_outside_mask) {
+				room_layout.at(i) = boundary_tile_inner_tr;
+			} else {
+				room_layout.at(i) = boundary_tile_top;
+			}
+		} else if (tile_row + 1 > room_size - 1 || original_room_layout.at(i + room_size) == room_outside_mask) {
+			if (tile_col < 1 || original_room_layout.at(i - 1) == room_outside_mask) {
+				room_layout.at(i) = boundary_tile_inner_bl;
+			} else if (tile_col + 1 > room_size - 1 || original_room_layout.at(i + 1) == room_outside_mask) {
+				room_layout.at(i) = boundary_tile_inner_br;
+			} else {
+				room_layout.at(i) = boundary_tile_bot;
+			}
+		} else if (tile_col < 1 || original_room_layout.at(i - 1) == room_outside_mask) {
+			room_layout.at(i) = boundary_tile_left;
+		} else if (tile_col + 1 > room_size - 1 || original_room_layout.at(i + 1) == room_outside_mask) {
+			room_layout.at(i) = boundary_tile_right;
+		} else if (original_room_layout.at(i + 1) == room_wall_mask) {
+			if (original_room_layout.at(i + room_size) == room_wall_mask) {
+				room_layout.at(i) = boundary_tile_outer_tl;
+			} else if (original_room_layout.at(i - room_size) == room_wall_mask) {
+				room_layout.at(i) = boundary_tile_outer_bl;
+			}
+		} else if (original_room_layout.at(i - 1) == room_wall_mask) {
+			if (original_room_layout.at(i + room_size) == room_wall_mask) {
+				room_layout.at(i) = boundary_tile_outer_tr;
+			} else if (original_room_layout.at(i - room_size) == room_wall_mask) {
+				room_layout.at(i) = boundary_tile_outer_br;
+			}
+		}
+	}
+
+	// update the entrance tiles
+	if (open_directions.find(Direction::Up) != open_directions.end()) {
+		if (original_room_layout.at(room_entrance_start - 1 + room_size) == room_wall_mask) {
+			room_layout.at(room_entrance_start - 1) = boundary_tile_left;
+		} else {
+			room_layout.at(room_entrance_start - 1) = boundary_tile_outer_br;
+		}
+		if (original_room_layout.at(room_entrance_end + 1 + room_size) == room_wall_mask) {
+			room_layout.at(room_entrance_end + 1) = boundary_tile_right;
+		} else {
+			room_layout.at(room_entrance_end + 1) = boundary_tile_outer_bl;
+		}
+	}
+	if (open_directions.find(Direction::Down) != open_directions.end()) {
+		if (original_room_layout.at(room_size * (room_size - 2) + room_entrance_start - 1) == room_wall_mask) {
+			room_layout.at(room_size * (room_size - 1) + room_entrance_start - 1) = boundary_tile_left;
+		} else {
+			room_layout.at(room_size * (room_size - 1) + room_entrance_start - 1) = boundary_tile_outer_tr;
+		}
+		if (original_room_layout.at(room_size * (room_size - 2) + room_entrance_end + 1) == room_wall_mask) {
+			room_layout.at(room_size * (room_size - 1) + room_entrance_end + 1) = boundary_tile_right;
+		} else {
+			room_layout.at(room_size * (room_size - 1) + room_entrance_end + 1) = boundary_tile_outer_tl;
+		}
+	}
+	if (open_directions.find(Direction::Left) != open_directions.end()) {
+		if (original_room_layout.at(room_size * (room_entrance_start - 1) + 1) == room_wall_mask) {
+			room_layout.at(room_size * (room_entrance_start - 1)) = boundary_tile_top;
+		} else {
+			room_layout.at(room_size * (room_entrance_start - 1)) = boundary_tile_outer_br;
+		}
+		if (original_room_layout.at(room_size * (room_entrance_end + 1) + 1) == room_wall_mask) {
+			room_layout.at(room_size * (room_entrance_end + 1)) = boundary_tile_bot;
+		} else {
+			room_layout.at(room_size * (room_entrance_end + 1)) = boundary_tile_outer_tr;
+		}
+	}
+	if (open_directions.find(Direction::Right) != open_directions.end()) {
+		if (original_room_layout.at(room_size * (room_entrance_start) - 1 - 1) == room_wall_mask) {
+			room_layout.at(room_size * (room_entrance_start) - 1) = boundary_tile_top;
+		} else {
+			room_layout.at(room_size * (room_entrance_start) - 1) = boundary_tile_outer_bl;
+		}
+		if (original_room_layout.at(room_size * (room_entrance_end + 2) - 1 - 1) == room_wall_mask) {
+			room_layout.at(room_size * (room_entrance_end + 2) - 1) = boundary_tile_bot;
+		} else {
+			room_layout.at(room_size * (room_entrance_end + 2) - 1) = boundary_tile_outer_tl;
+		}
+	}
+
+	room_layout = room_layout;
+}
+
+
 RoomLayout MapGenerator::generate_room(const std::set<Direction>& open_directions,
 									   RoomType room_type,
 									   MapUtility::LevelGenConf level_gen_conf,
 									   RoomGenerationEngines random_engs,
 									   bool /*is_debugging*/)
 {
-	// the entrance size on each open side
-	const static int room_entrance_size = 2;
-	// the start and end position of the entrance
-	const static int room_entrance_start = (room_size - room_entrance_size) / 2;
-	const static int room_entrance_end = (room_size + room_entrance_size) / 2 - 1;
 	// max generation values
 	const static double max_side_path_probability = 0.9;
 	const static double max_traps_density = 0.3;
@@ -403,11 +509,12 @@ RoomLayout MapGenerator::generate_room(const std::set<Direction>& open_direction
 
 			if (is_outside_tile(room_index)) {
 				room_layout.at(room_index) = static_cast<uint32_t>(void_tile);
-			} else if (is_boundary_tile(room_index)
-					   || ((room_type == RoomType::Critical)
-						   && (critical_locations.find(room_index) == critical_locations.end())
-						   && blocks_dist(random_engs.general_eng))) {
+			} else if (is_boundary_tile(room_index)) {
 				room_layout.at(room_index) = static_cast<uint32_t>(solid_block_tile);
+			} else if ((room_type == RoomType::Critical)
+						   && (critical_locations.find(room_index) == critical_locations.end())
+						   && blocks_dist(random_engs.general_eng)) {
+				// room_layout.at(room_index) = static_cast<uint32_t>(solid_block_tile);
 			}
 		}
 	}
@@ -415,18 +522,21 @@ RoomLayout MapGenerator::generate_room(const std::set<Direction>& open_direction
 	// smooth the room out based on specified iterations
 	smooth_room(room_layout, level_gen_conf.room_smoothness, critical_locations);
 
-	// generate traps
-	std::bernoulli_distribution spawn_traps_dist(max_traps_density * level_gen_conf.room_traps_density);
-	std::uniform_int_distribution<int> traps_dist(0, trap_tiles.size() - 1);
+	// update boundary tiles
+	update_boundary_tiles(room_layout, open_directions);
 
-	bool will_spawn_trap = spawn_traps_dist(random_engs.traps_eng);
-	for (int room_index = 0; room_index < room_size * room_size; room_index++) {
-		if (will_spawn_trap && room_layout.at(room_index) == floor_tile) {
-			room_layout.at(room_index) = trap_tiles.at(traps_dist(random_engs.general_eng));
-			will_spawn_trap = false;
-		}
-		will_spawn_trap |= spawn_traps_dist(random_engs.traps_eng);
-	}
+	// // generate traps
+	// std::bernoulli_distribution spawn_traps_dist(max_traps_density * level_gen_conf.room_traps_density);
+	// std::uniform_int_distribution<int> traps_dist(0, trap_tiles.size() - 1);
+
+	// bool will_spawn_trap = spawn_traps_dist(random_engs.traps_eng);
+	// for (int room_index = 0; room_index < room_size * room_size; room_index++) {
+	// 	if (will_spawn_trap && room_layout.at(room_index) == floor_tile) {
+	// 		room_layout.at(room_index) = trap_tiles.at(traps_dist(random_engs.general_eng));
+	// 		will_spawn_trap = false;
+	// 	}
+	// 	will_spawn_trap |= spawn_traps_dist(random_engs.traps_eng);
+	// }
 
 	return room_layout;
 }
