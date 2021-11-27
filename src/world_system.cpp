@@ -418,6 +418,21 @@ bool WorldSystem::check_debug_keys(int key, int action, int mod)
 		combat->drop_loot(pos);
 	}
 
+	// Give more resources
+	Inventory& inventory = registry.get<Inventory>(player);
+	if (key == GLFW_KEY_F1) {
+		inventory.resources.at((size_t)Resource::HealthPotion)++;
+		ui->update_resource_count();
+	}
+	if (key == GLFW_KEY_F2) {
+		inventory.resources.at((size_t)Resource::ManaPotion)++;
+		ui->update_resource_count();
+	}
+	if (key == GLFW_KEY_F3) {
+		inventory.resources.at((size_t)Resource::PaletteSwap)++;
+		ui->update_resource_count();
+	}
+
 	// Debugging
 	if (key == GLFW_KEY_B) {
 		debugging.in_debug_mode = action != GLFW_RELEASE;
@@ -604,13 +619,14 @@ void WorldSystem::try_change_color()
 	if (inventory.resources.at((size_t)Resource::PaletteSwap) == 0) {
 		return;
 	}
-	inventory.resources.at((size_t)Resource::PaletteSwap)--;
-	ui->update_resource_count();
 	MapPosition player_pos = registry.get<MapPosition>(player);
 
 	if (map_generator->walkable_and_free(player, player_pos.position, false)) {
 		ColorState inactive_color = turns->get_inactive_color();
 		turns->set_active_color(inactive_color);
+
+		inventory.resources.at((size_t)Resource::PaletteSwap)--;
+		ui->update_resource_count();
 
 		so_loud->fadeVolume((inactive_color == ColorState::Red ? bgm_red : bgm_blue), -1, .25);
 		so_loud->fadeVolume((inactive_color == ColorState::Red ? bgm_blue : bgm_red), 0, .25);
