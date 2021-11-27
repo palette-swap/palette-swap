@@ -593,7 +593,7 @@ const RoomLayout& MapGeneratorSystem::get_room_layout(int level, MapUtility::Roo
 
 const std::set<uint8_t>& MapUtility::walkable_tiles()
 {
-	const static std::set<uint8_t> walkable_tiles({ 0, 14, 20, 28, 36 });
+	const static std::set<uint8_t> walkable_tiles({ 40, 0, 8, 16, 24, 32, 48, 56, 14, 20, 28, 36 });
 	return walkable_tiles;
 }
 

@@ -159,7 +159,10 @@ static void smooth_room(RoomLayout& curr_layout, uint iterations, const std::set
 	}
 }
 
-// TODO: update to a decent mas
+const static std::array<uint8_t, 8> floor_tiles = { 40, 0, 8, 16, 24, 32, 48, 56 }; 
+
+// TODO: update to a decent mask
+const static uint8_t room_floor_mask = floor_tile;
 const static uint8_t room_wall_mask = solid_block_tile;
 const static uint8_t room_outside_mask = void_tile;
 
@@ -186,49 +189,64 @@ const static uint8_t boundary_tile_outer_tr = 26; // top right
 const static uint8_t boundary_tile_outer_bl = 33; // bot left
 const static uint8_t boundary_tile_outer_br = 34; // bot right
 
+// randomly generate a floor tile from given floor tiles
+const static uint8_t get_random_floor_tile(std::default_random_engine & random_eng)
+{
+	std::binomial_distribution<int> floor_tile_dist(floor_tiles.size() - 1, 0.3);
+	return static_cast<uint8_t>(floor_tiles.at(floor_tile_dist(random_eng)));
+}
+
+const static uint8_t generate_boundary_tile(const RoomLayout & room_layout, size_t tile_index)
+{
+	size_t tile_row = tile_index / room_size;
+	size_t tile_col = tile_index % room_size;
+	if (tile_row < 1 || room_layout.at(tile_index - room_size) == room_outside_mask) {
+		if (tile_col < 1 || room_layout.at(tile_index - 1) == room_outside_mask)
+			return boundary_tile_inner_tl;
+		if (tile_col + 1 > room_size - 1 || room_layout.at(tile_index + 1) == room_outside_mask)
+			return boundary_tile_inner_tr;
+		return boundary_tile_top;
+	}
+	if (tile_row + 1 > room_size - 1 || room_layout.at(tile_index + room_size) == room_outside_mask) {
+		if (tile_col < 1 || room_layout.at(tile_index - 1) == room_outside_mask)
+			return boundary_tile_inner_bl;
+		if (tile_col + 1 > room_size - 1 || room_layout.at(tile_index + 1) == room_outside_mask)
+			return boundary_tile_inner_br;
+		return boundary_tile_bot;
+	}
+	if (tile_col < 1 || room_layout.at(tile_index - 1) == room_outside_mask) {
+		return boundary_tile_left;
+	}
+	if (tile_col + 1 > room_size - 1 || room_layout.at(tile_index + 1) == room_outside_mask) {
+		return boundary_tile_right;
+	}
+	if (room_layout.at(tile_index + 1) == room_wall_mask) {
+		if (room_layout.at(tile_index + room_size) == room_wall_mask)
+			return boundary_tile_outer_tl;
+		if (room_layout.at(tile_index - room_size) == room_wall_mask)
+			return boundary_tile_outer_bl;
+	}
+	if (room_layout.at(tile_index - 1) == room_wall_mask) {
+		if (room_layout.at(tile_index + room_size) == room_wall_mask)
+			return boundary_tile_outer_tr;
+		if (room_layout.at(tile_index - room_size) == room_wall_mask)
+			return boundary_tile_outer_br;
+	}
+
+	return solid_block_tile;
+}
+
 // update boundary tiles to render more naturally, purely for visual effects
-const static void update_boundary_tiles(RoomLayout &room_layout, const std::set<Direction>& open_directions)
+const static void update_boundary_tiles(RoomLayout &room_layout, const std::set<Direction>& open_directions, std::default_random_engine & random_eng)
 {
 	RoomLayout original_room_layout = room_layout;
 	for (size_t i = 0; i < original_room_layout.size(); i++) {
 		uint8_t tile_mask = original_room_layout.at(i);
-		if (tile_mask != room_wall_mask) {
+		if (tile_mask == room_floor_mask) {
+			room_layout.at(i) = get_random_floor_tile(random_eng);
 			continue;
-		}
-		size_t tile_row = i / room_size;
-		size_t tile_col = i % room_size;
-		if (tile_row < 1 || original_room_layout.at(i - room_size) == room_outside_mask) {
-			if (tile_col < 1 || original_room_layout.at(i - 1) == room_outside_mask) {
-				room_layout.at(i) = boundary_tile_inner_tl;
-			} else if (tile_col + 1 > room_size - 1 || original_room_layout.at(i + 1) == room_outside_mask) {
-				room_layout.at(i) = boundary_tile_inner_tr;
-			} else {
-				room_layout.at(i) = boundary_tile_top;
-			}
-		} else if (tile_row + 1 > room_size - 1 || original_room_layout.at(i + room_size) == room_outside_mask) {
-			if (tile_col < 1 || original_room_layout.at(i - 1) == room_outside_mask) {
-				room_layout.at(i) = boundary_tile_inner_bl;
-			} else if (tile_col + 1 > room_size - 1 || original_room_layout.at(i + 1) == room_outside_mask) {
-				room_layout.at(i) = boundary_tile_inner_br;
-			} else {
-				room_layout.at(i) = boundary_tile_bot;
-			}
-		} else if (tile_col < 1 || original_room_layout.at(i - 1) == room_outside_mask) {
-			room_layout.at(i) = boundary_tile_left;
-		} else if (tile_col + 1 > room_size - 1 || original_room_layout.at(i + 1) == room_outside_mask) {
-			room_layout.at(i) = boundary_tile_right;
-		} else if (original_room_layout.at(i + 1) == room_wall_mask) {
-			if (original_room_layout.at(i + room_size) == room_wall_mask) {
-				room_layout.at(i) = boundary_tile_outer_tl;
-			} else if (original_room_layout.at(i - room_size) == room_wall_mask) {
-				room_layout.at(i) = boundary_tile_outer_bl;
-			}
-		} else if (original_room_layout.at(i - 1) == room_wall_mask) {
-			if (original_room_layout.at(i + room_size) == room_wall_mask) {
-				room_layout.at(i) = boundary_tile_outer_tr;
-			} else if (original_room_layout.at(i - room_size) == room_wall_mask) {
-				room_layout.at(i) = boundary_tile_outer_br;
-			}
+		} else if (tile_mask == room_wall_mask) {
+			room_layout.at(i) = generate_boundary_tile(original_room_layout, i);
 		}
 	}
 
@@ -301,15 +319,15 @@ RoomLayout MapGenerator::generate_room(const std::set<Direction>& open_direction
 		{ RoomType::Start,
 		  {
 			  0, 0, 0, 0, 0,  0, 0,	 0, 0, 0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0,	0,	0,	0, 0, 0,
-			  0, 0, 0, 0, 0,  0, 0,	 0, 0, 12, 12, 12, 0, 0, 0, 0, 0, 0, 0, 12, 20, 12, 0, 0, 0,
-			  0, 0, 0, 0, 12, 0, 12, 0, 0, 0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0,	0,	0,	0, 0, 0,
+			  0, 0, 0, 0, 0,  0, 0,	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0,
+			  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0,	0,	0,	0, 0, 0,
 			  0, 0, 0, 0, 0,  0, 0,	 0, 0, 0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0,	0,	0,	0, 0, 0,
 		  } },
 		{ RoomType::End,
 		  {
 			  0, 0, 0, 0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0, 0, 0, 0,
-			  0, 0, 0, 0,  0,  0,  0, 0, 7, 0, 7, 0, 0, 0, 0, 0, 0, 0, 15, 14, 15, 0, 0, 0, 0,
-			  0, 0, 0, 23, 12, 23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0, 0, 0, 0,
+			  0, 0, 0, 0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 14, 0, 0, 0, 0, 0,
+			  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0, 0, 0, 0,
 			  0, 0, 0, 0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0, 0, 0, 0,
 		  } },
 	};
@@ -523,7 +541,7 @@ RoomLayout MapGenerator::generate_room(const std::set<Direction>& open_direction
 	smooth_room(room_layout, level_gen_conf.room_smoothness, critical_locations);
 
 	// update boundary tiles
-	update_boundary_tiles(room_layout, open_directions);
+	update_boundary_tiles(room_layout, open_directions, random_engs.general_eng);
 
 	// // generate traps
 	// std::bernoulli_distribution spawn_traps_dist(max_traps_density * level_gen_conf.room_traps_density);
@@ -563,14 +581,14 @@ void MapGenerator::generate_enemies(MapUtility::LevelGenConf level_gen_conf,
 	for (int room_row = 0; room_row < room_size; room_row++) {
 		for (int room_col = 0; room_col < room_size; room_col++) {
 			int room_index = room_row * room_size + room_col;
-			if (enemies_dist(enemies_random_eng_red) && room_layout.at(room_index) == floor_tile) {
+			if (enemies_dist(enemies_random_eng_red) && room_layout.at(room_index) % 8 == 0) {
 				add_enemy_to_level_snapshot(
 					level_snap_shot,
 					ColorState::Red,
 					static_cast<EnemyType>(enemy_types_dist(enemies_random_eng_red)),
 					uvec2(room_map_col * room_size + room_col, room_map_row * room_size + room_row));
 			}
-			if (enemies_dist(general_random_eng_blue) && room_layout.at(room_index) == floor_tile) {
+			if (enemies_dist(general_random_eng_blue) && room_layout.at(room_index) % 8 == 0) {
 				add_enemy_to_level_snapshot(
 					level_snap_shot,
 					ColorState::Blue,
