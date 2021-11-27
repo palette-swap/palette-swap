@@ -264,6 +264,9 @@ void WorldSystem::restart_game()
 	so_loud->fadeVolume(bgm_blue, 0, .25);
 	animations->player_red_blue_animation(player, ColorState::Red);
 	animations->set_all_inactive_colours(ColorState::Blue);
+
+	//create_enemy(ColorState::All, EnemyType::KingMush, registry.get<MapPosition>(player).position + uvec2(20, 0));
+
 }
 
 // Compute collisions between entities

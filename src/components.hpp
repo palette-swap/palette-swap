@@ -219,7 +219,8 @@ enum class EnemyType {
 	Clone = Spider + 1,
 	// Boss Enemy Types
 	KingMush = Clone + 1,
-	EnemyCount = KingMush + 1,
+	Dragon = KingMush + 1,
+	EnemyCount = Dragon + 1,
 };
 
 enum class EnemyBehaviour {
@@ -231,13 +232,23 @@ enum class EnemyBehaviour {
 	Aggressive = Defensive + 1,
 	// Boss Enemy Behaviours (Behaviour Trees)
 	Summoner = Aggressive + 1,
-	EnemyBehaviourCount = Summoner + 1,
+	Dragon = Summoner + 1,
+	EnemyBehaviourCount = Dragon + 1,
 };
 
 const std::array<EnemyBehaviour, (size_t)EnemyType::EnemyCount> enemy_type_to_behaviour = {
-	EnemyBehaviour::Dummy,		EnemyBehaviour::Cowardly,  EnemyBehaviour::Basic,	 EnemyBehaviour::Defensive,
-	EnemyBehaviour::Aggressive, EnemyBehaviour::Basic,	   EnemyBehaviour::Basic,	 EnemyBehaviour::Cowardly,
-	EnemyBehaviour::Aggressive, EnemyBehaviour::Defensive, EnemyBehaviour::Summoner,
+	EnemyBehaviour::Dummy,		
+	EnemyBehaviour::Cowardly,  
+	EnemyBehaviour::Basic,	 
+	EnemyBehaviour::Defensive,
+	EnemyBehaviour::Aggressive, 
+	EnemyBehaviour::Basic,	   
+	EnemyBehaviour::Basic,	 
+	EnemyBehaviour::Cowardly,
+	EnemyBehaviour::Aggressive, 
+	EnemyBehaviour::Defensive, 
+	EnemyBehaviour::Summoner,
+	EnemyBehaviour::Dragon,
 };
 
 // Small Enemy Behaviours (State Machines) uses the following states.
@@ -534,6 +545,7 @@ const std::array<TEXTURE_ASSET_ID, static_cast<int>(EnemyType::EnemyCount)> enem
 	TEXTURE_ASSET_ID::CLONE,
 	// TODO (Evan): temporarily used MUSHROOM to mock KINGMUSH for testing, please replace it when the texture is
 	// available.
+	TEXTURE_ASSET_ID::KING_MUSH,
 	TEXTURE_ASSET_ID::KING_MUSH,
 };
 

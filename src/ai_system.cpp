@@ -92,9 +92,20 @@ void AISystem::step(float /*elapsed_ms*/)
 
 				// Boss Enemy Behaviours (Behaviour Trees)
 				case EnemyBehaviour::Summoner: {
-					if ((bosses.find(enemy_entity) == bosses.end())) {
+					if (bosses.find(enemy_entity) == bosses.end()) {
 						// A boss entity occurs for the 1st time, create its corresponding behaviour tree & initialize.
 						bosses[enemy_entity] = SummonerTree::summoner_tree_factory(this);
+						bosses[enemy_entity]->init(enemy_entity);
+					}
+					if (bosses[enemy_entity]->process(enemy_entity, this) != BTState::Running) {
+						bosses[enemy_entity]->init(enemy_entity);
+					}
+					break;
+				}
+				case EnemyBehaviour::Dragon: {
+					if (bosses.find(enemy_entity) == bosses.end()) {
+						// A boss entity occurs for the 1st time, create its corresponding behaviour tree & initialize.
+						bosses[enemy_entity] = DragonTree::dragon_tree_factory(this);
 						bosses[enemy_entity]->init(enemy_entity);
 					}
 					if (bosses[enemy_entity]->process(enemy_entity, this) != BTState::Running) {

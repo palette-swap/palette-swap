@@ -2,6 +2,7 @@
 
 #include <random>
 #include <vector>
+#include <tuple>
 
 #include "common.hpp"
 
@@ -437,6 +438,89 @@ private:
 
 	private:
 		std::unique_ptr<BTNode> m_child;
+	};
+
+	class DragonTree : public BTNode {
+	public:
+		explicit DragonTree(std::unique_ptr<BTNode> child)
+			: m_child(std::move(child))
+		{
+		}
+
+		void init(Entity e) override
+		{
+			debug_log("Debug: DragonTree.init\n");
+			m_child->init(e);
+			ripple_attacks = {};
+		}
+
+		BTState process(Entity e, AISystem* ai) override
+		{
+			debug_log("--------------------------------------------------\n");
+			debug_log("Debug: DragonTree.process\n");
+			BTState state = m_child->process(e, ai);
+			std::string message = "Debug: State after process = ";
+			message += state_names.at((size_t)state);
+			debug_log(message + "\n");
+			return handle_process_result(state);
+		}
+
+		static std::unique_ptr<BTNode> dragon_tree_factory(AISystem* ai)
+		{
+			// Selector - active
+			auto summon_enemies = std::make_unique<SummonEnemies>(EnemyType::Mushroom, 1);
+			std::vector<ivec2> aoe_shape;
+
+			// Algorithm for shape
+			// Why isn't this working??
+			for (auto& attack : ripple_attacks) {
+				/* ivec2 center = attack.first;
+				int dist = attack.second;
+
+				for (int i = dist; i > -dist; i--) {
+					aoe_shape.emplace_back(center + ivec2(dist, i));
+					aoe_shape.emplace_back(center + ivec2(-dist, i));
+				}
+				for (int i = dist - 1; i > -dist + 1; i--) {
+					aoe_shape.emplace_back(center + ivec2(i, dist));
+					aoe_shape.emplace_back(center + ivec2(i, -dist));
+				}*/
+			}
+
+			auto aoe_attack = std::make_unique<AOEAttack>(aoe_shape);
+			auto regular_attack = std::make_unique<RegularAttack>();
+			auto selector_active = std::make_unique<Selector>(std::move(regular_attack));
+			Selector* p = selector_active.get();
+			selector_active->add_precond_and_child(
+				[ai](Entity /*e*/) { return ai->chance_to_happen(1.0f); },
+				std::move(aoe_attack));
+
+			// Selector - idle
+			auto recover_health = std::make_unique<RecoverHealth>(0.20f);
+			auto do_nothing = std::make_unique<DoNothing>();
+			auto selector_idle = std::make_unique<Selector>(std::move(do_nothing));
+			selector_idle->add_precond_and_child(
+				// Dragon recover 20% HP if its HP is not full during idle.
+				[ai](Entity e) { return ai->is_health_below(e, 1.00f); },
+				std::move(recover_health));
+
+			// Selector - alive
+			auto selector_alive = std::make_unique<Selector>(std::move(selector_idle));
+			selector_alive->add_precond_and_child(
+				// Summoner switch to attack if it spots the player during active.
+				[ai](Entity e) { return ai->is_player_spotted(e); },
+				std::move(selector_active));
+
+			// Increase ripple size and clean up large ripples
+			//for (std::pair)
+
+			return std::make_unique<SummonerTree>(std::move(selector_alive));
+		}
+
+	private:
+		std::unique_ptr<BTNode> m_child;
+		ivec2 testest;
+		static std::vector<std::pair<ivec2, int>> ripple_attacks;
 	};
 
 	// Boss entities and its corresponding behaviour trees.
