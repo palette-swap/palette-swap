@@ -2,7 +2,6 @@
 
 #include <random>
 #include <vector>
-#include <tuple>
 
 #include "common.hpp"
 
@@ -186,10 +185,11 @@ private:
 	// Leaf action node: AOEAttack
 	class AOEAttack : public BTNode {
 	public:
-		explicit AOEAttack(std::vector<ivec2> area_pattern)
+		explicit AOEAttack(std::vector<ivec2> area_pattern, Entity e_target)
 			: is_charged(false)
 			, m_aoe_shape(std::move(area_pattern))
 		{
+			target = e_target;
 		}
 
 		void init(Entity /*e*/) override
@@ -208,11 +208,13 @@ private:
 				is_charged = true;
 
 				// Compute AOE area using AOE shape and player position.
-				Entity player = registry.view<Player>().front();
-				const uvec2& player_map_pos = registry.get<MapPosition>(player).position;
+				MapPosition* mp = registry.try_get<MapPosition>(target);
+				const uvec2& target_map_pos = (mp != nullptr ? mp->position : uvec2(0,0));
+
+
 				std::vector<uvec2> aoe_area;
 				for (const ivec2& map_pos_offset : m_aoe_shape) {
-					const ivec2& map_pos = map_pos_offset + static_cast<ivec2>(player_map_pos);
+					const ivec2& map_pos = map_pos_offset + static_cast<ivec2>(target_map_pos);
 					if (map_pos.x >= 0 || map_pos.y >= 0) {
 						aoe_area.emplace_back(map_pos);
 					}
@@ -246,6 +248,7 @@ private:
 		bool is_charged;
 		std::vector<ivec2> m_aoe_shape;
 		std::vector<Entity> m_aoe;
+		Entity target;
 	};
 
 	// Leaf action node: RegularAttack
@@ -394,12 +397,13 @@ private:
 		{
 			// Selector - active
 			auto summon_enemies = std::make_unique<SummonEnemies>(EnemyType::Mushroom, 1);
+			Entity player = registry.view<Player>().front();
 			std::vector<ivec2> aoe_shape;
 			aoe_shape.emplace_back(0, 0);
 			aoe_shape.emplace_back(0, -1);
 			aoe_shape.emplace_back(-1, 0);
 			aoe_shape.emplace_back(1, 0);
-			auto aoe_attack = std::make_unique<AOEAttack>(aoe_shape);
+			auto aoe_attack = std::make_unique<AOEAttack>(aoe_shape, player);
 			auto regular_attack = std::make_unique<RegularAttack>();
 			auto selector_active = std::make_unique<Selector>(std::move(regular_attack));
 			Selector* p = selector_active.get();
@@ -451,7 +455,6 @@ private:
 		{
 			debug_log("Debug: DragonTree.init\n");
 			m_child->init(e);
-			ripple_attacks = {};
 		}
 
 		BTState process(Entity e, AISystem* ai) override
@@ -468,26 +471,12 @@ private:
 		static std::unique_ptr<BTNode> dragon_tree_factory(AISystem* ai)
 		{
 			// Selector - active
-			auto summon_enemies = std::make_unique<SummonEnemies>(EnemyType::Mushroom, 1);
+			auto summon_enemies = std::make_unique<SummonEnemies>(EnemyType::AOERingGen, 1);
 			std::vector<ivec2> aoe_shape;
 
-			// Algorithm for shape
-			// Why isn't this working??
-			//for (auto& attack : ripple_attacks) {
-				/* ivec2 center = attack.first;
-				int dist = attack.second;
+			Entity aoe_emitter = registry.create();
 
-				for (int i = dist; i > -dist; i--) {
-					aoe_shape.emplace_back(center + ivec2(dist, i));
-					aoe_shape.emplace_back(center + ivec2(-dist, i));
-				}
-				for (int i = dist - 1; i > -dist + 1; i--) {
-					aoe_shape.emplace_back(center + ivec2(i, dist));
-					aoe_shape.emplace_back(center + ivec2(i, -dist));
-				}*/
-			//}
-
-			auto aoe_attack = std::make_unique<AOEAttack>(aoe_shape);
+			auto aoe_attack = std::make_unique<AOEAttack>(aoe_shape, aoe_emitter);
 			auto regular_attack = std::make_unique<RegularAttack>();
 			auto selector_active = std::make_unique<Selector>(std::move(regular_attack));
 			Selector* p = selector_active.get();
@@ -511,15 +500,11 @@ private:
 				[ai](Entity e) { return ai->is_player_spotted(e); },
 				std::move(selector_active));
 
-			// Increase ripple size and clean up large ripples
-			//for (std::pair)
-
-			return std::make_unique<SummonerTree>(std::move(selector_alive));
+			return std::make_unique<DragonTree>(std::move(selector_alive));
 		}
 
 	private:
 		std::unique_ptr<BTNode> m_child;
-		static std::vector<std::pair<ivec2, int>> ripple_attacks;
 	};
 
 	// Boss entities and its corresponding behaviour trees.
