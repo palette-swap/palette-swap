@@ -265,7 +265,7 @@ void WorldSystem::restart_game()
 	animations->player_red_blue_animation(player, ColorState::Red);
 	animations->set_all_inactive_colours(ColorState::Blue);
 
-	//create_enemy(ColorState::All, EnemyType::KingMush, registry.get<MapPosition>(player).position + uvec2(20, 0));
+	create_enemy(ColorState::All, EnemyType::Dragon, registry.get<MapPosition>(player).position + uvec2(20, 0));
 
 }
 

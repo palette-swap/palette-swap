@@ -473,7 +473,7 @@ private:
 
 			// Algorithm for shape
 			// Why isn't this working??
-			for (auto& attack : ripple_attacks) {
+			//for (auto& attack : ripple_attacks) {
 				/* ivec2 center = attack.first;
 				int dist = attack.second;
 
@@ -485,7 +485,7 @@ private:
 					aoe_shape.emplace_back(center + ivec2(i, dist));
 					aoe_shape.emplace_back(center + ivec2(i, -dist));
 				}*/
-			}
+			//}
 
 			auto aoe_attack = std::make_unique<AOEAttack>(aoe_shape);
 			auto regular_attack = std::make_unique<RegularAttack>();
@@ -519,7 +519,6 @@ private:
 
 	private:
 		std::unique_ptr<BTNode> m_child;
-		ivec2 testest;
 		static std::vector<std::pair<ivec2, int>> ripple_attacks;
 	};
 
