@@ -456,24 +456,21 @@ void AISystem::become_immortal(const Entity& entity, bool flag)
 void AISystem::become_powerup(const Entity& entity, bool flag)
 {
 	Enemy& enemy = registry.get<Enemy>(entity);
-	enemy.radius *= 2;
-	enemy.attack_range *= 2;
-
 	Stats& stats = registry.get<Stats>(entity);
 	if (flag) {
-		stats.to_hit_bonus *= 2;
-		stats.base_attack.to_hit_min *= 2;
-		stats.base_attack.to_hit_max *= 2;
-		stats.damage_bonus *= 2;
+		enemy.radius *= 2;
+		enemy.attack_range *= 2;
+
 		stats.base_attack.damage_min *= 2;
 		stats.base_attack.damage_max *= 2;
+		stats.damage_bonus *= 2;
 	} else {
-		stats.to_hit_bonus /= 2;
-		stats.base_attack.to_hit_min /= 2;
-		stats.base_attack.to_hit_max /= 2;
-		stats.damage_bonus /= 2;
+		enemy.radius /= 2;
+		enemy.attack_range /= 2;
+
 		stats.base_attack.damage_min /= 2;
 		stats.base_attack.damage_max /= 2;
+		stats.damage_bonus /= 2;
 	}
 }
 

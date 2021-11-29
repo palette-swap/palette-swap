@@ -274,6 +274,27 @@ private:
 		}
 	};
 
+	// Leaf action node: FireAttack (high damage)
+	class FireAttack : public BTNode {
+	public:
+		void init(Entity /*e*/) override { debug_log("Debug: FireAttack.init\n"); }
+
+		BTState process(Entity e, AISystem* ai) override
+		{
+			debug_log("Debug: FireAttack.process\n");
+
+			ai->become_powerup(e, true);
+			ai->attack_player(e);
+			ai->become_powerup(e, false);
+
+			ai->switch_enemy_state(e, EnemyState::Idle);
+
+			// TODO (Evan): animation for Titho and the target.
+
+			return handle_process_result(BTState::Success);
+		}
+	};
+
 	// Leaf action node: RecoverHealth
 	class RecoverHealth : public BTNode {
 	public:
@@ -529,11 +550,10 @@ private:
 		static std::unique_ptr<BTNode> weapon_master_tree_factory(AISystem* ai)
 		{
 			// Selector - special attack
-			auto fire_attack = std::make_unique<RegularAttack>();
+			auto fire_attack = std::make_unique<FireAttack>();
 			auto ice_attack = std::make_unique<RegularAttack>();
 			auto gale_attack = std::make_unique<RegularAttack>();
 			auto tar_attack = std::make_unique<RegularAttack>();
-				// WeaponMaster has 25% chance to make a tar attack during special attack mode.
 			auto selector_special_attack = std::make_unique<Selector>(std::move(tar_attack));
 			Selector* p = selector_special_attack.get();
 			selector_special_attack->add_precond_and_child(
@@ -548,6 +568,7 @@ private:
 				// WeaponMaster has 25% chance to make a gale attack during special attack mode.
 				[ai](Entity /*e*/) { return ai->chance_to_happen(0.50f); },
 				std::move(gale_attack));
+				// WeaponMaster has 25% chance to make a tar attack during special attack mode.
 
 			// Selector - active
 			auto regular_attack = std::make_unique<RegularAttack>();
