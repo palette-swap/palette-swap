@@ -363,11 +363,6 @@ void AnimationSystem::boss_event_animation(const Entity& boss, int event_state) 
 }
 
 void AnimationSystem::boss_ranged_attack(EnemyType boss, uvec2 target_position) {
-	// TODO (Evan): add ranged attack animation for Titho.
-	if (boss == EnemyType::Titho) {
-		return;
-	}
-
 	auto boss_range_attack_entity = registry.create();
 
 	registry.emplace<MapPosition>(boss_range_attack_entity, target_position);

@@ -260,13 +260,15 @@ private:
 
 			ai->switch_enemy_state(e, EnemyState::Idle);
 
-			// Gets information related to where the boss is attacking from a ranged. 
-			// Can be moved into animation ssytem to make this portion clearer and free or registry accesses
-			Entity player_entity = registry.view<Player>().front();
-			uvec2 player_location = registry.get<MapPosition>(player_entity).position;
-			EnemyType boss_enemy_type = registry.get<Enemy>(e).type;
-
-			ai->animations->boss_ranged_attack(boss_enemy_type, player_location);
+			// TODO (Evan): animation for Titho and the target.
+			if (registry.get<Enemy>(e).type != EnemyType::Titho) {
+				// Gets information related to where the boss is attacking from a ranged.
+				// Can be moved into animation ssytem to make this portion clearer and free or registry accesses
+				Entity player_entity = registry.view<Player>().front();
+				uvec2 player_location = registry.get<MapPosition>(player_entity).position;
+				EnemyType boss_enemy_type = registry.get<Enemy>(e).type;
+				ai->animations->boss_ranged_attack(boss_enemy_type, player_location);
+			}
 
 			return handle_process_result(BTState::Success);
 		}
@@ -526,10 +528,32 @@ private:
 
 		static std::unique_ptr<BTNode> weapon_master_tree_factory(AISystem* ai)
 		{
+			// Selector - special attack
+			auto fire_attack = std::make_unique<RegularAttack>();
+			auto ice_attack = std::make_unique<RegularAttack>();
+			auto gale_attack = std::make_unique<RegularAttack>();
+			auto tar_attack = std::make_unique<RegularAttack>();
+				// WeaponMaster has 25% chance to make a tar attack during special attack mode.
+			auto selector_special_attack = std::make_unique<Selector>(std::move(tar_attack));
+			Selector* p = selector_special_attack.get();
+			selector_special_attack->add_precond_and_child(
+				// WeaponMaster has 25% chance to make a fire attack during special attack mode.
+				[ai](Entity /*e*/) { return ai->chance_to_happen(0.25f); },
+				std::move(fire_attack));
+			selector_special_attack->add_precond_and_child(
+				// WeaponMaster has 25% chance to make a ice attack during special attack mode.
+				[ai](Entity /*e*/) { return ai->chance_to_happen(0.33f); },
+				std::move(ice_attack));
+			selector_special_attack->add_precond_and_child(
+				// WeaponMaster has 25% chance to make a gale attack during special attack mode.
+				[ai](Entity /*e*/) { return ai->chance_to_happen(0.50f); },
+				std::move(gale_attack));
+
 			// Selector - active
 			auto regular_attack = std::make_unique<RegularAttack>();
 			auto sequence_active = std::make_unique<Sequence>();
 			sequence_active->add_child(std::move(regular_attack));
+			sequence_active->add_child(std::move(selector_special_attack));
 
 			// Selector - idle
 			auto recover_health = std::make_unique<RecoverHealth>(0.20f);
