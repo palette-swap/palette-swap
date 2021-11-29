@@ -8,6 +8,7 @@
 #include "common.hpp"
 #include "components.hpp"
 
+#include "lighting_system.hpp"
 #include "map_generator_system.hpp"
 
 // System responsible for setting up OpenGL and for rendering all the
@@ -124,8 +125,6 @@ public:
 	// Draw all entities
 	void draw();
 
-	void draw_lighting(const mat3& projection);
-
 	// Draw UI entities over top
 	void draw_ui(const mat3& projection);
 
@@ -197,6 +196,9 @@ private:
 								const vec2& buffer_top_left,
 								const vec2& buffer_down_right);
 
+	// Lighting System
+	LightingSystem lighting;
+
 	// Window handle
 	GLFWwindow* window = nullptr;
 
@@ -211,8 +213,6 @@ private:
 	
 	float screen_scale = window_default_scale;
 	vec2 screen_size = { window_width_px, window_height_px };
-
-	Entity lighting_state_entity = registry.create();
 
 	Entity screen_state_entity = registry.create();
 

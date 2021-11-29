@@ -897,7 +897,23 @@ void RenderSystem::draw()
 
 	draw_ui(projection_2d);
 
-	draw_lighting(projection_2d);
+	glBindFramebuffer(GL_FRAMEBUFFER, lighting_frame_buffer);
+	gl_has_errors();
+	glViewport(0, 0, (GLsizei)screen_size_capped().x, (GLsizei)screen_size_capped().y);
+	glDepthRange(0.00001, 10);
+	glClearColor(0.0, 1.0, 0.0, 1.0);
+	glClearDepth(1.f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDisable(GL_DEPTH_TEST);
+
+	// Renders effects (ie spells), intended to be overlayed on top of regular render effects
+	for (auto [entity] : registry.view<LightingRequest>().each()) {
+		Transform transform = get_transform(entity);
+		transform.scale(vec2(32));
+		draw_rectangle(entity, transform, vec2(32), projection_2d);
+	}
 
 	// Truely render to the screen
 	draw_to_screen();
@@ -945,22 +961,6 @@ void RenderSystem::draw_ui(const mat3& projection)
 	for (auto [entity, line] : registry.view<Line>(entt::exclude<UIElement>).each()) {
 		draw_line(entity, line, projection);
 	}
-}
-
-void RenderSystem::draw_lighting(const mat3& projection)
-{
-
-	glBindFramebuffer(GL_FRAMEBUFFER, lighting_frame_buffer);
-	gl_has_errors();
-	// Clearing backbuffer
-	glViewport(0, 0, (GLsizei)screen_size_capped().x, (GLsizei)screen_size_capped().y);
-	glDepthRange(0.00001, 10);
-	glClearColor(1.0, 1.0, 1.0, 1.0);
-	glClearDepth(1.f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_DEPTH_TEST);
 }
 
 // projection matrix based on position of camera entity

@@ -51,6 +51,8 @@ bool RenderSystem::init(int width, int /*height*/, GLFWwindow* window_arg, std::
 	initialize_gl_effects();
 	initialize_gl_geometry_buffers();
 
+	lighting.init(map_generator);
+
 	return true;
 }
 
