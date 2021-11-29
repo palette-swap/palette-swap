@@ -327,10 +327,11 @@ private:
 			m_children.push_back(std::move(child));
 		}
 
-		void init(Entity e) override {
+		void init(Entity e) override
+		{
 			debug_log("Debug: Selector.init\n");
 			m_index = -1;
-			for (const auto& child: m_children) {
+			for (const auto& child : m_children) {
 				child->init(e);
 			}
 			m_default_child->init(e);
@@ -363,6 +364,61 @@ private:
 		std::vector<std::function<bool(Entity)>> m_preconditions;
 		std::vector<std::unique_ptr<BTNode>> m_children;
 		std::unique_ptr<BTNode> m_default_child;
+	};
+
+	// Composite logic node: Sequence
+	class Sequence : public BTNode {
+
+	public:
+		Sequence()
+			: m_index(0)
+		{
+		}
+
+		void init(Entity e) override
+		{
+			debug_log("Debug: Sequence.init\n");
+
+			// Trivial case.
+			if (m_children.empty()) {
+				return;
+			}
+
+			m_index = 0;
+			// Initialize the first child.
+			const auto& child = m_children[m_index];
+			child->init(e);
+		}
+
+		BTState process(Entity e, AISystem* ai) override
+		{
+			debug_log("Debug: Sequence.process\n");
+
+			// Trivial case.
+			if (m_children.empty()) {
+				return handle_process_result(BTState::Success);
+			}
+
+			// Process current child.
+			BTState state = m_children[m_index]->process(e, ai);
+
+			// Select a new active child and initialize its internal state.
+			if (state == BTState::Success) {
+				++m_index;
+				if (m_index < m_children.size()) {
+					m_children[m_index]->init(e);
+					return handle_process_result(BTState::Running);
+				} else {
+					return handle_process_result(BTState::Success);
+				}
+			} else {
+				return handle_process_result(BTState::Failure);
+			}
+		}
+		
+	private:
+		int m_index;
+		std::vector<std::unique_ptr<BTNode>> m_children;
 	};
 
 	class SummonerTree : public BTNode {
@@ -428,7 +484,7 @@ private:
 			// Selector - alive
 			auto selector_alive = std::make_unique<Selector>(std::move(selector_idle));
 			selector_alive->add_precond_and_child(
-				// Summoner switch to attack if it spots the player during active.
+				// Summoner switch to active if it spots the player.
 				[ai](Entity e) { return ai->is_player_spotted(e); },
 				std::move(selector_active));
 
@@ -465,6 +521,9 @@ private:
 
 		static std::unique_ptr<BTNode> weapon_master_tree_factory(AISystem* ai)
 		{
+			// Selector - active
+			auto sequence_active = std::make_unique<Sequence>();
+
 			// Selector - idle
 			auto recover_health = std::make_unique<RecoverHealth>(0.20f);
 			auto do_nothing = std::make_unique<DoNothing>();
@@ -474,7 +533,14 @@ private:
 				[ai](Entity e) { return ai->is_health_below(e, 1.00f); },
 				std::move(recover_health));
 
-			return std::make_unique<SummonerTree>(std::move(selector_idle));
+			// Selector - alive
+			auto selector_alive = std::make_unique<Selector>(std::move(selector_idle));
+			selector_alive->add_precond_and_child(
+				// WeaponMaster switch to active if it spots the player.
+				[ai](Entity e) { return ai->is_player_spotted(e); },
+				std::move(sequence_active));
+
+			return std::make_unique<WeaponMasterTree>(std::move(selector_alive));
 		}
 
 	private:
