@@ -104,68 +104,13 @@ const static uint8_t next_level_tile = 14;
 const static uint8_t last_level_tile = 20;
 const static std::array<uint8_t, 2> trap_tiles = { 28, 36 };
 
-// customized cellular automata algorithm to smooth the room out
-static void smooth_room(RoomLayout& curr_layout, uint iterations, const std::set<int>& critical_locations)
-{
-	RoomLayout updated_layout = curr_layout;
-	auto get_neighbour_walls = [](int tile_row, int tile_col, const RoomLayout& room_layout) {
-		int wall_count = 0;
-		for (int neighbour_row = tile_row - 1; neighbour_row <= tile_row + 1; neighbour_row++) {
-			for (int neighbour_col = tile_col - 1; neighbour_col <= tile_col + 1; neighbour_col++) {
-				if (neighbour_row == tile_row && neighbour_col == tile_col) {
-					continue;
-				}
-				if (neighbour_row < 0 || neighbour_row >= room_size || neighbour_col < 0 || neighbour_col >= room_size
-					|| room_layout.at(neighbour_row * room_size + neighbour_col)
-						== static_cast<uint32_t>(solid_block_tile)
-					|| room_layout.at(neighbour_row * room_size + neighbour_col) == static_cast<uint32_t>(void_tile)) {
-					wall_count++;
-				}
-			}
-		}
-		return wall_count;
-	};
+const static std::array<uint8_t, 8> floor_tiles = { 0, 8, 16, 24, 32, 40, 48 }; 
+const static std::array<uint8_t, 1> obstacle_tiles = { 56 };
 
-	for (uint i = 0; i < iterations; i++) {
-		// each iteration is broken into two steps, smoothing out and shrinking
-		// 1. smooth room out based on neighbouring tiles
-		for (int tile_position = 0; tile_position < curr_layout.size(); tile_position++) {
-			if (critical_locations.find(tile_position) != critical_locations.end()
-				|| curr_layout.at(tile_position) == next_level_tile
-				|| curr_layout.at(tile_position) == last_level_tile) {
-				continue;
-			}
-			int tile_row = tile_position / 10;
-			int tile_col = tile_position % 10;
-			int num_walls_around = get_neighbour_walls(tile_row, tile_col, curr_layout);
-
-			if (num_walls_around > 3) {
-				updated_layout.at(tile_position) = solid_block_tile;
-			} else {
-				updated_layout.at(tile_position) = floor_tile;
-			}
-		}
-
-		// 2. shrink room from outside
-		for (int tile_position = 0; tile_position < curr_layout.size(); tile_position++)  {
-			int tile_row = tile_position / 10;
-			int tile_col = tile_position % 10;
-			int num_walls_around = get_neighbour_walls(tile_row, tile_col, updated_layout);
-
-			if (num_walls_around == 8) {
-				updated_layout.at(tile_position) = void_tile;
-			}
-		}
-		curr_layout = updated_layout;
-	}
-}
-
-const static std::array<uint8_t, 8> floor_tiles = { 40, 0, 8, 16, 24, 32, 48, 56 }; 
-
-// TODO: update to a decent mask
-const static uint8_t room_floor_mask = floor_tile;
-const static uint8_t room_wall_mask = solid_block_tile;
-const static uint8_t room_outside_mask = void_tile;
+const static uint8_t room_floor_mask = 4;
+const static uint8_t room_wall_mask = 5;
+const static uint8_t room_outside_mask = 6;
+const static uint8_t room_obstacle_mask = 7;
 
 // room entrance size on each open side
 const static int room_entrance_size = 2;
@@ -191,10 +136,16 @@ const static uint8_t boundary_tile_outer_bl = 33; // bot left
 const static uint8_t boundary_tile_outer_br = 34; // bot right
 
 // randomly generate a floor tile from given floor tiles
-const static uint8_t get_random_floor_tile(std::default_random_engine & random_eng)
+const static uint8_t generate_random_floor_tile(std::default_random_engine & random_eng)
 {
-	std::binomial_distribution<int> floor_tile_dist(floor_tiles.size() - 1, 0.3);
+	std::uniform_int_distribution<int> floor_tile_dist(0, floor_tiles.size() - 1);
 	return static_cast<uint8_t>(floor_tiles.at(floor_tile_dist(random_eng)));
+}
+
+const static uint8_t generate_random_obstacle_tile(std::default_random_engine & random_eng)
+{
+	std::uniform_int_distribution<int> obstacle_tile_dist(0, obstacle_tiles.size() - 1);
+	return static_cast<uint8_t>(obstacle_tiles.at(obstacle_tile_dist(random_eng)));
 }
 
 const static uint8_t generate_boundary_tile(const RoomLayout & room_layout, size_t tile_index)
@@ -238,16 +189,30 @@ const static uint8_t generate_boundary_tile(const RoomLayout & room_layout, size
 }
 
 // update boundary tiles to render more naturally, purely for visual effects
-const static void update_boundary_tiles(RoomLayout &room_layout, const std::set<Direction>& open_directions, std::default_random_engine & random_eng)
+const static void update_room_tiles(RoomLayout &room_layout, const std::set<Direction>& open_directions, std::default_random_engine & random_eng)
 {
 	RoomLayout original_room_layout = room_layout;
 	for (size_t i = 0; i < original_room_layout.size(); i++) {
 		uint8_t tile_mask = original_room_layout.at(i);
-		if (tile_mask == room_floor_mask) {
-			room_layout.at(i) = get_random_floor_tile(random_eng);
-			continue;
-		} else if (tile_mask == room_wall_mask) {
+		switch (tile_mask)
+		{
+		case room_floor_mask: {
+			room_layout.at(i) = generate_random_floor_tile(random_eng);
+			break;
+		}
+		case room_wall_mask: {
 			room_layout.at(i) = generate_boundary_tile(original_room_layout, i);
+			break;
+		}
+		case room_obstacle_mask: {
+			room_layout.at(i) = generate_random_obstacle_tile(random_eng);
+			break;
+		}
+		case room_outside_mask: {
+			room_layout.at(i) = void_tile;
+		}
+		default:
+			break;
 		}
 	}
 
@@ -304,12 +269,68 @@ const static void update_boundary_tiles(RoomLayout &room_layout, const std::set<
 	room_layout = room_layout;
 }
 
+// customized cellular automata algorithm to smooth the room out
+// TODO: incorporate rock and grass generation to cellular automata
+static void smooth_room(RoomLayout& curr_layout, uint iterations, const std::set<int>& critical_locations)
+{
+	RoomLayout updated_layout = curr_layout;
+	auto get_neighbour_walls = [](int tile_row, int tile_col, const RoomLayout& room_layout) {
+		int wall_count = 0;
+		for (int neighbour_row = tile_row - 1; neighbour_row <= tile_row + 1; neighbour_row++) {
+			for (int neighbour_col = tile_col - 1; neighbour_col <= tile_col + 1; neighbour_col++) {
+				if (neighbour_row == tile_row && neighbour_col == tile_col) {
+					continue;
+				}
+				if (neighbour_row < 0 || neighbour_row >= room_size || neighbour_col < 0 || neighbour_col >= room_size
+					|| (room_layout.at(neighbour_row * room_size + neighbour_col)
+						== static_cast<uint32_t>(room_wall_mask))
+					|| room_layout.at(neighbour_row * room_size + neighbour_col) == static_cast<uint32_t>(room_outside_mask)) {
+					wall_count++;
+				}
+			}
+		}
+		return wall_count;
+	};
+
+	for (uint i = 0; i < iterations; i++) {
+		// each iteration is broken into two steps, smoothing out and shrinking
+		// 1. smooth room out based on neighbouring tiles
+		for (int tile_position = 0; tile_position < curr_layout.size(); tile_position++) {
+			if (critical_locations.find(tile_position) != critical_locations.end()
+				|| curr_layout.at(tile_position) == next_level_tile
+				|| curr_layout.at(tile_position) == last_level_tile) {
+				continue;
+			}
+			int tile_row = tile_position / 10;
+			int tile_col = tile_position % 10;
+			int num_walls_around = get_neighbour_walls(tile_row, tile_col, curr_layout);
+
+			if (num_walls_around > 3) {
+				updated_layout.at(tile_position) = room_wall_mask;
+			} else {
+				updated_layout.at(tile_position) = room_floor_mask;
+			}
+		}
+
+		// 2. shrink room from outside
+		for (int tile_position = 0; tile_position < curr_layout.size(); tile_position++)  {
+			int tile_row = tile_position / 10;
+			int tile_col = tile_position % 10;
+			int num_walls_around = get_neighbour_walls(tile_row, tile_col, updated_layout);
+
+			if (num_walls_around == 8) {
+				updated_layout.at(tile_position) = room_outside_mask;
+			}
+		}
+		curr_layout = updated_layout;
+	}
+}
 
 RoomLayout MapGenerator::generate_room(const std::set<Direction>& open_directions,
 									   RoomType room_type,
 									   MapUtility::LevelGenConf level_gen_conf,
 									   RoomGenerationEngines random_engs,
-									   bool /*is_debugging*/)
+									   bool is_debugging)
 {
 	// max generation values
 	const static double max_side_path_probability = 0.9;
@@ -511,7 +532,10 @@ RoomLayout MapGenerator::generate_room(const std::set<Direction>& open_direction
 		room_layout = room_templates.at(room_type);
 	}
 
-	std::bernoulli_distribution blocks_dist(level_gen_conf.room_density);
+	std::bernoulli_distribution blocks_dist(0.05);
+	std::bernoulli_distribution spawn_traps_dist(0.05);
+	std::uniform_int_distribution<int> traps_dist(0, trap_tiles.size() - 1);
+
 	for (int room_row = 0; room_row < room_size; room_row++) {
 		for (int room_col = 0; room_col < room_size; room_col++) {
 			int room_index = room_row * room_size + room_col;
@@ -527,13 +551,17 @@ RoomLayout MapGenerator::generate_room(const std::set<Direction>& open_direction
 			}
 
 			if (is_outside_tile(room_index)) {
-				room_layout.at(room_index) = static_cast<uint32_t>(void_tile);
+				room_layout.at(room_index) = room_outside_mask;
 			} else if (is_boundary_tile(room_index)) {
-				room_layout.at(room_index) = static_cast<uint32_t>(solid_block_tile);
-			} else if ((room_type == RoomType::Critical)
-						   && (critical_locations.find(room_index) == critical_locations.end())
+				room_layout.at(room_index) = room_wall_mask;
+			} else if ((critical_locations.find(room_index) == critical_locations.end())
 						   && blocks_dist(random_engs.general_eng)) {
-				// room_layout.at(room_index) = static_cast<uint32_t>(solid_block_tile);
+				room_layout.at(room_index) = room_obstacle_mask;
+			} else if (spawn_traps_dist(random_engs.traps_eng)) {
+				room_layout.at(room_index) = trap_tiles.at(traps_dist(random_engs.general_eng));
+			} else {
+				//TODO: move this into update room tiles and into cellular automata
+				room_layout.at(room_index) = room_floor_mask;
 			}
 		}
 	}
@@ -542,19 +570,11 @@ RoomLayout MapGenerator::generate_room(const std::set<Direction>& open_direction
 	smooth_room(room_layout, level_gen_conf.room_smoothness, critical_locations);
 
 	// update boundary tiles
-	update_boundary_tiles(room_layout, open_directions, random_engs.general_eng);
+	random_engs.general_eng.seed(level_gen_conf.seed);
+	update_room_tiles(room_layout, open_directions, random_engs.general_eng);
 
-	// // generate traps
-	// std::bernoulli_distribution spawn_traps_dist(max_traps_density * level_gen_conf.room_traps_density);
-	// std::uniform_int_distribution<int> traps_dist(0, trap_tiles.size() - 1);
-
-	// bool will_spawn_trap = spawn_traps_dist(random_engs.traps_eng);
-	// for (int room_index = 0; room_index < room_size * room_size; room_index++) {
-	// 	if (will_spawn_trap && room_layout.at(room_index) == floor_tile) {
-	// 		room_layout.at(room_index) = trap_tiles.at(traps_dist(random_engs.general_eng));
-	// 		will_spawn_trap = false;
-	// 	}
-	// 	will_spawn_trap |= spawn_traps_dist(random_engs.traps_eng);
+	// for (int i : critical_locations) {
+	// 	room_layout.at(i) = 12;
 	// }
 
 	return room_layout;
