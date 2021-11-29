@@ -35,10 +35,10 @@
           "name": "",
           "to_hit_min": 20,
           "to_hit_max": 20,
-          "damage_min": 5,
-          "damage_max": 15,
+          "damage_min": 10,
+          "damage_max": 10,
           "damage_type": 0,
-          "targeting_type": 1
+          "targeting_type": 0
         }
       }
     },
