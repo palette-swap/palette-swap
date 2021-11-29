@@ -23,6 +23,15 @@ public:
 	void step();
 
 private:
+	enum class Rotation {
+		Down = 0,
+		Left = Down + 1,
+		Up = Left + 1,
+		Right = Up + 1,
+		Count = Right + 1,
+	};
+	template <typename T> tvec2<T> rotate_pos(tvec2<T> pos, tvec2<T> origin, Rotation rotation);
 
-	void scan_row(uvec2 origin, int dy, const vec2& player_world_pos, vec2 left_bound, vec2 right_bound);
+	void
+	scan_row(uvec2 origin, int dy, const vec2& player_world_pos, vec2 left_bound, vec2 right_bound, Rotation rotation);
 };
