@@ -13,8 +13,8 @@
 
 #include "soloud_wav.h"
 
-static void debug_log(std::string string) {
-	// printf(string);
+static void debug_log(std::string str) {
+	 printf(str.c_str());
 }
 
 class AISystem {
@@ -139,7 +139,7 @@ private:
 
 		virtual BTState handle_process_result(BTState state)
 		{
-			process_count += state != BTState::Running ? 1 : 0;
+			process_count += (state != BTState::Running) ? 1 : 0;
 			return state;
 		}
 
@@ -433,6 +433,48 @@ private:
 				std::move(selector_active));
 
 			return std::make_unique<SummonerTree>(std::move(selector_alive));
+		}
+
+	private:
+		std::unique_ptr<BTNode> m_child;
+	};
+
+	class WeaponMasterTree : public BTNode {
+	public:
+		explicit WeaponMasterTree(std::unique_ptr<BTNode> child)
+			: m_child(std::move(child))
+		{
+		}
+
+		void init(Entity e) override
+		{
+			debug_log("Debug: WeaponMasterTree.init\n");
+			m_child->init(e);
+		}
+
+		BTState process(Entity e, AISystem* ai) override
+		{
+			debug_log("--------------------------------------------------\n");
+			debug_log("Debug: WeaponMasterTree.process\n");
+			BTState state = m_child->process(e, ai);
+			std::string message = "Debug: State after process = ";
+			message += state_names.at((size_t)state);
+			debug_log(message + "\n");
+			return handle_process_result(state);
+		}
+
+		static std::unique_ptr<BTNode> weapon_master_tree_factory(AISystem* ai)
+		{
+			// Selector - idle
+			auto recover_health = std::make_unique<RecoverHealth>(0.20f);
+			auto do_nothing = std::make_unique<DoNothing>();
+			auto selector_idle = std::make_unique<Selector>(std::move(do_nothing));
+			selector_idle->add_precond_and_child(
+				// WeaponMaster recover 20% HP if its HP is not full during idle.
+				[ai](Entity e) { return ai->is_health_below(e, 1.00f); },
+				std::move(recover_health));
+
+			return std::make_unique<SummonerTree>(std::move(selector_idle));
 		}
 
 	private:

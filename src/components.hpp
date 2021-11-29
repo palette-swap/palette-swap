@@ -219,7 +219,8 @@ enum class EnemyType {
 	Clone = Spider + 1,
 	// Boss Enemy Types
 	KingMush = Clone + 1,
-	EnemyCount = KingMush + 1,
+	Titho = KingMush + 1,
+	EnemyCount = Titho + 1,
 };
 
 enum class EnemyBehaviour {
@@ -231,24 +232,26 @@ enum class EnemyBehaviour {
 	Aggressive = Defensive + 1,
 	// Boss Enemy Behaviours (Behaviour Trees)
 	Summoner = Aggressive + 1,
-	EnemyBehaviourCount = Summoner + 1,
+	WeaponMaster = Summoner + 1,
+	EnemyBehaviourCount = WeaponMaster + 1,
 };
 
 const std::array<EnemyBehaviour, (size_t)EnemyType::EnemyCount> enemy_type_to_behaviour = {
 	EnemyBehaviour::Dummy,		EnemyBehaviour::Cowardly,  EnemyBehaviour::Basic,	 EnemyBehaviour::Defensive,
 	EnemyBehaviour::Aggressive, EnemyBehaviour::Basic,	   EnemyBehaviour::Basic,	 EnemyBehaviour::Cowardly,
-	EnemyBehaviour::Aggressive, EnemyBehaviour::Defensive, EnemyBehaviour::Summoner,
+	EnemyBehaviour::Aggressive, EnemyBehaviour::Defensive, EnemyBehaviour::Summoner, EnemyBehaviour::WeaponMaster,
 };
 
 // Small Enemy Behaviours (State Machines) uses the following states.
-// Dummy:		Idle, Active.
-// Basic:		Idle, Active.
-// Cowardly:	Idle, Active, Flinched.
-// Defensive:	Idle, Active, Immortal.
-// Aggressive:	Idle, Active, Powerup.
+// Dummy:			Idle, Active. 
+// Basic:			Idle, Active.
+// Cowardly:		Idle, Active, Flinched.
+// Defensive:		Idle, Active, Immortal.
+// Aggressive:		Idle, Active, Powerup.
 //
 // Boss Enemy Behaviours (Behaviour Trees) uses the following states.
-// Summoner:	Idle, Charging.
+// Summoner:		Idle, Charging.
+// WeaponMaster:	Idle.
 enum class EnemyState {
 	Idle = 0,
 	Active = Idle + 1,
@@ -288,19 +291,11 @@ struct RedExclusive {
 struct BlueExclusive {
 };
 
-// Component denoting the AOE entity that is displaying a boss's attack
-struct AOEAttackActive {
-	Entity aoe_attack;
-};
-
-// Component denoting an AOE's vector of intended attack targets
-struct AOETargets {
-};
-
 // Component that denotes what colour the player cannot see at the moment
 struct PlayerInactivePerception {
 	ColorState inactive = ColorState::Red;
 };
+
 //---------------------------------------------------------------------------
 //-------------------------         COMBAT          -------------------------
 //---------------------------------------------------------------------------
@@ -511,6 +506,7 @@ struct Weapon {
 	Attack& get_attack(size_t i) { return registry.get<Attack>(given_attacks.at(i)); }
 	std::string get_description();
 };
+
 //---------------------------------------------------------------------------
 //-------------------------		  ANIMATIONS        -------------------------
 //---------------------------------------------------------------------------
@@ -532,8 +528,8 @@ const std::array<TEXTURE_ASSET_ID, static_cast<int>(EnemyType::EnemyCount)> enem
 	TEXTURE_ASSET_ID::MUSHROOM,
 	TEXTURE_ASSET_ID::SPIDER,
 	TEXTURE_ASSET_ID::CLONE,
-	// TODO (Evan): temporarily used MUSHROOM to mock KINGMUSH for testing, please replace it when the texture is
-	// available.
+	TEXTURE_ASSET_ID::KING_MUSH,
+	// TODO (Evan): temporarily used KING_MUSH to mock TITHO for testing, please replace it when the texture is available.
 	TEXTURE_ASSET_ID::KING_MUSH,
 };
 
