@@ -474,6 +474,33 @@ void AISystem::become_powerup(const Entity& entity, bool flag)
 	}
 }
 
+void AISystem::add_attack_effect(const Entity& entity, Effect effect, float chance, int magnitude)
+{
+	Entity effect_entity = registry.create();
+	EffectEntry& effect_entry = registry.emplace<EffectEntry>(effect_entity);
+	effect_entry.next_effect = entt::null;
+	effect_entry.effect = effect;
+	effect_entry.chance = chance;
+	effect_entry.magnitude = magnitude;
+
+	Stats& stats = registry.get<Stats>(entity);
+	Entity head_entity = stats.base_attack.effects;
+	stats.base_attack.effects = effect_entity;
+	effect_entry.next_effect = head_entity;
+}
+
+void AISystem::clear_attack_effects(const Entity& entity)
+{
+	Stats& stats = registry.get<Stats>(entity);
+	Entity cur_entity = stats.base_attack.effects;
+	while (cur_entity != entt::null) {
+		Entity next_entity = registry.get<EffectEntry>(cur_entity).next_effect;
+		registry.destroy(cur_entity);
+		cur_entity = next_entity;
+	}
+	stats.base_attack.effects = entt::null;
+}
+
 void AISystem::summon_enemies(const Entity& entity, EnemyType enemy_type, int num)
 {
 	MapPosition& map_pos = registry.get<MapPosition>(entity);

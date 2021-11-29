@@ -33,7 +33,7 @@
         "evasion": 12,
         "attack": {
           "name": "",
-          "to_hit_min": 1,
+          "to_hit_min": 20,
           "to_hit_max": 20,
           "damage_min": 5,
           "damage_max": 15,

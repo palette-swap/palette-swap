@@ -78,6 +78,12 @@ private:
 	// An entity become powerup if flag is true. Otherwise cancel powerup.
 	void become_powerup(const Entity& entity, bool flag);
 
+	// An entity is added with an attack effect.
+	void add_attack_effect(const Entity& entity, Effect effect, float chance, int magnitude);
+
+	// An entity is cleared with all attack effects.
+	void clear_attack_effects(const Entity& entity);
+
 	// An entity summons new enemies with a certain type and number.
 	void summon_enemies(const Entity& entity, EnemyType enemy_type, int num);
 
@@ -257,10 +263,10 @@ private:
 			debug_log("Debug: RegularAttack.process\n");
 
 			ai->attack_player(e);
-
+			
 			ai->switch_enemy_state(e, EnemyState::Idle);
 
-			// TODO (Evan): animation for Titho and the target.
+			// TODO (Evan): animation for Titho and the target player.
 			if (registry.get<Enemy>(e).type != EnemyType::Titho) {
 				// Gets information related to where the boss is attacking from a ranged.
 				// Can be moved into animation ssytem to make this portion clearer and free or registry accesses
@@ -287,12 +293,41 @@ private:
 			ai->attack_player(e);
 			ai->become_powerup(e, false);
 
+			// TODO (Evan): animation for Titho and the target player.
 			ai->switch_enemy_state(e, EnemyState::Idle);
-
-			// TODO (Evan): animation for Titho and the target.
 
 			return handle_process_result(BTState::Success);
 		}
+	};
+
+	// Leaf action node: IceAttack (stun effect)
+	class IceAttack : public BTNode {
+	public:
+		IceAttack(float chance, int magnitude)
+			: m_chance(chance)
+			, m_magnitude(magnitude)
+		{
+		}
+
+		void init(Entity /*e*/) override { debug_log("Debug: IceAttack.init\n"); }
+
+		BTState process(Entity e, AISystem* ai) override
+		{
+			debug_log("Debug: IceAttack.process\n");
+
+			ai->add_attack_effect(e, Effect::Stun, m_chance, m_magnitude);
+			ai->attack_player(e);
+			ai->clear_attack_effects(e);
+
+			// TODO (Evan): animation for Titho and the target player.
+			ai->switch_enemy_state(e, EnemyState::Idle);
+
+			return handle_process_result(BTState::Success);
+		}
+
+	private:
+		float m_chance;
+		int m_magnitude;
 	};
 
 	// Leaf action node: RecoverHealth
@@ -551,24 +586,24 @@ private:
 		{
 			// Selector - special attack
 			auto fire_attack = std::make_unique<FireAttack>();
-			auto ice_attack = std::make_unique<RegularAttack>();
+			auto ice_attack = std::make_unique<IceAttack>(1.0f, 1);
 			auto gale_attack = std::make_unique<RegularAttack>();
 			auto tar_attack = std::make_unique<RegularAttack>();
-			auto selector_special_attack = std::make_unique<Selector>(std::move(tar_attack));
-			Selector* p = selector_special_attack.get();
-			selector_special_attack->add_precond_and_child(
-				// WeaponMaster has 25% chance to make a fire attack during special attack mode.
-				[ai](Entity /*e*/) { return ai->chance_to_happen(0.25f); },
-				std::move(fire_attack));
-			selector_special_attack->add_precond_and_child(
-				// WeaponMaster has 25% chance to make a ice attack during special attack mode.
-				[ai](Entity /*e*/) { return ai->chance_to_happen(0.33f); },
-				std::move(ice_attack));
-			selector_special_attack->add_precond_and_child(
-				// WeaponMaster has 25% chance to make a gale attack during special attack mode.
-				[ai](Entity /*e*/) { return ai->chance_to_happen(0.50f); },
-				std::move(gale_attack));
-				// WeaponMaster has 25% chance to make a tar attack during special attack mode.
+			auto selector_special_attack = std::make_unique<Selector>(std::move(ice_attack));
+			//Selector* p = selector_special_attack.get();
+			//selector_special_attack->add_precond_and_child(
+			//	// WeaponMaster has 25% chance to make a fire attack during special attack mode.
+			//	[ai](Entity /*e*/) { return ai->chance_to_happen(0.25f); },
+			//	std::move(fire_attack));
+			//selector_special_attack->add_precond_and_child(
+			//	// WeaponMaster has 25% chance to make a ice attack during special attack mode.
+			//	[ai](Entity /*e*/) { return ai->chance_to_happen(0.33f); },
+			//	std::move(ice_attack));
+			//selector_special_attack->add_precond_and_child(
+			//	// WeaponMaster has 25% chance to make a gale attack during special attack mode.
+			//	[ai](Entity /*e*/) { return ai->chance_to_happen(0.50f); },
+			//	std::move(gale_attack));
+			//	// WeaponMaster has 25% chance to make a tar attack during special attack mode.
 
 			// Selector - active
 			auto regular_attack = std::make_unique<RegularAttack>();

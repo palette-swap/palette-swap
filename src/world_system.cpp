@@ -321,6 +321,17 @@ void WorldSystem::return_arrow_to_player()
 // On key callback
 void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 {
+	// Player is stunned.
+	if (turns->ready_to_act(player)) {
+		if (Stunned* stunned = registry.try_get<Stunned>(player)) {
+			if (--(stunned->rounds) <= 0) {
+				registry.erase<Stunned>(player);
+			}
+			turns->skip_team_action(player);
+			return;
+		}
+	}
+
 	if (check_debug_keys(key, action, mod)) {
 		return;
 	}
@@ -640,6 +651,17 @@ void WorldSystem::try_change_color()
 // TODO: Integrate into turn state to only enable if player's turn is on
 void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 {
+	// Player is stunned.
+	if (turns->ready_to_act(player)) {
+		if (Stunned* stunned = registry.try_get<Stunned>(player)) {
+			if (--(stunned->rounds) <= 0) {
+				registry.erase<Stunned>(player);
+			}
+			turns->skip_team_action(player);
+			return;
+		}
+	}
+
 	if (story->in_cutscene()) {
 		story->on_mouse_click(button, action);
 		return;
