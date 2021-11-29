@@ -375,6 +375,11 @@ private:
 		{
 		}
 
+		void add_child(std::unique_ptr<BTNode> child)
+		{
+			m_children.push_back(std::move(child));
+		}
+
 		void init(Entity e) override
 		{
 			debug_log("Debug: Sequence.init\n");
@@ -522,7 +527,9 @@ private:
 		static std::unique_ptr<BTNode> weapon_master_tree_factory(AISystem* ai)
 		{
 			// Selector - active
+			auto regular_attack = std::make_unique<RegularAttack>();
 			auto sequence_active = std::make_unique<Sequence>();
+			sequence_active->add_child(std::move(regular_attack));
 
 			// Selector - idle
 			auto recover_health = std::make_unique<RecoverHealth>(0.20f);
