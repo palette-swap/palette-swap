@@ -23,8 +23,8 @@ public:
 private:
 	// room types for procedural generation
 	enum class RoomType : uint8_t {
-		Start, // starting room
-		End, // ending room
+		Entrance, // starting room
+		Exit, // ending room
 		Side, // side room
 		Critical, // rooms that the player will definitely come across
 	};
@@ -36,6 +36,9 @@ private:
 		std::default_random_engine general_eng;
 		// traps generation
 		std::default_random_engine traps_eng;
+		// enemy generation
+		std::default_random_engine enemy_random_eng_red;
+		std::default_random_engine enemy_random_eng_blue;
 
 		// currently using a single seed seems to be enough, if we want more
 		// variety, we could use multiple seeds
@@ -43,8 +46,35 @@ private:
 		{
 			general_eng.seed(seed);
 			traps_eng.seed(seed);
+			enemy_random_eng_red.seed(seed);
+			// use a different seed for the other dimension
+			enemy_random_eng_blue.seed(seed);
 		}
 	};
+
+	// represent a room position when we generate the path in a level
+	struct PathNode {
+		int position; // position calculated by row * map_size + col
+		bool on_main_path;
+		RoomType room_type;
+		PathNode * parent = nullptr;
+		// neighbours on all directions, bi-directional
+		std::set<PathNode *> children;
+		PathNode(int position, bool on_main_path, RoomType room_type) : position(position), on_main_path(on_main_path), room_type(room_type) {}
+		std::set<Direction> get_room_open_directions() const;
+	};
+
+	// generate a path from node 
+	static bool generate_path_from_node(PathNode * curr_room, int path_length, std::set<int> & visited_rooms, std::default_random_engine & random_eng, RoomType room_type);
+
+	// iterate through the generated path(graph), and generate each room layout and enemies
+	// In-order traversal will be used, during the iteration, we will naturally have an order, this
+	// will enable us to have dependent rooms(e.g. locked door in room 5 while key is available in room 2)
+	static void traverse_path_and_generate_rooms(PathNode * starting_node,
+												 MapUtility::LevelGenConf & level_gen_conf,
+												 MapUtility::LevelConfiguration & level_conf,
+												 rapidjson::Document & level_snap_shot,
+												 RoomGenerationEngines & room_rand_eng);
 
 	// generate a room that has paths to all open sides, tile layout will be influenced by the level generation conf
 	// the open sides will be gauranteed to have at least 2 walkable tiles at the middle(row 4,5 or col 4,5)
