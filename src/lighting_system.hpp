@@ -21,4 +21,8 @@ public:
 	void init(std::shared_ptr<MapGeneratorSystem> map);
 
 	void step();
+
+private:
+
+	void scan_row(uvec2 origin, int dy, const vec2& player_world_pos, vec2 left_bound, vec2 right_bound);
 };
