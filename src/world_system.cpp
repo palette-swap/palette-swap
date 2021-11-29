@@ -565,6 +565,15 @@ void WorldSystem::move_player(Direction direction)
 		return;
 	}
 
+	// Player is immobilized.
+	if (Immobilized* immobilized = registry.try_get<Immobilized>(player)) {
+		if (--(immobilized->rounds) <= 0) {
+			registry.erase<Immobilized>(player);
+		}
+		turns->skip_team_action(player);
+		return;
+	}
+
 	MapPosition& map_pos = registry.get<MapPosition>(player);
 	WorldPosition& arrow_position = registry.get<WorldPosition>(player_arrow);
 	uvec2 new_pos = map_pos.position;

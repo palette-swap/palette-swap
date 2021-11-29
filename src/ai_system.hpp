@@ -330,6 +330,67 @@ private:
 		int m_magnitude;
 	};
 
+	// Leaf action node: GaleAttack (shove effect)
+	class GaleAttack : public BTNode {
+	public:
+		GaleAttack(float chance, int magnitude)
+			: m_chance(chance)
+			, m_magnitude(magnitude)
+		{
+		}
+
+		void init(Entity /*e*/) override { debug_log("Debug: GaleAttack.init\n"); }
+
+		BTState process(Entity e, AISystem* ai) override
+		{
+			debug_log("Debug: GaleAttack.process\n");
+
+			ai->add_attack_effect(e, Effect::Shove, m_chance, m_magnitude);
+			ai->attack_player(e);
+			ai->clear_attack_effects(e);
+
+			// TODO (Evan): animation for Titho and the target player.
+			ai->switch_enemy_state(e, EnemyState::Idle);
+
+			return handle_process_result(BTState::Success);
+		}
+
+	private:
+		float m_chance;
+		int m_magnitude;
+	};
+
+	// Leaf action node: TarAttack (immobilize effect and evasion down effect)
+	class TarAttack : public BTNode {
+	public:
+		TarAttack(float chance, int magnitude)
+			: m_chance(chance)
+			, m_magnitude(magnitude)
+		{
+		}
+
+		void init(Entity /*e*/) override { debug_log("Debug: TarAttack.init\n"); }
+
+		BTState process(Entity e, AISystem* ai) override
+		{
+			debug_log("Debug: TarAttack.process\n");
+
+			ai->add_attack_effect(e, Effect::Immobilize, m_chance, m_magnitude);
+			ai->add_attack_effect(e, Effect::EvasionDown, m_chance, m_magnitude);
+			ai->attack_player(e);
+			ai->clear_attack_effects(e);
+
+			// TODO (Evan): animation for Titho and the target player.
+			ai->switch_enemy_state(e, EnemyState::Idle);
+
+			return handle_process_result(BTState::Success);
+		}
+
+	private:
+		float m_chance;
+		int m_magnitude;
+	};
+
 	// Leaf action node: RecoverHealth
 	class RecoverHealth : public BTNode {
 	public:
@@ -587,23 +648,23 @@ private:
 			// Selector - special attack
 			auto fire_attack = std::make_unique<FireAttack>();
 			auto ice_attack = std::make_unique<IceAttack>(1.0f, 1);
-			auto gale_attack = std::make_unique<RegularAttack>();
-			auto tar_attack = std::make_unique<RegularAttack>();
-			auto selector_special_attack = std::make_unique<Selector>(std::move(ice_attack));
-			//Selector* p = selector_special_attack.get();
-			//selector_special_attack->add_precond_and_child(
-			//	// WeaponMaster has 25% chance to make a fire attack during special attack mode.
-			//	[ai](Entity /*e*/) { return ai->chance_to_happen(0.25f); },
-			//	std::move(fire_attack));
-			//selector_special_attack->add_precond_and_child(
-			//	// WeaponMaster has 25% chance to make a ice attack during special attack mode.
-			//	[ai](Entity /*e*/) { return ai->chance_to_happen(0.33f); },
-			//	std::move(ice_attack));
-			//selector_special_attack->add_precond_and_child(
-			//	// WeaponMaster has 25% chance to make a gale attack during special attack mode.
-			//	[ai](Entity /*e*/) { return ai->chance_to_happen(0.50f); },
-			//	std::move(gale_attack));
-			//	// WeaponMaster has 25% chance to make a tar attack during special attack mode.
+			auto gale_attack = std::make_unique<GaleAttack>(1.0f, 1);
+			auto tar_attack = std::make_unique<TarAttack>(1.0f, 1);
+			auto selector_special_attack = std::make_unique<Selector>(std::move(tar_attack));
+			Selector* p = selector_special_attack.get();
+			selector_special_attack->add_precond_and_child(
+				// WeaponMaster has 25% chance to make a fire attack during special attack mode.
+				[ai](Entity /*e*/) { return ai->chance_to_happen(0.25f); },
+				std::move(fire_attack));
+			selector_special_attack->add_precond_and_child(
+				// WeaponMaster has 25% chance to make a ice attack during special attack mode.
+				[ai](Entity /*e*/) { return ai->chance_to_happen(0.33f); },
+				std::move(ice_attack));
+			selector_special_attack->add_precond_and_child(
+				// WeaponMaster has 25% chance to make a gale attack during special attack mode.
+				[ai](Entity /*e*/) { return ai->chance_to_happen(0.50f); },
+				std::move(gale_attack));
+				// WeaponMaster has 25% chance to make a tar attack during special attack mode.
 
 			// Selector - active
 			auto regular_attack = std::make_unique<RegularAttack>();
