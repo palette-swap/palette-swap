@@ -1,6 +1,7 @@
 #version 330
 
 uniform sampler2D screen_texture;
+uniform sampler2D lighting_texture;
 uniform float time;
 uniform float darken_screen_factor;
 
@@ -28,7 +29,7 @@ void main()
 {
 	vec2 coord = distort(texcoord);
 
-    vec4 in_color = texture(screen_texture, coord);
+    vec4 in_color = texture(screen_texture, coord) * texture(lighting_texture, coord);
     color = color_shift(in_color);
     color = fade_color(color);
 }

@@ -124,6 +124,8 @@ public:
 	// Draw all entities
 	void draw();
 
+	void draw_lighting(const mat3& projection);
+
 	// Draw UI entities over top
 	void draw_ui(const mat3& projection);
 
@@ -154,6 +156,7 @@ private:
 	// The draw loop first renders to this texture, then it is used for the water
 	// shader
 	bool init_screen_texture();
+	bool init_lighting();
 
 	////////////////////////////////////////////////////////
 	// General helper functions
@@ -199,12 +202,17 @@ private:
 
 	// Screen texture handles
 	GLuint frame_buffer = 0;
+	GLuint lighting_frame_buffer = 0;
 	GLuint off_screen_render_buffer_color = 0;
 	GLuint off_screen_render_buffer_depth = 0;
+	GLuint lighting_buffer_color = 0;
+	GLuint lighting_buffer_depth = 0;
 
 	
 	float screen_scale = window_default_scale;
 	vec2 screen_size = { window_width_px, window_height_px };
+
+	Entity lighting_state_entity = registry.create();
 
 	Entity screen_state_entity = registry.create();
 

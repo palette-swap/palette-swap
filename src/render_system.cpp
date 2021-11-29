@@ -800,10 +800,18 @@ void RenderSystem::draw_to_screen()
 	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), nullptr);
 	gl_has_errors();
 
-	// Bind our texture in Texture Unit 0
-	glActiveTexture(GL_TEXTURE0);
+	// Bind our textures in
+	GLint screen_texture_loc = glGetUniformLocation(water_program, "screen_texture");
+	GLint lighting_texture_loc = glGetUniformLocation(water_program, "lighting_texture");
+	glUniform1i(screen_texture_loc, 0);
+	glUniform1i(lighting_texture_loc, 1);
 
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, off_screen_render_buffer_color);
+	gl_has_errors();
+
+	glActiveTexture(GL_TEXTURE0 + 1);
+	glBindTexture(GL_TEXTURE_2D, lighting_buffer_color);
 	gl_has_errors();
 	// Draw
 	glDrawElements(GL_TRIANGLES,
@@ -823,7 +831,7 @@ void RenderSystem::draw()
 	PlayerInactivePerception& player_perception = registry.get<PlayerInactivePerception>(player);
 	ColorState& inactive_color = player_perception.inactive;
 
-	// First render to the custom framebuffer
+	// Render to the custom framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
 	gl_has_errors();
 	// Clearing backbuffer
@@ -889,6 +897,8 @@ void RenderSystem::draw()
 
 	draw_ui(projection_2d);
 
+	draw_lighting(projection_2d);
+
 	// Truely render to the screen
 	draw_to_screen();
 
@@ -935,6 +945,22 @@ void RenderSystem::draw_ui(const mat3& projection)
 	for (auto [entity, line] : registry.view<Line>(entt::exclude<UIElement>).each()) {
 		draw_line(entity, line, projection);
 	}
+}
+
+void RenderSystem::draw_lighting(const mat3& projection)
+{
+
+	glBindFramebuffer(GL_FRAMEBUFFER, lighting_frame_buffer);
+	gl_has_errors();
+	// Clearing backbuffer
+	glViewport(0, 0, (GLsizei)screen_size_capped().x, (GLsizei)screen_size_capped().y);
+	glDepthRange(0.00001, 10);
+	glClearColor(1.0, 1.0, 1.0, 1.0);
+	glClearDepth(1.f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDisable(GL_DEPTH_TEST);
 }
 
 // projection matrix based on position of camera entity
@@ -1012,6 +1038,18 @@ void RenderSystem::on_resize(int width, int height)
 	screen_size = { width, height };
 
 	glBindTexture(GL_TEXTURE_2D, off_screen_render_buffer_color);
+	glTexImage2D(GL_TEXTURE_2D,
+				 0,
+				 GL_RGBA,
+				 (GLsizei)screen_size_capped().x,
+				 (GLsizei)screen_size_capped().y,
+				 0,
+				 GL_RGBA,
+				 GL_UNSIGNED_BYTE,
+				 nullptr);
+	gl_has_errors();
+
+	glBindTexture(GL_TEXTURE_2D, lighting_buffer_color);
 	glTexImage2D(GL_TEXTURE_2D,
 				 0,
 				 GL_RGBA,
