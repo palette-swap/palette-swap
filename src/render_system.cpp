@@ -793,16 +793,19 @@ void RenderSystem::draw_light(Entity entity, const Light& light, const mat3& pro
 
 void RenderSystem::draw_lighting(const mat3& projection)
 {
+	auto prep_buffer = [&]() {
+		glViewport(0, 0, (GLsizei)screen_size_capped().x, (GLsizei)screen_size_capped().y);
+		glDepthRange(0.00001, 10);
+		glClearColor(0.25, 0.25, 0.25, 1.0);
+		glClearDepth(1.f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glDisable(GL_DEPTH_TEST);
+	};
 	glBindFramebuffer(GL_FRAMEBUFFER, lighting_frame_buffer);
 	gl_has_errors();
-	glViewport(0, 0, (GLsizei)screen_size_capped().x, (GLsizei)screen_size_capped().y);
-	glDepthRange(0.00001, 10);
-	glClearColor(0.2, 0.2, 0.2, 1.0);
-	glClearDepth(1.f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_DEPTH_TEST);
+	prep_buffer();
 
 	for (auto [entity, light] : registry.view<Light>().each()) {
 		draw_light(entity, light, projection);
@@ -810,14 +813,7 @@ void RenderSystem::draw_lighting(const mat3& projection)
 
 	glBindFramebuffer(GL_FRAMEBUFFER, los_frame_buffer);
 	gl_has_errors();
-	glViewport(0, 0, (GLsizei)screen_size_capped().x, (GLsizei)screen_size_capped().y);
-	glDepthRange(0.00001, 10);
-	glClearColor(0.2, 0.2, 0.2, 1.0);
-	glClearDepth(1.f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_DEPTH_TEST);
+	prep_buffer();
 
 	for (auto [entity] : registry.view<LightingTile>().each()) {
 		Transform transform = get_transform(entity);
