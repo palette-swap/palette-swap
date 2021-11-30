@@ -9,6 +9,9 @@ Entity create_player(uvec2 pos)
 	registry.emplace<MapPosition>(entity, pos);
 	registry.emplace<Stats>(entity);
 
+	// Light up around the player
+	registry.emplace<Light>(entity, MapUtility::tile_size * 9);
+
 	Inventory& inventory = registry.emplace<Inventory>(entity);
 
 	// Setup Casting

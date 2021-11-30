@@ -77,6 +77,7 @@ class RenderSystem {
 		shader_path("water"),
 		shader_path("tilemap"),
 		shader_path("text_bubble"),
+		shader_path("light"),
 		shader_path("light_triangles"),
 		shader_path("lighting"),
 	};
@@ -190,6 +191,9 @@ private:
 	void draw_text(Entity entity, const Text& text, const mat3& projection);
 	void draw_line(Entity entity, const Line& line, const mat3& projection);
 	void draw_map(const mat3& projection, ColorState color);
+
+	// Lighting
+	void draw_light(Entity entity, const Light& light, const mat3& projection);
 	void draw_lighting(const mat3& projection);
 
 	void draw_triangles(const Transform& transform, const mat3& projection);
@@ -208,10 +212,13 @@ private:
 	// Screen texture handles
 	GLuint frame_buffer = 0;
 	GLuint lighting_frame_buffer = 0;
+	GLuint los_frame_buffer = 0;
 	GLuint off_screen_render_buffer_color = 0;
 	GLuint off_screen_render_buffer_depth = 0;
 	GLuint lighting_buffer_color = 0;
 	GLuint lighting_buffer_depth = 0;
+	GLuint los_buffer_color = 0;
+	GLuint los_buffer_depth = 0;
 
 	
 	float screen_scale = window_default_scale;

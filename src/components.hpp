@@ -164,7 +164,8 @@ enum class EFFECT_ASSET_ID {
 	WATER = AOE + 1,
 	TILE_MAP = WATER + 1,
 	TEXT_BUBBLE = TILE_MAP + 1,
-	LIGHT_TRIANGLES = TEXT_BUBBLE + 1,
+	LIGHT = TEXT_BUBBLE + 1,
+	LIGHT_TRIANGLES = LIGHT + 1,
 	LIGHTING = LIGHT_TRIANGLES + 1,
 	EFFECT_COUNT = LIGHTING + 1,
 };
@@ -213,6 +214,10 @@ struct LightingTriangle {
 };
 
 struct LightingTile {
+};
+
+struct Light {
+	float radius;
 };
 
 //---------------------------------------------------------------------------

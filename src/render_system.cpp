@@ -739,8 +739,76 @@ void RenderSystem::draw_map(const mat3& projection, ColorState color)
 	}
 }
 
-void RenderSystem::draw_lighting(const mat3& projection) {
+void RenderSystem::draw_light(Entity entity, const Light& light, const mat3& projection)
+{
+	Transform transform = get_transform(entity);
+
+	transform.scale(vec2(2) * light.radius);
+	const auto program = (GLuint)effects.at((uint8)EFFECT_ASSET_ID::LIGHT);
+
+	// Setting shaders
+	glUseProgram(program);
+	gl_has_errors();
+
+	const GLuint vbo = vertex_buffers.at((int)GEOMETRY_BUFFER_ID::LINE);
+	const GLuint ibo = index_buffers.at((int)GEOMETRY_BUFFER_ID::LINE);
+
+	// Setting vertex and index buffers
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+	gl_has_errors();
+
+	GLint in_position_loc = glGetAttribLocation(program, "in_position");
+	gl_has_errors();
+
+	GLint in_color_loc = glGetAttribLocation(program, "in_color");
+	gl_has_errors();
+
+	glEnableVertexAttribArray(in_position_loc);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), nullptr);
+	gl_has_errors();
+
+	glEnableVertexAttribArray(in_color_loc);
+	glVertexAttribPointer(
+		in_color_loc,
+		3,
+		GL_FLOAT,
+		GL_FALSE,
+		sizeof(ColoredVertex),
+		(void*)sizeof(vec3)); // NOLINT(performance-no-int-to-ptr,cppcoreguidelines-pro-type-cstyle-cast)
+	gl_has_errors();
+
+	// Setup coloring
+	vec4 color = vec4(1);
+	if (registry.any_of<Color>(entity)) {
+		color = vec4(registry.get<Color>(entity).color, 1.f);
+	}
+
+	GLint color_uloc = glGetUniformLocation(program, "fcolor");
+	glUniform4fv(color_uloc, 1, glm::value_ptr(color));
+	gl_has_errors();
+
+	draw_triangles(transform, projection);
+}
+
+void RenderSystem::draw_lighting(const mat3& projection)
+{
 	glBindFramebuffer(GL_FRAMEBUFFER, lighting_frame_buffer);
+	gl_has_errors();
+	glViewport(0, 0, (GLsizei)screen_size_capped().x, (GLsizei)screen_size_capped().y);
+	glDepthRange(0.00001, 10);
+	glClearColor(0.2, 0.2, 0.2, 1.0);
+	glClearDepth(1.f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDisable(GL_DEPTH_TEST);
+
+	for (auto [entity, light] : registry.view<Light>().each()) {
+		draw_light(entity, light, projection);
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, los_frame_buffer);
 	gl_has_errors();
 	glViewport(0, 0, (GLsizei)screen_size_capped().x, (GLsizei)screen_size_capped().y);
 	glDepthRange(0.00001, 10);
@@ -816,8 +884,10 @@ void RenderSystem::draw_lighting(const mat3& projection) {
 	// Bind our textures in
 	GLint screen_texture_loc = glGetUniformLocation(program, "screen");
 	GLint lighting_texture_loc = glGetUniformLocation(program, "lighting");
+	GLint los_texture_loc = glGetUniformLocation(program, "los");
 	glUniform1i(screen_texture_loc, 0);
 	glUniform1i(lighting_texture_loc, 1);
+	glUniform1i(los_texture_loc, 2);
 
 	glActiveTexture(GL_TEXTURE0);
 	gl_has_errors();
@@ -826,6 +896,10 @@ void RenderSystem::draw_lighting(const mat3& projection) {
 
 	glActiveTexture(GL_TEXTURE0 + 1);
 	glBindTexture(GL_TEXTURE_2D, lighting_buffer_color);
+	gl_has_errors();
+
+	glActiveTexture(GL_TEXTURE0 + 2);
+	glBindTexture(GL_TEXTURE_2D, los_buffer_color);
 	gl_has_errors();
 
 	// Draw
