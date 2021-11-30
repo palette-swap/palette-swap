@@ -67,10 +67,14 @@ void LightingSystem::spin(uvec2 player_map_pos, vec2 player_world_pos)
 		dvec2 angle;
 		angle.x = (i == 0) ? -glm::pi<double>() : visited_angles.at(i - 1).y;
 		angle.y = (i == visited_angles.size()) ? glm::pi<double>() : visited_angles.at(i).x;
-		auto scale = static_cast<double>(light_radius * MapUtility::tile_size);
-		vec2 p2 = player_world_pos + vec2(scale * glm::rotate(dvec2(1, 0), angle.x));
-		vec2 p3 = player_world_pos + vec2(scale * glm::rotate(dvec2(1, 0), angle.y));
-		draw_triangle(player_world_pos, p2, p3);
+		while (angle.x < angle.y) {
+			auto scale = static_cast<double>(2 * light_radius * MapUtility::tile_size);
+			vec2 p2 = player_world_pos + vec2(scale * glm::rotate(dvec2(1, 0), angle.x));
+			vec2 p3 = player_world_pos
+				+ vec2(scale * glm::rotate(dvec2(1, 0), min(angle.y, angle.x + glm::pi<double>() / 2.0)));
+			draw_triangle(player_world_pos, p2, p3);
+			angle.x += glm::pi<double>() / 2.0;
+		}
 	}
 }
 
@@ -91,7 +95,7 @@ void LightingSystem::process_tile(vec2 player_world_pos, uvec2 tile)
 	bool cross_seam = false;
 	for (const auto& offset : offsets) {
 		dvec2 dpos = dvec2(MapUtility::map_position_to_world_position(tile) + MapUtility::tile_size / 2.f * vec2(offset)
-			- player_world_pos);
+						   - player_world_pos);
 		double angle = atan2(dpos.y, dpos.x);
 		if (abs(angle) >= glm::pi<double>() / 2.0 && side == 0) {
 			side = (angle >= 0) ? 1 : -1;
@@ -131,8 +135,8 @@ void LightingSystem::process_tile(vec2 player_world_pos, uvec2 tile)
 		dvec2 positive_angle = vec2(glm::pi<double>(), glm::pi<double>());
 		dvec2 negative_angle = vec2(-glm::pi<double>(), -glm::pi<double>());
 		for (const auto& offset : offsets) {
-			dvec2 dpos = dvec2(MapUtility::map_position_to_world_position(tile) + MapUtility::tile_size / 2.f * vec2(offset)
-				- player_world_pos);
+			dvec2 dpos = dvec2(MapUtility::map_position_to_world_position(tile)
+							   + MapUtility::tile_size / 2.f * vec2(offset) - player_world_pos);
 			double angle = atan2(dpos.y, dpos.x);
 			if (angle >= 0) {
 				positive_angle.x = min(positive_angle.x, angle);
@@ -230,4 +234,4 @@ vec2 LightingSystem::project_onto_tile(uvec2 tile, vec2 player_world_pos, double
 		}
 	}
 	return player_world_pos;
-	}
+}
