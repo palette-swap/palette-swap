@@ -45,6 +45,9 @@ void LightingSystem::spin(uvec2 player_map_pos, vec2 player_world_pos)
 	for (int radius = 1; radius < light_radius; radius++) {
 		for (int dx = -radius; dx <= radius; dx++) {
 			for (int dy = -radius; dy <= radius; dy++) {
+				if (abs(dx) != radius && abs(dy) != radius) {
+					continue;
+				}
 				if (dx + static_cast<int>(player_map_pos.x) < 0
 					|| player_map_pos.x + dx >= MapUtility::map_size * MapUtility::room_size) {
 					continue;
@@ -62,7 +65,6 @@ void LightingSystem::spin(uvec2 player_map_pos, vec2 player_world_pos)
 		}
 	}
 
-	// Temporary measure to ensure you can see big spaces
 	for (int i = 0; i <= visited_angles.size(); i++) {
 		dvec2 angle;
 		angle.x = (i == 0) ? -glm::pi<double>() : visited_angles.at(i - 1).y;
@@ -119,8 +121,7 @@ void LightingSystem::process_tile(vec2 player_world_pos, uvec2 tile)
 			}
 			break;
 		}
-		case AngleResult::OverlapStart:
-		case AngleResult::OverlapEnd: {
+		case AngleResult::Overlap: {
 			vec2 p2 = project_onto_tile(tile, player_world_pos, angle.x);
 			vec2 p3 = project_onto_tile(tile, player_world_pos, angle.y);
 			draw_triangle(player_world_pos, p2, p3);
@@ -159,18 +160,20 @@ LightingSystem::AngleResult LightingSystem::try_add_angle(dvec2& angle)
 		if (rad_to_int(pair.x) <= rad_to_int(angle.x) && rad_to_int(pair.y) >= rad_to_int(angle.y)) {
 			return AngleResult::Redundant;
 		}
-		if (angle.x <= pair.y) {
-			if (angle.y > pair.x && angle.x < pair.y) {
+		if (rad_to_int(angle.x) <= rad_to_int(pair.y)) {
+			if (rad_to_int(angle.y) >= rad_to_int(pair.x) && rad_to_int(angle.x) <= rad_to_int(pair.y)) {
 				// Intersect, remove redundant bits
-				if (angle.x <= pair.x) {
+				result = AngleResult::Overlap;
+				if (rad_to_int(angle.x) <= rad_to_int(pair.x)) {
+					// The ends overlapped, so we can break
 					angle.y = pair.x;
-					result = AngleResult::OverlapEnd;
-				} else {
-					angle.x = pair.y;
-					result = AngleResult::OverlapStart;
+					break;
 				}
+				// It might also overlap on the other end, so we need to keep going
+				angle.x = pair.y;
+			} else {
+				break;
 			}
-			break;
 		}
 	}
 
@@ -214,24 +217,34 @@ vec2 LightingSystem::project_onto_tile(uvec2 tile, vec2 player_world_pos, double
 	if (glm::epsilonEqual(dpos.y, 0.0, tol)) {
 		return vec2(tile_center.x + .5f * MapUtility::tile_size * sign.x, player_world_pos.y);
 	}
+	double min_dist = DBL_MAX;
+	dvec2 min_pos;
 	dvec2 test_pos;
 	// First, try to land on a horizontal edge
 	for (int i = 1; i >= -1; i -= 2) {
 		test_pos.y = tile_center.y + .5 * MapUtility::tile_size * sign.y * i;
 		test_pos.x = player_world_pos.x + (test_pos.y - player_world_pos.y) * (dpos.x / dpos.y);
-		if (glm::epsilonEqual(test_pos.x, static_cast<double>(tile_center.x), .5 * MapUtility::tile_size + tol)) {
+		double dist = abs(static_cast<double>(tile_center.x) - test_pos.x);
+		if (dist <= .5 * MapUtility::tile_size + tol) {
 			// We're inside the tile bounds, so it worked
 			return test_pos;
+		} else if (dist < min_dist) {
+			min_dist = dist;
+			min_pos = test_pos;
 		}
 	}
 	// Otherwise, it's a vertical edge
 	for (int i = 1; i >= -1; i -= 2) {
 		test_pos.x = tile_center.x + .5 * MapUtility::tile_size * sign.x * i;
 		test_pos.y = player_world_pos.y + (test_pos.x - player_world_pos.x) * (dpos.y / dpos.x);
-		if (glm::epsilonEqual(test_pos.y, static_cast<double>(tile_center.y), .5 * MapUtility::tile_size + tol)) {
+		double dist = abs(static_cast<double>(tile_center.y) - test_pos.y);
+		if (dist <= .5 * MapUtility::tile_size + tol) {
 			// We're inside the tile bounds, so it worked
 			return test_pos;
+		} else if (dist < min_dist) {
+			min_dist = dist;
+			min_pos = test_pos;
 		}
 	}
-	return player_world_pos;
+	return min_pos;
 }

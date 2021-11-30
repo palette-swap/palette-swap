@@ -26,8 +26,7 @@ private:
 	enum class AngleResult {
 		New,
 		Redundant,
-		OverlapStart,
-		OverlapEnd,
+		Overlap,
 	};
 
 	void spin(uvec2 player_map_pos, vec2 player_world_pos);
@@ -35,9 +34,13 @@ private:
 	AngleResult try_add_angle(dvec2& angle);
 	vec2 project_onto_tile(uvec2 tile, vec2 player_world_pos, double angle);
 
-	inline int rad_to_int(double angle) {return static_cast<int>(round(angle * 256 / glm::pi<double>())); }
+	inline int rad_to_int(double angle)
+	{
+		return static_cast<int>(round(angle * half_pseudo_degrees / glm::pi<double>()));
+	}
 
 	std::vector<dvec2> visited_angles;
 	const int light_radius = 16;
-	const double tol = 1.0 / 8192.0;
+	const double half_pseudo_degrees = 2 << 14;
+	const double tol = 4.0 / half_pseudo_degrees;
 };
