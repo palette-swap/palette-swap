@@ -43,20 +43,31 @@ void LightingSystem::step()
 void LightingSystem::spin(uvec2 player_map_pos, vec2 player_world_pos)
 {
 	visited_angles.clear();
+	auto check_point = [&](uvec2 tile) {
+		if (!map_generator->is_on_map(tile)) {
+			return;
+		}
+		process_tile(player_world_pos, tile);
+	};
 	for (int radius = 1; radius < light_radius; radius++) {
-		for (int dx = -radius; dx <= radius; dx++) {
-			for (int dy = -radius; dy <= radius; dy++) {
-				if (abs(dx) != radius && abs(dy) != radius) {
-					continue;
-				}
-				if (dx + static_cast<int>(player_map_pos.x) < 0
-					|| player_map_pos.x + dx >= MapUtility::map_size * MapUtility::room_size) {
+		for (int dx = 0; dx <= radius; dx++) {
+			for (int dy = 0; dy + dx <= radius; dy++) {
+				if (dx + dy != radius) {
 					continue;
 				}
 				if (dx * dx + dy * dy >= light_radius * light_radius) {
 					continue;
 				}
-				process_tile(player_world_pos, uvec2(player_map_pos.x + dx, player_map_pos.y + dy));
+				check_point(uvec2(player_map_pos.x + dx, player_map_pos.y + dy));
+				if (dx != 0 && dy != 0) {
+					check_point(uvec2(player_map_pos.x - dx, player_map_pos.y - dy));
+				}
+				if (dx != 0) {
+					check_point(uvec2(player_map_pos.x - dx, player_map_pos.y + dy));
+				}
+				if (dy != 0) {
+					check_point(uvec2(player_map_pos.x + dx, player_map_pos.y - dy));
+				}
 				if (visited_angles.size() == 1 && visited_angles.at(0).x <= -glm::pi<double>()
 					&& visited_angles.at(0).y >= glm::pi<double>()) {
 					// We've darkened everything now
