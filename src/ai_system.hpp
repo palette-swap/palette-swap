@@ -209,8 +209,7 @@ private:
 
 				// Compute AOE area using AOE shape and player position.
 				MapPosition* mp = registry.try_get<MapPosition>(target);
-				const uvec2& target_map_pos = (mp != nullptr ? mp->position : uvec2(0,0));
-
+				const uvec2& target_map_pos = (mp != nullptr ? mp->position : uvec2(0, 0));
 
 				std::vector<uvec2> aoe_area;
 				for (const ivec2& map_pos_offset : m_aoe_shape) {
@@ -227,10 +226,10 @@ private:
 				aoe_stats.damage_bonus *= 2;
 
 				Enemy enemy = registry.get<Enemy>(e);
-				
+
 				// Create AOE.
 				m_aoe = create_aoe(aoe_area, aoe_stats, enemy.type);
-				
+
 				ai->switch_enemy_state(e, EnemyState::Charging);
 
 				return handle_process_result(BTState::Running);
@@ -247,6 +246,100 @@ private:
 	private:
 		bool is_charged;
 		std::vector<ivec2> m_aoe_shape;
+		std::vector<Entity> m_aoe;
+		Entity target;
+	};
+
+	// Leaf action node: AOERingAttack
+	class AOERingAttack : public BTNode {
+	public:
+		explicit AOERingAttack(int max_radius, Entity target)
+			: is_charged(false)
+			, target(target)
+			, max_radius(max_radius)
+		{
+			radius = 3;
+		}
+
+		void init(Entity /*e*/) override
+		{
+			debug_log("Debug: AOEAttack.init\n");
+			is_charged = false;
+			m_aoe.clear();
+		}
+
+		BTState process(Entity e, AISystem* ai) override
+		{
+			debug_log("Debug: AOEAttack.process\n");
+
+			do {
+				if (!is_charged) {
+					// Charging
+					is_charged = true;
+
+					// Compute AOE area using AOE shape and player position.
+					MapPosition* mp = registry.try_get<MapPosition>(target);
+					const uvec2& target_map_pos = (mp != nullptr ? mp->position : uvec2(0, 0));
+
+					std::vector<uvec2> aoe_area;
+
+					for (int i = -radius; i <= radius; i++) {
+						const ivec2& map_pos_N = ivec2(i, -radius) + static_cast<ivec2>(target_map_pos);
+						if (map_pos_N.x >= 0 || map_pos_N.y >= 0) {
+							aoe_area.emplace_back(map_pos_N);
+						}
+						const ivec2& map_pos_S = ivec2(i, radius) + static_cast<ivec2>(target_map_pos);
+						if (map_pos_S.x >= 0 || map_pos_S.y >= 0) {
+							aoe_area.emplace_back(map_pos_S);
+						}
+					}
+					for (int i = -radius + 1; i <= radius - 1; i++) {
+						const ivec2& map_pos_W = ivec2(-radius, i) + static_cast<ivec2>(target_map_pos);
+						if (map_pos_W.x >= 0 || map_pos_W.y >= 0) {
+							aoe_area.emplace_back(map_pos_W);
+						}
+						const ivec2& map_pos_E = ivec2(radius, i) + static_cast<ivec2>(target_map_pos);
+						if (map_pos_E.x >= 0 || map_pos_E.y >= 0) {
+							aoe_area.emplace_back(map_pos_E);
+						}
+					}
+
+					// Create AOE stats.
+					Stats aoe_stats = registry.get<Stats>(e);
+					aoe_stats.base_attack.damage_min *= 2;
+					aoe_stats.base_attack.damage_max *= 2;
+					aoe_stats.damage_bonus *= 2;
+
+					Enemy enemy = registry.get<Enemy>(e);
+
+					// Create AOE.
+					m_aoe = create_aoe(aoe_area, aoe_stats, enemy.type);
+
+					ai->switch_enemy_state(e, EnemyState::Charging);
+
+					return handle_process_result(BTState::Running);
+				}
+				// Release AOE.
+				ai->release_aoe(m_aoe);
+
+				ai->switch_enemy_state(e, EnemyState::Idle);
+				ai->animations->boss_event_animation(e, 4);
+				ai->so_loud->play(ai->king_mush_aoe_wav);
+
+				is_charged = false;
+				radius++;
+			} while (radius < max_radius);
+
+			ai->switch_enemy_state(e, EnemyState::Idle);
+			registry.destroy(e);
+
+			return handle_process_result(BTState::Success);
+		}
+
+	private:
+		bool is_charged;
+		int radius;
+		int max_radius;
 		std::vector<Entity> m_aoe;
 		Entity target;
 	};
@@ -311,6 +404,22 @@ private:
 			debug_log("Debug: DoNothing.process\n");
 
 			ai->switch_enemy_state(e, EnemyState::Idle);
+
+			return handle_process_result(BTState::Success);
+		}
+	};
+
+	// Leaf action node: SelfDestruct
+	class SelfDestruct : public BTNode {
+	public:
+		void init(Entity /*e*/) override { debug_log("Debug: SelfDestruct.init\n"); }
+
+		BTState process(Entity e, AISystem* ai) override
+		{
+			debug_log("Debug: SelfDestruct.process\n");
+
+			ai->switch_enemy_state(e, EnemyState::Idle);
+			registry.destroy(e);
 
 			return handle_process_result(BTState::Success);
 		}
@@ -392,7 +501,6 @@ private:
 			debug_log(message + "\n");
 			return handle_process_result(state);
 		}
-
 		static std::unique_ptr<BTNode> summoner_tree_factory(AISystem* ai)
 		{
 			// Selector - active
@@ -440,6 +548,7 @@ private:
 			return std::make_unique<SummonerTree>(std::move(selector_alive));
 		}
 
+
 	private:
 		std::unique_ptr<BTNode> m_child;
 	};
@@ -471,23 +580,23 @@ private:
 		static std::unique_ptr<BTNode> dragon_tree_factory(AISystem* ai)
 		{
 			// Selector - active
-			auto summon_enemies = std::make_unique<SummonEnemies>(EnemyType::AOERingGen, 1);
+			auto summon_aoe_emitter = std::make_unique<SummonEnemies>(EnemyType::AOERingGen, 1);
 			std::vector<ivec2> aoe_shape;
 
 			Entity aoe_emitter = registry.create();
 
 			auto aoe_attack = std::make_unique<AOEAttack>(aoe_shape, aoe_emitter);
-			auto regular_attack = std::make_unique<RegularAttack>();
-			auto selector_active = std::make_unique<Selector>(std::move(regular_attack));
+			auto do_nothing_1 = std::make_unique<DoNothing>();
+			auto selector_active = std::make_unique<Selector>(std::move(do_nothing_1));
 			Selector* p = selector_active.get();
 			selector_active->add_precond_and_child(
-				[ai](Entity /*e*/) { return ai->chance_to_happen(1.0f); },
-				std::move(aoe_attack));
+				[p](Entity /*e*/) { return (p->get_process_count() == 0); },
+				std::move(summon_aoe_emitter));
 
 			// Selector - idle
 			auto recover_health = std::make_unique<RecoverHealth>(0.20f);
-			auto do_nothing = std::make_unique<DoNothing>();
-			auto selector_idle = std::make_unique<Selector>(std::move(do_nothing));
+			auto do_nothing_2 = std::make_unique<DoNothing>();
+			auto selector_idle = std::make_unique<Selector>(std::move(do_nothing_2));
 			selector_idle->add_precond_and_child(
 				// Dragon recover 20% HP if its HP is not full during idle.
 				[ai](Entity e) { return ai->is_health_below(e, 1.00f); },
@@ -501,6 +610,46 @@ private:
 				std::move(selector_active));
 
 			return std::make_unique<DragonTree>(std::move(selector_alive));
+		}
+
+	private:
+		std::unique_ptr<BTNode> m_child;
+	};
+
+	class AOEEmitterTree : public BTNode {
+	public: 
+		explicit AOEEmitterTree(std::unique_ptr<BTNode> child)
+			: m_child(std::move(child))
+		{
+		}
+
+		void init(Entity e) override 
+		{ 
+			debug_log("Debug: AOEEmitterTree.init\n");
+			m_child->init(e);
+		}
+
+		BTState process(Entity e, AISystem* ai) override
+		{
+			debug_log("--------------------------------------------------\n");
+			debug_log("Debug: AOEEmitterTree.process\n");
+			BTState state = m_child->process(e, ai);
+			std::string message = "Debug: State after process = ";
+			message += state_names.at((size_t)state);
+			debug_log(message + "\n");
+			return handle_process_result(state);
+		}
+
+		static std::unique_ptr<BTNode> aoe_emitter_tree_factory(AISystem* ai, Entity target)
+		{
+			// Selector - active
+			auto aoe_attack = std::make_unique<AOERingAttack>(10, target);
+			auto selector_active = std::make_unique<Selector>(std::move(aoe_attack));
+
+			// Selector - alive
+			auto selector_alive = std::make_unique<Selector>(std::move(selector_active));
+
+			return std::make_unique<SummonerTree>(std::move(selector_alive));
 		}
 
 	private:

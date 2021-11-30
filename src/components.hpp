@@ -220,7 +220,8 @@ enum class EnemyType {
 	// Boss Enemy Types
 	KingMush = Clone + 1,
 	Dragon = KingMush + 1,
-	EnemyCount = Dragon + 1,
+	AOERingGen = Dragon + 1,
+	EnemyCount = AOERingGen + 1,
 };
 
 enum class EnemyBehaviour {
@@ -233,7 +234,8 @@ enum class EnemyBehaviour {
 	// Boss Enemy Behaviours (Behaviour Trees)
 	Summoner = Aggressive + 1,
 	Dragon = Summoner + 1,
-	EnemyBehaviourCount = Dragon + 1,
+	AOERingGen = Dragon + 1,
+	EnemyBehaviourCount = AOERingGen + 1,
 };
 
 const std::array<EnemyBehaviour, (size_t)EnemyType::EnemyCount> enemy_type_to_behaviour = {
@@ -249,6 +251,7 @@ const std::array<EnemyBehaviour, (size_t)EnemyType::EnemyCount> enemy_type_to_be
 	EnemyBehaviour::Defensive, 
 	EnemyBehaviour::Summoner,
 	EnemyBehaviour::Dragon,
+	EnemyBehaviour::AOERingGen,
 };
 
 // Small Enemy Behaviours (State Machines) uses the following states.
@@ -291,6 +294,9 @@ struct AOESquare {
 	// Released AOE square will be destroyed in the next turn.
 	bool actual_attack_displayed = false;
 	bool is_released = false;
+};
+
+struct Uninteractable {
 };
 
 struct RedExclusive {
@@ -547,6 +553,7 @@ const std::array<TEXTURE_ASSET_ID, static_cast<int>(EnemyType::EnemyCount)> enem
 	// available.
 	TEXTURE_ASSET_ID::KING_MUSH,
 	TEXTURE_ASSET_ID::KING_MUSH,
+	TEXTURE_ASSET_ID::SLIME,
 };
 
 const std::map<EnemyType, TEXTURE_ASSET_ID> boss_type_entry_animation_map {
@@ -655,7 +662,8 @@ const std::array<int, (size_t)DamageType::Count> damage_type_to_spell_impact = {
 };
 
 const std::map<EnemyType, TEXTURE_ASSET_ID> boss_type_attack_spritesheet { 
-	{ EnemyType::KingMush, TEXTURE_ASSET_ID::KING_MUSH_ATTACKS } 
+	{ EnemyType::KingMush, TEXTURE_ASSET_ID::KING_MUSH_ATTACKS },
+	{ EnemyType::AOERingGen, TEXTURE_ASSET_ID::KING_MUSH_ATTACKS },
 };
 //---------------------------------------------------------------------------
 //-------------------------		    Physics         -------------------------

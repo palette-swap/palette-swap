@@ -23,7 +23,8 @@ template <typename ColorExclusive>
 void PhysicsSystem::check_occupied(const std::vector<uvec2>& tiles, Entity entity, Entity shooter)
 {
 	for (auto [entity_j, map_position_j] :
-		 registry.view<MapPosition>(entt::exclude<MapHitbox, Item, ColorExclusive, ResourcePickup>).each()) {
+		 registry.view<MapPosition>(entt::exclude<MapHitbox, Item, ColorExclusive, ResourcePickup, Uninteractable>)
+			 .each()) {
 		if (entity_j == shooter) {
 			continue;
 		}
@@ -32,7 +33,8 @@ void PhysicsSystem::check_occupied(const std::vector<uvec2>& tiles, Entity entit
 		}
 	}
 	for (auto [entity_j, map_position_j, hitbox_j] :
-		 registry.view<MapPosition, MapHitbox>(entt::exclude<Item, ColorExclusive, ResourcePickup>).each()) {
+		 registry.view<MapPosition, MapHitbox>(entt::exclude<Item, ColorExclusive, ResourcePickup, Uninteractable>)
+			 .each()) {
 		if (entity_j == shooter) {
 			continue;
 		}

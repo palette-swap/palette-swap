@@ -131,6 +131,11 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 		enemy.speed = 0;
 		enemy.attack_range = 3;
 		break;
+	case EnemyType::AOERingGen:
+		enemy.radius = 0;
+		enemy.speed = 0;
+		enemy.attack_range = 0;
+		break;
 	default:
 		throw std::runtime_error("Invalid enemy type.");
 	}

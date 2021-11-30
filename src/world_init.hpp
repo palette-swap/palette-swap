@@ -24,3 +24,5 @@ Entity create_item_template(const std::string& name, const SlotList<bool>& allow
 Entity create_spell(const std::string& name, std::vector<Entity> attacks);
 // Creates a weapon (also an item)
 Entity create_weapon(const std::string& name, std::vector<Entity> attacks);
+// Creates an emitter of ring AOEs
+Entity create_aoe_emitter(uvec2 center);

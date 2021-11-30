@@ -113,7 +113,17 @@ void AISystem::step(float /*elapsed_ms*/)
 					}
 					break;
 				}
-
+				case EnemyBehaviour::AOERingGen: { 
+					if (bosses.find(enemy_entity) == bosses.end()) {
+						// A boss entity occurs for the 1st time, create its corresponding behaviour tree & initialize.
+						bosses[enemy_entity] = AOEEmitterTree::aoe_emitter_tree_factory(this, enemy_entity);
+						bosses[enemy_entity]->init(enemy_entity);
+					}
+					if (bosses[enemy_entity]->process(enemy_entity, this) != BTState::Running) {
+						bosses[enemy_entity]->init(enemy_entity);
+					}
+					break;
+				}
 				default:
 					throw std::runtime_error("Invalid enemy behaviour.");
 				}
@@ -485,10 +495,15 @@ void AISystem::summon_enemies(const Entity& entity, EnemyType enemy_type, int nu
 {
 	MapPosition& map_pos = registry.get<MapPosition>(entity);
 
-	for (size_t i = 0; i < num; ++i) {
-		uvec2 new_map_pos = { map_pos.position.x - 2 - i, map_pos.position.y};
-		if (map_generator->walkable_and_free(entt::null, new_map_pos)) {
-			create_enemy(turns->get_active_color(), enemy_type, new_map_pos);
+	if (enemy_type == EnemyType::AOERingGen) {
+		Entity entity = create_enemy(ColorState::All, EnemyType::AOERingGen, map_pos.position);
+		registry.emplace<Uninteractable>(entity);
+	} else {
+		for (size_t i = 0; i < num; ++i) {
+			uvec2 new_map_pos = { map_pos.position.x - 2 - i, map_pos.position.y };
+			if (map_generator->walkable_and_free(entt::null, new_map_pos)) {
+				create_enemy(turns->get_active_color(), enemy_type, new_map_pos);
+			}
 		}
 	}
 
