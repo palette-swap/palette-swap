@@ -164,7 +164,8 @@ enum class EFFECT_ASSET_ID {
 	WATER = AOE + 1,
 	TILE_MAP = WATER + 1,
 	TEXT_BUBBLE = TILE_MAP + 1,
-	EFFECT_COUNT = TEXT_BUBBLE + 1,
+	LIGHT_TRIANGLES = TEXT_BUBBLE + 1,
+	EFFECT_COUNT = LIGHT_TRIANGLES + 1,
 };
 constexpr int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 
@@ -179,7 +180,8 @@ enum class GEOMETRY_BUFFER_ID : uint8_t {
 	DEBUG_LINE = LINE + 1,
 	SCREEN_TRIANGLE = DEBUG_LINE + 1,
 	ROOM = SCREEN_TRIANGLE + 1,
-	GEOMETRY_COUNT = ROOM + 1
+	LIGHTING_TRIANGLES = ROOM + 1,
+	GEOMETRY_COUNT = LIGHTING_TRIANGLES + 1,
 };
 const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 
@@ -203,7 +205,13 @@ enum class ColorState { None = 0, Red = 1, Blue = 2, All = Blue + 1 };
 //-------------------------        Lighting         -------------------------
 //---------------------------------------------------------------------------
 
-struct LightingRequest {
+struct LightingTriangle {
+	vec2 p1;
+	vec2 p2;
+	vec2 p3;
+};
+
+struct LightingTile {
 };
 
 //---------------------------------------------------------------------------

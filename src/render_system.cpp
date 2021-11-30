@@ -739,6 +739,59 @@ void RenderSystem::draw_map(const mat3& projection, ColorState color)
 	}
 }
 
+void RenderSystem::draw_lighting(const mat3& projection) {
+	glBindFramebuffer(GL_FRAMEBUFFER, lighting_frame_buffer);
+	gl_has_errors();
+	glViewport(0, 0, (GLsizei)screen_size_capped().x, (GLsizei)screen_size_capped().y);
+	glDepthRange(0.00001, 10);
+	glClearColor(0.0, 0.0, 0.0, 1.0);
+	glClearDepth(1.f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDisable(GL_DEPTH_TEST);
+
+	for (auto [entity] : registry.view<LightingTile>().each()) {
+		Transform transform = get_transform(entity);
+		transform.scale(MapUtility::tile_size * vec2(1));
+		draw_rectangle(entity, transform, MapUtility::tile_size * vec2(1), projection);
+	}
+
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers.at((int)GEOMETRY_BUFFER_ID::LIGHTING_TRIANGLES));
+
+	const auto program = (GLuint)effects.at((uint8)EFFECT_ASSET_ID::LIGHT_TRIANGLES);
+	gl_has_errors();
+
+	// Renders effects (ie spells), intended to be overlayed on top of regular render effects
+	std::vector<GLfloat> vertices;
+	for (auto [entity, request] : registry.view<LightingTriangle>().each()) {
+		for (uint i = 0; i < 2; i++) {
+			vertices.push_back(request.p1[i]);
+		}
+		for (uint i = 0; i < 2; i++) {
+			vertices.push_back(request.p2[i]);
+		}
+		for (uint i = 0; i < 2; i++) {
+			vertices.push_back(request.p3[i]);
+		}
+	}
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices[0]) * vertices.size(), vertices.data(), GL_DYNAMIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+	glUseProgram(program);
+
+	GLint projection_loc = glGetUniformLocation(program, "projection");
+	glUniformMatrix3fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
+	gl_has_errors();
+	glDrawArrays(GL_TRIANGLES, 0, vertices.size() / 2);
+	gl_has_errors();
+	glDisableVertexAttribArray(0);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
+}
 void RenderSystem::draw_triangles(const Transform& transform, const mat3& projection)
 {
 	// Get number of indices from index buffer, which has elements uint16_t
@@ -895,25 +948,9 @@ void RenderSystem::draw()
 		}
 	}
 
+	draw_lighting(projection_2d);
+
 	draw_ui(projection_2d);
-
-	glBindFramebuffer(GL_FRAMEBUFFER, lighting_frame_buffer);
-	gl_has_errors();
-	glViewport(0, 0, (GLsizei)screen_size_capped().x, (GLsizei)screen_size_capped().y);
-	glDepthRange(0.00001, 10);
-	glClearColor(0.0, 0.0, 0.0, 1.0);
-	glClearDepth(1.f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_DEPTH_TEST);
-
-	// Renders effects (ie spells), intended to be overlayed on top of regular render effects
-	for (auto [entity] : registry.view<LightingRequest>().each()) {
-		Transform transform = get_transform(entity);
-		transform.scale(vec2(32));
-		draw_rectangle(entity, transform, vec2(32), projection_2d);
-	}
 
 	// Truely render to the screen
 	draw_to_screen();

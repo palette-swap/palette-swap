@@ -77,6 +77,7 @@ class RenderSystem {
 		shader_path("water"),
 		shader_path("tilemap"),
 		shader_path("text_bubble"),
+		shader_path("light_triangles"),
 	};
 
 	// TODO: move these constants into animation system most likely, need to finalize
@@ -188,6 +189,7 @@ private:
 	void draw_text(Entity entity, const Text& text, const mat3& projection);
 	void draw_line(Entity entity, const Line& line, const mat3& projection);
 	void draw_map(const mat3& projection, ColorState color);
+	void draw_lighting(const mat3& projection);
 
 	void draw_triangles(const Transform& transform, const mat3& projection);
 	void draw_to_screen();

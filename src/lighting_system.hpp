@@ -31,6 +31,7 @@ private:
 		Count = Right + 1,
 	};
 	template <typename T> tvec2<T> rotate_pos(tvec2<T> pos, tvec2<T> origin, Rotation rotation);
+	vec2 prep_pos(vec2 pos, const vec2& player_world_pos, Rotation rotation);
 
 	void
 	scan_row(uvec2 origin, int dy, const vec2& player_world_pos, vec2 left_bound, vec2 right_bound, Rotation rotation);

@@ -4,17 +4,24 @@
 
 void LightingSystem::init(std::shared_ptr<MapGeneratorSystem> map) { this->map_generator = std::move(map); }
 
-void draw_tile(uvec2 pos) {
+void draw_tile(uvec2 pos)
+{
 	Entity entity = registry.create();
-	registry.emplace<LightingRequest>(entity);
+	registry.emplace<LightingTile>(entity);
 	registry.emplace<WorldPosition>(entity, MapUtility::map_position_to_world_position(pos));
 	registry.emplace<Color>(entity, vec3(1));
 	registry.emplace<UIRectangle>(entity, 1.f, vec4(1));
 }
 
+void draw_triangle(vec2 p1, vec2 p2, vec2 p3) {
+	Entity entity = registry.create();
+	registry.emplace<LightingTriangle>(entity, p1, p2, p3);
+}
+
 void LightingSystem::step()
 {
-	registry.destroy(registry.view<LightingRequest>().begin(), registry.view<LightingRequest>().end());
+	registry.destroy(registry.view<LightingTriangle>().begin(), registry.view<LightingTriangle>().end());
+	registry.destroy(registry.view<LightingTile>().begin(), registry.view<LightingTile>().end());
 	Entity player = registry.view<Player>().front();
 	vec2 player_world_pos;
 	uvec2 player_map_pos;
@@ -28,8 +35,8 @@ void LightingSystem::step()
 
 	for (uint r = 0; r < (uint)Rotation::Count; r++) {
 		auto rotation = (Rotation)r;
-		vec2 left_bound = MapUtility::map_position_to_world_position({ player_map_pos.x - 1, player_map_pos.y + 1 });
-		vec2 right_bound = MapUtility::map_position_to_world_position({ player_map_pos.x + 1, player_map_pos.y + 1 });
+		vec2 left_bound = player_world_pos + MapUtility::tile_size * vec2(-1, 1);
+		vec2 right_bound = player_world_pos + MapUtility::tile_size * vec2(1, 1);
 		scan_row(player_map_pos, 0, player_world_pos, left_bound, right_bound, rotation);
 	}
 }
@@ -59,20 +66,35 @@ template <typename T> inline tvec2<T> LightingSystem::rotate_pos(tvec2<T> pos, t
 	return origin + difference;
 }
 
+inline vec2 LightingSystem::prep_pos(vec2 pos, const vec2& player_world_pos, Rotation rotation)
+{
+	vec2 rotated = rotate_pos(pos, player_world_pos, rotation);
+	vec2 centered = MapUtility::map_position_to_world_position(MapUtility::world_position_to_map_position(rotated));
+	return centered
+		+ vec2(rotated.x < player_world_pos.x ? -1 : 1, rotated.y < player_world_pos.y ? -1 : 1) * MapUtility::tile_size
+		/ 2.f;
+}
+
 void LightingSystem::scan_row(
 	uvec2 origin, int dy, const vec2& player_world_pos, vec2 left_bound, vec2 right_bound, Rotation rotation)
 {
 	uvec2 prev_pos = uvec2(-1, -1);
 	uvec2 rotated_prev_pos = uvec2(-1, -1);
 	Geometry::Cone cone(player_world_pos, right_bound, left_bound);
+	draw_triangle(player_world_pos,
+				  prep_pos(player_world_pos + MapUtility::tile_size * vec2(dy * cone.slope_inverse(0, 1), dy),
+						   player_world_pos,
+						   rotation),
+				  prep_pos(player_world_pos + MapUtility::tile_size * vec2(dy * cone.slope_inverse(0, 2), dy),
+						   player_world_pos,
+						   rotation));
 	for (int dx = roundf(dy * cone.slope_inverse(0, 2)); dx <= roundf(dy * cone.slope_inverse(0, 1)); dx++) {
-		if (dx + static_cast<int>(origin.x) < 0
-			|| origin.x + dx >= MapUtility::map_size * MapUtility::room_size) {
+		if (dx + static_cast<int>(origin.x) < 0 || origin.x + dx >= MapUtility::map_size * MapUtility::room_size) {
 			continue;
 		}
 		uvec2 pos = uvec2(origin.x + dx, origin.y + dy);
 		uvec2 rotated_pos = rotate_pos(pos, origin, rotation);
-		if (!map_generator->walkable(rotated_pos) || cone.contains(MapUtility::map_position_to_world_position(pos))) {
+		if (!map_generator->walkable(rotated_pos)) {
 			draw_tile(rotated_pos);
 		}
 		if (prev_pos != uvec2(-1, -1) && !map_generator->walkable(rotated_prev_pos)
