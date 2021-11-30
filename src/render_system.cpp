@@ -815,12 +815,6 @@ void RenderSystem::draw_lighting(const mat3& projection)
 	gl_has_errors();
 	prep_buffer();
 
-	for (auto [entity] : registry.view<LightingTile>().each()) {
-		Transform transform = get_transform(entity);
-		transform.scale(MapUtility::tile_size * vec2(1));
-		draw_rectangle(entity, transform, MapUtility::tile_size * vec2(1), projection);
-	}
-
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers.at((int)GEOMETRY_BUFFER_ID::LIGHTING_TRIANGLES));
 
 	auto program = (GLuint)effects.at((uint8)EFFECT_ASSET_ID::LIGHT_TRIANGLES);
@@ -853,6 +847,12 @@ void RenderSystem::draw_lighting(const mat3& projection)
 	glDrawArrays(GL_TRIANGLES, 0, vertices.size() / 2);
 	gl_has_errors();
 	glDisableVertexAttribArray(0);
+
+	for (auto [entity] : registry.view<LightingTile>().each()) {
+		Transform transform = get_transform(entity);
+		transform.scale(MapUtility::tile_size * vec2(1));
+		draw_rectangle(entity, transform, MapUtility::tile_size * vec2(1), projection);
+	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
 

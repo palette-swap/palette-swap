@@ -8,11 +8,12 @@ void LightingSystem::init(std::shared_ptr<MapGeneratorSystem> map) { this->map_g
 
 void draw_tile(uvec2 pos)
 {
+	const static vec3 color(1);
 	Entity entity = registry.create();
 	registry.emplace<LightingTile>(entity);
 	registry.emplace<WorldPosition>(entity, MapUtility::map_position_to_world_position(pos));
-	registry.emplace<Color>(entity, vec3(1));
-	registry.emplace<UIRectangle>(entity, 1.f, vec4(1));
+	registry.emplace<Color>(entity, color);
+	registry.emplace<UIRectangle>(entity, 1.f, vec4(color, 1));
 }
 
 void draw_triangle(vec2 p1, vec2 p2, vec2 p3)
@@ -118,6 +119,7 @@ void LightingSystem::process_tile(vec2 player_world_pos, uvec2 tile)
 				vec2 p3 = MapUtility::map_position_to_world_position(tile)
 					+ MapUtility::tile_size / 2.f * vec2(offsets.at((i + 1) % offsets.size()));
 				draw_triangle(player_world_pos, p2, p3);
+				//draw_tile(tile);
 			}
 			break;
 		}
