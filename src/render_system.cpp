@@ -759,10 +759,9 @@ void RenderSystem::draw_lighting(const mat3& projection) {
 
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers.at((int)GEOMETRY_BUFFER_ID::LIGHTING_TRIANGLES));
 
-	const auto program = (GLuint)effects.at((uint8)EFFECT_ASSET_ID::LIGHT_TRIANGLES);
+	auto program = (GLuint)effects.at((uint8)EFFECT_ASSET_ID::LIGHT_TRIANGLES);
 	gl_has_errors();
 
-	// Renders effects (ie spells), intended to be overlayed on top of regular render effects
 	std::vector<GLfloat> vertices;
 	for (auto [entity, request] : registry.view<LightingTriangle>().each()) {
 		for (uint i = 0; i < 2; i++) {
@@ -786,11 +785,56 @@ void RenderSystem::draw_lighting(const mat3& projection) {
 	GLint projection_loc = glGetUniformLocation(program, "projection");
 	glUniformMatrix3fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
 	gl_has_errors();
+
 	glDrawArrays(GL_TRIANGLES, 0, vertices.size() / 2);
 	gl_has_errors();
 	glDisableVertexAttribArray(0);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
+
+	// Draw the screen texture on the quad geometry
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers[(GLuint)GEOMETRY_BUFFER_ID::SCREEN_TRIANGLE]);
+	glBindBuffer(
+		GL_ELEMENT_ARRAY_BUFFER,
+		index_buffers[(GLuint)GEOMETRY_BUFFER_ID::SCREEN_TRIANGLE]);
+	gl_has_errors();
+
+	// Apply Lighting
+	program = (GLuint)effects.at((uint8)EFFECT_ASSET_ID::LIGHTING);
+
+	// Setting shaders
+	glUseProgram(program);
+	gl_has_errors();
+
+	// Set the vertex position and vertex texture coordinates (both stored in the
+	// same VBO)
+	GLint in_position_loc = glGetAttribLocation(program, "in_position");
+	glEnableVertexAttribArray(in_position_loc);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), nullptr);
+	gl_has_errors();
+
+	// Bind our textures in
+	GLint screen_texture_loc = glGetUniformLocation(program, "screen");
+	GLint lighting_texture_loc = glGetUniformLocation(program, "lighting");
+	glUniform1i(screen_texture_loc, 0);
+	glUniform1i(lighting_texture_loc, 1);
+
+	glActiveTexture(GL_TEXTURE0);
+	gl_has_errors();
+	glBindTexture(GL_TEXTURE_2D, off_screen_render_buffer_color);
+	gl_has_errors();
+
+	glActiveTexture(GL_TEXTURE0 + 1);
+	glBindTexture(GL_TEXTURE_2D, lighting_buffer_color);
+	gl_has_errors();
+
+	// Draw
+	glDrawElements(GL_TRIANGLES,
+				   3,
+				   GL_UNSIGNED_SHORT,
+				   nullptr); // one triangle = 3 vertices; nullptr indicates that there is
+							 // no offset from the bound index buffer
+	gl_has_errors();
 }
 void RenderSystem::draw_triangles(const Transform& transform, const mat3& projection)
 {
@@ -853,18 +897,9 @@ void RenderSystem::draw_to_screen()
 	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), nullptr);
 	gl_has_errors();
 
-	// Bind our textures in
-	GLint screen_texture_loc = glGetUniformLocation(water_program, "screen_texture");
-	GLint lighting_texture_loc = glGetUniformLocation(water_program, "lighting_texture");
-	glUniform1i(screen_texture_loc, 0);
-	glUniform1i(lighting_texture_loc, 1);
-
+	// Bind our texture in Texture Unit 0
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, off_screen_render_buffer_color);
-	gl_has_errors();
-
-	glActiveTexture(GL_TEXTURE0 + 1);
-	glBindTexture(GL_TEXTURE_2D, lighting_buffer_color);
 	gl_has_errors();
 	// Draw
 	glDrawElements(GL_TRIANGLES,
@@ -884,7 +919,7 @@ void RenderSystem::draw()
 	PlayerInactivePerception& player_perception = registry.get<PlayerInactivePerception>(player);
 	ColorState& inactive_color = player_perception.inactive;
 
-	// Render to the custom framebuffer
+	// First render to the custom framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
 	gl_has_errors();
 	// Clearing backbuffer

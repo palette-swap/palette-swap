@@ -78,6 +78,7 @@ class RenderSystem {
 		shader_path("tilemap"),
 		shader_path("text_bubble"),
 		shader_path("light_triangles"),
+		shader_path("lighting"),
 	};
 
 	// TODO: move these constants into animation system most likely, need to finalize
