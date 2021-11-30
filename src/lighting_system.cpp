@@ -2,6 +2,8 @@
 
 #include "geometry.hpp"
 
+#include <glm/gtx/rotate_vector.hpp>
+
 void LightingSystem::init(std::shared_ptr<MapGeneratorSystem> map) { this->map_generator = std::move(map); }
 
 void draw_tile(uvec2 pos)
@@ -13,7 +15,8 @@ void draw_tile(uvec2 pos)
 	registry.emplace<UIRectangle>(entity, 1.f, vec4(1));
 }
 
-void draw_triangle(vec2 p1, vec2 p2, vec2 p3) {
+void draw_triangle(vec2 p1, vec2 p2, vec2 p3)
+{
 	Entity entity = registry.create();
 	registry.emplace<LightingTriangle>(entity, p1, p2, p3);
 }
@@ -33,87 +36,198 @@ void LightingSystem::step()
 		player_world_pos = MapUtility::map_position_to_world_position(player_map_pos);
 	}
 
-	for (uint r = 0; r < (uint)Rotation::Count; r++) {
-		auto rotation = (Rotation)r;
-		vec2 left_bound = player_world_pos + MapUtility::tile_size * vec2(-1, 1);
-		vec2 right_bound = player_world_pos + MapUtility::tile_size * vec2(1, 1);
-		scan_row(player_map_pos, 0, player_world_pos, left_bound, right_bound, rotation);
+	spin(player_map_pos, player_world_pos);
+}
+
+void LightingSystem::spin(uvec2 player_map_pos, vec2 player_world_pos)
+{
+	visited_angles.clear();
+	for (int radius = 1; radius < light_radius; radius++) {
+		for (int dx = -radius; dx <= radius; dx++) {
+			for (int dy = -radius; dy <= radius; dy++) {
+				if (dx + static_cast<int>(player_map_pos.x) < 0
+					|| player_map_pos.x + dx >= MapUtility::map_size * MapUtility::room_size) {
+					continue;
+				}
+				if (dx * dx + dy * dy >= light_radius * light_radius) {
+					continue;
+				}
+				process_tile(player_world_pos, uvec2(player_map_pos.x + dx, player_map_pos.y + dy));
+				if (visited_angles.size() == 1 && visited_angles.at(0).x <= -glm::pi<double>()
+					&& visited_angles.at(0).y >= glm::pi<double>()) {
+					// We've darkened everything now
+					return;
+				}
+			}
+		}
+	}
+
+	// Temporary measure to ensure you can see big spaces
+	for (int i = 0; i <= visited_angles.size(); i++) {
+		dvec2 angle;
+		angle.x = (i == 0) ? -glm::pi<double>() : visited_angles.at(i - 1).y;
+		angle.y = (i == visited_angles.size()) ? glm::pi<double>() : visited_angles.at(i).x;
+		auto scale = static_cast<double>(light_radius * MapUtility::tile_size);
+		vec2 p2 = player_world_pos + vec2(scale * glm::rotate(dvec2(1, 0), angle.x));
+		vec2 p3 = player_world_pos + vec2(scale * glm::rotate(dvec2(1, 0), angle.y));
+		draw_triangle(player_world_pos, p2, p3);
 	}
 }
 
-template <typename T> inline tvec2<T> LightingSystem::rotate_pos(tvec2<T> pos, tvec2<T> origin, Rotation rotation)
+void LightingSystem::process_tile(vec2 player_world_pos, uvec2 tile)
 {
-	if (rotation == Rotation::Down) {
-		return pos;
+	static constexpr std::array<ivec2, 4> offsets = {
+		ivec2(-1, -1),
+		ivec2(-1, 1),
+		ivec2(1, 1),
+		ivec2(1, -1),
+	};
+	if (map_generator->walkable(tile)) {
+		return;
 	}
-	tvec2<T> difference = pos - origin;
-	switch (rotation) {
-	case Rotation::Up: {
-		difference *= -1;
-		break;
+	auto min_angle = glm::pi<double>();
+	auto max_angle = -glm::pi<double>();
+	int side = 0;
+	bool cross_seam = false;
+	for (const auto& offset : offsets) {
+		dvec2 dpos = dvec2(MapUtility::map_position_to_world_position(tile) + MapUtility::tile_size / 2.f * vec2(offset)
+			- player_world_pos);
+		double angle = atan2(dpos.y, dpos.x);
+		if (abs(angle) >= glm::pi<double>() / 2.0 && side == 0) {
+			side = (angle >= 0) ? 1 : -1;
+		} else if (side != 0 && (side == 1) != (angle >= 0)) {
+			// Crossing the seam case
+			cross_seam = true;
+			break;
+		}
+		min_angle = min(min_angle, angle);
+		max_angle = max(max_angle, angle);
 	}
-	case Rotation::Left:
-		difference *= -1;
-	case Rotation::Right: {
-		T new_x = difference.y;
-		difference.y = difference.x;
-		difference.x = new_x;
-		break;
+	auto draw = [&](AngleResult result, const dvec2& angle) {
+		switch (result) {
+		case AngleResult::New: {
+			for (int i = 0; i < offsets.size(); i++) {
+				vec2 p2 = MapUtility::map_position_to_world_position(tile)
+					+ MapUtility::tile_size / 2.f * vec2(offsets.at(i));
+				vec2 p3 = MapUtility::map_position_to_world_position(tile)
+					+ MapUtility::tile_size / 2.f * vec2(offsets.at((i + 1) % offsets.size()));
+				draw_triangle(player_world_pos, p2, p3);
+			}
+			break;
+		}
+		case AngleResult::OverlapStart:
+		case AngleResult::OverlapEnd: {
+			vec2 p2 = project_onto_tile(tile, player_world_pos, angle.x);
+			vec2 p3 = project_onto_tile(tile, player_world_pos, angle.y);
+			draw_triangle(player_world_pos, p2, p3);
+			draw_tile(tile);
+			break;
+		}
+		default:
+			return;
+		}
+	};
+	if (cross_seam) {
+		dvec2 positive_angle = vec2(glm::pi<double>(), glm::pi<double>());
+		dvec2 negative_angle = vec2(-glm::pi<double>(), -glm::pi<double>());
+		for (const auto& offset : offsets) {
+			dvec2 dpos = dvec2(MapUtility::map_position_to_world_position(tile) + MapUtility::tile_size / 2.f * vec2(offset)
+				- player_world_pos);
+			double angle = atan2(dpos.y, dpos.x);
+			if (angle >= 0) {
+				positive_angle.x = min(positive_angle.x, angle);
+			} else {
+				negative_angle.y = max(negative_angle.y, angle);
+			}
+		}
+		draw(try_add_angle(positive_angle), positive_angle);
+		draw(try_add_angle(negative_angle), negative_angle);
+	} else {
+		dvec2 angle = dvec2(min_angle, max_angle);
+		draw(try_add_angle(angle), angle);
 	}
-	default:
-		break;
-	}
-	return origin + difference;
 }
 
-inline vec2 LightingSystem::prep_pos(vec2 pos, const vec2& player_world_pos, Rotation rotation)
+LightingSystem::AngleResult LightingSystem::try_add_angle(dvec2& angle)
 {
-	vec2 rotated = rotate_pos(pos, player_world_pos, rotation);
-	vec2 centered = MapUtility::map_position_to_world_position(MapUtility::world_position_to_map_position(rotated));
-	return centered
-		+ vec2(rotated.x < player_world_pos.x ? -1 : 1, rotated.y < player_world_pos.y ? -1 : 1) * MapUtility::tile_size
-		/ 2.f;
-}
+	AngleResult result = AngleResult::New;
+	for (auto& pair : visited_angles) {
+		if (rad_to_int(pair.x) <= rad_to_int(angle.x) && rad_to_int(pair.y) >= rad_to_int(angle.y)) {
+			return AngleResult::Redundant;
+		}
+		if (angle.x <= pair.y) {
+			if (angle.y > pair.x && angle.x < pair.y) {
+				// Intersect, remove redundant bits
+				if (angle.x <= pair.x) {
+					angle.y = pair.x;
+					result = AngleResult::OverlapEnd;
+				} else {
+					angle.x = pair.y;
+					result = AngleResult::OverlapStart;
+				}
+			}
+			break;
+		}
+	}
 
-void LightingSystem::scan_row(
-	uvec2 origin, int dy, const vec2& player_world_pos, vec2 left_bound, vec2 right_bound, Rotation rotation)
-{
-	uvec2 prev_pos = uvec2(-1, -1);
-	uvec2 rotated_prev_pos = uvec2(-1, -1);
-	Geometry::Cone cone(player_world_pos, right_bound, left_bound);
-	draw_triangle(player_world_pos,
-				  prep_pos(player_world_pos + MapUtility::tile_size * vec2(dy * cone.slope_inverse(0, 1), dy),
-						   player_world_pos,
-						   rotation),
-				  prep_pos(player_world_pos + MapUtility::tile_size * vec2(dy * cone.slope_inverse(0, 2), dy),
-						   player_world_pos,
-						   rotation));
-	for (int dx = roundf(dy * cone.slope_inverse(0, 2)); dx <= roundf(dy * cone.slope_inverse(0, 1)); dx++) {
-		if (dx + static_cast<int>(origin.x) < 0 || origin.x + dx >= MapUtility::map_size * MapUtility::room_size) {
+	int inserted_pos = -1;
+	ivec2 remove_range = ivec2(-1, -1);
+	for (int i = 0; i < visited_angles.size(); i++) {
+		auto& pair = visited_angles[i];
+		if (inserted_pos == -1 && pair.y >= angle.x) {
+			visited_angles.emplace(visited_angles.begin() + i, angle.x, angle.y);
+			inserted_pos = i;
 			continue;
 		}
-		uvec2 pos = uvec2(origin.x + dx, origin.y + dy);
-		uvec2 rotated_pos = rotate_pos(pos, origin, rotation);
-		if (!map_generator->walkable(rotated_pos)) {
-			draw_tile(rotated_pos);
+		if (pair.x <= angle.y && pair.y >= angle.x) {
+			visited_angles[inserted_pos]
+				= dvec2(min(pair.x, visited_angles[inserted_pos].x), max(pair.y, visited_angles[inserted_pos].y));
+			if (remove_range.x == -1) {
+				remove_range.x = i;
+			}
+			remove_range.y = i + 1;
 		}
-		if (prev_pos != uvec2(-1, -1) && !map_generator->walkable(rotated_prev_pos)
-			&& map_generator->walkable(rotated_pos)) {
-			left_bound = MapUtility::map_position_to_world_position(prev_pos);
-			left_bound += MapUtility::tile_size / 2.f * vec2(1, (left_bound.x < player_world_pos.x ? 1 : -1));
-			cone.vertices[2] = left_bound;
+		if (pair.x > angle.y) {
+			break;
 		}
-		if (map_generator->walkable(rotated_prev_pos) && !map_generator->walkable(rotated_pos)) {
-			vec2 new_right_bound = MapUtility::map_position_to_world_position(pos);
-			new_right_bound
-				+= MapUtility::tile_size / 2.f * vec2(-1, (new_right_bound.x > player_world_pos.x ? 1 : -1));
-			scan_row(origin, dy + 1, player_world_pos, left_bound, new_right_bound, rotation);
-		}
-
-		prev_pos = pos;
-		rotated_prev_pos = rotated_pos;
 	}
-	if (map_generator->walkable(rotated_prev_pos)) {
-		scan_row(origin, dy + 1, player_world_pos, left_bound, right_bound, rotation);
+	if (inserted_pos == -1) {
+		visited_angles.emplace_back(angle.x, angle.y);
+	} else if (remove_range.x != -1) {
+		visited_angles.erase(visited_angles.begin() + remove_range.x, visited_angles.begin() + remove_range.y);
 	}
+	return result;
 }
+
+vec2 LightingSystem::project_onto_tile(uvec2 tile, vec2 player_world_pos, double angle)
+{
+	dvec2 dpos = glm::rotate(dvec2(1, 0), angle);
+	dvec2 sign = dvec2((dpos.x > 0) ? 1.f : -1.f, (dpos.y > 0) ? 1.f : -1.f);
+	vec2 tile_center = MapUtility::map_position_to_world_position(tile);
+	if (glm::epsilonEqual(dpos.x, 0.0, tol)) {
+		return vec2(player_world_pos.x, tile_center.y + .5f * MapUtility::tile_size * sign.y);
+	}
+	if (glm::epsilonEqual(dpos.y, 0.0, tol)) {
+		return vec2(tile_center.x + .5f * MapUtility::tile_size * sign.x, player_world_pos.y);
+	}
+	dvec2 test_pos;
+	// First, try to land on a horizontal edge
+	for (int i = 1; i >= -1; i -= 2) {
+		test_pos.y = tile_center.y + .5 * MapUtility::tile_size * sign.y * i;
+		test_pos.x = player_world_pos.x + (test_pos.y - player_world_pos.y) * (dpos.x / dpos.y);
+		if (glm::epsilonEqual(test_pos.x, static_cast<double>(tile_center.x), .5 * MapUtility::tile_size + tol)) {
+			// We're inside the tile bounds, so it worked
+			return test_pos;
+		}
+	}
+	// Otherwise, it's a vertical edge
+	for (int i = 1; i >= -1; i -= 2) {
+		test_pos.x = tile_center.x + .5 * MapUtility::tile_size * sign.x * i;
+		test_pos.y = player_world_pos.y + (test_pos.x - player_world_pos.x) * (dpos.y / dpos.x);
+		if (glm::epsilonEqual(test_pos.y, static_cast<double>(tile_center.y), .5 * MapUtility::tile_size + tol)) {
+			// We're inside the tile bounds, so it worked
+			return test_pos;
+		}
+	}
+	return player_world_pos;
+	}

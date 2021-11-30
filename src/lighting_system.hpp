@@ -23,16 +23,21 @@ public:
 	void step();
 
 private:
-	enum class Rotation {
-		Down = 0,
-		Left = Down + 1,
-		Up = Left + 1,
-		Right = Up + 1,
-		Count = Right + 1,
+	enum class AngleResult {
+		New,
+		Redundant,
+		OverlapStart,
+		OverlapEnd,
 	};
-	template <typename T> tvec2<T> rotate_pos(tvec2<T> pos, tvec2<T> origin, Rotation rotation);
-	vec2 prep_pos(vec2 pos, const vec2& player_world_pos, Rotation rotation);
 
-	void
-	scan_row(uvec2 origin, int dy, const vec2& player_world_pos, vec2 left_bound, vec2 right_bound, Rotation rotation);
+	void spin(uvec2 player_map_pos, vec2 player_world_pos);
+	void process_tile(vec2 player_world_pos, uvec2 tile);
+	AngleResult try_add_angle(dvec2& angle);
+	vec2 project_onto_tile(uvec2 tile, vec2 player_world_pos, double angle);
+
+	inline int rad_to_int(double angle) {return static_cast<int>(round(angle * 256 / glm::pi<double>())); }
+
+	std::vector<dvec2> visited_angles;
+	const int light_radius = 16;
+	const double tol = 1.0 / 8192.0;
 };
