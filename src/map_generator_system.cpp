@@ -180,6 +180,7 @@ static void load_enemy(unsigned int enemy_index, const rapidjson::Document& json
 
 	Animation& enemy_animation = registry.emplace<Animation>(entity);
 	int enemy_type = static_cast<int>(enemy_component.type);
+	AnimationProfile enemy_profile = enemy_type_to_animation_profile.at(enemy_type);
 	bool visible = true;
 
 	// Need to replace with a different component denoting a boss enemy
@@ -190,12 +191,12 @@ static void load_enemy(unsigned int enemy_index, const rapidjson::Document& json
 		registry.emplace<Boss>(entity);
 	} else {
 		enemy_animation.max_frames = 4;
-		enemy_animation.travel_offset = enemy_travel_animation_offset.at(enemy_type);
+		enemy_animation.travel_offset = enemy_profile.travel_offset;
 	}
 
 	enemy_animation.state = enemy_state_to_animation_state.at(static_cast<size_t>(enemy_component.state));
 	registry.emplace<RenderRequest>(entity,
-									enemy_type_textures.at(static_cast<int>(enemy_type)),
+									enemy_profile.texture,
 									EFFECT_ASSET_ID::ENEMY,
 									GEOMETRY_BUFFER_ID::SMALL_SPRITE,
 									visible);

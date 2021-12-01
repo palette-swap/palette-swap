@@ -521,40 +521,28 @@ struct Weapon {
 // Represents allowed directions for an animated sprite (e.g whether the sprite is facing left or right)
 enum class Sprite_Direction : uint8_t { SPRITE_LEFT, SPRITE_RIGHT };
 
-// Maps enemy types to corresponding texture asset
-// Remember to add a mapping to a new texture (or use a default such as a slime)
-// This will help load the animation by enemy type when you load enemies
-const std::array<TEXTURE_ASSET_ID, static_cast<int>(EnemyType::EnemyCount)> enemy_type_textures {
-	TEXTURE_ASSET_ID::DUMMY,
-	TEXTURE_ASSET_ID::SLIME,
-	TEXTURE_ASSET_ID::RAVEN,
-	TEXTURE_ASSET_ID::ARMOR,
-	TEXTURE_ASSET_ID::TREEANT,
-	TEXTURE_ASSET_ID::WRAITH,
-	TEXTURE_ASSET_ID::DRAKE,
-	TEXTURE_ASSET_ID::MUSHROOM,
-	TEXTURE_ASSET_ID::SPIDER,
-	TEXTURE_ASSET_ID::CLONE,
-	TEXTURE_ASSET_ID::KING_MUSH,
-	TEXTURE_ASSET_ID::TITHO,
+// Animation details by type
+struct AnimationProfile {
+	TEXTURE_ASSET_ID texture;
+	float travel_offset;
 };
 
-// Maps enemy types to corresponding texture asset
-// Remember to add a mapping to a new texture (or use a default such as a slime)
+// Maps enemy types to corresponding animation profile
+// Remember to add a mapping to a new texture (or use a default such as a slime)/enemy type
 // This will help load the animation by enemy type when you load enemies
-const std::array<float, static_cast<int>(EnemyType::EnemyCount)> enemy_travel_animation_offset {
-	0.f, // Dummy
-	0.2f, // Slime
-	0.f, //Raven
-	0.f, // Armor
-	0.f, // Treeant
-	0.1f, // Wraith
-	0.1f, // Drake
-	0.2f, // Mushroom
-	0.2f, // Spider
-	0.f, // Clone
-	0.f, // King Mush
-	0.f, // Titho
+const std::array<AnimationProfile, static_cast<int>(EnemyType::EnemyCount)> enemy_type_to_animation_profile {
+	AnimationProfile { TEXTURE_ASSET_ID::DUMMY, 0.f }, 
+	AnimationProfile { TEXTURE_ASSET_ID::SLIME, 0.2f }, 
+	AnimationProfile { TEXTURE_ASSET_ID::RAVEN, 0.f },
+	AnimationProfile { TEXTURE_ASSET_ID::ARMOR, 0.f }, 
+	AnimationProfile { TEXTURE_ASSET_ID::TREEANT, 0.f }, 
+	AnimationProfile { TEXTURE_ASSET_ID::WRAITH, 0.1f },
+	AnimationProfile { TEXTURE_ASSET_ID::DRAKE, 0.1f }, 
+	AnimationProfile { TEXTURE_ASSET_ID::MUSHROOM, 0.2f }, 
+	AnimationProfile { TEXTURE_ASSET_ID::SPIDER, 0.2f },
+	AnimationProfile { TEXTURE_ASSET_ID::CLONE, 0.f }, 
+	AnimationProfile { TEXTURE_ASSET_ID::KING_MUSH, 0.f }, 
+	AnimationProfile { TEXTURE_ASSET_ID::TITHO, 0.f },
 };
 
 const std::map<EnemyType, TEXTURE_ASSET_ID> boss_type_entry_animation_map {

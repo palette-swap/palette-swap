@@ -132,10 +132,12 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 
 	Animation& enemy_animation = registry.emplace<Animation>(entity);
 	enemy_animation.max_frames = 4;
-	enemy_animation.travel_offset = enemy_travel_animation_offset.at(static_cast<int>(type));
+
+	AnimationProfile enemy_profile = enemy_type_to_animation_profile.at(static_cast<int>(type));
+	enemy_animation.travel_offset = enemy_profile.travel_offset;
 
 	registry.emplace<RenderRequest>(
-		entity, enemy_type_textures.at(static_cast<int>(type)), EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);
+		entity, enemy_profile.texture, EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);
 	if (team == ColorState::Red) {
 		enemy_animation.display_color = vec4(AnimationUtility::default_enemy_red,1);
 		registry.emplace<RedExclusive>(entity);
