@@ -132,6 +132,7 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 
 	Animation& enemy_animation = registry.emplace<Animation>(entity);
 	enemy_animation.max_frames = 4;
+	enemy_animation.travel_offset = enemy_travel_animation_offset.at(static_cast<int>(type));
 
 	registry.emplace<RenderRequest>(
 		entity, enemy_type_textures.at(static_cast<int>(type)), EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);

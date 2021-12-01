@@ -536,8 +536,25 @@ const std::array<TEXTURE_ASSET_ID, static_cast<int>(EnemyType::EnemyCount)> enem
 	TEXTURE_ASSET_ID::SPIDER,
 	TEXTURE_ASSET_ID::CLONE,
 	TEXTURE_ASSET_ID::KING_MUSH,
-	// TODO (Evan): temporarily used KING_MUSH to mock TITHO for testing, please replace it when the texture is available.
 	TEXTURE_ASSET_ID::TITHO,
+};
+
+// Maps enemy types to corresponding texture asset
+// Remember to add a mapping to a new texture (or use a default such as a slime)
+// This will help load the animation by enemy type when you load enemies
+const std::array<float, static_cast<int>(EnemyType::EnemyCount)> enemy_travel_animation_offset {
+	0.f, // Dummy
+	0.2f, // Slime
+	0.f, //Raven
+	0.f, // Armor
+	0.f, // Treeant
+	0.1f, // Wraith
+	0.1f, // Drake
+	0.2f, // Mushroom
+	0.2f, // Spider
+	0.f, // Clone
+	0.f, // King Mush
+	0.f, // Titho
 };
 
 const std::map<EnemyType, TEXTURE_ASSET_ID> boss_type_entry_animation_map {
@@ -586,7 +603,9 @@ struct Animation {
 	// Adjusts animation rate to be faster or slower than default
 	// ie. faster things should change more frames. slower things should change less frames
 	float speed_adjustment = 0.6f;
-	float elapsed_time = 0;
+	float elapsed_time = 0.f;
+	// Stores offset for the specific entity when requested for travel
+	float travel_offset = 0.f;
 };
 
 // Struct denoting irregular animation events (ie attacking, containing information to restore an entity's

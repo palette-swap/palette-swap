@@ -160,11 +160,9 @@ void AnimationSystem::enemy_tile_transition(const Entity& enemy, uvec2 map_start
 
 	registry.emplace<WorldPosition>(enemy, enemy_transition.start_point);
 
-	// TODO: Change this to not be a hard check for mushrooms/slimes
-	// This has been added to be a git issue
-	if (enemy_type == EnemyType::Mushroom || enemy_type == EnemyType::Slime) {
-		enemy_transition.middle_point -= vec2(0, MapUtility::tile_size * 0.2f);
-	}
+
+	enemy_transition.middle_point -= vec2(0, MapUtility::tile_size * enemy_animation.travel_offset);
+
 		
 }
 
