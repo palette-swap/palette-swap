@@ -264,9 +264,8 @@ private:
 			// TODO (Evan): animation for Titho and the target player.
 			// Gets information related to where the boss is attacking from a ranged.
 			// Can be moved into animation ssytem to make this portion clearer and free or registry accesses
-			Entity player_entity = registry.view<Player>().front();
-			uvec2 player_location = registry.get<MapPosition>(player_entity).position;
-			ai->animations->boss_regular_attack(e, player_location);
+			// TODO Change hard coded int to map based on enemy type
+			ai->animations->boss_special_attack_animation(e, 1);
 
 
 			ai->attack_player(e);
@@ -287,11 +286,11 @@ private:
 			debug_log("Debug: FireAttack.process\n");
 
 			ai->become_powerup(e, true);
+			// TODO Change hard coded int to map based on enemy type
+			ai->animations->boss_special_attack_animation(e, 2);
 			ai->attack_player(e);
 			ai->become_powerup(e, false);
 
-			// TODO Change hard coded int to map based on enemy type
-			ai->animations->boss_event_animation(e, 2);
 			ai->switch_enemy_state(e, EnemyState::Idle);
 
 			return handle_process_result(BTState::Success);
@@ -314,11 +313,11 @@ private:
 			debug_log("Debug: IceAttack.process\n");
 
 			ai->add_attack_effect(e, Effect::Stun, m_chance, m_magnitude);
+			// TODO Change hard coded int to map based on enemy type
+			ai->animations->boss_special_attack_animation(e, 3);
 			ai->attack_player(e);
 			ai->clear_attack_effects(e);
 
-			// TODO Change hard coded int to map based on enemy type
-			ai->animations->boss_event_animation(e, 3);
 			ai->switch_enemy_state(e, EnemyState::Idle);
 
 			return handle_process_result(BTState::Success);
@@ -345,11 +344,12 @@ private:
 			debug_log("Debug: GaleAttack.process\n");
 
 			ai->add_attack_effect(e, Effect::Shove, m_chance, m_magnitude);
+			// TODO Change hard coded int to map based on enemy type
+			ai->animations->boss_special_attack_animation(e, 5);
 			ai->attack_player(e);
 			ai->clear_attack_effects(e);
 
-			// TODO Change hard coded int to map based on enemy type
-			ai->animations->boss_event_animation(e, 4);
+
 			ai->switch_enemy_state(e, EnemyState::Idle);
 
 			return handle_process_result(BTState::Success);
@@ -377,11 +377,11 @@ private:
 
 			ai->add_attack_effect(e, Effect::Immobilize, m_chance, m_magnitude);
 			ai->add_attack_effect(e, Effect::EvasionDown, m_chance, m_magnitude);
+			// TODO Change hard coded int to map based on enemy type
+			ai->animations->boss_special_attack_animation(e, 4);
 			ai->attack_player(e);
 			ai->clear_attack_effects(e);
 
-			// TODO Change hard coded int to map based on enemy type
-			ai->animations->boss_event_animation(e, 5);
 			ai->switch_enemy_state(e, EnemyState::Idle);
 
 			return handle_process_result(BTState::Success);

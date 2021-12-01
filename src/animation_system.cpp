@@ -363,11 +363,16 @@ void AnimationSystem::boss_event_animation(const Entity& boss, int event_state) 
 	}
 }
 
-void AnimationSystem::boss_regular_attack(Entity boss, uvec2 target_position) {
-	
-	// Sets boss's attack animation to be the regular one
+
+void AnimationSystem::boss_special_attack_animation(Entity boss, int attack_state) {
+
+	// Finds player's location for attack
+	Entity player_entity = registry.view<Player>().front();
+	uvec2 player_location = registry.get<MapPosition>(player_entity).position;
+
+		// Sets boss's attack animation to be the regular one
 	auto boss_type = registry.get<Enemy>(boss).type;
-	auto &boss_animation = registry.get<Animation>(boss);
+	auto& boss_animation = registry.get<Animation>(boss);
 
 	if (!registry.any_of<EventAnimation>(boss)) {
 		EventAnimation& boss_attack = registry.emplace<EventAnimation>(boss);
@@ -376,14 +381,14 @@ void AnimationSystem::boss_regular_attack(Entity boss, uvec2 target_position) {
 		this->animation_event_setup(boss_animation, boss_attack, boss_animation.display_color);
 
 		// Sets animation state to be the beginning of the boss regular attack animation
-		boss_animation.state = boss_regular_attack_state;
+		boss_animation.state = attack_state;
 		boss_animation.frame = 0;
-		boss_animation.speed_adjustment = enemy_attack_speed;
+		boss_animation.speed_adjustment = boss_ranged_attack_speed;
 	}
 
 	// Creates a remote attack entity based on attack spritesheet
 	auto boss_range_attack_entity = registry.create();
-	registry.emplace<MapPosition>(boss_range_attack_entity, target_position);
+	registry.emplace<MapPosition>(boss_range_attack_entity, player_location);
 	registry.emplace<TransientEventAnimation>(boss_range_attack_entity);
 	registry.emplace<EffectRenderRequest>(boss_range_attack_entity,
 										  boss_type_attack_spritesheet.at(boss_type),
@@ -392,7 +397,7 @@ void AnimationSystem::boss_regular_attack(Entity boss, uvec2 target_position) {
 										  true);
 	Animation& spell_impact_animation = registry.emplace<Animation>(boss_range_attack_entity);
 	spell_impact_animation.max_frames = boss_ranged_attack_total_frames;
-	spell_impact_animation.state = boss_regular_remote_attack_state;
+	spell_impact_animation.state = attack_state;
 	spell_impact_animation.speed_adjustment = boss_ranged_attack_speed;
 }
 
