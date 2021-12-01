@@ -183,10 +183,10 @@ static void load_enemy(unsigned int enemy_index, const rapidjson::Document& json
 	bool visible = true;
 
 	// Need to replace with a different component denoting a boss enemy
-	if (enemy_component.type == EnemyType::KingMush) {
+	if (enemy_component.type == EnemyType::KingMush || enemy_component.type == EnemyType::Titho) {
 		enemy_animation.max_frames = 8;
 		enemy_animation.speed_adjustment = 0.6f;
-		visible = false;
+		visible = true;
 	} else {
 		enemy_animation.max_frames = 4;
 	}
