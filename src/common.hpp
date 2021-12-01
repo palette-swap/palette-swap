@@ -144,6 +144,13 @@ inline std::vector<uvec2> get_surrounding_tiles(uvec2 center, uint radius = 1u)
 
 	return tiles;
 }
+
+inline uint8_t get_room_index(uvec2 tile)
+{
+	uvec2 room_pos = tile / static_cast<uint>(room_size);
+	return static_cast<uint8_t>(room_pos.y * map_size + room_pos.x);
+}
+
 } // namespace MapUtility
 
 // Represent four directions, that could have many uses, e.g. moving player

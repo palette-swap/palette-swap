@@ -451,6 +451,20 @@ void MapGeneratorSystem::snapshot_level()
 		stats.serialize(enemy_prefix + "/stats", level_snapshot);
 	}
 
+	// Save visited rooms
+	rapidjson::Value visited_rooms;
+	visited_rooms.SetArray();
+	for (auto [entity, room] : registry.view<Room>().each()) {
+		if (room.visible) {
+			visited_rooms.PushBack(room.room_index, level_snapshot.GetAllocator());
+		}
+	}
+	if (level_snapshot.HasMember("visited_rooms")) {
+		level_snapshot["visited_rooms"] = visited_rooms;
+	} else {
+		level_snapshot.AddMember("visited_rooms", visited_rooms, level_snapshot.GetAllocator());
+	}
+
 	// save player position
 	registry.get<MapPosition>(registry.view<Player>().front()).serialize("/player", level_snapshot);
 
@@ -470,12 +484,30 @@ void MapGeneratorSystem::load_level(int level)
 
 	rapidjson::Document json_doc;
 	json_doc.Parse(snapshot.c_str());
+
+	// Enemies
 	const rapidjson::Value& enemies = json_doc["enemies"];
 	assert(enemies.IsArray());
 
 	for (rapidjson::SizeType i = 0; i < enemies.Size(); i++) {
 		if (!enemies[i].IsNull()) {
 			load_enemy(i, json_doc);
+		}
+	}
+
+	// Visited rooms
+	if (json_doc.HasMember("visited_rooms") && json_doc["visited_rooms"].IsArray()) {
+		const rapidjson::Value& visited_rooms = json_doc["visited_rooms"];
+		for (rapidjson::SizeType i = 0; i < visited_rooms.Size(); i++) {
+			if (!visited_rooms[i].IsNull()) {
+				auto room_index = static_cast<MapUtility::RoomID>(visited_rooms[i].GetInt());
+				for (auto [entity, room] : registry.view<Room>().each()) {
+					if (room.room_index == room_index) {
+						room.visible = true;
+						break;
+					}
+				}
+			}
 		}
 	}
 
@@ -554,7 +586,7 @@ void MapGeneratorSystem::load_initial_level()
 }
 
 // Creates a room entity, with room type referencing to the predefined room
-void MapGeneratorSystem::create_room(vec2 position, MapUtility::RoomID room_id, int level) const
+void MapGeneratorSystem::create_room(vec2 position, MapUtility::RoomID room_id, int level, uint index) const
 {
 	auto entity = registry.create();
 
@@ -564,6 +596,7 @@ void MapGeneratorSystem::create_room(vec2 position, MapUtility::RoomID room_id, 
 	Room& room = registry.emplace<Room>(entity);
 	room.room_id = room_id;
 	room.level = level;
+	room.room_index = index;
 
 	Animation& tile_animation = registry.emplace<Animation>(entity);
 	tile_animation.max_frames = 4;
@@ -581,7 +614,7 @@ void MapGeneratorSystem::create_map(int level) const
 		for (size_t col = 0; col < mapping[0].size(); col++) {
 			vec2 position = top_left_corner_pos + vec2(tile_size * room_size / 2)
 				+ vec2(col, row) * tile_size * static_cast<float>(room_size);
-			create_room(position, mapping.at(row).at(col), level);
+			create_room(position, mapping.at(row).at(col), level, row * MapUtility::map_size + col);
 		}
 	}
 }

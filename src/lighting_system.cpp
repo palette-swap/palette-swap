@@ -6,7 +6,7 @@
 
 void LightingSystem::init(std::shared_ptr<MapGeneratorSystem> map) { this->map_generator = std::move(map); }
 
-void draw_tile(uvec2 pos)
+void light_tile(uvec2 pos)
 {
 	const static vec3 color(1);
 	Entity entity = registry.create();
@@ -16,7 +16,7 @@ void draw_tile(uvec2 pos)
 	registry.emplace<UIRectangle>(entity, 1.f, vec4(color, 1));
 }
 
-void draw_triangle(vec2 p1, vec2 p2, vec2 p3)
+void light_triangle(vec2 p1, vec2 p2, vec2 p3)
 {
 	Entity entity = registry.create();
 	registry.emplace<LightingTriangle>(entity, p1, p2, p3);
@@ -43,6 +43,7 @@ void LightingSystem::step()
 void LightingSystem::spin(uvec2 player_map_pos, vec2 player_world_pos)
 {
 	visited_angles.clear();
+	visible_tiles.clear();
 	auto check_point = [&](uvec2 tile) {
 		if (!map_generator->is_on_map(tile)) {
 			return;
@@ -71,6 +72,7 @@ void LightingSystem::spin(uvec2 player_map_pos, vec2 player_world_pos)
 				if (visited_angles.size() == 1 && visited_angles.at(0).x <= -glm::pi<double>()
 					&& visited_angles.at(0).y >= glm::pi<double>()) {
 					// We've darkened everything now
+					update_visible();
 					return;
 				}
 			}
@@ -86,23 +88,16 @@ void LightingSystem::spin(uvec2 player_map_pos, vec2 player_world_pos)
 			vec2 p2 = player_world_pos + vec2(scale * glm::rotate(dvec2(1, 0), angle.x));
 			vec2 p3 = player_world_pos
 				+ vec2(scale * glm::rotate(dvec2(1, 0), min(angle.y, angle.x + glm::pi<double>() / 2.0)));
-			draw_triangle(player_world_pos, p2, p3);
+			light_triangle(player_world_pos, p2, p3);
 			angle.x += glm::pi<double>() / 2.0;
 		}
 	}
+	update_visible();
 }
 
 void LightingSystem::process_tile(vec2 player_world_pos, uvec2 tile)
 {
-	static constexpr std::array<ivec2, 4> offsets = {
-		ivec2(-1, -1),
-		ivec2(-1, 1),
-		ivec2(1, 1),
-		ivec2(1, -1),
-	};
-	if (map_generator->walkable(tile)) {
-		return;
-	}
+	bool is_solid = !map_generator->walkable(tile);
 	auto min_angle = glm::pi<double>();
 	auto max_angle = -glm::pi<double>();
 	int side = 0;
@@ -121,30 +116,7 @@ void LightingSystem::process_tile(vec2 player_world_pos, uvec2 tile)
 		min_angle = min(min_angle, angle);
 		max_angle = max(max_angle, angle);
 	}
-	auto draw = [&](AngleResult result, const dvec2& angle) {
-		switch (result) {
-		case AngleResult::New: {
-			for (int i = 0; i < offsets.size(); i++) {
-				vec2 p2 = MapUtility::map_position_to_world_position(tile)
-					+ MapUtility::tile_size / 2.f * vec2(offsets.at(i));
-				vec2 p3 = MapUtility::map_position_to_world_position(tile)
-					+ MapUtility::tile_size / 2.f * vec2(offsets.at((i + 1) % offsets.size()));
-				draw_triangle(player_world_pos, p2, p3);
-				//draw_tile(tile);
-			}
-			break;
-		}
-		case AngleResult::Overlap: {
-			vec2 p2 = project_onto_tile(tile, player_world_pos, angle.x);
-			vec2 p3 = project_onto_tile(tile, player_world_pos, angle.y);
-			draw_triangle(player_world_pos, p2, p3);
-			draw_tile(tile);
-			break;
-		}
-		default:
-			return;
-		}
-	};
+	AngleResult result = AngleResult::Redundant;
 	if (cross_seam) {
 		dvec2 positive_angle = vec2(glm::pi<double>(), glm::pi<double>());
 		dvec2 negative_angle = vec2(-glm::pi<double>(), -glm::pi<double>());
@@ -158,23 +130,69 @@ void LightingSystem::process_tile(vec2 player_world_pos, uvec2 tile)
 				negative_angle.y = max(negative_angle.y, angle);
 			}
 		}
-		draw(try_add_angle(positive_angle), positive_angle);
-		draw(try_add_angle(negative_angle), negative_angle);
+		if (is_solid) {
+			AngleResult pos_result = try_add_angle(positive_angle);
+			AngleResult neg_result = try_add_angle(negative_angle);
+			draw_tile(pos_result, positive_angle, tile, player_world_pos);
+			draw_tile(neg_result, negative_angle, tile, player_world_pos);
+			result = (AngleResult)((uint)pos_result | (uint)neg_result);
+		} else {
+			result = (AngleResult)((uint)check_visible(positive_angle) | (uint)check_visible(negative_angle));
+		}
 	} else {
 		dvec2 angle = dvec2(min_angle, max_angle);
-		draw(try_add_angle(angle), angle);
+		if (is_solid) {
+			result = try_add_angle(angle);
+			draw_tile(result, angle, tile, player_world_pos);
+		} else {
+			result = check_visible(angle);
+		}
+	}
+	if (result != AngleResult::Redundant) {
+		mark_as_visible(tile);
+	}
+}
+
+void LightingSystem::draw_tile(AngleResult result, const dvec2& angle, uvec2 tile, vec2 player_world_pos)
+{
+	switch (result) {
+	case AngleResult::New: {
+		for (int i = 0; i < offsets.size(); i++) {
+			vec2 p2
+				= MapUtility::map_position_to_world_position(tile) + MapUtility::tile_size / 2.f * vec2(offsets.at(i));
+			vec2 p3 = MapUtility::map_position_to_world_position(tile)
+				+ MapUtility::tile_size / 2.f * vec2(offsets.at((i + 1) % offsets.size()));
+			light_triangle(player_world_pos, p2, p3);
+			// light_tile(tile);
+		}
+		break;
+	}
+	case AngleResult::Overlap: {
+		vec2 p2 = project_onto_tile(tile, player_world_pos, angle.x);
+		vec2 p3 = project_onto_tile(tile, player_world_pos, angle.y);
+		light_triangle(player_world_pos, p2, p3);
+		light_tile(tile);
+		break;
+	}
+	default:
+		return;
 	}
 }
 
 LightingSystem::AngleResult LightingSystem::try_add_angle(dvec2& angle)
 {
 	AngleResult result = AngleResult::New;
-	for (auto& pair : visited_angles) {
+	size_t update_index = -1;
+	for (size_t i = 0; i < visited_angles.size(); i++) {
+		const auto& pair = visited_angles[i];
 		if (rad_to_int(pair.x) <= rad_to_int(angle.x) && rad_to_int(pair.y) >= rad_to_int(angle.y)) {
 			return AngleResult::Redundant;
 		}
 		if (rad_to_int(angle.x) <= rad_to_int(pair.y)) {
 			if (rad_to_int(angle.y) >= rad_to_int(pair.x) && rad_to_int(angle.x) <= rad_to_int(pair.y)) {
+				if (update_index == -1) {
+					update_index = i;
+				}
 				// Intersect, remove redundant bits
 				result = AngleResult::Overlap;
 				if (rad_to_int(angle.x) <= rad_to_int(pair.x)) {
@@ -185,14 +203,18 @@ LightingSystem::AngleResult LightingSystem::try_add_angle(dvec2& angle)
 				// It might also overlap on the other end, so we need to keep going
 				angle.x = pair.y;
 			} else {
+				// Didn't intersect / no longer intersecting, so we're in the clear
 				break;
 			}
 		}
 	}
+	if (update_index == -1) {
+		update_index = 0;
+	}
 
 	int inserted_pos = -1;
 	ivec2 remove_range = ivec2(-1, -1);
-	for (int i = 0; i < visited_angles.size(); i++) {
+	for (size_t i = update_index; i < visited_angles.size(); i++) {
 		auto& pair = visited_angles[i];
 		if (inserted_pos == -1 && pair.y >= angle.x) {
 			visited_angles.emplace(visited_angles.begin() + i, angle.x, angle.y);
@@ -254,10 +276,41 @@ vec2 LightingSystem::project_onto_tile(uvec2 tile, vec2 player_world_pos, double
 		if (dist <= .5 * MapUtility::tile_size + tol) {
 			// We're inside the tile bounds, so it worked
 			return test_pos;
-		} else if (dist < min_dist) {
+		}
+		if (dist < min_dist) {
 			min_dist = dist;
 			min_pos = test_pos;
 		}
 	}
 	return min_pos;
+}
+
+LightingSystem::AngleResult LightingSystem::check_visible(dvec2& angle) {
+	for (auto& pair : visited_angles) {
+		if (rad_to_int(pair.x) <= rad_to_int(angle.x) && rad_to_int(pair.y) >= rad_to_int(angle.y)) {
+			return AngleResult::Redundant;
+		}
+		if (rad_to_int(angle.x) <= rad_to_int(pair.y)) {
+			if (rad_to_int(angle.y) >= rad_to_int(pair.x) && rad_to_int(angle.x) <= rad_to_int(pair.y)) {
+				return AngleResult::Overlap;
+			}
+			return AngleResult::New;
+		}
+	}
+	return AngleResult::New;
+}
+
+void LightingSystem::mark_as_visible(uvec2 tile)
+{
+	visible_tiles.insert(tile);
+	visible_rooms.insert(MapUtility::get_room_index(tile));
+}
+
+void LightingSystem::update_visible()
+{
+	for (auto [entity, room] : registry.view<Room>().each()) {
+		if (!room.visible && visible_rooms.count(room.room_index) > 0) {
+			room.visible = true;
+		}
+	}
 }

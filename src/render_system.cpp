@@ -717,6 +717,10 @@ void RenderSystem::draw_map(const mat3& projection, ColorState color)
 	glBindTexture(GL_TEXTURE_2D, texture_id);
 	gl_has_errors();
 	for (auto [entity, room] : registry.view<Room>().each()) {
+		if (!room.visible) {
+			continue;
+		}
+
 		Transform transform = get_transform(entity);
 		transform.scale(scaling_factors.at(static_cast<int>(tex)));
 

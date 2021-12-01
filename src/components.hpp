@@ -192,6 +192,9 @@ struct Room {
 	// this can have potential bug if we have up to 255 rooms, but we probably won't...
 	MapUtility::RoomID room_id = 0xff;
 	int level = -1;
+	// Position within a particular map
+	uint8_t room_index = 0;
+	bool visible = false;
 };
 
 // For TileMap vertex buffers, we need a separate tile_texture float because we want

@@ -105,7 +105,7 @@ private:
 	// Create the current map
 	void create_map(int level) const;
 	// Create a room
-	void create_room(vec2 position, MapUtility::RoomID room_id, int level) const;
+	void create_room(vec2 position, MapUtility::RoomID room_id, int level, uint index) const;
 
 	// Entity for the help picture
 	Entity help_picture = entt::null;
