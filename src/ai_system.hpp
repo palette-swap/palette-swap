@@ -279,6 +279,10 @@ private:
 	// Leaf action node: FireAttack (high damage)
 	class FireAttack : public BTNode {
 	public:
+		FireAttack(int animation)
+			: m_animation(animation)
+		{
+		}
 		void init(Entity /*e*/) override { debug_log("Debug: FireAttack.init\n"); }
 
 		BTState process(Entity e, AISystem* ai) override
@@ -287,7 +291,7 @@ private:
 
 			ai->become_powerup(e, true);
 			// TODO Change hard coded int to map based on enemy type
-			ai->animations->boss_special_attack_animation(e, 2);
+			ai->animations->boss_special_attack_animation(e, m_animation);
 			ai->attack_player(e);
 			ai->become_powerup(e, false);
 
@@ -295,13 +299,17 @@ private:
 
 			return handle_process_result(BTState::Success);
 		}
+
+	private:
+		int m_animation;
 	};
 
 	// Leaf action node: IceAttack (stun effect)
 	class IceAttack : public BTNode {
 	public:
-		IceAttack(float chance, int magnitude)
-			: m_chance(chance)
+		IceAttack(int animation, float chance, int magnitude)
+			: m_animation(animation)
+			, m_chance(chance)
 			, m_magnitude(magnitude)
 		{
 		}
@@ -314,7 +322,7 @@ private:
 
 			ai->add_attack_effect(e, Effect::Stun, m_chance, m_magnitude);
 			// TODO Change hard coded int to map based on enemy type
-			ai->animations->boss_special_attack_animation(e, 3);
+			ai->animations->boss_special_attack_animation(e, m_animation);
 			ai->attack_player(e);
 			ai->clear_attack_effects(e);
 
@@ -324,6 +332,7 @@ private:
 		}
 
 	private:
+		int m_animation;
 		float m_chance;
 		int m_magnitude;
 	};
@@ -331,8 +340,9 @@ private:
 	// Leaf action node: GaleAttack (shove effect)
 	class GaleAttack : public BTNode {
 	public:
-		GaleAttack(float chance, int magnitude)
-			: m_chance(chance)
+		GaleAttack(int animation, float chance, int magnitude)
+			: m_animation(animation)
+			, m_chance(chance)
 			, m_magnitude(magnitude)
 		{
 		}
@@ -345,7 +355,7 @@ private:
 
 			ai->add_attack_effect(e, Effect::Shove, m_chance, m_magnitude);
 			// TODO Change hard coded int to map based on enemy type
-			ai->animations->boss_special_attack_animation(e, 5);
+			ai->animations->boss_special_attack_animation(e, m_animation);
 			ai->attack_player(e);
 			ai->clear_attack_effects(e);
 
@@ -356,6 +366,7 @@ private:
 		}
 
 	private:
+		int m_animation;
 		float m_chance;
 		int m_magnitude;
 	};
@@ -363,8 +374,9 @@ private:
 	// Leaf action node: TarAttack (immobilize effect and evasion down effect)
 	class TarAttack : public BTNode {
 	public:
-		TarAttack(float chance, int magnitude)
-			: m_chance(chance)
+		TarAttack(int animation, float chance, int magnitude)
+			: m_animation(animation) 
+			, m_chance(chance)
 			, m_magnitude(magnitude)
 		{
 		}
@@ -378,7 +390,7 @@ private:
 			ai->add_attack_effect(e, Effect::Immobilize, m_chance, m_magnitude);
 			ai->add_attack_effect(e, Effect::EvasionDown, m_chance, m_magnitude);
 			// TODO Change hard coded int to map based on enemy type
-			ai->animations->boss_special_attack_animation(e, 4);
+			ai->animations->boss_special_attack_animation(e, m_animation);
 			ai->attack_player(e);
 			ai->clear_attack_effects(e);
 
@@ -388,6 +400,7 @@ private:
 		}
 
 	private:
+		int m_animation;
 		float m_chance;
 		int m_magnitude;
 	};
@@ -647,10 +660,10 @@ private:
 		static std::unique_ptr<BTNode> weapon_master_tree_factory(AISystem* ai)
 		{
 			// Selector - special attack
-			auto fire_attack = std::make_unique<FireAttack>();
-			auto ice_attack = std::make_unique<IceAttack>(1.0f, 1);
-			auto gale_attack = std::make_unique<GaleAttack>(1.0f, 1);
-			auto tar_attack = std::make_unique<TarAttack>(1.0f, 1);
+			auto fire_attack = std::make_unique<FireAttack>(2);
+			auto ice_attack = std::make_unique<IceAttack>(3, 1.0f, 1);
+			auto gale_attack = std::make_unique<GaleAttack>(5, 1.0f, 1);
+			auto tar_attack = std::make_unique<TarAttack>(4, 1.0f, 1);
 			auto selector_special_attack = std::make_unique<Selector>(std::move(tar_attack));
 			Selector* p = selector_special_attack.get();
 			selector_special_attack->add_precond_and_child(
