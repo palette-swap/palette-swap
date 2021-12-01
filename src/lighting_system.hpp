@@ -40,7 +40,7 @@ private:
 	}
 
 	std::vector<dvec2> visited_angles;
-	const int light_radius = 16;
+	const int light_radius = 14;
 	const double half_pseudo_degrees = 2 << 14;
 	const double tol = 4.0 / half_pseudo_degrees;
 };

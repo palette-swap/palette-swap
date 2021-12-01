@@ -10,7 +10,7 @@ Entity create_player(uvec2 pos)
 	registry.emplace<Stats>(entity);
 
 	// Light up around the player
-	registry.emplace<Light>(entity, MapUtility::tile_size * 9);
+	registry.emplace<Light>(entity, MapUtility::tile_size * 7.5f);
 
 	Inventory& inventory = registry.emplace<Inventory>(entity);
 
