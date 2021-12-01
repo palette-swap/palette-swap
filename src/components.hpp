@@ -282,6 +282,10 @@ struct Enemy {
 	void deserialize(const std::string& prefix, const rapidjson::Document& json, bool load_from_file = true);
 };
 
+// Denotes that an enemy is a boss type
+struct Boss {
+};
+
 struct AOESquare {
 	// Released AOE square will be destroyed in the next turn.
 	bool actual_attack_displayed = false;
@@ -546,7 +550,7 @@ const std::array<int, (size_t)EnemyState::EnemyStateCount> enemy_state_to_animat
 	2, // Flinched
 	2, // Powerup
 	2, // Immortal
-	1, // Charging
+	3, // Charging
 };
 
 // Render behind other elements in its grouping
@@ -642,8 +646,8 @@ const std::array<int, (size_t)DamageType::Count> damage_type_to_spell_impact = {
 };
 
 const std::map<EnemyType, TEXTURE_ASSET_ID> boss_type_attack_spritesheet { 
-	{ EnemyType::KingMush, TEXTURE_ASSET_ID::KING_MUSH_ATTACKS } 
-};
+	{ EnemyType::KingMush, TEXTURE_ASSET_ID::KING_MUSH_ATTACKS } ,
+	{EnemyType::Titho, TEXTURE_ASSET_ID::TITHO_ATTACKS } };
 //---------------------------------------------------------------------------
 //-------------------------		    Physics         -------------------------
 //---------------------------------------------------------------------------

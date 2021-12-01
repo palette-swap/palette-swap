@@ -37,7 +37,7 @@ static constexpr float player_tile_travel_time_ms = 80.f;
 // Used for boss action speeds
 static constexpr float boss_action_speed = 0.5f;
 static constexpr int boss_aoe_state = 0;
-static constexpr int boss_ranged_attack_state = 1;
+static constexpr int boss_regular_attack_state = 1;
 static constexpr int boss_ranged_attack_total_frames = 8;
 static constexpr float boss_ranged_attack_speed = 2.f;
 
@@ -129,7 +129,7 @@ public:
 	// Triggers the actual animation for an entity's aoe attack
 	void trigger_aoe_attack_animation(const Entity& aoe);
 	// Triggers boss's range attacked display at the specified location
-	void boss_ranged_attack(EnemyType boss, uvec2 target_position);
+	void boss_regular_attack(Entity boss, uvec2 target_position);
 	// Generates the boss enemy entry animation
 	// DOES NOT CREATE AN ACTUAL BOSS ENTITY, JUST CREATES THE ENTRY ANIMATION ENTITY AT THE LOCATION GIVEN
 	Entity create_boss_entry_entity(EnemyType boss_type, uvec2 position);

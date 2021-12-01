@@ -118,6 +118,7 @@ void AnimationSystem::set_enemy_state(const Entity& enemy, int state)
 {
 	Animation& enemy_animation = registry.get<Animation>(enemy);
 
+	printf("The enemy state was set back to idle");
 	if (registry.any_of<EventAnimation>(enemy)) {
 		EventAnimation& enemy_event = registry.get<EventAnimation>(enemy);
 		enemy_event.restore_state = state;
@@ -362,19 +363,33 @@ void AnimationSystem::boss_event_animation(const Entity& boss, int event_state) 
 	}
 }
 
-void AnimationSystem::boss_ranged_attack(EnemyType boss, uvec2 target_position) {
+void AnimationSystem::boss_regular_attack(Entity boss, uvec2 target_position) {
 	auto boss_range_attack_entity = registry.create();
+	auto boss_type = registry.get<Enemy>(boss).type;
+	auto &boss_animation = registry.get<Animation>(boss);
 
+	if (!registry.any_of<EventAnimation>(boss)) {
+		EventAnimation& boss_attack = registry.emplace<EventAnimation>(boss);
+
+		// Stores restoration states for the player's animations, to be called after animation event is resolves
+		this->animation_event_setup(boss_animation, boss_attack, boss_animation.display_color);
+
+		// Sets animation state to be the beginning of the boss regular attack animation
+		boss_animation.state = boss_regular_attack_state;
+		boss_animation.frame = 0;
+		boss_animation.speed_adjustment = enemy_attack_speed;
+	}
+	
 	registry.emplace<MapPosition>(boss_range_attack_entity, target_position);
 	registry.emplace<TransientEventAnimation>(boss_range_attack_entity);
 	registry.emplace<EffectRenderRequest>(boss_range_attack_entity,
-										  boss_type_attack_spritesheet.at(boss),
+										  boss_type_attack_spritesheet.at(boss_type),
 										  EFFECT_ASSET_ID::ENEMY,
 										  GEOMETRY_BUFFER_ID::SMALL_SPRITE,
 										  true);
 	Animation& spell_impact_animation = registry.emplace<Animation>(boss_range_attack_entity);
 	spell_impact_animation.max_frames = boss_ranged_attack_total_frames;
-	spell_impact_animation.state = boss_ranged_attack_state;
+	spell_impact_animation.state = boss_regular_attack_state;
 	spell_impact_animation.speed_adjustment = boss_ranged_attack_speed;
 }
 

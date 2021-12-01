@@ -187,6 +187,7 @@ static void load_enemy(unsigned int enemy_index, const rapidjson::Document& json
 		enemy_animation.max_frames = 8;
 		enemy_animation.speed_adjustment = 0.6f;
 		visible = true;
+		registry.emplace<Boss>(entity);
 	} else {
 		enemy_animation.max_frames = 4;
 	}
