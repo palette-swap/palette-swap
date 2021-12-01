@@ -529,7 +529,9 @@ void AISystem::release_aoe(const std::vector<Entity>& aoe)
 			attack_player(aoe_square);
 		}
 
-		animations->trigger_aoe_attack_animation(aoe_square);
+		// TODO: specifify type of aoe that needs to be displayed, there may be multiple. Default is currently
+		// set to state 1
+		animations->trigger_aoe_attack_animation(aoe_square, 1);
 		// Released AOE squares will be destroyed in the next turn.
 		registry.get<AOESquare>(aoe_square).is_released = true;
 	}

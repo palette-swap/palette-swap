@@ -364,7 +364,8 @@ void AnimationSystem::boss_event_animation(const Entity& boss, int event_state) 
 }
 
 void AnimationSystem::boss_regular_attack(Entity boss, uvec2 target_position) {
-	auto boss_range_attack_entity = registry.create();
+	
+	// Sets boss's attack animation to be the regular one
 	auto boss_type = registry.get<Enemy>(boss).type;
 	auto &boss_animation = registry.get<Animation>(boss);
 
@@ -379,7 +380,9 @@ void AnimationSystem::boss_regular_attack(Entity boss, uvec2 target_position) {
 		boss_animation.frame = 0;
 		boss_animation.speed_adjustment = enemy_attack_speed;
 	}
-	
+
+	// Creates a remote attack entity based on attack spritesheet
+	auto boss_range_attack_entity = registry.create();
 	registry.emplace<MapPosition>(boss_range_attack_entity, target_position);
 	registry.emplace<TransientEventAnimation>(boss_range_attack_entity);
 	registry.emplace<EffectRenderRequest>(boss_range_attack_entity,
@@ -389,15 +392,15 @@ void AnimationSystem::boss_regular_attack(Entity boss, uvec2 target_position) {
 										  true);
 	Animation& spell_impact_animation = registry.emplace<Animation>(boss_range_attack_entity);
 	spell_impact_animation.max_frames = boss_ranged_attack_total_frames;
-	spell_impact_animation.state = boss_regular_attack_state;
+	spell_impact_animation.state = boss_regular_remote_attack_state;
 	spell_impact_animation.speed_adjustment = boss_ranged_attack_speed;
 }
 
-void AnimationSystem::trigger_aoe_attack_animation(const Entity& aoe) { 
+void AnimationSystem::trigger_aoe_attack_animation(const Entity& aoe, int aoe_state) { 
 	Animation& aoe_animation = registry.get<Animation>(aoe); 
 	AOESquare& aoe_status = registry.get<AOESquare>(aoe);
 
-	aoe_animation.state = 0;
+	aoe_animation.state = aoe_state;
 	aoe_animation.frame = 0;
 	aoe_animation.max_frames = 8;
 	aoe_animation.speed_adjustment = 0.8f;

@@ -262,13 +262,12 @@ private:
 			debug_log("Debug: RegularAttack.process\n");
 
 			// TODO (Evan): animation for Titho and the target player.
-			if (registry.get<Enemy>(e).type != EnemyType::Titho) {
-				// Gets information related to where the boss is attacking from a ranged.
-				// Can be moved into animation ssytem to make this portion clearer and free or registry accesses
-				Entity player_entity = registry.view<Player>().front();
-				uvec2 player_location = registry.get<MapPosition>(player_entity).position;
-				ai->animations->boss_regular_attack(e, player_location);
-			}
+			// Gets information related to where the boss is attacking from a ranged.
+			// Can be moved into animation ssytem to make this portion clearer and free or registry accesses
+			Entity player_entity = registry.view<Player>().front();
+			uvec2 player_location = registry.get<MapPosition>(player_entity).position;
+			ai->animations->boss_regular_attack(e, player_location);
+
 
 			ai->attack_player(e);
 			
@@ -291,7 +290,8 @@ private:
 			ai->attack_player(e);
 			ai->become_powerup(e, false);
 
-			// TODO (Evan): animation for Titho and the target player.
+			// TODO Change hard coded int to map based on enemy type
+			ai->animations->boss_event_animation(e, 2);
 			ai->switch_enemy_state(e, EnemyState::Idle);
 
 			return handle_process_result(BTState::Success);
@@ -317,7 +317,8 @@ private:
 			ai->attack_player(e);
 			ai->clear_attack_effects(e);
 
-			// TODO (Evan): animation for Titho and the target player.
+			// TODO Change hard coded int to map based on enemy type
+			ai->animations->boss_event_animation(e, 3);
 			ai->switch_enemy_state(e, EnemyState::Idle);
 
 			return handle_process_result(BTState::Success);
@@ -347,7 +348,8 @@ private:
 			ai->attack_player(e);
 			ai->clear_attack_effects(e);
 
-			// TODO (Evan): animation for Titho and the target player.
+			// TODO Change hard coded int to map based on enemy type
+			ai->animations->boss_event_animation(e, 4);
 			ai->switch_enemy_state(e, EnemyState::Idle);
 
 			return handle_process_result(BTState::Success);
@@ -378,7 +380,8 @@ private:
 			ai->attack_player(e);
 			ai->clear_attack_effects(e);
 
-			// TODO (Evan): animation for Titho and the target player.
+			// TODO Change hard coded int to map based on enemy type
+			ai->animations->boss_event_animation(e, 5);
 			ai->switch_enemy_state(e, EnemyState::Idle);
 
 			return handle_process_result(BTState::Success);
