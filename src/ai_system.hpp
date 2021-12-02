@@ -159,10 +159,12 @@ private:
 	// Leaf action node: SummonEnemies
 	class SummonEnemies : public BTNode {
 	public:
-		SummonEnemies(EnemyType type, int num)
+		SummonEnemies(int animation, EnemyType type, int num)
 			: m_type(type)
 			, m_num(num)
+			, m_animation(animation)
 		{
+
 		}
 
 		void init(Entity /*e*/) override
@@ -177,13 +179,14 @@ private:
 			ai->summon_enemies(e, m_type, m_num);
 
 			ai->switch_enemy_state(e, EnemyState::Idle);
-			ai->animations->boss_event_animation(e, 2);
+			ai->animations->boss_event_animation(e, m_animation);
 			return handle_process_result(BTState::Success);
 		}
 
 	private:
 		EnemyType m_type;
 		int m_num;
+		int m_animation;
 	};
 
 	
@@ -255,6 +258,10 @@ private:
 	// Leaf action node: RegularAttack
 	class RegularAttack : public BTNode {
 	public:
+		RegularAttack(int animation)
+			: m_animation(animation)
+		{
+		}
 		void init(Entity /*e*/) override { debug_log("Debug: RegularAttack.init\n"); }
 
 		BTState process(Entity e, AISystem* ai) override
@@ -265,7 +272,7 @@ private:
 			// Gets information related to where the boss is attacking from a ranged.
 			// Can be moved into animation ssytem to make this portion clearer and free or registry accesses
 			// TODO Change hard coded int to map based on enemy type
-			ai->animations->boss_special_attack_animation(e, 1);
+			ai->animations->boss_special_attack_animation(e, m_animation);
 
 
 			ai->attack_player(e);
@@ -274,6 +281,9 @@ private:
 
 			return handle_process_result(BTState::Success);
 		}
+
+	private:
+		int m_animation;
 	};
 
 	// Leaf action node: FireAttack (high damage)
@@ -586,14 +596,14 @@ private:
 		static std::unique_ptr<BTNode> summoner_tree_factory(AISystem* ai)
 		{
 			// Selector - active
-			auto summon_enemies = std::make_unique<SummonEnemies>(EnemyType::Mushroom, 1);
+			auto summon_enemies = std::make_unique<SummonEnemies>(2, EnemyType::Mushroom, 1);
 			std::vector<ivec2> aoe_shape;
 			aoe_shape.emplace_back(0, 0);
 			aoe_shape.emplace_back(0, -1);
 			aoe_shape.emplace_back(-1, 0);
 			aoe_shape.emplace_back(1, 0);
 			auto aoe_attack = std::make_unique<AOEAttack>(aoe_shape);
-			auto regular_attack = std::make_unique<RegularAttack>();
+			auto regular_attack = std::make_unique<RegularAttack>(1);
 			auto selector_active = std::make_unique<Selector>(std::move(regular_attack));
 			Selector* p = selector_active.get();
 			selector_active->add_precond_and_child(
@@ -681,7 +691,7 @@ private:
 				// WeaponMaster has 25% chance to make a tar attack during special attack mode.
 
 			// Selector - active
-			auto regular_attack = std::make_unique<RegularAttack>();
+			auto regular_attack = std::make_unique<RegularAttack>(1);
 			auto sequence_active = std::make_unique<Sequence>();
 			sequence_active->add_child(std::move(regular_attack));
 			sequence_active->add_child(std::move(selector_special_attack));
