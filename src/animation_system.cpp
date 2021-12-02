@@ -164,7 +164,27 @@ void AnimationSystem::enemy_tile_transition(const Entity& enemy, uvec2 map_start
 	if (enemy_type == EnemyType::Mushroom || enemy_type == EnemyType::Slime) {
 		enemy_transition.middle_point -= vec2(0, MapUtility::tile_size * 0.2f);
 	}
-		
+}
+
+void AnimationSystem::set_enemy_death_animation(const Entity& enemy) 
+{
+	auto enemy_death_entity = registry.create();
+
+	MapPosition position = registry.get<MapPosition>(enemy);
+	RenderRequest enemy_render = registry.get<RenderRequest>(enemy);
+	Animation enemy_animation = registry.get<Animation>(enemy);
+
+	registry.emplace<MapPosition>(enemy_death_entity, position);
+	registry.emplace<TransientEventAnimation>(enemy_death_entity);
+	registry.emplace<RenderRequest>(
+		enemy_death_entity, enemy_render.used_texture, EFFECT_ASSET_ID::DEATH, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);
+
+	Animation& enemy_death_animation = registry.emplace<Animation>(enemy_death_entity);
+	enemy_death_animation.max_frames = enemy_death_total_frames;
+	enemy_death_animation.direction = enemy_animation.direction;
+	enemy_death_animation.state = enemy_animation.state;
+	enemy_death_animation.display_color = enemy_animation.display_color;
+	enemy_death_animation.speed_adjustment = enemy_death_animation_speed;
 }
 
 void AnimationSystem::set_all_inactive_colours(ColorState inactive_color)
@@ -302,6 +322,21 @@ void AnimationSystem::player_red_blue_animation(const Entity& player, ColorState
 	}
 }
 
+void AnimationSystem::player_spell_impact_animation(const Entity& enemy, DamageType spelltype)
+{
+	auto spell_impact_entity = registry.create();
+	MapPosition position = registry.get<MapPosition>(enemy);
+
+	registry.emplace<MapPosition>(spell_impact_entity, position);
+	registry.emplace<TransientEventAnimation>(spell_impact_entity);
+	registry.emplace<EffectRenderRequest>(
+		spell_impact_entity, TEXTURE_ASSET_ID::SPELLS, EFFECT_ASSET_ID::SPELL, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);
+	Animation& spell_impact_animation = registry.emplace<Animation>(spell_impact_entity);
+	spell_impact_animation.max_frames = spell_impact_total_frames;
+	spell_impact_animation.state = damage_type_to_spell_impact.at((int)spelltype);
+	spell_impact_animation.speed_adjustment = player_spell_impact_speed;
+}
+
 Entity AnimationSystem::create_boss_entry_entity(EnemyType boss_type, uvec2 map_position) {
 
 	auto boss_entry_entity = registry.create();
@@ -331,20 +366,7 @@ bool AnimationSystem::boss_intro_complete(const Entity& boss_entity)
 	return (!registry.any_of<UndisplayEventAnimation> (boss_entity));
 }
 
-void AnimationSystem::player_spell_impact_animation(const Entity& enemy, DamageType spelltype) {
-	auto spell_impact_entity = registry.create();
-	MapPosition position = registry.get<MapPosition>(enemy);
 
-	registry.emplace<MapPosition>(spell_impact_entity, position);
-	registry.emplace<TransientEventAnimation>(spell_impact_entity);
-	registry.emplace<EffectRenderRequest>(
-		spell_impact_entity, TEXTURE_ASSET_ID::SPELLS, EFFECT_ASSET_ID::SPELL, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);
-	Animation& spell_impact_animation = registry.emplace<Animation>(spell_impact_entity);
-	spell_impact_animation.max_frames = spell_impact_total_frames;
-	spell_impact_animation.state = damage_type_to_spell_impact.at((int)spelltype);
-	spell_impact_animation.speed_adjustment = player_spell_impact_speed;
-	
-}
 
 void AnimationSystem::boss_event_animation(const Entity& boss, int event_state) {
 	Animation& enemy_animation = registry.get<Animation>(boss);

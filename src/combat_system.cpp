@@ -307,6 +307,7 @@ void CombatSystem::kill(Entity attacker_entity, Entity target_entity)
 	drop_loot(registry.get<MapPosition>(target_entity).position);
 
 	// TODO: Animate death
+	animations->set_enemy_death_animation(target_entity);
 	registry.destroy(target_entity);
 
 	for (const auto& callback : death_callbacks) {
