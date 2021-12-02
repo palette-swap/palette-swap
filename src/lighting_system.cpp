@@ -314,6 +314,13 @@ void LightingSystem::update_visible()
 	for (auto [entity, room] : registry.view<Room>().each()) {
 		if (!room.visible && visible_rooms.count(room.room_index) > 0) {
 			room.visible = true;
+			if (BigRoomElement* element = registry.try_get<BigRoomElement>(entity)) {
+				Entity curr = registry.get<BigRoom>(element->big_room).first_room;
+				while (curr != entt::null) {
+					registry.get<Room>(curr).visible = true;
+					curr = registry.get<BigRoomElement>(curr).next_room;
+				}
+			}
 		}
 	}
 }

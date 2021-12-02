@@ -197,6 +197,16 @@ struct Room {
 	bool visible = false;
 };
 
+struct BigRoom {
+	Entity first_room = entt::null;
+	static void add_room(Entity big_room, Entity room);
+};
+
+struct BigRoomElement {
+	Entity big_room = entt::null;
+	Entity next_room = entt::null;
+};
+
 // For TileMap vertex buffers, we need a separate tile_texture float because we want
 // to be able to specify different textures for a room
 struct TileMapVertex {
