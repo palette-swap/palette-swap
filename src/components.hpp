@@ -679,6 +679,13 @@ const std::array<int, (size_t)DamageType::Count> damage_type_to_spell_impact = {
 const std::map<EnemyType, TEXTURE_ASSET_ID> boss_type_attack_spritesheet { 
 	{ EnemyType::KingMush, TEXTURE_ASSET_ID::KING_MUSH_ATTACKS } 
 };
+
+struct RoomAnimation {
+	uvec2 start_tile;
+	float dist_per_second = MapUtility::tile_size * 6.f;
+	float elapsed_time = 0;
+};
+
 //---------------------------------------------------------------------------
 //-------------------------		    Physics         -------------------------
 //---------------------------------------------------------------------------

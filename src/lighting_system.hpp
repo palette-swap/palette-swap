@@ -17,7 +17,7 @@ public:
 	// Initialize the window
 	void init(std::shared_ptr<MapGeneratorSystem> map);
 
-	void step();
+	void step(float elapsed_ms);
 
 	bool is_visible(uvec2 tile);
 
@@ -50,7 +50,7 @@ private:
 
 	std::vector<dvec2> visited_angles;
 	std::unordered_set<uvec2> visible_tiles;
-	std::unordered_set<uint8_t> visible_rooms;
+	std::unordered_map<uint8_t, uvec2> visible_rooms;
 	const int light_radius = 14;
 	const double half_pseudo_degrees = 2 << 14;
 	const double tol = 4.0 / half_pseudo_degrees;

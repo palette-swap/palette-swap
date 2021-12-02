@@ -90,7 +90,7 @@ int main()
 		world.handle_collisions();
 		animations->update_animations(elapsed_ms, turns->get_inactive_color());
 		turns->step();
-		lighting.step();
+		lighting.step(elapsed_ms);
 		renderer.draw();
 	}
 

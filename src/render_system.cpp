@@ -770,6 +770,18 @@ void RenderSystem::draw_map(const mat3& projection, ColorState color)
 		GLint frame_loc = glGetUniformLocation(program, "frame");
 		glUniform1i(frame_loc, animation.frame);
 
+		GLint appearing_loc = glGetUniformLocation(program, "appearing");
+		bool appearing = false;
+		if (RoomAnimation* appear = registry.try_get<RoomAnimation>(entity)) {
+			GLint start_tile = glGetUniformLocation(program, "start_tile");
+			glUniform2fv(start_tile, 1, glm::value_ptr(MapUtility::map_position_to_world_position(appear->start_tile)));
+
+			GLint max_show_distance = glGetUniformLocation(program, "max_show_distance");
+			glUniform1f(max_show_distance, appear->dist_per_second * (appear->elapsed_time / 1000.f));
+			appearing = true;
+		}
+		glUniform1i(appearing_loc, static_cast<int>(appearing));
+
 		draw_triangles(transform, projection);
 	}
 }

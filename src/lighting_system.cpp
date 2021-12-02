@@ -22,7 +22,7 @@ void light_triangle(vec2 p1, vec2 p2, vec2 p3)
 	registry.emplace<LightingTriangle>(entity, p1, p2, p3);
 }
 
-void LightingSystem::step()
+void LightingSystem::step(float elapsed_ms)
 {
 	registry.destroy(registry.view<LightingTriangle>().begin(), registry.view<LightingTriangle>().end());
 	registry.destroy(registry.view<LightingTile>().begin(), registry.view<LightingTile>().end());
@@ -37,6 +37,25 @@ void LightingSystem::step()
 		player_world_pos = MapUtility::map_position_to_world_position(player_map_pos);
 	}
 
+	auto check_distance = [](uvec2 start, uvec2 tile, float max_distance) -> bool {
+		return glm::distance2(MapUtility::map_position_to_world_position(start),
+							  MapUtility::map_position_to_world_position(tile))
+			<= max_distance * max_distance;
+	};
+	for (auto [entity, room, animation] : registry.view<Room, RoomAnimation>().each()) {
+		animation.elapsed_time += elapsed_ms;
+		auto area = MapUtility::get_room_area(room.room_index);
+		float max_dist = animation.dist_per_second * (animation.elapsed_time / 1000.f);
+
+		// Check if the whole thing is revealed
+		if (check_distance(animation.start_tile, area.first, max_dist)
+			&& check_distance(animation.start_tile, area.second, max_dist)
+			&& check_distance(animation.start_tile, uvec2(area.first.x, area.second.y), max_dist)
+			&& check_distance(animation.start_tile, uvec2(area.second.x, area.first.y), max_dist)) {
+			//registry.remove<RoomAnimation>(entity);
+		}
+	}
+
 	spin(player_map_pos, player_world_pos);
 }
 
@@ -46,7 +65,8 @@ void LightingSystem::spin(uvec2 player_map_pos, vec2 player_world_pos)
 {
 	visited_angles.clear();
 	visible_tiles.clear();
-	visible_tiles.emplace(player_map_pos);
+	visible_rooms.clear();
+	mark_as_visible(player_map_pos);
 	auto check_point = [&](uvec2 tile) {
 		if (!map_generator->is_on_map(tile)) {
 			return;
@@ -306,20 +326,28 @@ LightingSystem::AngleResult LightingSystem::check_visible(dvec2& angle) {
 void LightingSystem::mark_as_visible(uvec2 tile)
 {
 	visible_tiles.insert(tile);
-	visible_rooms.insert(MapUtility::get_room_index(tile));
+	uint8_t room_index = MapUtility::get_room_index(tile);
+	if (visible_rooms.count(room_index) == 0) {
+		visible_rooms.emplace(room_index, tile);
+	}
 }
 
 void LightingSystem::update_visible()
 {
 	for (auto [entity, room] : registry.view<Room>().each()) {
 		if (!room.visible && visible_rooms.count(room.room_index) > 0) {
-			room.visible = true;
+			uvec2 tile = visible_rooms.at(room.room_index);
 			if (BigRoomElement* element = registry.try_get<BigRoomElement>(entity)) {
 				Entity curr = registry.get<BigRoom>(element->big_room).first_room;
 				while (curr != entt::null) {
+
 					registry.get<Room>(curr).visible = true;
+					registry.emplace<RoomAnimation>(curr, tile);
 					curr = registry.get<BigRoomElement>(curr).next_room;
 				}
+			} else {
+				room.visible = true;
+				registry.emplace<RoomAnimation>(entity, tile);
 			}
 		}
 	}
