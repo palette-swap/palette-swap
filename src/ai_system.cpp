@@ -492,6 +492,11 @@ int AISystem::get_random_int(int min, int max)
 	return floor(rand_float);
 }
 
+float AISystem::get_distance(ivec2 a, ivec2 b) {
+	ivec2 diff = b - a;
+	return sqrtf(diff.x * diff.x + diff.y * diff.y);
+};
+
 void AISystem::become_immortal(const Entity& entity, bool flag)
 {
 	Stats& stats = registry.get<Stats>(entity);
@@ -558,6 +563,41 @@ void AISystem::release_aoe(const std::vector<Entity>& aoe)
 		// Released AOE squares will be destroyed in the next turn.
 		registry.get<AOESquare>(aoe_square).is_released = true;
 	}
+}
+
+std::vector<ivec2> AISystem::draw_tile_line(ivec2 a, ivec2 b, int offset) { 
+	// Based on Bresenham's line algorithm
+	// Transform into usable line
+	ivec2 diff = b - a;
+	int flip_x = ((diff.x < 0) ? -1 : 1);
+	int flip_y = ((diff.y < 0) ? -1 : 1);
+	diff.x *= flip_x;
+	diff.y *= flip_y;
+
+	bool flip_45 = (diff.x < diff.y);
+	if (flip_45) {
+		int temp = diff.x;
+		diff.x = diff.y;
+		diff.y = temp;
+	}
+
+	std::vector<ivec2> line_tiles;
+	// Assume a.x < b.x and a.y < b.y and x.length < y.length
+	float slope = (float)(diff.y) / (float)(diff.x);
+	for (int x = offset; x <= diff.x; x++) {
+		int x_i = x;
+		int y_i = (int)round(slope * x_i);
+
+		// Reverse transformation
+		if (flip_45) {
+			int temp = x_i;
+			x_i = y_i;
+			y_i = temp;
+		}
+		line_tiles.emplace_back(x_i * flip_x + a.x, y_i * flip_y + a.y);
+	}
+	
+	return line_tiles; 
 }
 
 void AISystem::draw_pathing_debug()
