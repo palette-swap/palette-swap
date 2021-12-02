@@ -176,14 +176,14 @@ void AnimationSystem::set_enemy_death_animation(const Entity& enemy)
 
 	registry.emplace<MapPosition>(enemy_death_entity, position);
 	registry.emplace<TransientEventAnimation>(enemy_death_entity);
-	registry.emplace<RenderRequest>(
+	registry.emplace<EffectRenderRequest>(
 		enemy_death_entity, enemy_render.used_texture, EFFECT_ASSET_ID::DEATH, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);
 
 	Animation& enemy_death_animation = registry.emplace<Animation>(enemy_death_entity);
 	enemy_death_animation.max_frames = enemy_death_total_frames;
 	enemy_death_animation.direction = enemy_animation.direction;
 	enemy_death_animation.state = enemy_animation.state;
-	enemy_death_animation.display_color = enemy_animation.display_color;
+	enemy_death_animation.display_color = vec4 { 1, 1, 1, 0.8 };
 	enemy_death_animation.speed_adjustment = enemy_death_animation_speed;
 }
 

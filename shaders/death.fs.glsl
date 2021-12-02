@@ -2,7 +2,7 @@
 
 // From vertex shader
 in vec2 texcoord;
-
+in vec2 vpos;
 // Application data
 uniform sampler2D sampler0;
 uniform vec3 fcolor;
