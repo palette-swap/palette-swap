@@ -156,14 +156,12 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 	return entity;
 }
 
-std::vector<Entity> create_aoe(const std::vector<uvec2>& aoe_area, const Stats& stats, EnemyType enemy_type)
+std::vector<Entity> create_aoe(const std::vector<uvec2>& aoe_area, const Stats& stats, EnemyType enemy_type, Entity owner)
 {
 	std::vector<Entity> aoe;
 
 	for (const uvec2& map_pos : aoe_area) {
-		Entity aoe_square = registry.create();
-
-		registry.emplace<AOESquare>(aoe_square);
+		Entity aoe_square = AOESource::add(owner);
 
 		registry.emplace<WorldPosition>(aoe_square, MapUtility::map_position_to_world_position(map_pos));
 

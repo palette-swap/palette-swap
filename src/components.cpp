@@ -572,3 +572,17 @@ std::string Attack::get_description() const {
 
 	return description;
 }
+
+Entity AOESource::add(Entity parent)
+{
+	AOESource* source = registry.try_get<AOESource>(parent);
+	Entity new_aoe = registry.create();
+	if (source == nullptr) {
+		source = &(registry.emplace<AOESource>(parent, new_aoe));
+		registry.emplace<AOESquare>(source->children, parent, entt::null);
+	} else {
+		registry.emplace<AOESquare>(new_aoe, parent, source->children);
+		source->children = new_aoe;
+	}
+	return new_aoe;
+}

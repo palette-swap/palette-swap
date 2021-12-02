@@ -94,7 +94,8 @@ struct SmallSpriteVertex {
  */
 
 enum class TEXTURE_ASSET_ID : uint8_t {
-	PALADIN = 0,
+	EMPTY = 0,
+	PALADIN = EMPTY + 1,
 	// Small Enemies
 	DUMMY = PALADIN + 1,
 	SLIME = DUMMY + 1,
@@ -126,6 +127,7 @@ const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 // Define the scaling factors needed for each textures
 // Note: This needs to stay the same order as TEXTURE_ASSET_ID and texture_paths
 static constexpr std::array<vec2, texture_count> scaling_factors = {
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
@@ -290,7 +292,14 @@ struct Enemy {
 	void deserialize(const std::string& prefix, const rapidjson::Document& json, bool load_from_file = true);
 };
 
+struct AOESource {
+	Entity children;
+	static Entity add(Entity parent);
+};
+
 struct AOESquare {
+	Entity parent;
+	Entity next_AOE;
 	// Released AOE square will be destroyed in the next turn.
 	bool actual_attack_displayed = false;
 	bool is_released = false;
@@ -553,7 +562,7 @@ const std::array<TEXTURE_ASSET_ID, static_cast<int>(EnemyType::EnemyCount)> enem
 	// available.
 	TEXTURE_ASSET_ID::KING_MUSH,
 	TEXTURE_ASSET_ID::KING_MUSH,
-	TEXTURE_ASSET_ID::SLIME,
+	TEXTURE_ASSET_ID::EMPTY,
 };
 
 const std::map<EnemyType, TEXTURE_ASSET_ID> boss_type_entry_animation_map {
@@ -663,6 +672,7 @@ const std::array<int, (size_t)DamageType::Count> damage_type_to_spell_impact = {
 
 const std::map<EnemyType, TEXTURE_ASSET_ID> boss_type_attack_spritesheet { 
 	{ EnemyType::KingMush, TEXTURE_ASSET_ID::KING_MUSH_ATTACKS },
+	{ EnemyType::Dragon, TEXTURE_ASSET_ID::KING_MUSH_ATTACKS },
 	{ EnemyType::AOERingGen, TEXTURE_ASSET_ID::KING_MUSH_ATTACKS },
 };
 //---------------------------------------------------------------------------

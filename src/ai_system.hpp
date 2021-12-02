@@ -72,6 +72,9 @@ private:
 	// Return true if a percent chance happens.
 	bool chance_to_happen(float percent);
 
+	// Return random int between [min, max)
+	int get_random_int(int min, int max);
+
 	// An entity become immortal if flag is true. Otherwise cancel immortality.
 	void become_immortal(const Entity& entity, bool flag);
 
@@ -181,15 +184,14 @@ private:
 		int m_num;
 	};
 
-	
 	// Leaf action node: AOEAttack
 	class AOEAttack : public BTNode {
 	public:
-		explicit AOEAttack(std::vector<ivec2> area_pattern, Entity e_target)
+		explicit AOEAttack(std::vector<ivec2> area_pattern, Entity target)
 			: is_charged(false)
 			, m_aoe_shape(std::move(area_pattern))
+			, target(target)
 		{
-			target = e_target;
 		}
 
 		void init(Entity /*e*/) override
@@ -228,7 +230,7 @@ private:
 				Enemy enemy = registry.get<Enemy>(e);
 
 				// Create AOE.
-				m_aoe = create_aoe(aoe_area, aoe_stats, enemy.type);
+				m_aoe = create_aoe(aoe_area, aoe_stats, enemy.type, e);
 
 				ai->switch_enemy_state(e, EnemyState::Charging);
 
@@ -248,6 +250,122 @@ private:
 		std::vector<ivec2> m_aoe_shape;
 		std::vector<Entity> m_aoe;
 		Entity target;
+	};
+
+	// Leaf action node: AOEAttack
+	class AOERandomAttack : public BTNode {
+	public:
+		explicit AOERandomAttack(Entity target, int num_attacks, int radius)
+			: is_charged(false)
+			, target(target)
+			, num_attacks(num_attacks)
+			, radius(radius)
+		{
+		}
+
+		void init(Entity /*e*/) override
+		{
+			debug_log("Debug: AOEAttack.init\n");
+			is_charged = false;
+			m_aoe.clear();
+		}
+
+		BTState process(Entity e, AISystem* ai) override
+		{
+			debug_log("Debug: AOEAttack.process\n");
+
+			if (!is_charged) {
+				// Charging
+				is_charged = true;
+
+				// Compute AOE area using AOE shape and player position.
+				MapPosition* mp = registry.try_get<MapPosition>(target);
+				const uvec2& target_map_pos = (mp != nullptr ? mp->position : uvec2(0, 0));
+
+				std::vector<ivec2> attack_points;
+				int retries = 3; 
+				ivec2 dragon_pos = static_cast<ivec2> (registry.get<MapPosition>(e).position);
+				auto dist_func = [](ivec2 a, ivec2 b) { 
+					ivec2 diff = b - a;
+					return sqrtf(diff.x * diff.x + diff.y * diff.y);
+				};
+				for (int i = 0; i < num_attacks; i++) {
+					ivec2 attack_i;
+					attack_i.x = ai->get_random_int(-radius, radius+1);
+					attack_i.y = ai->get_random_int(-radius, radius+1);
+
+					// Check if point is more than 3 tiles from other points and the dragon
+					bool too_close = false;
+					if (dist_func(attack_i, dragon_pos) < 3.0f) {
+						if (retries > 0) {
+							i--;
+							retries--;
+						}
+						continue;
+					}
+					for (ivec2 point : attack_points) {
+						if (dist_func(attack_i, point) < 3.0f) {
+							too_close = true;
+							break;
+						}
+					}
+					if (too_close) {
+						if (retries > 0) {
+							i--;
+							retries--;
+						}
+						continue;
+					}
+					attack_points.emplace_back(attack_i);
+				}
+
+				std::vector<uvec2> aoe_area;
+				for (ivec2 point : attack_points) {
+					for (const ivec2& map_pos_offset : m_aoe_shape) {
+						const ivec2& map_pos = point + map_pos_offset + static_cast<ivec2>(target_map_pos);
+						if (map_pos.x >= 0 || map_pos.y >= 0) {
+							aoe_area.emplace_back(map_pos);
+						}
+					}
+				}
+				// Create AOE stats.
+				Stats aoe_stats = registry.get<Stats>(e);
+				aoe_stats.base_attack.damage_min *= 2;
+				aoe_stats.base_attack.damage_max *= 2;
+				aoe_stats.damage_bonus *= 2;
+
+				Enemy enemy = registry.get<Enemy>(e);
+
+				// Create AOE.
+				m_aoe = create_aoe(aoe_area, aoe_stats, enemy.type, e);
+
+				ai->switch_enemy_state(e, EnemyState::Charging);
+
+				return handle_process_result(BTState::Running);
+			}
+			// Release AOE.
+			ai->release_aoe(m_aoe);
+			m_aoe.clear();
+
+			ai->switch_enemy_state(e, EnemyState::Idle);
+			ai->animations->boss_event_animation(e, 4);
+			ai->so_loud->play(ai->king_mush_aoe_wav);
+			return handle_process_result(BTState::Success);
+		}
+
+	private:
+		bool is_charged;
+		int num_attacks;
+		int radius;
+		std::vector<Entity> m_aoe;
+		Entity target;
+		std::vector<ivec2> m_aoe_shape = { { 0, 0 }, { 0, 1 }, { 0, -1 }, { 1, 0 }, { -1, 0 } };
+		// All attacks are in a + pattern
+		// ┌───┐
+		// │ x │
+		// │xxx|
+		// | x |
+		// └───┘
 	};
 
 	// Leaf action node: AOERingAttack
@@ -313,7 +431,7 @@ private:
 					Enemy enemy = registry.get<Enemy>(e);
 
 					// Create AOE.
-					m_aoe = create_aoe(aoe_area, aoe_stats, enemy.type);
+					m_aoe = create_aoe(aoe_area, aoe_stats, enemy.type, e);
 
 					ai->switch_enemy_state(e, EnemyState::Charging);
 
@@ -577,7 +695,7 @@ private:
 			return handle_process_result(state);
 		}
 
-		static std::unique_ptr<BTNode> dragon_tree_factory(AISystem* ai)
+		static std::unique_ptr<BTNode> dragon_tree_factory(AISystem* ai, Entity e)
 		{
 			// Selector - active
 			auto summon_aoe_emitter = std::make_unique<SummonEnemies>(EnemyType::AOERingGen, 1);
@@ -585,13 +703,18 @@ private:
 
 			Entity aoe_emitter = registry.create();
 
-			auto aoe_attack = std::make_unique<AOEAttack>(aoe_shape, aoe_emitter);
 			auto do_nothing_1 = std::make_unique<DoNothing>();
 			auto selector_active = std::make_unique<Selector>(std::move(do_nothing_1));
 			Selector* p = selector_active.get();
 			selector_active->add_precond_and_child(
-				[p](Entity /*e*/) { return (p->get_process_count() == 0); },
+				[p](Entity /*e*/) { return ((p->get_process_count()+2) % 5 == 0); },
 				std::move(summon_aoe_emitter));
+
+			auto wild_surge = std::make_unique<AOERandomAttack>(e, 10, 8);
+			selector_active->add_precond_and_child(
+				[p](Entity /*e*/) { return p->get_process_count() % 5 == 0; }, 
+				std::move(wild_surge)
+			);
 
 			// Selector - idle
 			auto recover_health = std::make_unique<RecoverHealth>(0.20f);

@@ -37,9 +37,18 @@ AISystem::AISystem(const Debug& debugging,
 	this->combat->on_death([this](const Entity& entity) {
 		// If entity is a boss, remove its behaviour tree and AOE squares.
 		if (bosses.find(entity) != bosses.end()) {
+			// Destroy all children in AOEsource
+			if (auto parent = registry.try_get<AOESource>(entity)) {
+				Entity iterator = parent->children;
+				auto view = registry.view<AOESquare>();
+				while (iterator != entt::null) {
+					AOESquare aoe_i = view.get<AOESquare>(iterator);
+					Entity temp = iterator;
+					iterator = aoe_i.next_AOE;
+					registry.destroy(temp);
+				}
+			}
 			bosses.erase(entity);
-			auto view = registry.view<AOESquare>();
-			registry.destroy(view.begin(), view.end());
 		}
 	});
 }
@@ -49,9 +58,25 @@ void AISystem::step(float /*elapsed_ms*/)
 	if (turns->execute_team_action(enemy_team)) {
 
 		// Released AOE squares are destroyed.
-		for (auto [aoe_square_entity, aoe_square] : registry.view<AOESquare>().each()) {
-			if (aoe_square.is_released) {
-				registry.destroy(aoe_square_entity);
+		auto view = registry.view<AOESquare>();
+		for (auto [entity, aoe_source] : registry.view<AOESource>().each()) {
+			Entity prev = entt::null;
+			Entity curr = aoe_source.children;
+			while (curr != entt::null) {
+				AOESquare curr_square = view.get<AOESquare>(curr);
+				Entity next = curr_square.next_AOE;
+				if (curr_square.is_released) {
+					registry.destroy(curr);
+					curr = next;
+					if (prev != entt::null) {
+						view.get<AOESquare>(prev).next_AOE = curr;
+					} else {
+						aoe_source.children = curr;
+					}
+				} else {
+					prev = curr;
+					curr = next;
+				}
 			}
 		}
 
@@ -105,7 +130,7 @@ void AISystem::step(float /*elapsed_ms*/)
 				case EnemyBehaviour::Dragon: {
 					if (bosses.find(enemy_entity) == bosses.end()) {
 						// A boss entity occurs for the 1st time, create its corresponding behaviour tree & initialize.
-						bosses[enemy_entity] = DragonTree::dragon_tree_factory(this);
+						bosses[enemy_entity] = DragonTree::dragon_tree_factory(this, enemy_entity);
 						bosses[enemy_entity]->init(enemy_entity);
 					}
 					if (bosses[enemy_entity]->process(enemy_entity, this) != BTState::Running) {
@@ -453,10 +478,18 @@ bool AISystem::is_health_below(const Entity& entity, float ratio)
 	return static_cast<float>(stats.health) < static_cast<float>(stats.health_max) * ratio;
 }
 
-bool AISystem::chance_to_happen(float percent) {
+bool AISystem::chance_to_happen(float percent)
+{
 	float chance = uniform_dist(rng);
 	bool result = chance < percent;
 	return result;
+}
+
+int AISystem::get_random_int(int min, int max)
+{
+	float rand_unit = uniform_dist(rng);
+	float rand_float = (max - min) * rand_unit + min;
+	return floor(rand_float);
 }
 
 void AISystem::become_immortal(const Entity& entity, bool flag)
