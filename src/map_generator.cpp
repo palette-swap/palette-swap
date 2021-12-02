@@ -20,18 +20,10 @@ static std::string enemy_template_path(const std::string& name)
 };
 
 const static std::array<std::string, (size_t)EnemyType::EnemyCount> enemy_template_paths = {
-	enemy_template_path("TrainingDummy.json"), 
-	enemy_template_path("Slime.json"),	 
-	enemy_template_path("Raven.json"),
-	enemy_template_path("Armor.json"),		   
-	enemy_template_path("TreeAnt.json"),	 
-	enemy_template_path("Wraith.json"),
-	enemy_template_path("Drake.json"),		   
-	enemy_template_path("Mushroom.json"), 
-	enemy_template_path("Spider.json"),
-	enemy_template_path("Clone.json"),		   
-	enemy_template_path("KingMush.json"),
-	enemy_template_path("Dragon.json"),
+	enemy_template_path("TrainingDummy.json"), enemy_template_path("Slime.json"),	 enemy_template_path("Raven.json"),
+	enemy_template_path("Armor.json"),		   enemy_template_path("TreeAnt.json"),	 enemy_template_path("Wraith.json"),
+	enemy_template_path("Drake.json"),		   enemy_template_path("Mushroom.json"), enemy_template_path("Spider.json"),
+	enemy_template_path("Clone.json"),		   enemy_template_path("KingMush.json"),
 };
 
 static void load_enemies_from_file()
@@ -110,14 +102,14 @@ const static uint8_t void_tile = 10;
 const static uint8_t next_level_tile = 14;
 const static uint8_t last_level_tile = 20;
 const static std::array<uint8_t, 2> trap_tiles = { 28, 36 };
-// const static uint8_t boundary_tile_top_left = 1;
-// const static uint8_t boundary_tile_top = 2;
-// const static uint8_t boundary_tile_top_right = 3;
-// const static uint8_t boundary_tile_left = 9;
-// const static uint8_t boundary_tile_right = 11;
-// const static uint8_t boundary_tile_bot_left = 17;
-// const static uint8_t boundary_tile_bot = 18;
-// const static uint8_t boundary_tile_bot_right = 19;
+//const static uint8_t boundary_tile_top_left = 1;
+//const static uint8_t boundary_tile_top = 2;
+//const static uint8_t boundary_tile_top_right = 3;
+//const static uint8_t boundary_tile_left = 9;
+//const static uint8_t boundary_tile_right = 11;
+//const static uint8_t boundary_tile_bot_left = 17;
+//const static uint8_t boundary_tile_bot = 18;
+//const static uint8_t boundary_tile_bot_right = 19;
 
 // customized cellular automata algorithm to smooth the room out
 static void smooth_room(RoomLayout& curr_layout, uint iterations, const std::set<int>& critical_locations)
@@ -170,7 +162,7 @@ static void smooth_room(RoomLayout& curr_layout, uint iterations, const std::set
 		}
 
 		// 2. shrink room from outside
-		for (int tile_position = 0; tile_position < curr_layout.size(); tile_position++) {
+		for (int tile_position = 0; tile_position < curr_layout.size(); tile_position++)  {
 			int tile_row = tile_position / 10;
 			int tile_col = tile_position % 10;
 			int num_walls_around = get_neighbour_walls(tile_row, tile_col, updated_layout);
