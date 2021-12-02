@@ -231,8 +231,6 @@ void WorldSystem::restart_game()
 	map_generator->load_initial_level();
 	uvec2 player_starting_point = registry.get<MapPosition>(player).position;
 
-	create_guide(player_starting_point + uvec2(2, 2));
-
 	// TODO: Should move into create_player (under world init) afterwards
 
 	// Initializes the perception of the player for what is inactive
