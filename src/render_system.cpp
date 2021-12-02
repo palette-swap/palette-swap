@@ -47,6 +47,22 @@ Transform RenderSystem::get_transform_no_rotation(Entity entity) const
 	return transform;
 }
 
+void RenderSystem::prepare_buffer(vec3 color) const
+{
+	// Clearing backbuffer
+	glViewport(0, 0, (GLsizei)screen_size_capped().x, (GLsizei)screen_size_capped().y);
+	glDepthRange(0.00001, 10);
+	glClearColor(color.r, color.g, color.b, 1.0);
+	glClearDepth(1.f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDisable(GL_DEPTH_TEST); // native OpenGL does not work with a depth buffer
+							  // and alpha blending, one would have to sort
+							  // sprites back to front
+	gl_has_errors();
+}
+
 void RenderSystem::prepare_for_textured(GLuint texture_id)
 {
 	const auto program = (GLuint)effects.at((uint8)EFFECT_ASSET_ID::TEXTURED);
@@ -335,6 +351,8 @@ void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest& render
 		gl_has_errors();
 	}
 
+	prepare_for_lit_entity(program);
+
 	draw_triangles(transform, projection);
 }
 
@@ -531,6 +549,8 @@ void RenderSystem::draw_stat_bar(
 		glUniform3fv(color_uloc, 1, glm::value_ptr(color));
 		gl_has_errors();
 	}
+
+	prepare_for_lit_entity(program);
 
 	draw_triangles(transform, projection);
 }
@@ -754,6 +774,34 @@ void RenderSystem::draw_map(const mat3& projection, ColorState color)
 	}
 }
 
+void RenderSystem::prepare_for_lit_entity(GLuint program) const
+{
+
+	// Bind our textures in
+	GLint texture_loc = glGetUniformLocation(program, "sampler0");
+	GLint lighting_texture_loc = glGetUniformLocation(program, "lighting");
+	GLint use_lighting_loc = glGetUniformLocation(program, "use_lighting");
+	glUniform1i(texture_loc, 0);
+	glUniform1i(lighting_texture_loc, 1);
+	glUniform1i(use_lighting_loc, static_cast<int>(applying_lighting));
+
+	glActiveTexture(GL_TEXTURE0 + 1);
+	glBindTexture(GL_TEXTURE_2D, lighting_buffer_color);
+}
+
+void RenderSystem::create_lighting_texture(const mat3& projection)
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, lighting_frame_buffer);
+	gl_has_errors();
+	prepare_buffer(vec3(0));
+
+	for (auto [entity, light] : registry.view<Light>().each()) {
+		draw_light(entity, light, projection);
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
+}
+
 void RenderSystem::draw_light(Entity entity, const Light& light, const mat3& projection)
 {
 	Transform transform = get_transform(entity);
@@ -808,27 +856,10 @@ void RenderSystem::draw_light(Entity entity, const Light& light, const mat3& pro
 
 void RenderSystem::draw_lighting(const mat3& projection)
 {
-	auto prep_buffer = [&]() {
-		glViewport(0, 0, (GLsizei)screen_size_capped().x, (GLsizei)screen_size_capped().y);
-		glDepthRange(0.00001, 10);
-		glClearColor(0.25, 0.25, 0.25, 1.0);
-		glClearDepth(1.f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glDisable(GL_DEPTH_TEST);
-	};
-	glBindFramebuffer(GL_FRAMEBUFFER, lighting_frame_buffer);
-	gl_has_errors();
-	prep_buffer();
-
-	for (auto [entity, light] : registry.view<Light>().each()) {
-		draw_light(entity, light, projection);
-	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, los_frame_buffer);
 	gl_has_errors();
-	prep_buffer();
+	prepare_buffer(vec3(0));
 
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers.at((int)GEOMETRY_BUFFER_ID::LIGHTING_TRIANGLES));
 
@@ -1004,25 +1035,14 @@ void RenderSystem::draw()
 	PlayerInactivePerception& player_perception = registry.get<PlayerInactivePerception>(player);
 	ColorState& inactive_color = player_perception.inactive;
 
+	// Reset lighting state
+	applying_lighting = false;
+
 	// First render to the custom framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
 	gl_has_errors();
-	// Clearing backbuffer
-	glViewport(0, 0, (GLsizei)screen_size_capped().x, (GLsizei)screen_size_capped().y);
-	glDepthRange(0.00001, 10);
-	if (inactive_color == ColorState::Blue) {
-		glClearColor(57.f / 256, 51.f / 256, 81.f / 256, 1.0);
-	} else {
-		glClearColor(58.f / 256, 66.f / 256, 60.f / 256, 1.0);
-	}
-	glClearDepth(1.f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_DEPTH_TEST); // native OpenGL does not work with a depth buffer
-							  // and alpha blending, one would have to sort
-							  // sprites back to front
-	gl_has_errors();
+	prepare_buffer((inactive_color == ColorState::Blue) ? vec3(57.f / 256, 51.f / 256, 81.f / 256)
+														: vec3(58.f / 256, 66.f / 256, 60.f / 256));
 	mat3 projection_2d = create_projection_matrix();
 
 	draw_map(projection_2d, inactive_color == ColorState::Blue ? ColorState::Red : ColorState::Blue);
@@ -1033,6 +1053,12 @@ void RenderSystem::draw()
 			draw_textured_mesh(entity, request, projection_2d);
 		}
 	}
+
+	create_lighting_texture(projection_2d);
+	// Start applying lighting to various entities
+	applying_lighting = true;
+
+	
 
 	auto render_requests_lambda = [&](Entity entity, RenderRequest& render_request) {
 		if (render_request.visible) {
@@ -1083,6 +1109,9 @@ void RenderSystem::draw()
 	}
 
 	draw_lighting(projection_2d);
+
+	// Done using lighting
+	applying_lighting = false;
 
 	draw_ui(projection_2d);
 

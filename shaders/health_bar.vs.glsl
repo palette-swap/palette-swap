@@ -5,6 +5,7 @@ in vec3 in_position;
 in vec3 in_color;
 
 out vec3 vcolor;
+out vec3 pos;
 
 // Application data
 uniform mat3 transform;
@@ -18,6 +19,6 @@ void main()
 	if(in_color != vec3(0, 0, 0)) {
 		local_position *= vec2(health, 1.0);
 	}
-	vec3 pos = projection * transform * vec3(local_position, 1.0);
+	pos = projection * transform * vec3(local_position, 1.0);
 	gl_Position = vec4(pos.xy, in_position.z, 1.0);
 }

@@ -155,6 +155,8 @@ private:
 	// Helper to get position transform without rotation
 	Transform get_transform_no_rotation(Entity entity) const;
 
+	// Helper to ready the current buffer for re-use
+	void prepare_buffer(vec3 color) const;
 	// Helper to ready to draw the Textured effect
 	void prepare_for_textured(GLuint texture_id);
 	// Helper to ready to draw the SpriteSheet effect
@@ -178,6 +180,8 @@ private:
 	void draw_map(const mat3& projection, ColorState color);
 
 	// Lighting
+	void prepare_for_lit_entity(GLuint program) const;
+	void create_lighting_texture(const mat3& projection);
 	void draw_light(Entity entity, const Light& light, const mat3& projection);
 	void draw_lighting(const mat3& projection);
 
@@ -206,6 +210,7 @@ private:
 
 	// Lighting System
 	LightingSystem& lighting;
+	bool applying_lighting = true;
 
 	// Window handle
 	GLFWwindow* window = nullptr;
