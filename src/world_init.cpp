@@ -162,7 +162,6 @@ std::vector<Entity> create_aoe(const std::vector<uvec2>& aoe_area, const Stats& 
 
 		registry.emplace<Stats>(aoe_square, stats);
 
-		// TODO (Evan): Replace CANNONBALL with a suitable texture for a basic AOE.
 		registry.emplace<EffectRenderRequest>(
 			aoe_square, boss_type_attack_spritesheet.at(enemy_type), EFFECT_ASSET_ID::AOE, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);
 

@@ -1,8 +1,8 @@
 {
   "player": {
     "position": {
-      "x": 26,
-      "y": 44
+      "x": 30,
+      "y": 50
     }
   },
   "enemies": [
@@ -17,15 +17,15 @@
       "attack_range": 10,
       "nest_position": {
         "x": 30,
-        "y": 45
+        "y": 46
       },
       "position": {
         "x": 30,
-        "y": 45
+        "y": 46
       },
       "stats": {
-        "health": 100,
-        "health_max": 100,
+        "health": 300,
+        "health_max": 300,
         "mana": 100,
         "mana_max": 100,
         "to_hit_bonus": 6,
@@ -35,8 +35,8 @@
           "name": "",
           "to_hit_min": 20,
           "to_hit_max": 20,
-          "damage_min": 10,
-          "damage_max": 10,
+          "damage_min": 7,
+          "damage_max": 7,
           "damage_type": 0,
           "targeting_type": 0
         }
