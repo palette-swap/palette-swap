@@ -40,10 +40,25 @@ void LightingSystem::step()
 	spin(player_map_pos, player_world_pos);
 }
 
+bool LightingSystem::is_visible(uvec2 tile)
+{
+	// First, check los
+	if (visible_tiles.count(tile) == 0) {
+		return false;
+	}
+
+	// Then, check lighting
+	Entity player = registry.view<Player>().front();
+	uvec2 player_pos = registry.get<MapPosition>(player).position;
+	uvec2 dist_2 = (tile - player_pos) * (tile - player_pos);
+	return dist_2.x + dist_2.y <= pow(registry.get<Light>(player).radius / MapUtility::tile_size + .707f, 2);
+}
+
 void LightingSystem::spin(uvec2 player_map_pos, vec2 player_world_pos)
 {
 	visited_angles.clear();
 	visible_tiles.clear();
+	visible_tiles.emplace(player_map_pos);
 	auto check_point = [&](uvec2 tile) {
 		if (!map_generator->is_on_map(tile)) {
 			return;

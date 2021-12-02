@@ -6,20 +6,25 @@
 #include <glm/gtc/type_ptr.hpp> // Allows nice passing of values to GL functions
 #pragma warning(pop)
 
-Transform RenderSystem::get_transform(Entity entity) const
+Transform RenderSystem::get_transform(Entity entity, uvec2* tile) const
 {
 	Transform transform;
-	if (registry.any_of<WorldPosition>(entity)) {
+	if (WorldPosition* world_pos = registry.try_get<WorldPosition>(entity)) {
 		// Most objects in the game are expected to use MapPosition, exceptions are:
 		// Arrow, Room.
-		transform.translate(registry.get<WorldPosition>(entity).position);
-		if (registry.any_of<Velocity>(entity)) {
+		transform.translate(world_pos->position);
+		if (Velocity* velocity = registry.try_get<Velocity>(entity)) {
 			// Probably can provide a get if exist function here to boost performance
-			transform.rotate(registry.get<Velocity>(entity).angle);
+			transform.rotate(velocity->angle);
 		}
-	} else if (registry.any_of<MapPosition>(entity)) {
-		MapPosition& map_position = registry.get<MapPosition>(entity);
-		transform.translate(MapUtility::map_position_to_world_position(map_position.position));
+		if (tile != nullptr) {
+			*tile = MapUtility::world_position_to_map_position(world_pos->position);
+		}
+	} else if (MapPosition* map_pos = registry.try_get<MapPosition>(entity)) {
+		transform.translate(MapUtility::map_position_to_world_position(map_pos->position));
+		if (tile != nullptr) {
+			*tile = map_pos->position;
+		}
 	} else {
 		transform.translate(screen_position_to_world_position(registry.get<ScreenPosition>(entity).position));
 	}
@@ -226,7 +231,8 @@ RenderSystem::TextData RenderSystem::generate_text(const Text& text)
 
 void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest& render_request, const mat3& projection)
 {
-	Transform transform = get_transform(entity);
+	uvec2 tile;
+	Transform transform = get_transform(entity, &tile);
 
 	transform.scale(scaling_factors.at(static_cast<int>(render_request.used_texture)));
 
@@ -262,7 +268,11 @@ void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest& render
 
 	} else if (render_request.used_effect == EFFECT_ASSET_ID::ENEMY
 			   || render_request.used_effect == EFFECT_ASSET_ID::PLAYER
-				|| render_request.used_effect == EFFECT_ASSET_ID::BOSS_INTRO_SHADER) {
+			   || render_request.used_effect == EFFECT_ASSET_ID::BOSS_INTRO_SHADER) {
+
+		if (!lighting.is_visible(tile)) {
+			return;
+		}
 
 		GLint in_position_loc = glGetAttribLocation(program, "in_position");
 		GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
@@ -1030,10 +1040,17 @@ void RenderSystem::draw()
 	};
 
 	auto health_group_lambda = [&](Entity entity, Stats& stats, Enemy& /*enemy*/) {
-		Transform transform = get_transform(entity);
-		transform.translate(vec2(2 - MapUtility::tile_size / 2, -MapUtility::tile_size / 2));
-		transform.scale(vec2(MapUtility::tile_size - 4, 3));
-		draw_stat_bar(transform, stats, projection_2d, false);
+		uvec2 tile;
+		Transform transform = get_transform(entity, &tile);
+		if (!lighting.is_visible(tile)) {
+			return;
+		}
+		vec2 shift = vec2(2 - MapUtility::tile_size / 2, -MapUtility::tile_size / 2);
+		vec2 scale = vec2(MapUtility::tile_size - 4, 3);
+		bool fancy = false;
+		transform.translate(shift);
+		transform.scale(scale);
+		draw_stat_bar(transform, stats, projection_2d, fancy, scale.x / scale.y, entity);
 	};
 
 	// Renders entities + healthbars depending on which state we are in

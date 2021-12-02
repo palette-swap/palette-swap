@@ -19,6 +19,8 @@ public:
 
 	void step();
 
+	bool is_visible(uvec2 tile);
+
 private:
 	enum class AngleResult {
 		Redundant = 0,

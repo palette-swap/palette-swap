@@ -96,22 +96,6 @@ class RenderSystem {
 
 	static constexpr float entry_animation_height = 1.f;
 	static constexpr float entry_animation_width = 64.f;
-
-	// Static buffers
-	std::array<GLuint, geometry_count> vertex_buffers = {};
-	std::array<GLuint, geometry_count> index_buffers = {};
-	std::array<Mesh, geometry_count> meshes = {};
-
-	// Dynamic text buffers
-	struct TextData {
-		GLuint texture;
-		int texture_width;
-		int texture_height;
-	};
-	std::unordered_map<Text, TextData> text_buffers = {};
-	std::unordered_map<unsigned int, TTF_Font*> fonts = {};
-
-	std::shared_ptr<MapGeneratorSystem> map_generator;
 public:
 	// Initialize the window
 	bool init(int width, int height, GLFWwindow* window, std::shared_ptr<MapGeneratorSystem> map);
@@ -119,7 +103,7 @@ public:
 	// Destroy resources associated to one or all entities created by the system
 	~RenderSystem();
 
-	explicit RenderSystem(Debug & debugging);
+	RenderSystem(Debug & debugging, LightingSystem& lighting);
 	RenderSystem(const RenderSystem&) = delete; // copy constructor
 	RenderSystem& operator=(const RenderSystem&) = delete; // copy assignment
 	RenderSystem(RenderSystem&&) = delete; // move constructor
@@ -167,7 +151,7 @@ private:
 	// Get UI scale based on difference between current window size and default
 	float get_ui_scale_factor() const;
 	// Helper to get position transform
-	Transform get_transform(Entity entity) const;
+	Transform get_transform(Entity entity, uvec2* tile = nullptr) const;
 	// Helper to get position transform without rotation
 	Transform get_transform_no_rotation(Entity entity) const;
 
@@ -178,6 +162,7 @@ private:
 
 	// Generates raster texture of provided text
 	// Returns vbo, ibo
+	struct TextData;
 	TextData generate_text(const Text& text);
 
 	////////////////////////////////////////////////////////
@@ -203,8 +188,24 @@ private:
 								const vec2& buffer_top_left,
 								const vec2& buffer_down_right);
 
+	// Static buffers
+	std::array<GLuint, geometry_count> vertex_buffers = {};
+	std::array<GLuint, geometry_count> index_buffers = {};
+	std::array<Mesh, geometry_count> meshes = {};
+
+	// Dynamic text buffers
+	struct TextData {
+		GLuint texture;
+		int texture_width;
+		int texture_height;
+	};
+	std::unordered_map<Text, TextData> text_buffers = {};
+	std::unordered_map<unsigned int, TTF_Font*> fonts = {};
+
+	std::shared_ptr<MapGeneratorSystem> map_generator;
+
 	// Lighting System
-	LightingSystem lighting;
+	LightingSystem& lighting;
 
 	// Window handle
 	GLFWwindow* window = nullptr;

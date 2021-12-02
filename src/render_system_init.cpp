@@ -56,8 +56,9 @@ bool RenderSystem::init(int width, int /*height*/, GLFWwindow* window_arg, std::
 	return true;
 }
 
-RenderSystem::RenderSystem(Debug& debugging)
-	: debugging(debugging) {};
+RenderSystem::RenderSystem(Debug& debugging, LightingSystem& lighting)
+	: debugging(debugging)
+	, lighting(lighting) {};
 
 void RenderSystem::initialize_gl_textures()
 {
