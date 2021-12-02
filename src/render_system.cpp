@@ -511,7 +511,7 @@ void RenderSystem::draw_stat_bar(
 
 	GLint health_loc = glGetUniformLocation(program, "health");
 	float percentage = 1.f;
-	if (fancy && registry.get<TargettedBar>(entity).target == BarType::Mana) {
+	if (fancy && registry.any_of<TargettedBar>(entity) && registry.get<TargettedBar>(entity).target == BarType::Mana) {
 		percentage = max(static_cast<float>(stats.mana), 0.f) / static_cast<float>(stats.mana_max);
 	} else {
 		percentage = max(static_cast<float>(stats.health), 0.f) / static_cast<float>(stats.health_max);
@@ -523,12 +523,13 @@ void RenderSystem::draw_stat_bar(
 		glUniform1f(xy_ratio_loc, ratio);
 
 		// Setup coloring
-		if (registry.any_of<Color>(entity)) {
-			GLint color_uloc = glGetUniformLocation(program, "fcolor");
-			const vec3 color = registry.get<Color>(entity).color;
-			glUniform3fv(color_uloc, 1, glm::value_ptr(color));
-			gl_has_errors();
+		GLint color_uloc = glGetUniformLocation(program, "fcolor");
+		vec3 color = vec3(.8, .1, .1);
+		if (registry.any_of<Color>(entity) && !registry.any_of<MapHitbox>(entity)) {
+			color = registry.get<Color>(entity).color;
 		}
+		glUniform3fv(color_uloc, 1, glm::value_ptr(color));
+		gl_has_errors();
 	}
 
 	draw_triangles(transform, projection);
@@ -1048,6 +1049,13 @@ void RenderSystem::draw()
 		vec2 shift = vec2(2 - MapUtility::tile_size / 2, -MapUtility::tile_size / 2);
 		vec2 scale = vec2(MapUtility::tile_size - 4, 3);
 		bool fancy = false;
+		if (MapHitbox* hitbox = registry.try_get<MapHitbox>(entity)) {
+			shift.x -= MapUtility::tile_size * hitbox->center.x;
+			shift.y -= MapUtility::tile_size * hitbox->center.y;
+			scale.x = MapUtility::tile_size * hitbox->area.x - 4;
+			scale.y = min(9.f, hitbox->area.x * scale.y);
+			fancy = true;
+		}
 		transform.translate(shift);
 		transform.scale(scale);
 		draw_stat_bar(transform, stats, projection_2d, fancy, scale.x / scale.y, entity);
