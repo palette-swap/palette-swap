@@ -227,8 +227,13 @@ enum class EnemyType {
 	Mushroom = Drake + 1,
 	Spider = Mushroom + 1,
 	Clone = Spider + 1,
+	SwordSoldier = Clone + 1,
+	SpearSoldier = SwordSoldier + 1,
+	Apparition = SpearSoldier + 1,
+	KoboldWarrior = Apparition + 1,
+	KoboldMage = KoboldWarrior + 1,
 	// Boss Enemy Types
-	KingMush = Clone + 1,
+	KingMush = KoboldMage + 1,
 	EnemyCount = KingMush + 1,
 };
 
@@ -247,7 +252,8 @@ enum class EnemyBehaviour {
 const std::array<EnemyBehaviour, (size_t)EnemyType::EnemyCount> enemy_type_to_behaviour = {
 	EnemyBehaviour::Dummy,		EnemyBehaviour::Cowardly,  EnemyBehaviour::Basic,	 EnemyBehaviour::Defensive,
 	EnemyBehaviour::Aggressive, EnemyBehaviour::Basic,	   EnemyBehaviour::Basic,	 EnemyBehaviour::Cowardly,
-	EnemyBehaviour::Aggressive, EnemyBehaviour::Defensive, EnemyBehaviour::Summoner,
+	EnemyBehaviour::Aggressive, EnemyBehaviour::Defensive, EnemyBehaviour::Basic,	 EnemyBehaviour::Basic,
+	EnemyBehaviour::Basic,		EnemyBehaviour::Basic,	   EnemyBehaviour::Basic,	 EnemyBehaviour::Summoner,
 };
 
 // Small Enemy Behaviours (State Machines) uses the following states.
@@ -542,6 +548,11 @@ const std::array<TEXTURE_ASSET_ID, static_cast<int>(EnemyType::EnemyCount)> enem
 	TEXTURE_ASSET_ID::MUSHROOM,
 	TEXTURE_ASSET_ID::SPIDER,
 	TEXTURE_ASSET_ID::CLONE,
+	TEXTURE_ASSET_ID::SWORD_SOLDIER,
+	TEXTURE_ASSET_ID::SPEAR_SOLDIER,
+	TEXTURE_ASSET_ID::APPARITION,
+	TEXTURE_ASSET_ID::KOBOLD_WARRIOR,
+	TEXTURE_ASSET_ID::KOBOLD_MAGE,
 	// TODO (Evan): temporarily used MUSHROOM to mock KINGMUSH for testing, please replace it when the texture is
 	// available.
 	TEXTURE_ASSET_ID::KING_MUSH,
