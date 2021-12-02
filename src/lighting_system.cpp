@@ -329,6 +329,15 @@ void LightingSystem::mark_as_visible(uvec2 tile)
 	uint8_t room_index = MapUtility::get_room_index(tile);
 	if (visible_rooms.count(room_index) == 0) {
 		visible_rooms.emplace(room_index, tile);
+		for (auto [entity, room, element] : registry.view<Room, BigRoomElement>().each()) {
+			if (room.room_index == room_index) {
+				Entity curr = registry.get<BigRoom>(element.big_room).first_room;
+				while (curr != entt::null) {
+					visible_rooms.emplace(registry.get<Room>(curr).room_index, tile);
+					curr = registry.get<BigRoomElement>(curr).next_room;
+				}
+			}
+		}
 	}
 }
 
