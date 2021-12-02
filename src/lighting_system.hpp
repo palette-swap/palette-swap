@@ -55,6 +55,7 @@ private:
 	const double half_pseudo_degrees = 2 << 14;
 	const double tol = 4.0 / half_pseudo_degrees;
 
+	static constexpr float center_offset = MapUtility::tile_size / 2.f + .25f;
 	static constexpr std::array<ivec2, 4> offsets = {
 		ivec2(-1, -1),
 		ivec2(-1, 1),

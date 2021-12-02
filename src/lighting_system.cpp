@@ -169,14 +169,14 @@ void LightingSystem::process_tile(vec2 player_world_pos, uvec2 tile)
 }
 
 void LightingSystem::draw_tile(AngleResult result, const dvec2& angle, uvec2 tile, vec2 player_world_pos)
-{
+{ 
 	switch (result) {
 	case AngleResult::New: {
 		for (int i = 0; i < offsets.size(); i++) {
 			vec2 p2
-				= MapUtility::map_position_to_world_position(tile) + MapUtility::tile_size / 2.f * vec2(offsets.at(i));
+				= MapUtility::map_position_to_world_position(tile) + center_offset * vec2(offsets.at(i));
 			vec2 p3 = MapUtility::map_position_to_world_position(tile)
-				+ MapUtility::tile_size / 2.f * vec2(offsets.at((i + 1) % offsets.size()));
+				+ center_offset * vec2(offsets.at((i + 1) % offsets.size()));
 			light_triangle(player_world_pos, p2, p3);
 			// light_tile(tile);
 		}
@@ -262,17 +262,17 @@ vec2 LightingSystem::project_onto_tile(uvec2 tile, vec2 player_world_pos, double
 	dvec2 sign = dvec2((dpos.x > 0) ? 1.f : -1.f, (dpos.y > 0) ? 1.f : -1.f);
 	vec2 tile_center = MapUtility::map_position_to_world_position(tile);
 	if (glm::epsilonEqual(dpos.x, 0.0, tol)) {
-		return vec2(player_world_pos.x, tile_center.y + .5f * MapUtility::tile_size * sign.y);
+		return vec2(player_world_pos.x, tile_center.y + center_offset * sign.y);
 	}
 	if (glm::epsilonEqual(dpos.y, 0.0, tol)) {
-		return vec2(tile_center.x + .5f * MapUtility::tile_size * sign.x, player_world_pos.y);
+		return vec2(tile_center.x + center_offset * sign.x, player_world_pos.y);
 	}
 	double min_dist = DBL_MAX;
 	dvec2 min_pos;
 	dvec2 test_pos;
 	// First, try to land on a horizontal edge
 	for (int i = 1; i >= -1; i -= 2) {
-		test_pos.y = tile_center.y + .5 * MapUtility::tile_size * sign.y * i;
+		test_pos.y = tile_center.y + center_offset * sign.y * i;
 		test_pos.x = player_world_pos.x + (test_pos.y - player_world_pos.y) * (dpos.x / dpos.y);
 		double dist = abs(static_cast<double>(tile_center.x) - test_pos.x);
 		if (dist <= .5 * MapUtility::tile_size + tol) {
@@ -285,7 +285,7 @@ vec2 LightingSystem::project_onto_tile(uvec2 tile, vec2 player_world_pos, double
 	}
 	// Otherwise, it's a vertical edge
 	for (int i = 1; i >= -1; i -= 2) {
-		test_pos.x = tile_center.x + .5 * MapUtility::tile_size * sign.x * i;
+		test_pos.x = tile_center.x + center_offset * sign.x * i;
 		test_pos.y = player_world_pos.y + (test_pos.x - player_world_pos.x) * (dpos.y / dpos.x);
 		double dist = abs(static_cast<double>(tile_center.y) - test_pos.y);
 		if (dist <= .5 * MapUtility::tile_size + tol) {
