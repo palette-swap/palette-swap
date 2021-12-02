@@ -26,8 +26,6 @@ AISystem::AISystem(const Debug& debugging,
 
 	enemy_attack1_wav.load(audio_path("enemy_attack1.wav").c_str());
 
-	king_mush_summon_wav.load(audio_path("King Mush Shrooma.wav").c_str());
-	king_mush_aoe_wav.load(audio_path("King Mush Fudun.wav").c_str());
 
 	std::vector<std::function<void(const Entity& attacker, const Entity& target)>> callbacks;
 
@@ -514,8 +512,6 @@ void AISystem::summon_enemies(const Entity& entity, EnemyType enemy_type, int nu
 			create_enemy(turns->get_active_color(), enemy_type, new_map_pos);
 		}
 	}
-
-	so_loud->play(king_mush_summon_wav);
 }
 
 void AISystem::release_aoe(const std::vector<Entity>& aoe)

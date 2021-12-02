@@ -103,8 +103,6 @@ private:
 	// Sound stuff
 	std::shared_ptr<SoLoud::Soloud> so_loud;
 	SoLoud::Wav enemy_attack1_wav;
-	SoLoud::Wav king_mush_summon_wav;
-	SoLoud::Wav king_mush_aoe_wav;
 
 	// Entity representing the enemy team's turn.
 	Entity enemy_team;
@@ -159,12 +157,13 @@ private:
 	// Leaf action node: SummonEnemies
 	class SummonEnemies : public BTNode {
 	public:
-		SummonEnemies(int animation, EnemyType type, int num)
+		SummonEnemies(int animation, std::string summon_sound, EnemyType type, int num)
 			: m_type(type)
 			, m_num(num)
 			, m_animation(animation)
-		{
 
+		{
+			summon_effect.load(audio_path(summon_sound).c_str());
 		}
 
 		void init(Entity /*e*/) override
@@ -177,8 +176,8 @@ private:
 			debug_log("Debug: SummonEnemies.process\n");
 
 			ai->summon_enemies(e, m_type, m_num);
-
 			ai->switch_enemy_state(e, EnemyState::Idle);
+			ai->so_loud->play(summon_effect);
 			ai->animations->boss_event_animation(e, m_animation);
 			return handle_process_result(BTState::Success);
 		}
@@ -187,16 +186,19 @@ private:
 		EnemyType m_type;
 		int m_num;
 		int m_animation;
+		SoLoud::Wav summon_effect;
 	};
 
 	
 	// Leaf action node: AOEAttack
 	class AOEAttack : public BTNode {
 	public:
-		explicit AOEAttack(std::vector<ivec2> area_pattern)
+		explicit AOEAttack(std::vector<ivec2> area_pattern, std::string aoe_sound, int aoe_attack)
 			: is_charged(false)
 			, m_aoe_shape(std::move(area_pattern))
+			, m_aoe_attack(aoe_attack)
 		{
+			aoe_effect.load(audio_path(aoe_sound).c_str());
 		}
 
 		void init(Entity /*e*/) override
@@ -244,8 +246,8 @@ private:
 			ai->release_aoe(m_aoe);
 
 			ai->switch_enemy_state(e, EnemyState::Idle);
-			ai->animations->boss_event_animation(e, 4);
-			ai->so_loud->play(ai->king_mush_aoe_wav);
+			ai->animations->boss_event_animation(e, m_aoe_attack);
+			ai->so_loud->play(aoe_effect);
 			return handle_process_result(BTState::Success);
 		}
 
@@ -253,6 +255,8 @@ private:
 		bool is_charged;
 		std::vector<ivec2> m_aoe_shape;
 		std::vector<Entity> m_aoe;
+		int m_aoe_attack;
+		SoLoud::Wav aoe_effect;
 	};
 
 	// Leaf action node: RegularAttack
@@ -596,13 +600,13 @@ private:
 		static std::unique_ptr<BTNode> summoner_tree_factory(AISystem* ai)
 		{
 			// Selector - active
-			auto summon_enemies = std::make_unique<SummonEnemies>(2, EnemyType::Mushroom, 1);
+			auto summon_enemies = std::make_unique<SummonEnemies>(2, "King Mush Shrooma.wav", EnemyType::Mushroom, 1);
 			std::vector<ivec2> aoe_shape;
 			aoe_shape.emplace_back(0, 0);
 			aoe_shape.emplace_back(0, -1);
 			aoe_shape.emplace_back(-1, 0);
 			aoe_shape.emplace_back(1, 0);
-			auto aoe_attack = std::make_unique<AOEAttack>(aoe_shape);
+			auto aoe_attack = std::make_unique<AOEAttack>(aoe_shape, "King Mush Fudun.wav ", 4);
 			auto regular_attack = std::make_unique<RegularAttack>(1);
 			auto selector_active = std::make_unique<Selector>(std::move(regular_attack));
 			Selector* p = selector_active.get();
