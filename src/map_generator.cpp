@@ -450,7 +450,7 @@ void MapGenerator::generate_enemies(MapUtility::LevelGenConf level_gen_conf,
 	int room_map_col = room_position_on_map % 10;
 
 	// We don't spawn clone enemies
-	std::uniform_int_distribution<int> enemy_types_dist(1, static_cast<int>(EnemyType::Clone));
+	std::uniform_int_distribution<int> enemy_types_dist(1, static_cast<int>(EnemyType::KoboldMage));
 
 	for (int room_row = 0; room_row < room_size; room_row++) {
 		for (int room_col = 0; room_col < room_size; room_col++) {
