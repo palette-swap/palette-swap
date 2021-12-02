@@ -17,6 +17,29 @@ using MapLayout = std::array<std::array<MapUtility::RoomID, MapUtility::room_siz
 // to uin8_t Predefined room ids: 0 -- void room
 using RoomLayout = std::array<uint32_t, MapUtility::room_size * MapUtility::room_size>;
 
+enum class TileType {
+	Floor,
+	Trap,
+	Door,
+	BreakableWall,
+	Chest,
+};
+
+struct AnimatedTile {
+	// indicates if the tile is activated or always animated
+	bool is_trigger;
+	bool activated;
+	// a sperate parameter as different tile can be of the same type
+	uint8_t tile_id;
+	float speed_adjustment = 0.6f;
+	// how many times the tile can be interacted, -1 means infinite
+	int usage_count = -1;
+	// animation frame, from 0 to 3
+	int frame = 0;
+	float elapsed_time = 0;
+
+	const int max_frames = 4;
+};
 // The current level configurations
 struct LevelConfiguration {
 	// level snapshot that contains player and enemy information
@@ -25,6 +48,9 @@ struct LevelConfiguration {
 	MapUtility::MapLayout map_layout;
 	// room layout of current level, indexed by room ids
 	std::vector<MapUtility::RoomLayout> room_layouts;
+	// animated tiles per room, index by room id then tile position in room
+	std::vector<std::map<int /*tile position in room*/, AnimatedTile>> animated_tiles_red;
+	std::vector<std::map<int /*tile position in room*/, AnimatedTile>> animated_tiles_blue;
 };
 
 // Per-Level generation configuation, used as the metadata for generating a level,
@@ -40,7 +66,7 @@ struct LevelGenConf {
 	// decides how many solid tiles are spawned in a room
 	double room_density = 0.2;
 	// how many side rooms we have, 1 indicates there a side room next to each room
-	double side_room_percentage = 0.2;
+	double side_room_percentage = 1.0;
 	// how complex the path in a room is
 	double room_path_complexity = 0.5;
 	// how dense traps are spawned

@@ -86,6 +86,7 @@ int main()
 		physics.step(elapsed_ms, window_width_px, window_height_px);
 		world.handle_collisions();
 		animations->update_animations(elapsed_ms, turns->get_inactive_color());
+		map->step(elapsed_ms);
 		renderer.draw();
 		turns->step();
 	}

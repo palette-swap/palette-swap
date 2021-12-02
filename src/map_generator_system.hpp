@@ -12,10 +12,8 @@ class TurnSystem;
 namespace MapUtility {
 //////////////////////////////////////////
 // Defines different types of tiles
-const std::set<uint8_t>& walkable_tiles();
-const std::set<uint8_t>& wall_tiles();
 const uint8_t tile_next_level = 14;
-const uint8_t tile_last_level = 20;
+const uint8_t tile_last_level = 15;
 } // namespace MapUtility
 
 // Manages and store the generated maps
@@ -86,6 +84,8 @@ private:
 	const std::string& get_level_snap_shot(int level) const;
 	const std::vector<MapUtility::RoomLayout>& get_level_room_layouts(int level) const;
 
+	std::vector<std::map<int /*tile position in map*/, MapUtility::AnimatedTile>>& get_level_animated_tiles(int level);
+
 	int current_level = 0;
 
 	// get the tile texture id, of the position on the current level
@@ -97,7 +97,7 @@ private:
 	void snapshot_level();
 
 	// Clear current level
-	void clear_level() const;
+	void clear_level();
 
 	// Load level specified
 	void load_level(int level);
@@ -115,6 +115,9 @@ private:
 	// used for save and load
 	std::vector<MapUtility::LevelConfiguration> level_configurations_backup;
 	int current_level_backup = 0;
+
+	// buffer to save rooms that need to be animated, room is removed from the buffer once all animations are completed
+	std::set<MapUtility::RoomID> animated_room_buffer;
 
 public:
 	explicit MapGeneratorSystem(std::shared_ptr<TurnSystem> turns);
@@ -142,11 +145,20 @@ public:
 
 	MapUtility::TileID get_tile_id_from_room(int level, MapUtility::RoomID room_id, uint8_t row, uint8_t col) const;
 
-	// TODO: probably shouldn't expose these, we should have public step_on_tile function, and do the processing
-	// internally
-	bool is_next_level_tile(uvec2 pos) const;
-	bool is_last_level_tile(uvec2 pos) const;
-	bool is_trap_tile(uvec2 pos) const;
+	// states after we attempted to move the player
+	enum class MoveState {
+		Success,
+		Failed,
+		NextLevel,
+		LastLevel,
+		EndOfGame,
+	};
+	// true if player can be moved to tile, otherwise return false
+	MoveState move_player_to_tile(uvec2 from_pos, uvec2 to_pos);
+
+	// player trying to interact with surrounding tile, activated when pressed SHIFT,
+	// return true if tile is interacted, otherwise return false
+	bool interact_with_surrounding_tile(Entity player);
 
 	bool is_last_level() const;
 
@@ -160,9 +172,14 @@ public:
 	// Load the first level
 	void load_initial_level();
 
+	// Sets all inactive enemy colours to be a specific defaulted inactive colour
+	void set_all_inactive_colours(ColorState inactive_color);
+
 	// Get the 10*10 layout array for a room, mainly used by rendering
 	const std::array<uint32_t, MapUtility::map_size * MapUtility::map_size>&
 	get_room_layout(int level, MapUtility::RoomID room_id) const;
+
+	void step(float elapsed_ms);
 
 	/////////////////////////////////////////////////
 	// Map Editor

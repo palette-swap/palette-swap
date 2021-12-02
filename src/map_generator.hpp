@@ -23,11 +23,16 @@ public:
 private:
 	// room types for procedural generation
 	enum class RoomType : uint8_t {
-		Entrance, // starting room
-		Exit, // ending room
 		Side, // side room
 		Critical, // rooms that the player will definitely come across
+
+		// templated rooms
+		Entrance, // starting room
+		Exit, // ending room
+		Event
 	};
+
+	static MapUtility::RoomLayout get_template_room_layout(RoomType room_type);
 
 	// if we want our generation parameters to be more independent,
 	// we will need different engines
@@ -40,6 +45,8 @@ private:
 		std::default_random_engine enemy_random_eng_red;
 		std::default_random_engine enemy_random_eng_blue;
 
+		std::default_random_engine keys_generation_eng;
+
 		// currently using a single seed seems to be enough, if we want more
 		// variety, we could use multiple seeds
 		explicit RoomGenerationEngines(unsigned int seed)
@@ -49,6 +56,7 @@ private:
 			enemy_random_eng_red.seed(seed);
 			// use a different seed for the other dimension
 			enemy_random_eng_blue.seed(seed);
+			keys_generation_eng.seed(seed);
 		}
 	};
 
@@ -79,11 +87,11 @@ private:
 	// generate a room that has paths to all open sides, tile layout will be influenced by the level generation conf
 	// the open sides will be gauranteed to have at least 2 walkable tiles at the middle(row 4,5 or col 4,5)
 	// we also take in random engines so each room won't be identical
-	static MapUtility::RoomLayout generate_room(const std::set<Direction>& open_directions,
-												RoomType room_type,
-												MapUtility::LevelGenConf level_gen_conf,
-												RoomGenerationEngines random_engs,
-												bool is_debugging);
+	static void generate_room(PathNode * starting_node,
+							  MapUtility::LevelGenConf level_gen_conf,
+							  MapUtility::LevelConfiguration & level_conf,
+							  RoomGenerationEngines random_engs,
+							  bool is_debugging);
 
 	// generate enemies in a room and store in the level snapshot, we need room position on map so we can obtain enemy's
 	// global map position
