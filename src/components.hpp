@@ -106,8 +106,13 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 	MUSHROOM = DRAKE + 1,
 	SPIDER = MUSHROOM + 1,
 	CLONE = SPIDER + 1,
+	SWORD_SOLDIER = CLONE + 1,
+	SPEAR_SOLDIER = SWORD_SOLDIER + 1,
+	APPARITION = SPEAR_SOLDIER + 1,
+	KOBOLD_WARRIOR = APPARITION + 1,
+	KOBOLD_MAGE = KOBOLD_WARRIOR + 1,
 	// Bosses
-	KING_MUSH = CLONE + 1,
+	KING_MUSH = KOBOLD_MAGE + 1,
 	KING_MUSH_ATTACKS = KING_MUSH + 1,
 	KING_MUSH_ENTRY = KING_MUSH_ATTACKS + 1,
 	// Misc Assets
@@ -126,6 +131,11 @@ const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 // Define the scaling factors needed for each textures
 // Note: This needs to stay the same order as TEXTURE_ASSET_ID and texture_paths
 static constexpr std::array<vec2, texture_count> scaling_factors = {
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
