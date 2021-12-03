@@ -1078,7 +1078,10 @@ void RenderSystem::draw()
 		}
 	};
 
-	auto health_group_lambda = [&](Entity entity, Stats& stats, Enemy& /*enemy*/) {
+	auto health_group_lambda = [&](Entity entity, RenderRequest& request, Stats& stats, Enemy& /*enemy*/) {
+		if (!request.visible) {
+			return;
+		}
 		uvec2 tile;
 		Transform transform = get_transform(entity, &tile);
 		if (!lighting.is_visible(tile)) {
@@ -1102,13 +1105,13 @@ void RenderSystem::draw()
 	// Renders entities + healthbars depending on which state we are in
 	if (inactive_color == ColorState::Red) {
 		registry.view<RenderRequest>(entt::exclude<Background, RedExclusive>).each(render_requests_lambda);
-		registry.view<Stats, Enemy>(entt::exclude<RedExclusive>).each(health_group_lambda);
+		registry.view<RenderRequest, Stats, Enemy>(entt::exclude<RedExclusive>).each(health_group_lambda);
 	} else if (inactive_color == ColorState::Blue) {
 		registry.view<RenderRequest>(entt::exclude<Background, BlueExclusive>).each(render_requests_lambda);
-		registry.view<Stats, Enemy>(entt::exclude<BlueExclusive>).each(health_group_lambda);
+		registry.view<RenderRequest, Stats, Enemy>(entt::exclude<BlueExclusive>).each(health_group_lambda);
 	} else {
 		registry.view<RenderRequest>().each(render_requests_lambda);
-		registry.view<Stats, Enemy>().each(health_group_lambda);
+		registry.view<RenderRequest, Stats, Enemy>().each(health_group_lambda);
 	}
 
 	// Renders effects (ie spells), intended to be overlayed on top of regular render effects
