@@ -231,8 +231,6 @@ void WorldSystem::restart_game()
 	map_generator->load_initial_level();
 	uvec2 player_starting_point = registry.get<MapPosition>(player).position;
 
-	// TODO: Should move into create_player (under world init) afterwards
-
 	// Initializes the perception of the player for what is inactive
 	PlayerInactivePerception& inactive_perception = registry.get<PlayerInactivePerception>(player);
 	inactive_perception.inactive = turns->get_inactive_color();
