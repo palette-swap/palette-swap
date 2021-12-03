@@ -39,9 +39,15 @@ void main()
 	float width = abs(right_side - left_side);
 
 	vec3 distort_position = in_position;
+
+	// TODO: Incrementaly applies a folding effect based on frame currently rendered
+	
+
+	// Distorts the death animation sinusoidally
 	distort_position.x += 0.2 * sin(time);
 	distort_position.y += 0.05 * sin(time);
 
+	// Distorts the render left and right
 	if ((abs(texcoord.x - left_side))/width <= 0.5) {
 		distort_position.x += 0.10 * frame;
 	} else {
@@ -53,6 +59,8 @@ void main()
 	} else {
 		distort_position.y -= 0.05 * frame;
 	}
+
+
 
 
 	// Creates output positions

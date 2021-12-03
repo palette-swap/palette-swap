@@ -402,7 +402,7 @@ void RenderSystem::draw_effect(Entity entity, const EffectRenderRequest& render_
 		glUniform1i(actual_aoe, static_cast<GLint>(aoe_status.actual_attack_displayed));
 	}
 	if (render_request.used_effect == EFFECT_ASSET_ID::DEATH) {
-
+		transform.scale({ animation.direction, 1 });
 	}
 
 	GLuint texture_id = texture_gl_handles.at((GLuint)render_request.used_texture);

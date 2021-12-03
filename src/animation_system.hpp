@@ -22,7 +22,7 @@ static constexpr int enemy_num_frames = 4;
 static constexpr float enemy_attack_speed = 1.2f;
 static constexpr float enemy_tile_travel_time_ms = 100.f;
 static constexpr int enemy_death_total_frames = 4;
-static constexpr float enemy_death_animation_speed = 0.3f;
+static constexpr float enemy_death_animation_speed = 0.4f;
 
 // These values are used for the default setting for the player
 static constexpr int player_num_frames = 6;
@@ -104,6 +104,7 @@ public:
 	void enemy_tile_transition(const Entity& enemy, uvec2 map_start_point, uvec2 map_end_point);
 	// Creates an enemy death animation, will delete once animation is complete
 	void set_enemy_death_animation(const Entity& enemy);
+	
 	// Sets all inactive enemy colours to be a specific defaulted inactive colour
 	void set_all_inactive_colours(ColorState inactive_color);
 
@@ -165,6 +166,8 @@ private:
 	void resolve_travel_event_animations(float elapsed_ms);
 	// helper function for setting animation events
 	void animation_event_setup(Animation& animation, EventAnimation& EventAnimation, vec4& color);
+	// Copies over animations from original to copy
+	void copy_animation_settings(Animation& original, Animation& copy);
 	// helper function for updating camera
 	void camera_update_position();
 	

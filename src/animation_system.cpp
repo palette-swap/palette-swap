@@ -169,9 +169,9 @@ void AnimationSystem::set_enemy_death_animation(const Entity& enemy)
 {
 	auto enemy_death_entity = registry.create();
 
-	MapPosition position = registry.get<MapPosition>(enemy);
-	RenderRequest enemy_render = registry.get<RenderRequest>(enemy);
-	Animation enemy_animation = registry.get<Animation>(enemy);
+	MapPosition &position = registry.get<MapPosition>(enemy);
+	RenderRequest &enemy_render = registry.get<RenderRequest>(enemy);
+	Animation &enemy_animation = registry.get<Animation>(enemy);
 
 	registry.emplace<MapPosition>(enemy_death_entity, position);
 	registry.emplace<TransientEventAnimation>(enemy_death_entity);
@@ -179,12 +179,15 @@ void AnimationSystem::set_enemy_death_animation(const Entity& enemy)
 		enemy_death_entity, enemy_render.used_texture, EFFECT_ASSET_ID::DEATH, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);
 
 	Animation& enemy_death_animation = registry.emplace<Animation>(enemy_death_entity);
-	enemy_death_animation.max_frames = enemy_animation.max_frames;
-	enemy_death_animation.direction = enemy_animation.direction;
-	enemy_death_animation.state = enemy_animation.state;
-	enemy_death_animation.display_color = vec4 { 1, 1, 1, 0.8 };
+
+	// Copies over enemy animation states from previous animation
+	AnimationSystem::copy_animation_settings(enemy_animation, enemy_death_animation);
+	// Changes death animation settings slightly
+	enemy_death_animation.display_color.w = 0.8f;
 	enemy_death_animation.speed_adjustment = enemy_death_animation_speed;
 }
+
+
 
 void AnimationSystem::set_all_inactive_colours(ColorState inactive_color)
 {
@@ -541,6 +544,14 @@ void AnimationSystem::animation_event_setup(Animation& animation, EventAnimation
 	EventAnimation.restore_speed = animation.speed_adjustment;
 	EventAnimation.restore_state = animation.state;
 	EventAnimation.restore_color = color;
+}
+
+void AnimationSystem::copy_animation_settings(Animation& original, Animation& copy)
+{
+	copy.max_frames = original.max_frames;
+	copy.direction = original.direction;
+	copy.state = original.state;
+	copy.display_color = original.display_color;
 }
 
 void AnimationSystem::camera_update_position()
