@@ -8,7 +8,7 @@
   "enemies": [
     {
       "team": 3,
-      "type": 10,
+      "type": 15,
       "tile_area": [ 3, 3 ],
       "tile_center":  [1, 1],
       "state": 0,
@@ -38,7 +38,7 @@
           "damage_min": 5,
           "damage_max": 15,
           "damage_type": 0,
-          "targeting_type": 1
+          "targeting_type": 0
         }
       }
     }

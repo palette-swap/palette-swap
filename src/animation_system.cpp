@@ -118,6 +118,7 @@ void AnimationSystem::set_enemy_state(const Entity& enemy, int state)
 {
 	Animation& enemy_animation = registry.get<Animation>(enemy);
 
+	printf("The enemy state was set back to idle");
 	if (registry.any_of<EventAnimation>(enemy)) {
 		EventAnimation& enemy_event = registry.get<EventAnimation>(enemy);
 		enemy_event.restore_state = state;
@@ -159,11 +160,9 @@ void AnimationSystem::enemy_tile_transition(const Entity& enemy, uvec2 map_start
 
 	registry.emplace<WorldPosition>(enemy, enemy_transition.start_point);
 
-	// TODO: Change this to not be a hard check for mushrooms/slimes
-	// This has been added to be a git issue
-	if (enemy_type == EnemyType::Mushroom || enemy_type == EnemyType::Slime) {
-		enemy_transition.middle_point -= vec2(0, MapUtility::tile_size * 0.2f);
-	}
+
+	enemy_transition.middle_point -= vec2(0, MapUtility::tile_size * enemy_animation.travel_offset);
+
 }
 
 void AnimationSystem::set_enemy_death_animation(const Entity& enemy) 
@@ -384,27 +383,49 @@ void AnimationSystem::boss_event_animation(const Entity& boss, int event_state) 
 	}
 }
 
-void AnimationSystem::boss_ranged_attack(EnemyType boss, uvec2 target_position) {
-	auto boss_range_attack_entity = registry.create();
 
-	registry.emplace<MapPosition>(boss_range_attack_entity, target_position);
+void AnimationSystem::boss_special_attack_animation(Entity boss, int attack_state) {
+
+	// Finds player's location for attack
+	Entity player_entity = registry.view<Player>().front();
+	uvec2 player_location = registry.get<MapPosition>(player_entity).position;
+
+		// Sets boss's attack animation to be the regular one
+	auto boss_type = registry.get<Enemy>(boss).type;
+	auto& boss_animation = registry.get<Animation>(boss);
+
+	if (!registry.any_of<EventAnimation>(boss)) {
+		EventAnimation& boss_attack = registry.emplace<EventAnimation>(boss);
+
+		// Stores restoration states for the player's animations, to be called after animation event is resolves
+		this->animation_event_setup(boss_animation, boss_attack, boss_animation.display_color);
+
+		// Sets animation state to be the beginning of the boss regular attack animation
+		boss_animation.state = attack_state;
+		boss_animation.frame = 0;
+		boss_animation.speed_adjustment = boss_ranged_attack_speed;
+	}
+
+	// Creates a remote attack entity based on attack spritesheet
+	auto boss_range_attack_entity = registry.create();
+	registry.emplace<MapPosition>(boss_range_attack_entity, player_location);
 	registry.emplace<TransientEventAnimation>(boss_range_attack_entity);
 	registry.emplace<EffectRenderRequest>(boss_range_attack_entity,
-										  boss_type_attack_spritesheet.at(boss),
+										  boss_type_attack_spritesheet.at(boss_type),
 										  EFFECT_ASSET_ID::ENEMY,
 										  GEOMETRY_BUFFER_ID::SMALL_SPRITE,
 										  true);
 	Animation& spell_impact_animation = registry.emplace<Animation>(boss_range_attack_entity);
 	spell_impact_animation.max_frames = boss_ranged_attack_total_frames;
-	spell_impact_animation.state = boss_ranged_attack_state;
+	spell_impact_animation.state = attack_state;
 	spell_impact_animation.speed_adjustment = boss_ranged_attack_speed;
 }
 
-void AnimationSystem::trigger_aoe_attack_animation(const Entity& aoe) { 
+void AnimationSystem::trigger_aoe_attack_animation(const Entity& aoe, int aoe_state) { 
 	Animation& aoe_animation = registry.get<Animation>(aoe); 
 	AOESquare& aoe_status = registry.get<AOESquare>(aoe);
 
-	aoe_animation.state = 0;
+	aoe_animation.state = aoe_state;
 	aoe_animation.frame = 0;
 	aoe_animation.max_frames = 8;
 	aoe_animation.speed_adjustment = 0.8f;

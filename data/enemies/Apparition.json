@@ -1,12 +1,12 @@
 {
-  "type": 9,
+  "type": 12,
   "state": 0,
-  "radius": 6,
-  "speed": 2,
+  "radius": 5,
+  "speed": 1,
   "attack_range": 1,
   "stats": {
-    "health": 100,
-    "health_max": 100,
+    "health": 250,
+    "health_max": 250,
     "mana": 100,
     "mana_max": 100,
     "to_hit_bonus": 6,

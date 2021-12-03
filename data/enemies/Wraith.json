@@ -5,8 +5,8 @@
   "speed": 1,
   "attack_range": 1,
   "stats": {
-    "health": 50,
-    "health_max": 50,
+    "health": 60,
+    "health_max": 60,
     "mana": 100,
     "mana_max": 100,
     "to_hit_bonus": 6,

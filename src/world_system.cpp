@@ -231,9 +231,6 @@ void WorldSystem::restart_game()
 	map_generator->load_initial_level();
 	uvec2 player_starting_point = registry.get<MapPosition>(player).position;
 
-	// TODO: Should move into create_player (under world init) afterwards
-	animations->set_player_animation(player);
-
 	// Initializes the perception of the player for what is inactive
 	PlayerInactivePerception& inactive_perception = registry.get<PlayerInactivePerception>(player);
 	inactive_perception.inactive = turns->get_inactive_color();
@@ -321,6 +318,17 @@ void WorldSystem::return_arrow_to_player()
 // On key callback
 void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 {
+	// Player is stunned.
+	if (turns->ready_to_act(player)) {
+		if (Stunned* stunned = registry.try_get<Stunned>(player)) {
+			if (--(stunned->rounds) <= 0) {
+				registry.erase<Stunned>(player);
+			}
+			turns->skip_team_action(player);
+			return;
+		}
+	}
+
 	if (check_debug_keys(key, action, mod)) {
 		return;
 	}
@@ -554,6 +562,15 @@ void WorldSystem::move_player(Direction direction)
 		return;
 	}
 
+	// Player is immobilized.
+	if (Immobilized* immobilized = registry.try_get<Immobilized>(player)) {
+		if (--(immobilized->rounds) <= 0) {
+			registry.erase<Immobilized>(player);
+		}
+		turns->skip_team_action(player);
+		return;
+	}
+
 	MapPosition& map_pos = registry.get<MapPosition>(player);
 	WorldPosition& arrow_position = registry.get<WorldPosition>(player_arrow);
 	uvec2 new_pos = map_pos.position;
@@ -640,6 +657,17 @@ void WorldSystem::try_change_color()
 // TODO: Integrate into turn state to only enable if player's turn is on
 void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 {
+	// Player is stunned.
+	if (turns->ready_to_act(player)) {
+		if (Stunned* stunned = registry.try_get<Stunned>(player)) {
+			if (--(stunned->rounds) <= 0) {
+				registry.erase<Stunned>(player);
+			}
+			turns->skip_team_action(player);
+			return;
+		}
+	}
+
 	if (story->in_cutscene()) {
 		story->on_mouse_click(button, action);
 		return;
