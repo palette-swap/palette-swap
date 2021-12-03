@@ -262,7 +262,6 @@ void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest& render
 
 	} else if (render_request.used_effect == EFFECT_ASSET_ID::ENEMY
 			   || render_request.used_effect == EFFECT_ASSET_ID::PLAYER
-			   || render_request.used_effect == EFFECT_ASSET_ID::DEATH
 				|| render_request.used_effect == EFFECT_ASSET_ID::BOSS_INTRO_SHADER) {
 
 		GLint in_position_loc = glGetAttribLocation(program, "in_position");
@@ -401,9 +400,6 @@ void RenderSystem::draw_effect(Entity entity, const EffectRenderRequest& render_
 		AOESquare& aoe_status = registry.get<AOESquare>(entity);
 		GLint actual_aoe = glGetUniformLocation(program, "actual_aoe");
 		glUniform1i(actual_aoe, static_cast<GLint>(aoe_status.actual_attack_displayed));
-	}
-	if (render_request.used_effect == EFFECT_ASSET_ID::DEATH) {
-		transform.scale({ animation.direction, 1 });
 	}
 
 	GLuint texture_id = texture_gl_handles.at((GLuint)render_request.used_texture);
