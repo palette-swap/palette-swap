@@ -226,6 +226,11 @@ enum class EnemyType {
 	EnemyCount = Titho + 1,
 };
 
+const std::array<EnemyType, (size_t)EnemyType::EnemyCount> enemy_type_bosses = {
+	EnemyType::KingMush,
+	EnemyType::Titho,
+};
+
 enum class EnemyBehaviour {
 	// Small Enemy Behaviours (State Machines)
 	Dummy = 0,
