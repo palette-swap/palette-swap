@@ -166,7 +166,9 @@ void StorySystem::load_next_level() {
 		if (enemy.type == EnemyType::KingMush) {
 			vec2 position = registry.get<MapPosition>(entity).position;
 			auto entry_entity = animations->create_boss_entry_entity(EnemyType::KingMush, position);
-			create_cutscene(entry_entity, entity, CutSceneType::BossEntry, 350, "This is the boss. Beat it!");
+			std::string texts("sssssssssssssssssssssssssssssssssssssssssssss");
+			create_cutscene(entry_entity, entity, CutSceneType::BossEntry, 350, texts);
+			// printf("Number of conversation characters: %d", texts.length());
 		}
 	}
 }
