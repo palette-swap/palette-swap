@@ -136,8 +136,11 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 	Animation& enemy_animation = registry.emplace<Animation>(entity);
 	enemy_animation.max_frames = 4;
 
+	AnimationProfile enemy_profile = enemy_type_to_animation_profile.at(static_cast<int>(type));
+	enemy_animation.travel_offset = enemy_profile.travel_offset;
+
 	registry.emplace<RenderRequest>(
-		entity, enemy_type_textures.at(static_cast<int>(type)), EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);
+		entity, enemy_profile.texture, EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);
 	if (team == ColorState::Red) {
 		enemy_animation.display_color = vec4(AnimationUtility::default_enemy_red,1);
 		registry.emplace<RedExclusive>(entity);
@@ -162,7 +165,6 @@ std::vector<Entity> create_aoe(const std::vector<uvec2>& aoe_area, const Stats& 
 
 		registry.emplace<Stats>(aoe_square, stats);
 
-		// TODO (Evan): Replace CANNONBALL with a suitable texture for a basic AOE.
 		registry.emplace<EffectRenderRequest>(
 			aoe_square, boss_type_attack_spritesheet.at(enemy_type), EFFECT_ASSET_ID::AOE, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);
 

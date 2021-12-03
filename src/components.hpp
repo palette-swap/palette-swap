@@ -110,9 +110,10 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 	KING_MUSH = CLONE + 1,
 	KING_MUSH_ATTACKS = KING_MUSH + 1,
 	KING_MUSH_ENTRY = KING_MUSH_ATTACKS + 1,
+	TITHO = KING_MUSH_ENTRY + 1,
+	TITHO_ATTACKS = TITHO + 1,
 	// Misc Assets
-
-	CANNONBALL = KING_MUSH_ENTRY + 1,
+	CANNONBALL = TITHO_ATTACKS + 1,
 	SPELLS = CANNONBALL + 1,
 	TILE_SET_RED = SPELLS + 1,
 	TILE_SET_BLUE = TILE_SET_RED + 1,
@@ -140,6 +141,8 @@ static constexpr std::array<vec2, texture_count> scaling_factors = {
 	vec2(MapUtility::tile_size * 3, MapUtility::tile_size * 3),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size * 5, MapUtility::tile_size * 5),
+	vec2(MapUtility::tile_size * 5, MapUtility::tile_size * 5),
+	vec2(MapUtility::tile_size * 3, MapUtility::tile_size * 3),
 	vec2(MapUtility::tile_size * 0.5, MapUtility::tile_size * 0.5),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size* MapUtility::room_size, MapUtility::tile_size* MapUtility::room_size),
@@ -253,7 +256,13 @@ enum class EnemyType {
 	Clone = Spider + 1,
 	// Boss Enemy Types
 	KingMush = Clone + 1,
-	EnemyCount = KingMush + 1,
+	Titho = KingMush + 1,
+	EnemyCount = Titho + 1,
+};
+
+const std::array<EnemyType, (size_t)EnemyType::EnemyCount> enemy_type_bosses = {
+	EnemyType::KingMush,
+	EnemyType::Titho,
 };
 
 enum class EnemyBehaviour {
@@ -265,24 +274,26 @@ enum class EnemyBehaviour {
 	Aggressive = Defensive + 1,
 	// Boss Enemy Behaviours (Behaviour Trees)
 	Summoner = Aggressive + 1,
-	EnemyBehaviourCount = Summoner + 1,
+	WeaponMaster = Summoner + 1,
+	EnemyBehaviourCount = WeaponMaster + 1,
 };
 
 const std::array<EnemyBehaviour, (size_t)EnemyType::EnemyCount> enemy_type_to_behaviour = {
 	EnemyBehaviour::Dummy,		EnemyBehaviour::Cowardly,  EnemyBehaviour::Basic,	 EnemyBehaviour::Defensive,
 	EnemyBehaviour::Aggressive, EnemyBehaviour::Basic,	   EnemyBehaviour::Basic,	 EnemyBehaviour::Cowardly,
-	EnemyBehaviour::Aggressive, EnemyBehaviour::Defensive, EnemyBehaviour::Summoner,
+	EnemyBehaviour::Aggressive, EnemyBehaviour::Defensive, EnemyBehaviour::Summoner, EnemyBehaviour::WeaponMaster,
 };
 
 // Small Enemy Behaviours (State Machines) uses the following states.
-// Dummy:		Idle, Active.
-// Basic:		Idle, Active.
-// Cowardly:	Idle, Active, Flinched.
-// Defensive:	Idle, Active, Immortal.
-// Aggressive:	Idle, Active, Powerup.
+// Dummy:			Idle, Active. 
+// Basic:			Idle, Active.
+// Cowardly:		Idle, Active, Flinched.
+// Defensive:		Idle, Active, Immortal.
+// Aggressive:		Idle, Active, Powerup.
 //
 // Boss Enemy Behaviours (Behaviour Trees) uses the following states.
-// Summoner:	Idle, Charging.
+// Summoner:		Idle, Charging.
+// WeaponMaster:	Idle.
 enum class EnemyState {
 	Idle = 0,
 	Active = Idle + 1,
@@ -310,6 +321,10 @@ struct Enemy {
 	void deserialize(const std::string& prefix, const rapidjson::Document& json, bool load_from_file = true);
 };
 
+// Denotes that an enemy is a boss type
+struct Boss {
+};
+
 struct AOESquare {
 	// Released AOE square will be destroyed in the next turn.
 	bool actual_attack_displayed = false;
@@ -322,19 +337,11 @@ struct RedExclusive {
 struct BlueExclusive {
 };
 
-// Component denoting the AOE entity that is displaying a boss's attack
-struct AOEAttackActive {
-	Entity aoe_attack;
-};
-
-// Component denoting an AOE's vector of intended attack targets
-struct AOETargets {
-};
-
 // Component that denotes what colour the player cannot see at the moment
 struct PlayerInactivePerception {
 	ColorState inactive = ColorState::Red;
 };
+
 //---------------------------------------------------------------------------
 //-------------------------         COMBAT          -------------------------
 //---------------------------------------------------------------------------
@@ -545,6 +552,7 @@ struct Weapon {
 	Attack& get_attack(size_t i) { return registry.get<Attack>(given_attacks.at(i)); }
 	std::string get_description();
 };
+
 //---------------------------------------------------------------------------
 //-------------------------		  ANIMATIONS        -------------------------
 //---------------------------------------------------------------------------
@@ -552,23 +560,28 @@ struct Weapon {
 // Represents allowed directions for an animated sprite (e.g whether the sprite is facing left or right)
 enum class Sprite_Direction : uint8_t { SPRITE_LEFT, SPRITE_RIGHT };
 
-// Maps enemy types to corresponding texture asset
-// Remember to add a mapping to a new texture (or use a default such as a slime)
+// Animation details by type
+struct AnimationProfile {
+	TEXTURE_ASSET_ID texture;
+	float travel_offset;
+};
+
+// Maps enemy types to corresponding animation profile
+// Remember to add a mapping to a new texture (or use a default such as a slime)/enemy type
 // This will help load the animation by enemy type when you load enemies
-const std::array<TEXTURE_ASSET_ID, static_cast<int>(EnemyType::EnemyCount)> enemy_type_textures {
-	TEXTURE_ASSET_ID::DUMMY,
-	TEXTURE_ASSET_ID::SLIME,
-	TEXTURE_ASSET_ID::RAVEN,
-	TEXTURE_ASSET_ID::ARMOR,
-	TEXTURE_ASSET_ID::TREEANT,
-	TEXTURE_ASSET_ID::WRAITH,
-	TEXTURE_ASSET_ID::DRAKE,
-	TEXTURE_ASSET_ID::MUSHROOM,
-	TEXTURE_ASSET_ID::SPIDER,
-	TEXTURE_ASSET_ID::CLONE,
-	// TODO (Evan): temporarily used MUSHROOM to mock KINGMUSH for testing, please replace it when the texture is
-	// available.
-	TEXTURE_ASSET_ID::KING_MUSH,
+const std::array<AnimationProfile, static_cast<int>(EnemyType::EnemyCount)> enemy_type_to_animation_profile {
+	AnimationProfile { TEXTURE_ASSET_ID::DUMMY, 0.f }, 
+	AnimationProfile { TEXTURE_ASSET_ID::SLIME, 0.2f }, 
+	AnimationProfile { TEXTURE_ASSET_ID::RAVEN, 0.f },
+	AnimationProfile { TEXTURE_ASSET_ID::ARMOR, 0.f }, 
+	AnimationProfile { TEXTURE_ASSET_ID::TREEANT, 0.f }, 
+	AnimationProfile { TEXTURE_ASSET_ID::WRAITH, 0.1f },
+	AnimationProfile { TEXTURE_ASSET_ID::DRAKE, 0.1f }, 
+	AnimationProfile { TEXTURE_ASSET_ID::MUSHROOM, 0.2f }, 
+	AnimationProfile { TEXTURE_ASSET_ID::SPIDER, 0.2f },
+	AnimationProfile { TEXTURE_ASSET_ID::CLONE, 0.f }, 
+	AnimationProfile { TEXTURE_ASSET_ID::KING_MUSH, 0.f }, 
+	AnimationProfile { TEXTURE_ASSET_ID::TITHO, 0.f },
 };
 
 const std::map<EnemyType, TEXTURE_ASSET_ID> boss_type_entry_animation_map {
@@ -581,7 +594,7 @@ const std::array<int, (size_t)EnemyState::EnemyStateCount> enemy_state_to_animat
 	2, // Flinched
 	2, // Powerup
 	2, // Immortal
-	1, // Charging
+	3, // Charging
 };
 
 // Render behind other elements in its grouping
@@ -617,7 +630,9 @@ struct Animation {
 	// Adjusts animation rate to be faster or slower than default
 	// ie. faster things should change more frames. slower things should change less frames
 	float speed_adjustment = 0.6f;
-	float elapsed_time = 0;
+	float elapsed_time = 0.f;
+	// Stores offset for the specific entity when requested for travel
+	float travel_offset = 0.f;
 };
 
 // Struct denoting irregular animation events (ie attacking, containing information to restore an entity's
@@ -677,15 +692,14 @@ const std::array<int, (size_t)DamageType::Count> damage_type_to_spell_impact = {
 };
 
 const std::map<EnemyType, TEXTURE_ASSET_ID> boss_type_attack_spritesheet { 
-	{ EnemyType::KingMush, TEXTURE_ASSET_ID::KING_MUSH_ATTACKS } 
-};
+	{ EnemyType::KingMush, TEXTURE_ASSET_ID::KING_MUSH_ATTACKS } ,
+	{EnemyType::Titho, TEXTURE_ASSET_ID::TITHO_ATTACKS } };
 
 struct RoomAnimation {
 	uvec2 start_tile;
 	float dist_per_second = MapUtility::tile_size * 6.f;
 	float elapsed_time = 0;
 };
-
 //---------------------------------------------------------------------------
 //-------------------------		    Physics         -------------------------
 //---------------------------------------------------------------------------
