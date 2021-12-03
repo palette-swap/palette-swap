@@ -280,20 +280,21 @@ vec2 LightingSystem::project_onto_tile(uvec2 tile, vec2 player_world_pos, double
 	dvec2 test_pos;
 	// First, try to land on a horizontal edge
 	for (int i = 1; i >= -1; i -= 2) {
-		test_pos.y = tile_center.y + center_offset * sign.y * i;
+		test_pos.y = tile_center.y + MapUtility::tile_size / 2.f * sign.y * i;
 		test_pos.x = player_world_pos.x + (test_pos.y - player_world_pos.y) * (dpos.x / dpos.y);
 		double dist = abs(static_cast<double>(tile_center.x) - test_pos.x);
 		if (dist <= .5 * MapUtility::tile_size + tol) {
 			// We're inside the tile bounds, so it worked
 			return test_pos;
-		} else if (dist < min_dist) {
+		}
+		if (dist < min_dist) {
 			min_dist = dist;
 			min_pos = test_pos;
 		}
 	}
 	// Otherwise, it's a vertical edge
 	for (int i = 1; i >= -1; i -= 2) {
-		test_pos.x = tile_center.x + center_offset * sign.x * i;
+		test_pos.x = tile_center.x + MapUtility::tile_size / 2.f * sign.x * i;
 		test_pos.y = player_world_pos.y + (test_pos.x - player_world_pos.x) * (dpos.y / dpos.x);
 		double dist = abs(static_cast<double>(tile_center.y) - test_pos.y);
 		if (dist <= .5 * MapUtility::tile_size + tol) {
