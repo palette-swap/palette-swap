@@ -22,8 +22,10 @@ static std::string enemy_template_path(const std::string& name)
 const static std::array<std::string, (size_t)EnemyType::EnemyCount> enemy_template_paths = {
 	enemy_template_path("TrainingDummy.json"), enemy_template_path("Slime.json"),	 enemy_template_path("Raven.json"),
 	enemy_template_path("Armor.json"),		   enemy_template_path("TreeAnt.json"),	 enemy_template_path("Wraith.json"),
-	enemy_template_path("Drake.json"),		   enemy_template_path("Mushroom.json"), enemy_template_path("Spider.json"),
-	enemy_template_path("Clone.json"),		   enemy_template_path("KingMush.json"),
+	enemy_template_path("Drake.json"),		   enemy_template_path("Mushroom.json"), enemy_template_path("Spider.json"),		 
+	enemy_template_path("Clone.json"),		   enemy_template_path("Sword Soldier.json"),	   enemy_template_path("Spear Soldier.json"),
+	enemy_template_path("Apparition.json"),	   enemy_template_path("Kobold Warrior.json"),
+	enemy_template_path("Kobold Mage.json"),	   enemy_template_path("KingMush.json"),
 };
 
 static void load_enemies_from_file()
@@ -448,7 +450,7 @@ void MapGenerator::generate_enemies(MapUtility::LevelGenConf level_gen_conf,
 	int room_map_col = room_position_on_map % 10;
 
 	// We don't spawn clone enemies
-	std::uniform_int_distribution<int> enemy_types_dist(1, static_cast<int>(EnemyType::Clone));
+	std::uniform_int_distribution<int> enemy_types_dist(1, static_cast<int>(EnemyType::KoboldMage));
 
 	for (int room_row = 0; room_row < room_size; room_row++) {
 		for (int room_col = 0; room_col < room_size; room_col++) {

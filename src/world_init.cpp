@@ -149,6 +149,27 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 	return entity;
 }
 
+Entity create_guide( uvec2 map_pos)
+{
+	auto entity = registry.create();
+
+	registry.emplace<MapPosition>(entity, map_pos);
+
+	// Sets animation and display colours for the guide. Currently makes her transparent for "narrative" elements
+	Animation& guide_animation = registry.emplace<Animation>(entity);
+	guide_animation.max_frames = 6;
+	guide_animation.speed_adjustment = 0.5f;
+	guide_animation.display_color.w = 0.6f;
+
+
+	registry.emplace<RenderRequest>(entity,
+									TEXTURE_ASSET_ID::GUIDE,
+									EFFECT_ASSET_ID::ENEMY,
+									GEOMETRY_BUFFER_ID::SMALL_SPRITE,
+									true);
+	return entity;
+}
+
 std::vector<Entity> create_aoe(const std::vector<uvec2>& aoe_area, const Stats& stats, EnemyType enemy_type)
 {
 	std::vector<Entity> aoe;
