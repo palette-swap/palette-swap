@@ -54,6 +54,8 @@ class RenderSystem {
 			textures_path("./02-Bosses/King Mush/King Mush Spritesheet.png"),
 			textures_path("./02-Bosses/King Mush/King Mush Attack Spritesheet.png"),
 			textures_path("./02-Bosses/King Mush/King Mush Entry Animation.png"),
+			textures_path("./02-Bosses/Titho/Titho Spritesheet.png"),
+			textures_path("./02-Bosses/Titho/Titho Attack Spritesheet.png"),
 			textures_path("./04-NPCs/Guide/Guide Spritesheet.png"),
 			textures_path("cannon_ball.png"),
 			textures_path("/01-Player/Spell Spritesheet.png"),

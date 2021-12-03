@@ -179,21 +179,24 @@ static void load_enemy(unsigned int enemy_index, const rapidjson::Document& json
 	registry.emplace<Hittable>(entity);
 
 	Animation& enemy_animation = registry.emplace<Animation>(entity);
-
+	int enemy_type = static_cast<int>(enemy_component.type);
+	AnimationProfile enemy_profile = enemy_type_to_animation_profile.at(enemy_type);
 	bool visible = true;
 
-	// Need to replace with a different component denoting a boss enemy
-	if (enemy_component.type == EnemyType::KingMush) {
+	auto found = std::find(enemy_type_bosses.begin(), enemy_type_bosses.end(), enemy_component.type);
+	if (found != enemy_type_bosses.end()) {
 		enemy_animation.max_frames = 8;
 		enemy_animation.speed_adjustment = 0.6f;
-		visible = false;
+		visible = true;
+		registry.emplace<Boss>(entity);
 	} else {
 		enemy_animation.max_frames = 4;
+		enemy_animation.travel_offset = enemy_profile.travel_offset;
 	}
 
 	enemy_animation.state = enemy_state_to_animation_state.at(static_cast<size_t>(enemy_component.state));
 	registry.emplace<RenderRequest>(entity,
-									enemy_type_textures.at(static_cast<int>(enemy_component.type)),
+									enemy_profile.texture,
 									EFFECT_ASSET_ID::ENEMY,
 									GEOMETRY_BUFFER_ID::SMALL_SPRITE,
 									visible);
