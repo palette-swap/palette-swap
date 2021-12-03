@@ -38,7 +38,7 @@
           "damage_min": 5,
           "damage_max": 15,
           "damage_type": 0,
-          "targeting_type": 1
+          "targeting_type": 0
         }
       }
     }

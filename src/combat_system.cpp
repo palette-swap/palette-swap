@@ -186,13 +186,6 @@ bool CombatSystem::do_attack(Entity attacker_entity, Attack& attack, Entity targ
 
 	if (registry.any_of<AOESquare>(attacker_entity)) {
 		// Attacker is an AOE square.
-		
-		// TODO (Evan): explode the AOE square and make it invisible after the explosion animation.
-		// (Don't worry about destroying AOE square entity since the AI system will do so in the next turn.)
-		// 
-		// First set a stable state which makes AOE square invisible.
-		// Then add a temporary explosion animation event to the AOE square.
-
 	} else {
 		MapPosition& attacker_position = registry.get<MapPosition>(attacker_entity);
 		MapPosition& target_position = registry.get<MapPosition>(target_entity);
