@@ -29,15 +29,18 @@ void main()
 	texcoord = in_texcoord;
 	texcoord.x += (1/num_frames * frame);
 	texcoord.y += (1/num_states * state);
+	vpos = in_position.xy;
 	// Defines the boundaries of the box for the sprite based on the sprite
 	float left_side = 1/num_frames * frame;
 	float right_side = 1/num_frames * (frame + 1);
 	float top_side = 1/num_states * state;
 	float bottom_side = 1/num_states * (state + 1);
+	float height = top_side - bottom_side;
+	float width = right_side - left_side;
 
 	vec3 distort_position = in_position;
-	distort_position.x += 0.10 * sin(time);
-	distort_position.y += 0.10 * sin(time + 0.3);
+	distort_position.x += 0.02 * sin(time) * (vpos.x - left_side)/width;
+	distort_position.y += 0.03 * sin(time) * (vpos.y - top_side)/height;
 	// Creates output positions
 	vec3 pos = projection * transform * vec3(distort_position.xy, 1.0);
 
