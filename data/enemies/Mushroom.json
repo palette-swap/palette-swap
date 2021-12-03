@@ -2,7 +2,7 @@
   "type": 7,
   "state": 0,
   "radius": 6,
-  "speed": 2,
+  "speed": 1,
   "attack_range": 1,
   "stats": {
     "health": 50,
