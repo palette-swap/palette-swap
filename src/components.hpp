@@ -118,7 +118,7 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 	TITHO = KING_MUSH_ENTRY + 1,
 	TITHO_ATTACKS = TITHO + 1,
 	//NPCS
-	GUIDE = TITHOS_ATTACKS + 1,
+	GUIDE = TITHO_ATTACKS + 1,
 	// Misc Assets
 	CANNONBALL = GUIDE + 1,
 	SPELLS = CANNONBALL + 1,
@@ -239,7 +239,7 @@ enum class EnemyType {
 	KoboldWarrior = Apparition + 1,
 	KoboldMage = KoboldWarrior + 1,
 	// Boss Enemy Types
-	KingMush = Clone + 1,
+	KingMush = KoboldMage + 1,
 	Titho = KingMush + 1,
 	EnemyCount = Titho + 1,
 };
