@@ -1275,6 +1275,18 @@ void RenderSystem::on_resize(int width, int height)
 				 GL_UNSIGNED_BYTE,
 				 nullptr);
 	gl_has_errors();
+
+	glBindTexture(GL_TEXTURE_2D, los_buffer_color);
+	glTexImage2D(GL_TEXTURE_2D,
+				 0,
+				 GL_RGBA,
+				 (GLsizei)screen_size_capped().x,
+				 (GLsizei)screen_size_capped().y,
+				 0,
+				 GL_RGBA,
+				 GL_UNSIGNED_BYTE,
+				 nullptr);
+	gl_has_errors();
 }
 
 // update camera's map position when player move out of buffer
