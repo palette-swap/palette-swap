@@ -226,7 +226,7 @@ enum class EnemyType {
 	EnemyCount = Titho + 1,
 };
 
-const std::array<EnemyType, (size_t)EnemyType::EnemyCount> enemy_type_bosses = {
+const std::array<EnemyType, ((size_t)EnemyType::EnemyCount - (size_t)EnemyType::KingMush)> enemy_type_bosses = {
 	EnemyType::KingMush,
 	EnemyType::Titho,
 };
