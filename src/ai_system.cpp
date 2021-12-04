@@ -36,13 +36,13 @@ AISystem::AISystem(const Debug& debugging,
 		// If entity is a boss, remove its behaviour tree and AOE squares.
 		if (bosses.find(entity) != bosses.end()) {
 			// Destroy all children in AOEsource
-			if (auto parent = registry.try_get<AOESource>(entity)) {
+			if (auto* parent = registry.try_get<AOESource>(entity)) {
 				Entity iterator = parent->children;
 				auto view = registry.view<AOESquare>();
 				while (iterator != entt::null) {
-					AOESquare aoe_i = view.get<AOESquare>(iterator);
+					const AOESquare& aoe_i = view.get<AOESquare>(iterator);
 					Entity temp = iterator;
-					iterator = aoe_i.next_AOE;
+					iterator = aoe_i.next_aoe;
 					registry.destroy(temp);
 				}
 			}
@@ -61,13 +61,13 @@ void AISystem::step(float /*elapsed_ms*/)
 			Entity prev = entt::null;
 			Entity curr = aoe_source.children;
 			while (curr != entt::null) {
-				AOESquare curr_square = view.get<AOESquare>(curr);
-				Entity next = curr_square.next_AOE;
+				AOESquare& curr_square = view.get<AOESquare>(curr);
+				Entity next = curr_square.next_aoe;
 				if (curr_square.is_released) {
 					registry.destroy(curr);
 					curr = next;
 					if (prev != entt::null) {
-						view.get<AOESquare>(prev).next_AOE = curr;
+						view.get<AOESquare>(prev).next_aoe = curr;
 					} else {
 						aoe_source.children = curr;
 					}
@@ -490,18 +490,6 @@ bool AISystem::chance_to_happen(float percent)
 	return result;
 }
 
-int AISystem::get_random_int(int min, int max)
-{
-	float rand_unit = uniform_dist(rng);
-	float rand_float = (max - min) * rand_unit + min;
-	return floor(rand_float);
-}
-
-float AISystem::get_distance(ivec2 a, ivec2 b) {
-	ivec2 diff = b - a;
-	return sqrtf(diff.x * diff.x + diff.y * diff.y);
-};
-
 void AISystem::become_immortal(const Entity& entity, bool flag)
 {
 	Stats& stats = registry.get<Stats>(entity);
@@ -598,8 +586,8 @@ void AISystem::release_aoe(const std::vector<Entity>& aoe)
 }
 
 std::vector<ivec2> AISystem::draw_tile_line(ivec2 a, ivec2 b, int offset) { 
-	// Based on Bresenham's line algorithm
-	// Transform into usable line
+	// Based on Bresenham's line algorithm 
+	// https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
 	ivec2 diff = b - a;
 	int flip_x = ((diff.x < 0) ? -1 : 1);
 	int flip_y = ((diff.y < 0) ? -1 : 1);
@@ -614,13 +602,11 @@ std::vector<ivec2> AISystem::draw_tile_line(ivec2 a, ivec2 b, int offset) {
 	}
 
 	std::vector<ivec2> line_tiles;
-	// Assume a.x < b.x and a.y < b.y and x.length < y.length
 	float slope = (float)(diff.y) / (float)(diff.x);
 	for (int x = offset; x <= diff.x; x++) {
 		int x_i = x;
 		int y_i = (int)round(slope * x_i);
 
-		// Reverse transformation
 		if (flip_45) {
 			int temp = x_i;
 			x_i = y_i;

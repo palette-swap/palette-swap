@@ -72,12 +72,6 @@ private:
 	// Return true if a percent chance happens.
 	bool chance_to_happen(float percent);
 
-	// Return random int between [min, max)
-	int get_random_int(int min, int max);
-
-	// Return distance between two tiles
-	float get_distance(ivec2 a, ivec2 b);
-
 	// An entity become immortal if flag is true. Otherwise cancel immortality.
 	void become_immortal(const Entity& entity, bool flag);
 
@@ -203,7 +197,7 @@ private:
 	public:
 		explicit AOEAttack(std::vector<ivec2> area_pattern, std::string aoe_sound, int aoe_attack, Entity target)
 			: is_charged(false)
-			, m_aoe_shape(std::move(area_pattern))
+			, aoe_shape(std::move(area_pattern))
 			, m_aoe_attack(aoe_attack)
 			, target(target)
 		{
@@ -227,23 +221,23 @@ private:
 
 				// Compute AOE area using AOE shape and player position.
 				MapPosition* mp = registry.try_get<MapPosition>(target);
-				const uvec2& target_map_pos = (mp != nullptr ? mp->position : uvec2(0, 0));
+				const uvec2& target_map_pos = (mp != nullptr ? mp->position : uvec2(0));
 
 				std::vector<uvec2> aoe_area;
-				for (const ivec2& map_pos_offset : m_aoe_shape) {
-					const ivec2& map_pos = map_pos_offset + static_cast<ivec2>(target_map_pos);
+				for (const ivec2& map_pos_offset : aoe_shape) {
+					const ivec2& map_pos = map_pos_offset + ivec2(target_map_pos);
 					if (map_pos.x >= 0 || map_pos.y >= 0) {
 						aoe_area.emplace_back(map_pos);
 					}
 				}
 
 				// Create AOE stats.
-				Stats aoe_stats = registry.get<Stats>(e);
+				Stats& aoe_stats = registry.get<Stats>(e);
 				aoe_stats.base_attack.damage_min *= 2;
 				aoe_stats.base_attack.damage_max *= 2;
 				aoe_stats.damage_bonus *= 2;
 
-				Enemy enemy = registry.get<Enemy>(e);
+				Enemy& enemy = registry.get<Enemy>(e);
 
 				// Create AOE.
 				m_aoe = create_aoe(aoe_area, aoe_stats, enemy.type, e);
@@ -263,7 +257,7 @@ private:
 
 	private:
 		bool is_charged;
-		std::vector<ivec2> m_aoe_shape;
+		std::vector<ivec2> aoe_shape;
 		std::vector<Entity> m_aoe;
 		int m_aoe_attack;
 		SoLoud::Wav aoe_effect;
@@ -279,6 +273,7 @@ private:
 			, num_attacks(num_attacks)
 			, radius(radius)
 		{
+			dist = std::uniform_int_distribution<int>(-radius, radius);
 		}
 
 		void init(Entity /*e*/) override
@@ -302,24 +297,24 @@ private:
 
 				std::vector<ivec2> attack_points;
 				int retries = 3; 
-				ivec2 dragon_pos = static_cast<ivec2> (registry.get<MapPosition>(e).position);
+				vec2 dragon_pos = vec2(registry.get<MapPosition>(e).position);
 
 				for (int i = 0; i < num_attacks; i++) {
 					ivec2 attack_i;
-					attack_i.x = ai->get_random_int(-radius, radius+1);
-					attack_i.y = ai->get_random_int(-radius, radius+1);
+					attack_i.x = dist(ai->rng);
+					attack_i.y = dist(ai->rng);
 
 					// Check if point is more than 3 tiles from other points and the dragon
 					bool too_close = false;
-					if (ai->get_distance(attack_i, dragon_pos) < 3.0f) {
+					if (distance2(vec2(attack_i), dragon_pos) < 9.0f) {
 						if (retries > 0) {
 							i--;
 							retries--;
 						}
 						continue;
 					}
-					for (ivec2 point : attack_points) {
-						if (ai->get_distance(attack_i, point) < 3.0f) {
+					for (vec2 point : attack_points) {
+						if (distance2(vec2(attack_i), point) < 9.0f) {
 							too_close = true;
 							break;
 						}
@@ -336,7 +331,7 @@ private:
 
 				std::vector<uvec2> aoe_area;
 				for (ivec2 point : attack_points) {
-					for (const ivec2& map_pos_offset : m_aoe_shape) {
+					for (const ivec2& map_pos_offset : aoe_shape) {
 						const ivec2& map_pos = point + map_pos_offset + static_cast<ivec2>(target_map_pos);
 						if (map_pos.x >= 0 || map_pos.y >= 0) {
 							aoe_area.emplace_back(map_pos);
@@ -364,7 +359,6 @@ private:
 
 			ai->switch_enemy_state(e, EnemyState::Idle);
 			ai->animations->boss_event_animation(e, 4);
-			ai->so_loud->play(ai->king_mush_aoe_wav);
 			return handle_process_result(BTState::Success);
 		}
 
@@ -372,9 +366,10 @@ private:
 		bool is_charged;
 		int num_attacks;
 		int radius;
+		std::uniform_int_distribution<int> dist;
 		std::vector<Entity> m_aoe;
 		Entity target;
-		std::vector<ivec2> m_aoe_shape = { { 0, 0 }, { 0, 1 }, { 0, -1 }, { 1, 0 }, { -1, 0 } };
+		std::vector<ivec2> aoe_shape = { { 0, 0 }, { 0, 1 }, { 0, -1 }, { 1, 0 }, { -1, 0 } };
 		// All attacks are in a + pattern
 		// ┌───┐
 		// │ x │
@@ -416,7 +411,7 @@ private:
 
 				// Transforming the beam
 				ivec2 diff = static_cast<ivec2>(target_map_pos) - static_cast<ivec2>(attacker_map_pos);
-				float length = ai->get_distance(attacker_map_pos, target_map_pos);
+				float length = distance(vec2(attacker_map_pos), vec2(target_map_pos));
 				int multiplier = ceil(min_length / length);
 
 				auto rotate_vector = [](ivec2 vector, float angle_r) { 
@@ -436,12 +431,12 @@ private:
 				std::vector<ivec2> main_line = draw_tile_line(attack_source, overshot_target, extra_squares);
 				std::vector<ivec2> left_line = draw_tile_line(attack_source, overshot_target_L, extra_squares);
 				std::vector<ivec2> right_line = draw_tile_line(attack_source, overshot_target_R, extra_squares);
-				m_aoe_shape.insert(m_aoe_shape.end(), main_line.begin(), main_line.end());
-				m_aoe_shape.insert(m_aoe_shape.end(), left_line.begin(), left_line.end());
-				m_aoe_shape.insert(m_aoe_shape.end(), right_line.begin(), right_line.end());
+				aoe_shape.insert(aoe_shape.end(), main_line.begin(), main_line.end());
+				aoe_shape.insert(aoe_shape.end(), left_line.begin(), left_line.end());
+				aoe_shape.insert(aoe_shape.end(), right_line.begin(), right_line.end());
 
 				std::vector<uvec2> aoe_area;
-				for (const ivec2& map_pos_offset : m_aoe_shape) {
+				for (const ivec2& map_pos_offset : aoe_shape) {
 					const ivec2& map_pos = map_pos_offset;
 					if (map_pos.x >= 0 || map_pos.y >= 0) {
 						aoe_area.emplace_back(map_pos);
@@ -465,17 +460,16 @@ private:
 			}
 			// Release AOE.
 			ai->release_aoe(m_aoe);
-			m_aoe_shape.clear();
+			aoe_shape.clear();
 
 			ai->switch_enemy_state(e, EnemyState::Idle);
 			ai->animations->boss_event_animation(e, 4);
-			ai->so_loud->play(ai->king_mush_aoe_wav);
 			return handle_process_result(BTState::Success);
 		}
 
 	private:
 		bool is_charged;
-		std::vector<ivec2> m_aoe_shape;
+		std::vector<ivec2> aoe_shape;
 		std::vector<Entity> m_aoe;
 		Entity attacker;
 		Entity target;
@@ -556,7 +550,6 @@ private:
 
 				ai->switch_enemy_state(e, EnemyState::Idle);
 				ai->animations->boss_event_animation(e, 4);
-				ai->so_loud->play(ai->king_mush_aoe_wav);
 
 				is_charged = false;
 				radius++;
@@ -1001,7 +994,8 @@ private:
 			auto selector_active = std::make_unique<Selector>(std::move(do_nothing_1));
 			Selector* p = selector_active.get();
 
-			auto summon_aoe_emitter = std::make_unique<SummonEnemies>(EnemyType::AOERingGen, 1);
+			auto summon_aoe_emitter
+				= std::make_unique<SummonEnemies>(3, "King Mush Shrooma.wav", EnemyType::AOERingGen, 1);
 			selector_active->add_precond_and_child(
 				[p](Entity /*e*/) { return ((p->get_process_count()+2) % 5 == 0); },
 				std::move(summon_aoe_emitter)

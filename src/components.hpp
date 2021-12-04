@@ -94,8 +94,7 @@ struct SmallSpriteVertex {
  */
 
 enum class TEXTURE_ASSET_ID : uint8_t {
-	EMPTY = 0,
-	PALADIN = EMPTY + 1,
+	PALADIN = 0,
 	// Small Enemies
 	DUMMY = PALADIN + 1,
 	SLIME = DUMMY + 1,
@@ -317,13 +316,13 @@ struct Boss {
 };
 
 struct AOESource {
-	Entity children;
+	Entity children = entt::null;
 	static Entity add(Entity parent);
 };
 
 struct AOESquare {
 	Entity parent;
-	Entity next_AOE;
+	Entity next_aoe;
 	// Released AOE square will be destroyed in the next turn.
 	bool actual_attack_displayed = false;
 	bool is_released = false;
@@ -589,7 +588,7 @@ const std::array<AnimationProfile, static_cast<int>(EnemyType::EnemyCount)> enem
 	AnimationProfile { TEXTURE_ASSET_ID::KING_MUSH, 0.f }, 
 	AnimationProfile { TEXTURE_ASSET_ID::TITHO, 0.f },
 	AnimationProfile { TEXTURE_ASSET_ID::KING_MUSH, 0.f },
-	AnimationProfile { TEXTURE_ASSET_ID::EMPTY, 0.f },
+	AnimationProfile { TEXTURE_ASSET_ID::SLIME, 0.f },
 };
 
 const std::map<EnemyType, TEXTURE_ASSET_ID> boss_type_entry_animation_map {
