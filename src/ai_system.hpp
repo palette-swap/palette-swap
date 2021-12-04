@@ -395,7 +395,7 @@ private:
 			ai->animations->boss_special_attack_animation(e, m_animation);
 
 			ai->add_attack_effect(e, Effect::Immobilize, m_chance, m_magnitude);
-			ai->add_attack_effect(e, Effect::EvasionDown, m_chance, m_magnitude);
+			ai->add_attack_effect(e, Effect::Entangle, m_chance, m_magnitude);
 			ai->attack_player(e);
 			ai->clear_attack_effects(e);
 

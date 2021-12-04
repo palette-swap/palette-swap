@@ -14,7 +14,7 @@
       {
         "name": "Sweep",
         "to_hit": [ 7, 17 ],
-        "damage": [ 5, 15 ],
+        "damage": [ 5, 17 ],
         "damage_type": "Physical",
         "targeting_type": "Adjacent",
         "pattern": "Rectangle",
@@ -22,30 +22,6 @@
       }
     ],
     "texture_offset": [ 1, 0 ]
-  },
-  {
-    "name": "Ice Orb",
-    "tier": 1,
-    "slots": [ "Spell" ],
-    "attacks": [
-      {
-        "name": "Ice Orb",
-        "mana_cost": 20,
-        "to_hit": [ 15, 20 ],
-        "damage": [ 0, 8 ],
-        "damage_type": "Cold",
-        "targeting_type": "Projectile",
-        "range": 4,
-        "effects": [
-          {
-            "effect": "Stun",
-            "magnitude": 3,
-            "chance": 0.95
-          }
-        ]
-      }
-    ],
-    "texture_offset": [ 1, 3 ]
   },
   {
     "name": "Mace",
@@ -78,12 +54,12 @@
   },
   {
     "name": "Spear",
-    "tier": 2,
+    "tier": 1,
     "slots": [ "Weapon" ],
     "attacks": [
       {
         "name": "Stab",
-        "to_hit": [ 10, 20 ],
+        "to_hit": [ 9, 19 ],
         "damage": [ 10, 25 ],
         "damage_type": "Physical",
         "targeting_type": "Adjacent",
@@ -92,7 +68,7 @@
       {
         "name": "Push Back",
         "to_hit": [ 7, 17 ],
-        "damage": [ 0, 10 ],
+        "damage": [ 2, 11 ],
         "damage_type": "Physical",
         "targeting_type": "Adjacent",
         "range": 1,
@@ -108,58 +84,403 @@
     "texture_offset": [ 3, 0 ]
   },
   {
-    "name": "Gale Blast",
-    "tier": 2,
-    "slots": [ "Spell" ],
+    "name": "Saber",
+    "tier": 1,
+    "slots": [ "Weapon" ],
     "attacks": [
       {
-        "name": "Gale Blast",
-        "mana_cost": 25,
-        "to_hit": [ 15, 20 ],
-        "damage": [ 10, 15 ],
-        "damage_type": "Wind",
-        "targeting_type": "Projectile",
-        "range": 4,
-        "parallel_size": 4,
-        "perpendicular_size": 4,
+        "name": "Slash",
+        "to_hit": [ 10, 20 ],
+        "damage": [ 14, 16 ],
+        "damage_type": "Physical",
+        "targeting_type": "Adjacent"
+      },
+      {
+        "name": "Feint",
+        "to_hit": [ 12, 22 ],
+        "damage": [ 0, 0 ],
+        "damage_type": "Physical",
+        "targeting_type": "Adjacent",
+        "effects": [
+          {
+            "effect": "Disarm",
+            "chance": 0.5,
+            "magnitude": 4
+          },
+          {
+            "effect": "Entangle",
+            "chance": 0.5,
+            "magnitude": 4
+          },
+          {
+            "effect": "Stun",
+            "chance": 0.2,
+            "magnitude": 1
+          }
+        ]
+      }
+    ],
+    "texture_offset": [ 5, 0 ]
+  },
+  {
+    "name": "Flail",
+    "tier": 2,
+    "slots": [ "Weapon" ],
+    "attacks": [
+      {
+        "name": "Strike",
+        "to_hit": [ 0, 25 ],
+        "damage": [ 20, 30 ],
+        "damage_type": "Physical",
+        "targeting_type": "Adjacent"
+      },
+      {
+        "name": "Bind",
+        "to_hit": [ 8, 18 ],
+        "damage": [ 3, 12 ],
+        "damage_type": "Physical",
+        "targeting_type": "Adjacent",
+        "effects": [
+          {
+            "effect": "Disarm",
+            "chance": 0.6,
+            "magnitude": 3
+          },
+          {
+            "effect": "Weaken",
+            "chance": 0.6,
+            "magnitude": 3
+          }
+        ]
+      }
+    ],
+    "texture_offset": [ 4, 0 ]
+  },
+  {
+    "name": "Hammer",
+    "tier": 2,
+    "slots": [ "Weapon" ],
+    "attacks": [
+      {
+        "name": "Bash",
+        "to_hit": [ 11, 21 ],
+        "damage": [ 15, 19 ],
+        "damage_type": "Physical",
+        "targeting_type": "Adjacent",
         "effects": [
           {
             "effect": "Shove",
-            "magnitude": 4,
-            "chance": 0.95
+            "chance": 0.25,
+            "magnitude": 1
+          }
+        ]
+      },
+      {
+        "name": "Smash",
+        "to_hit": [ 10, 20 ],
+        "damage": [ 5, 12 ],
+        "damage_type": "Physical",
+        "targeting_type": "Adjacent",
+        "pattern": "Rectangle",
+        "parallel_size": 2,
+        "perpendicular_size": 2,
+        "effects": [
+          {
+            "effect": "Stun",
+            "chance": 0.6,
+            "magnitude": 1
           }
         ]
       }
     ],
-    "texture_offset": [ 3, 3 ]
+    "texture_offset": [ 6, 0 ]
   },
   {
-    "name": "Tar Ball",
-    "tier": 3,
-    "slots": [ "Spell" ],
+    "name": "Katana",
+    "tier": 2,
+    "slots": [ "Weapon" ],
     "attacks": [
       {
-        "name": "Tar Ball",
-        "mana_cost": 25,
-        "to_hit": [ 15, 25 ],
-        "damage": [ 8, 15 ],
-        "damage_type": "Earth",
-        "targeting_type": "Projectile",
-        "range": 4,
+        "name": "Side Cut",
+        "to_hit": [ 11, 21 ],
+        "damage": [ 18, 19 ],
+        "damage_type": "Physical",
+        "targeting_type": "Adjacent"
+      },
+      {
+        "name": "Overhead Cut",
+        "cost": 2,
+        "to_hit": [ 0, 30 ],
+        "damage": [ 25, 32 ],
+        "damage_type": "Physical",
+        "targeting_type": "Adjacent",
         "effects": [
           {
-            "effect": "EvasionDown",
-            "magnitude": 2,
-            "chance": 0.5
+            "effect": "Crit",
+            "chance": 0.6,
+            "magnitude": 2
+          },
+          {
+            "effect": "Bleed",
+            "chance": 0.6,
+            "magnitude": 2
+          }
+        ]
+      }
+    ],
+    "texture_offset": [ 8, 0 ]
+  },
+  {
+    "name": "Blazing Blade",
+    "tier": 3,
+    "slots": [ "Weapon" ],
+    "attacks": [
+      {
+        "name": "Slice",
+        "to_hit": [ 12, 22 ],
+        "damage": [ 14, 23 ],
+        "damage_type": "Fire",
+        "targeting_type": "Adjacent",
+        "effects": [
+          {
+            "effect": "Burn",
+            "chance": 0.75,
+            "magnitude": 2
+          }
+        ]
+      },
+      {
+        "name": "Flame Burst",
+        "cost": 3,
+        "to_hit": [ 10, 19 ],
+        "damage": [ 0, 0 ],
+        "damage_type": "Fire",
+        "targeting_type": "Adjacent",
+        "pattern": "Circle",
+        "parallel_size": 2,
+        "perpendicular_size": 3,
+        "effects": [
+          {
+            "effect": "Burn",
+            "chance": 1,
+            "magnitude": 10
+          }
+        ]
+      }
+    ],
+    "texture_offset": [ 9, 0 ]
+  },
+  {
+    "name": "Glacial Sword",
+    "tier": 3,
+    "slots": [ "Weapon" ],
+    "attacks": [
+      {
+        "name": "Slice",
+        "to_hit": [ 14, 20 ],
+        "damage": [ 17, 20 ],
+        "damage_type": "Cold",
+        "targeting_type": "Adjacent",
+        "effects": [
+          {
+            "effect": "Stun",
+            "chance": 0.25,
+            "magnitude": 1
+          }
+        ]
+      },
+      {
+        "name": "Chill Burst",
+        "cost": 2,
+        "to_hit": [ 10, 19 ],
+        "damage": [ 4, 8 ],
+        "damage_type": "Cold",
+        "targeting_type": "Adjacent",
+        "pattern": "Circle",
+        "parallel_size": 2,
+        "perpendicular_size": 3,
+        "effects": [
+          {
+            "effect": "Disarm",
+            "chance": 0.75,
+            "magnitude": 8
+          },
+          {
+            "effect": "Stun",
+            "chance": 0.2,
+            "magnitude": 6
+          }
+        ]
+      }
+    ],
+    "texture_offset": [ 10, 0 ]
+  },
+  {
+    "name": "Stone Cleaver",
+    "tier": 3,
+    "slots": [ "Weapon" ],
+    "attacks": [
+      {
+        "name": "Cleave",
+        "to_hit": [ 15, 19 ],
+        "damage": [ 17, 17 ],
+        "damage_type": "Earth",
+        "targeting_type": "Adjacent",
+        "pattern": "Rectangle",
+        "perpendicular_size": 2,
+        "effects": [
+          {
+            "effect": "Disarm",
+            "chance": 0.25,
+            "magnitude": 2
+          }
+        ]
+      },
+      {
+        "name": "Entangle",
+        "cost": 2,
+        "to_hit": [ 14, 18 ],
+        "damage": [ 10, 10 ],
+        "damage_type": "Earth",
+        "targeting_type": "Adjacent",
+        "effects": [
+          {
+            "effect": "Entangle",
+            "chance": 0.75,
+            "magnitude": 6
+          },
+          {
+            "effect": "Crit",
+            "chance": 0.25,
+            "magnitude": 3
+          }
+        ]
+      }
+    ],
+    "texture_offset": [ 11, 0 ]
+  },
+  {
+    "name": "Storm Trident",
+    "tier": 3,
+    "slots": [ "Weapon" ],
+    "attacks": [
+      {
+        "name": "Stab",
+        "to_hit": [ 8, 25 ],
+        "damage": [ 10, 30 ],
+        "damage_type": "Wind",
+        "targeting_type": "Adjacent",
+        "range": 3,
+        "effects": [
+          {
+            "effect": "Shove",
+            "chance": 0.25,
+            "magnitude": 1
+          }
+        ]
+      },
+      {
+        "name": "Blow Over",
+        "cost": 2,
+        "to_hit": [ 6, 23 ],
+        "damage": [ 0, 15 ],
+        "damage_type": "Wind",
+        "targeting_type": "Adjacent",
+        "range": 2,
+        "effects": [
+          {
+            "effect": "Shove",
+            "chance": 0.75,
+            "magnitude": 2
           },
           {
             "effect": "Immobilize",
-            "magnitude": 2,
-            "chance": 0.95
+            "chance": 0,
+            "magnitude": 5
           }
         ]
       }
     ],
-    "texture_offset": [ 2, 3 ]
+    "texture_offset": [ 12, 0 ]
+  },
+  {
+    "name": "Sword of Light",
+    "tier": 4,
+    "slots": [ "Weapon" ],
+    "attacks": [
+      {
+        "name": "Slice",
+        "to_hit": [ 15, 21 ],
+        "damage": [ 10, 30 ],
+        "damage_type": "Light",
+        "targeting_type": "Adjacent",
+        "effects": [
+          {
+            "effect": "Weaken",
+            "chance": 0.5,
+            "magnitude": 2
+          }
+        ]
+      },
+      {
+        "name": "Cleanse",
+        "cost": 4,
+        "to_hit": [ 0, 77 ],
+        "damage": [ 0, 77 ],
+        "damage_type": "Light",
+        "targeting_type": "Adjacent",
+        "pattern": "Circle",
+        "parallel_size": 3,
+        "perpendicular_size": 3,
+        "effects": [
+          {
+            "effect": "Weaken",
+            "chance": 0.77,
+            "magnitude": 10
+          }
+        ]
+      }
+    ],
+    "texture_offset": [ 13, 0 ]
+  },
+  {
+    "name": "Umbrella",
+    "tier": 4,
+    "slots": [ "Weapon" ],
+    "attacks": [
+      {
+        "name": "Eye Poke",
+        "to_hit": [ 30, 30 ],
+        "damage": [ 1, 1 ],
+        "damage_type": "Physical",
+        "targeting_type": "Adjacent",
+        "effects": [
+          {
+            "effect": "Crit",
+            "chance": 0.03,
+            "magnitude": 999
+          }
+        ]
+      },
+      {
+        "name": "Twirl",
+        "to_hit": [ 15, 21 ],
+        "damage": [ 0, 2 ],
+        "damage_type": "Physical",
+        "targeting_type": "Adjacent",
+        "pattern": "Rectangle",
+        "parallel_size": 2,
+        "perpendicular_size": 2,
+        "range": 0,
+        "effects": [
+          {
+            "effect": "Stun",
+            "chance": 0.75,
+            "magnitude": 2
+          }
+        ]
+      }
+    ],
+    "texture_offset": [ 14, 0 ]
   }
 ]

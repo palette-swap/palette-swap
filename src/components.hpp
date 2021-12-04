@@ -372,11 +372,17 @@ enum class DamageType {
 	Cold = Fire + 1,
 	Earth = Cold + 1,
 	Wind = Earth + 1,
-	Count = Wind + 1,
+	Light = Wind + 1,
+	Count = Light + 1,
 };
 
 const std::array<std::string_view, (size_t)DamageType::Count> damage_type_names = {
-	"Physical", "Fire", "Cold", "Earth", "Wind",
+	"Physical",
+	"Fire",
+	"Cold",
+	"Earth",
+	"Wind",
+	"Light",
 };
 
 enum class TargetingType {
@@ -428,17 +434,27 @@ struct Attack {
 
 enum class Effect {
 	Shove = 0,
-	Stun = Shove + 1,
-	EvasionDown = Stun + 1,
-	Immobilize = EvasionDown + 1,
-	Count = Immobilize + 1,
+	Immobilize = Shove + 1,
+	Stun = Immobilize + 1,
+	Disarm = Stun + 1,
+	Entangle = Disarm + 1,
+	Weaken = Entangle + 1,
+	Crit = Weaken + 1,
+	Bleed = Crit + 1,
+	Burn = Bleed + 1,
+	Count = Burn + 1,
 };
 
 const std::array<std::string_view, (size_t)Effect::Count> effect_names = {
 	"Shove",
-	"Stun",
-	"EvasionDown",
 	"Immobilize",
+	"Stun",
+	"Disarm",
+	"Entangle",
+	"Weaken",
+	"Crit",
+	"Bleed",
+	"Burn",
 };
 
 struct EffectEntry {

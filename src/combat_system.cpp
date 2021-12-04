@@ -117,7 +117,8 @@ template <typename ColorExclusive> bool CombatSystem::is_valid_attack(Entity att
 	uvec2 attacker_pos = registry.get<MapPosition>(attacker).position;
 	auto view = registry.view<MapPosition, Enemy, Stats>(entt::exclude<ColorExclusive>);
 	for (const Entity target_entity : view) {
-		if (attack.is_in_range(attacker_pos, target, view.template get<MapPosition>(target_entity).position)) {
+		if (target_entity != attacker && attack.is_in_range(
+				attacker_pos, target, view.template get<MapPosition>(target_entity).position)) {
 
 			return true;
 		}
@@ -126,7 +127,7 @@ template <typename ColorExclusive> bool CombatSystem::is_valid_attack(Entity att
 	for (const Entity target_entity : view_big) {
 		for (auto square : MapUtility::MapArea(view_big.template get<MapPosition>(target_entity),
 											   view_big.template get<MapHitbox>(target_entity))) {
-			if (attack.is_in_range(attacker_pos, target, square)) {
+			if (target_entity != attacker && attack.is_in_range(attacker_pos, target, square)) {
 				return true;
 			}
 		}
@@ -350,7 +351,7 @@ bool CombatSystem::can_reach(Entity attacker, Attack& attack, uvec2 target)
 	if (attack.targeting_type == TargetingType::Adjacent) {
 		ivec2 distance_vec = abs(ivec2(target - registry.get<MapPosition>(attacker).position));
 		int distance = abs(distance_vec.x - distance_vec.y) + min(distance_vec.x, distance_vec.y) * 3 / 2;
-		if (distance > attack.range || distance == 0) {
+		if (distance > attack.range) {
 			return false;
 		}
 	}
@@ -369,21 +370,21 @@ void CombatSystem::do_attack_effects(Entity attacker, Attack& attack, Entity tar
 				try_shove(attacker, effect, target);
 				break;
 			}
+			case Effect::Immobilize: {
+				Immobilized& immobilized = registry.get_or_emplace<Immobilized>(target, effect.magnitude);
+				immobilized.rounds = max(immobilized.rounds, effect.magnitude);
+				break;
+			}
 			case Effect::Stun: {
 				Stunned& stunned = registry.get_or_emplace<Stunned>(target, effect.magnitude);
 				stunned.rounds = max(stunned.rounds, effect.magnitude);
 				break;
 			}
-			case Effect::EvasionDown: {
+			case Effect::Entangle: {
 				StatBoosts& boosts = registry.get_or_emplace<StatBoosts>(target);
 				int evasion_old = boosts.evasion;
 				boosts.evasion = max(boosts.evasion - effect.magnitude, min(boosts.evasion, -effect.magnitude));
 				registry.get<Stats>(target).evasion += boosts.evasion - evasion_old;
-				break;
-			}
-			case Effect::Immobilize: {
-				Immobilized& immobilized = registry.get_or_emplace<Immobilized>(target, effect.magnitude);
-				immobilized.rounds = max(immobilized.rounds, effect.magnitude);
 				break;
 			}
 			default:

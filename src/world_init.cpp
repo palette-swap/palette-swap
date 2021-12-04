@@ -26,9 +26,9 @@ Entity create_player(uvec2 pos)
 
 	// Setup Sword
 	Entity light_entity = registry.create();
-	registry.emplace<Attack>(light_entity, "Light", 4, 18, 12, 22, DamageType::Physical, TargetingType::Adjacent);
+	registry.emplace<Attack>(light_entity, "Slice", 4, 18, 8, 18, DamageType::Physical, TargetingType::Adjacent);
 	Entity heavy_entity = registry.create();
-	registry.emplace<Attack>(heavy_entity, "Heavy", 1, 14, 20, 30, DamageType::Physical, TargetingType::Adjacent);
+	registry.emplace<Attack>(heavy_entity, "Stab", 1, 14, 15, 25, DamageType::Physical, TargetingType::Adjacent);
 	inventory.equipped.at(static_cast<uint8>(Slot::Weapon))
 		= create_weapon("Sword", std::vector<Entity>({ light_entity, heavy_entity }));
 
