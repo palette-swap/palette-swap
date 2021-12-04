@@ -60,7 +60,17 @@ void main()
 		distort_position.y -= 0.05 * frame;
 	}
 
+	if (frame >= 1) {
+		if ((texcoord.y - top_side)/height <= 0.2) {
+			distort_position.y += 0.2 * abs((texcoord.y - (top_side + 0.2)))/0.2;
+		}
+	}
 
+	if (frame >= 2) {
+		if ((texcoord.y - top_side)/height >= 0.8) {
+			distort_position.y -= 0.2 * abs((texcoord.y - (bottom_side - 0.2)))/0.2;
+		}
+	}
 
 
 	// Creates output positions

@@ -176,7 +176,7 @@ void AnimationSystem::set_enemy_death_animation(const Entity& enemy)
 	registry.emplace<MapPosition>(enemy_death_entity, position);
 	registry.emplace<TransientEventAnimation>(enemy_death_entity);
 	registry.emplace<EffectRenderRequest>(
-		enemy_death_entity, enemy_render.used_texture, EFFECT_ASSET_ID::DEATH, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);
+		enemy_death_entity, enemy_render.used_texture, EFFECT_ASSET_ID::DEATH, GEOMETRY_BUFFER_ID::DEATH, true);
 
 	Animation& enemy_death_animation = registry.emplace<Animation>(enemy_death_entity);
 
