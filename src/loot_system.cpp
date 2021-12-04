@@ -71,7 +71,8 @@ bool LootSystem::try_pickup_items(Entity player)
 		}
 	}
 	for (auto [entity, item, pos] : registry.view<Item, MapPosition>().each()) {
-		if (player_pos.position == pos.position) {
+		ivec2 distance = abs(ivec2(player_pos.position - pos.position));
+		if (distance.x <= 1 && distance.y <= 1) {
 			Inventory& inventory = registry.get<Inventory>(player);
 			for (size_t i = 0; i < Inventory::inventory_size; i++) {
 				if (inventory.inventory.at(i) == entt::null) {
