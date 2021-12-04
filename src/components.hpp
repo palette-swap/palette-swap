@@ -297,10 +297,10 @@ enum class EnemyBehaviour {
 };
 
 const std::array<EnemyBehaviour, (size_t)EnemyType::EnemyCount> enemy_type_to_behaviour = {
-	EnemyBehaviour::Dummy,		EnemyBehaviour::Cowardly,  EnemyBehaviour::Basic,	 EnemyBehaviour::Defensive,
-	EnemyBehaviour::Aggressive, EnemyBehaviour::Basic,	   EnemyBehaviour::Basic,	 EnemyBehaviour::Cowardly,
-	EnemyBehaviour::Aggressive, EnemyBehaviour::Defensive, EnemyBehaviour::Basic,	 EnemyBehaviour::Basic,
-	EnemyBehaviour::Basic,		EnemyBehaviour::Basic,	   EnemyBehaviour::Basic,	 EnemyBehaviour::Summoner,
+	EnemyBehaviour::Dummy,		  EnemyBehaviour::Cowardly,	 EnemyBehaviour::Basic, EnemyBehaviour::Defensive,
+	EnemyBehaviour::Aggressive,	  EnemyBehaviour::Basic,	 EnemyBehaviour::Basic, EnemyBehaviour::Cowardly,
+	EnemyBehaviour::Aggressive,	  EnemyBehaviour::Defensive, EnemyBehaviour::Basic, EnemyBehaviour::Basic,
+	EnemyBehaviour::Basic,		  EnemyBehaviour::Basic,	 EnemyBehaviour::Basic, EnemyBehaviour::Summoner,
 	EnemyBehaviour::WeaponMaster,
 };
 
@@ -376,13 +376,16 @@ enum class DamageType {
 	Count = Light + 1,
 };
 
+// Appears to be an issue with clang-format always putting these on one line, putting a comment on each is purportedly
+// the best workaround
+// https://stackoverflow.com/questions/39144255/clang-format-removes-new-lines-in-array-definition-with-designators/39287832#39287832
 const std::array<std::string_view, (size_t)DamageType::Count> damage_type_names = {
-	"Physical",
-	"Fire",
-	"Cold",
-	"Earth",
-	"Wind",
-	"Light",
+	"Physical", //
+	"Fire",		//
+	"Cold",		//
+	"Earth",	//
+	"Wind",		//
+	"Light",	//
 };
 
 enum class TargetingType {
@@ -543,10 +546,11 @@ enum class Resource {
 	Count = PaletteSwap + 1,
 };
 
-const std::array<std::string_view, (size_t)Resource::Count> resource_names = {
-	"Health Potion",
-	"Mana Potion",
-	"Palette Swap",
+// see damage_type_names for comment explanation
+constexpr std::array<std::string_view, (size_t)Resource::Count> resource_names = {
+	"Health Potion", //
+	"Mana Potion",	 //
+	"Palette Swap",	 //
 };
 
 struct Inventory {
@@ -606,7 +610,7 @@ struct AnimationProfile {
 // Maps enemy types to corresponding animation profile
 // Remember to add a mapping to a new texture (or use a default such as a slime)/enemy type
 // This will help load the animation by enemy type when you load enemies
-const std::array<AnimationProfile, static_cast<int>(EnemyType::EnemyCount)> enemy_type_to_animation_profile {
+constexpr std::array<AnimationProfile, static_cast<int>(EnemyType::EnemyCount)> enemy_type_to_animation_profile {
 	AnimationProfile { TEXTURE_ASSET_ID::DUMMY, 0.f }, 
 	AnimationProfile { TEXTURE_ASSET_ID::SLIME, 0.2f }, 
 	AnimationProfile { TEXTURE_ASSET_ID::RAVEN, 0.f },
@@ -630,7 +634,7 @@ const std::map<EnemyType, TEXTURE_ASSET_ID> boss_type_entry_animation_map {
 	{ EnemyType::KingMush, TEXTURE_ASSET_ID::KING_MUSH_ENTRY },
 };
 
-const std::array<int, (size_t)EnemyState::EnemyStateCount> enemy_state_to_animation_state = {
+constexpr std::array<int, (size_t)EnemyState::EnemyStateCount> enemy_state_to_animation_state = {
 	0, // Idle
 	1, // Active
 	2, // Flinched
@@ -725,7 +729,7 @@ struct EffectRenderRequest {
 	bool visible = true;
 };
 
-const std::array<int, (size_t)DamageType::Count> damage_type_to_spell_impact = {
+constexpr std::array<int, (size_t)DamageType::Count> damage_type_to_spell_impact = {
 	4, // Physical (default is fire effect)
 	4, // Fire effect
 	5, // Ice effect
@@ -733,9 +737,10 @@ const std::array<int, (size_t)DamageType::Count> damage_type_to_spell_impact = {
 	7, // Wind effect
 };
 
-const std::map<EnemyType, TEXTURE_ASSET_ID> boss_type_attack_spritesheet { 
-	{ EnemyType::KingMush, TEXTURE_ASSET_ID::KING_MUSH_ATTACKS } ,
-	{EnemyType::Titho, TEXTURE_ASSET_ID::TITHO_ATTACKS } };
+const std::map<EnemyType, TEXTURE_ASSET_ID> boss_type_attack_spritesheet {
+	{ EnemyType::KingMush, TEXTURE_ASSET_ID::KING_MUSH_ATTACKS },
+	{ EnemyType::Titho, TEXTURE_ASSET_ID::TITHO_ATTACKS },
+};
 
 struct RoomAnimation {
 	uvec2 start_tile;
