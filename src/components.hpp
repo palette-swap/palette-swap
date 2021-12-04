@@ -558,9 +558,9 @@ constexpr std::array<std::string_view, (size_t)Resource::Count> resource_names =
 
 // see damage_type_names for comment explanation
 constexpr std::array<ivec2, (size_t)Resource::Count> resource_textures = {
-	{0, 4}, //
-	{1, 4}, //
-	{0, 5}, //
+	ivec2(0, 4), //
+	ivec2(1, 4), //
+	ivec2(0, 5), //
 };
 
 struct Inventory {

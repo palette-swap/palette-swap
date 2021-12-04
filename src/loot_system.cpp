@@ -47,33 +47,11 @@ void LootSystem::restart_game()
 
 	looted = 0;
 	loot_misses = 0;
-	loot_list.clear();
-
-	std::vector<size_t> used;
+	looted_per_tier.clear();
 
 	for (auto& list : loot_table) {
-		used.push_back(0);
+		looted_per_tier.push_back(0);
 		std::shuffle(list.begin(), list.end(), *rng);
-	}
-
-	for (int i = 0; i < loot_count; i++) {
-		bool filled = false;
-		for (size_t j = 0; j < loot_table.size(); j++) {
-			std::uniform_int_distribution<size_t> draw_from_list(0, loot_table.at(j).size() - used.at(j));
-			if (draw_from_list(*rng) > 0) {
-				loot_list.push_back(loot_table.at(j).at(used.at(j)++));
-				filled = true;
-				break;
-			}
-		}
-		if (!filled) {
-			for (size_t j = 0; j < loot_table.size(); j++) {
-				if (used.at(j) < loot_table.at(j).size()) {
-					loot_list.push_back(loot_table.at(j).at(used.at(j)++));
-					break;
-				}
-			}
-		}
 	}
 }
 
@@ -124,7 +102,7 @@ void LootSystem::drop_loot(uvec2 center_position)
 	// 7-9: Health Potion
 
 	// This is tempered by increasing the floor by the number of consecutive misses
-	bool all_dropped = looted >= loot_list.size();
+	bool all_dropped = looted >= loot_count;
 	std::uniform_int_distribution<size_t> drop_chance(1 + loot_misses, 9);
 	size_t result = drop_chance(*rng);
 	if (result <= 3 || (all_dropped && result <= 4)) {
@@ -140,9 +118,28 @@ void LootSystem::drop_loot(uvec2 center_position)
 	drop_item(center_position);
 }
 
-void LootSystem::drop_item(uvec2 position) {
-
-	Entity template_entity = loot_list.at(looted++ % loot_list.size());
+void LootSystem::drop_item(uvec2 position)
+{
+	Entity template_entity = entt::null;
+	for (size_t j = 0; j < loot_table.size(); j++) {
+		std::uniform_int_distribution<size_t> draw_from_list(0, loot_table.at(j).size() - looted_per_tier.at(j));
+		if (draw_from_list(*rng) > 0) {
+			template_entity = loot_table.at(j).at(looted_per_tier.at(j)++);
+			break;
+		}
+	}
+	if (template_entity == entt::null) {
+		for (size_t j = 0; j < loot_table.size(); j++) {
+			if (looted_per_tier.at(j) < loot_table.at(j).size()) {
+				template_entity = loot_table.at(j).at(looted_per_tier.at(j)++);
+				break;
+			}
+		}
+	}
+	if (template_entity == entt::null) {
+		// Everything has dropped
+		return;
+	}
 	ItemTemplate& item = registry.get<ItemTemplate>(template_entity);
 	Entity loot = registry.create();
 	registry.emplace<Item>(loot, template_entity);

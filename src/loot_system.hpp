@@ -29,7 +29,7 @@ private:
 	std::vector<std::vector<Entity>> loot_table;
 	size_t looted = 0;
 	size_t loot_misses = 0;
-	std::vector<Entity> loot_list;
+	std::vector<size_t> looted_per_tier;
 
 	std::shared_ptr<TutorialSystem> tutorials;
 };
