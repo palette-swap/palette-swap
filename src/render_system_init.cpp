@@ -45,16 +45,20 @@ bool RenderSystem::init(int width, int /*height*/, GLFWwindow* window_arg, std::
 	glBindVertexArray(vao);
 	gl_has_errors();
 
+	init_lighting();
 	init_screen_texture();
 	initialize_gl_textures();
 	initialize_gl_effects();
 	initialize_gl_geometry_buffers();
 
+	lighting.init(map_generator);
+
 	return true;
 }
 
-RenderSystem::RenderSystem(Debug& debugging)
-	: debugging(debugging) {};
+RenderSystem::RenderSystem(Debug& debugging, LightingSystem& lighting)
+	: debugging(debugging)
+	, lighting(lighting) {};
 
 void RenderSystem::initialize_gl_textures()
 {
@@ -286,6 +290,10 @@ RenderSystem::~RenderSystem()
 		glDeleteTextures((GLsizei)texture_gl_handles.size(), texture_gl_handles.data());
 		glDeleteTextures(1, &off_screen_render_buffer_color);
 		glDeleteRenderbuffers(1, &off_screen_render_buffer_depth);
+		glDeleteTextures(1, &lighting_buffer_color);
+		glDeleteRenderbuffers(1, &lighting_buffer_depth);
+		glDeleteTextures(1, &los_buffer_color);
+		glDeleteRenderbuffers(1, &los_buffer_depth);
 		gl_has_errors();
 
 		for (const auto effect : effects) {
@@ -293,6 +301,8 @@ RenderSystem::~RenderSystem()
 		}
 		// delete allocated resources
 		glDeleteFramebuffers(1, &frame_buffer);
+		glDeleteFramebuffers(1, &lighting_frame_buffer);
+		glDeleteFramebuffers(1, &los_frame_buffer);
 		gl_has_errors();
 
 		// Delete text-related resources
@@ -331,6 +341,53 @@ bool RenderSystem::init_screen_texture()
 	gl_has_errors();
 
 	assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+
+	return true;
+}
+
+// Initialize the screen texture from a standard sprite
+bool RenderSystem::init_lighting()
+{
+	lighting_frame_buffer = 0;
+	glGenFramebuffers(1, &lighting_frame_buffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, lighting_frame_buffer);
+
+	glGenTextures(1, &lighting_buffer_color);
+	glBindTexture(GL_TEXTURE_2D, lighting_buffer_color);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, window_width_px, window_height_px, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	gl_has_errors();
+
+	glGenRenderbuffers(1, &lighting_buffer_depth);
+	glBindRenderbuffer(GL_RENDERBUFFER, lighting_buffer_depth);
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, lighting_buffer_color, 0);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, window_width_px, window_height_px);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, lighting_buffer_depth);
+	gl_has_errors();
+
+	assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+	los_frame_buffer = 0;
+	glGenFramebuffers(1, &los_frame_buffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, los_frame_buffer);
+
+	glGenTextures(1, &los_buffer_color);
+	glBindTexture(GL_TEXTURE_2D, los_buffer_color);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, window_width_px, window_height_px, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	gl_has_errors();
+
+	glGenRenderbuffers(1, &los_buffer_depth);
+	glBindRenderbuffer(GL_RENDERBUFFER, los_buffer_depth);
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, los_buffer_color, 0);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, window_width_px, window_height_px);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, los_buffer_depth);
+	gl_has_errors();
+
+	assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
 
 	return true;
 }
