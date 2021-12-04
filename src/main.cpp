@@ -9,6 +9,7 @@
 #include "ai_system.hpp"
 #include "animation_system.hpp"
 #include "combat_system.hpp"
+#include "lighting_system.hpp"
 #include "map_generator_system.hpp"
 #include "physics_system.hpp"
 #include "render_system.hpp"
@@ -52,7 +53,8 @@ int main()
 	// Global systems
 	Debug debugging;
 	WorldSystem world(debugging, combat, map, turns, animations, ui, so_loud, stories, tutorials);
-	RenderSystem renderer(debugging);
+	LightingSystem lighting;
+	RenderSystem renderer(debugging, lighting);
 	PhysicsSystem physics(debugging, map);
 	AISystem ai(debugging, combat, map, turns, animations, so_loud);
 
@@ -68,6 +70,7 @@ int main()
 	// initialize the main systems
 	renderer.init(window_width_px, window_height_px, window, map);
 	world.init(&renderer);
+	lighting.init(map);
 
 	// variable timestep loop
 	auto t = Clock::now();
@@ -86,8 +89,9 @@ int main()
 		physics.step(elapsed_ms, window_width_px, window_height_px);
 		world.handle_collisions();
 		animations->update_animations(elapsed_ms, turns->get_inactive_color());
-		renderer.draw();
 		turns->step();
+		lighting.step(elapsed_ms);
+		renderer.draw();
 	}
 
 	return EXIT_SUCCESS;

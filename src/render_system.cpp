@@ -6,20 +6,25 @@
 #include <glm/gtc/type_ptr.hpp> // Allows nice passing of values to GL functions
 #pragma warning(pop)
 
-Transform RenderSystem::get_transform(Entity entity) const
+Transform RenderSystem::get_transform(Entity entity, uvec2* tile) const
 {
 	Transform transform;
-	if (registry.any_of<WorldPosition>(entity)) {
+	if (WorldPosition* world_pos = registry.try_get<WorldPosition>(entity)) {
 		// Most objects in the game are expected to use MapPosition, exceptions are:
 		// Arrow, Room.
-		transform.translate(registry.get<WorldPosition>(entity).position);
-		if (registry.any_of<Velocity>(entity)) {
+		transform.translate(world_pos->position);
+		if (Velocity* velocity = registry.try_get<Velocity>(entity)) {
 			// Probably can provide a get if exist function here to boost performance
-			transform.rotate(registry.get<Velocity>(entity).angle);
+			transform.rotate(velocity->angle);
 		}
-	} else if (registry.any_of<MapPosition>(entity)) {
-		MapPosition& map_position = registry.get<MapPosition>(entity);
-		transform.translate(MapUtility::map_position_to_world_position(map_position.position));
+		if (tile != nullptr) {
+			*tile = MapUtility::world_position_to_map_position(world_pos->position);
+		}
+	} else if (MapPosition* map_pos = registry.try_get<MapPosition>(entity)) {
+		transform.translate(MapUtility::map_position_to_world_position(map_pos->position));
+		if (tile != nullptr) {
+			*tile = map_pos->position;
+		}
 	} else {
 		transform.translate(screen_position_to_world_position(registry.get<ScreenPosition>(entity).position));
 	}
@@ -40,6 +45,22 @@ Transform RenderSystem::get_transform_no_rotation(Entity entity) const
 		transform.translate(screen_position_to_world_position(registry.get<ScreenPosition>(entity).position));
 	}
 	return transform;
+}
+
+void RenderSystem::prepare_buffer(vec3 color) const
+{
+	// Clearing backbuffer
+	glViewport(0, 0, (GLsizei)screen_size_capped().x, (GLsizei)screen_size_capped().y);
+	glDepthRange(0.00001, 10);
+	glClearColor(color.r, color.g, color.b, 1.0);
+	glClearDepth(1.f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDisable(GL_DEPTH_TEST); // native OpenGL does not work with a depth buffer
+							  // and alpha blending, one would have to sort
+							  // sprites back to front
+	gl_has_errors();
 }
 
 void RenderSystem::prepare_for_textured(GLuint texture_id)
@@ -226,7 +247,8 @@ RenderSystem::TextData RenderSystem::generate_text(const Text& text)
 
 void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest& render_request, const mat3& projection)
 {
-	Transform transform = get_transform(entity);
+	uvec2 tile;
+	Transform transform = get_transform(entity, &tile);
 
 	transform.scale(scaling_factors.at(static_cast<int>(render_request.used_texture)));
 
@@ -262,7 +284,11 @@ void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest& render
 
 	} else if (render_request.used_effect == EFFECT_ASSET_ID::ENEMY
 			   || render_request.used_effect == EFFECT_ASSET_ID::PLAYER
-				|| render_request.used_effect == EFFECT_ASSET_ID::BOSS_INTRO_SHADER) {
+			   || render_request.used_effect == EFFECT_ASSET_ID::BOSS_INTRO_SHADER) {
+
+		if (!lighting.is_visible(tile)) {
+			return;
+		}
 
 		GLint in_position_loc = glGetAttribLocation(program, "in_position");
 		GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
@@ -324,6 +350,8 @@ void RenderSystem::draw_textured_mesh(Entity entity, const RenderRequest& render
 		glUniform3fv(color_uloc, 1, glm::value_ptr(color));
 		gl_has_errors();
 	}
+
+	prepare_for_lit_entity(program);
 
 	draw_triangles(transform, projection);
 }
@@ -501,7 +529,7 @@ void RenderSystem::draw_stat_bar(
 
 	GLint health_loc = glGetUniformLocation(program, "health");
 	float percentage = 1.f;
-	if (fancy && registry.get<TargettedBar>(entity).target == BarType::Mana) {
+	if (fancy && registry.any_of<TargettedBar>(entity) && registry.get<TargettedBar>(entity).target == BarType::Mana) {
 		percentage = max(static_cast<float>(stats.mana), 0.f) / static_cast<float>(stats.mana_max);
 	} else {
 		percentage = max(static_cast<float>(stats.health), 0.f) / static_cast<float>(stats.health_max);
@@ -513,13 +541,16 @@ void RenderSystem::draw_stat_bar(
 		glUniform1f(xy_ratio_loc, ratio);
 
 		// Setup coloring
-		if (registry.any_of<Color>(entity)) {
-			GLint color_uloc = glGetUniformLocation(program, "fcolor");
-			const vec3 color = registry.get<Color>(entity).color;
-			glUniform3fv(color_uloc, 1, glm::value_ptr(color));
-			gl_has_errors();
+		GLint color_uloc = glGetUniformLocation(program, "fcolor");
+		vec3 color = vec3(.8, .1, .1);
+		if (registry.any_of<Color>(entity) && !registry.any_of<MapHitbox>(entity)) {
+			color = registry.get<Color>(entity).color;
 		}
+		glUniform3fv(color_uloc, 1, glm::value_ptr(color));
+		gl_has_errors();
 	}
+
+	prepare_for_lit_entity(program);
 
 	draw_triangles(transform, projection);
 }
@@ -717,6 +748,10 @@ void RenderSystem::draw_map(const mat3& projection, ColorState color)
 	glBindTexture(GL_TEXTURE_2D, texture_id);
 	gl_has_errors();
 	for (auto [entity, room] : registry.view<Room>().each()) {
+		if (!room.visible) {
+			continue;
+		}
+
 		Transform transform = get_transform(entity);
 		transform.scale(scaling_factors.at(static_cast<int>(tex)));
 
@@ -735,10 +770,200 @@ void RenderSystem::draw_map(const mat3& projection, ColorState color)
 		GLint frame_loc = glGetUniformLocation(program, "frame");
 		glUniform1i(frame_loc, animation.frame);
 
+		GLint appearing_loc = glGetUniformLocation(program, "appearing");
+		bool appearing = false;
+		if (RoomAnimation* appear = registry.try_get<RoomAnimation>(entity)) {
+			GLint start_tile = glGetUniformLocation(program, "start_tile");
+			glUniform2fv(start_tile, 1, glm::value_ptr(MapUtility::map_position_to_world_position(appear->start_tile)));
+
+			GLint max_show_distance = glGetUniformLocation(program, "max_show_distance");
+			glUniform1f(max_show_distance, appear->dist_per_second * (appear->elapsed_time / 1000.f));
+			appearing = true;
+		}
+		glUniform1i(appearing_loc, static_cast<int>(appearing));
+
 		draw_triangles(transform, projection);
 	}
 }
 
+void RenderSystem::prepare_for_lit_entity(GLuint program) const
+{
+
+	// Bind our textures in
+	GLint texture_loc = glGetUniformLocation(program, "sampler0");
+	GLint lighting_texture_loc = glGetUniformLocation(program, "lighting");
+	GLint use_lighting_loc = glGetUniformLocation(program, "use_lighting");
+	glUniform1i(texture_loc, 0);
+	glUniform1i(lighting_texture_loc, 1);
+	glUniform1i(use_lighting_loc, static_cast<int>(applying_lighting));
+
+	glActiveTexture(GL_TEXTURE0 + 1);
+	glBindTexture(GL_TEXTURE_2D, lighting_buffer_color);
+}
+
+void RenderSystem::create_lighting_texture(const mat3& projection)
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, lighting_frame_buffer);
+	gl_has_errors();
+	prepare_buffer(vec3(0));
+
+	for (auto [entity, light] : registry.view<Light>().each()) {
+		draw_light(entity, light, projection);
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
+}
+
+void RenderSystem::draw_light(Entity entity, const Light& light, const mat3& projection)
+{
+	Transform transform = get_transform(entity);
+
+	transform.scale(vec2(2) * light.radius);
+	const auto program = (GLuint)effects.at((uint8)EFFECT_ASSET_ID::LIGHT);
+
+	// Setting shaders
+	glUseProgram(program);
+	gl_has_errors();
+
+	const GLuint vbo = vertex_buffers.at((int)GEOMETRY_BUFFER_ID::LINE);
+	const GLuint ibo = index_buffers.at((int)GEOMETRY_BUFFER_ID::LINE);
+
+	// Setting vertex and index buffers
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+	gl_has_errors();
+
+	GLint in_position_loc = glGetAttribLocation(program, "in_position");
+	gl_has_errors();
+
+	GLint in_color_loc = glGetAttribLocation(program, "in_color");
+	gl_has_errors();
+
+	glEnableVertexAttribArray(in_position_loc);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), nullptr);
+	gl_has_errors();
+
+	glEnableVertexAttribArray(in_color_loc);
+	glVertexAttribPointer(
+		in_color_loc,
+		3,
+		GL_FLOAT,
+		GL_FALSE,
+		sizeof(ColoredVertex),
+		(void*)sizeof(vec3)); // NOLINT(performance-no-int-to-ptr,cppcoreguidelines-pro-type-cstyle-cast)
+	gl_has_errors();
+
+	// Setup coloring
+	vec4 color = vec4(1);
+	if (registry.any_of<Color>(entity)) {
+		color = vec4(registry.get<Color>(entity).color, 1.f);
+	}
+
+	GLint color_uloc = glGetUniformLocation(program, "fcolor");
+	glUniform4fv(color_uloc, 1, glm::value_ptr(color));
+	gl_has_errors();
+
+	draw_triangles(transform, projection);
+}
+
+void RenderSystem::draw_lighting(const mat3& projection)
+{
+
+	glBindFramebuffer(GL_FRAMEBUFFER, los_frame_buffer);
+	gl_has_errors();
+	prepare_buffer(vec3(0));
+
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers.at((int)GEOMETRY_BUFFER_ID::LIGHTING_TRIANGLES));
+
+	auto program = (GLuint)effects.at((uint8)EFFECT_ASSET_ID::LIGHT_TRIANGLES);
+	gl_has_errors();
+
+	std::vector<GLfloat> vertices;
+	for (auto [entity, request] : registry.view<LightingTriangle>().each()) {
+		for (uint i = 0; i < 2; i++) {
+			vertices.push_back(request.p1[i]);
+		}
+		for (uint i = 0; i < 2; i++) {
+			vertices.push_back(request.p2[i]);
+		}
+		for (uint i = 0; i < 2; i++) {
+			vertices.push_back(request.p3[i]);
+		}
+	}
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices[0]) * vertices.size(), vertices.data(), GL_DYNAMIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+	glUseProgram(program);
+
+	GLint projection_loc = glGetUniformLocation(program, "projection");
+	glUniformMatrix3fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
+	gl_has_errors();
+
+	glDrawArrays(GL_TRIANGLES, 0, vertices.size() / 2);
+	gl_has_errors();
+	glDisableVertexAttribArray(0);
+
+	for (auto [entity] : registry.view<LightingTile>().each()) {
+		Transform transform = get_transform(entity);
+		transform.scale(MapUtility::tile_size * vec2(1));
+		draw_rectangle(entity, transform, MapUtility::tile_size * vec2(1), projection);
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
+
+	// Draw the screen texture on the quad geometry
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers[(GLuint)GEOMETRY_BUFFER_ID::SCREEN_TRIANGLE]);
+	glBindBuffer(
+		GL_ELEMENT_ARRAY_BUFFER,
+		index_buffers[(GLuint)GEOMETRY_BUFFER_ID::SCREEN_TRIANGLE]);
+	gl_has_errors();
+
+	// Apply Lighting
+	program = (GLuint)effects.at((uint8)EFFECT_ASSET_ID::LIGHTING);
+
+	// Setting shaders
+	glUseProgram(program);
+	gl_has_errors();
+
+	// Set the vertex position and vertex texture coordinates (both stored in the
+	// same VBO)
+	GLint in_position_loc = glGetAttribLocation(program, "in_position");
+	glEnableVertexAttribArray(in_position_loc);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), nullptr);
+	gl_has_errors();
+
+	// Bind our textures in
+	GLint screen_texture_loc = glGetUniformLocation(program, "screen");
+	GLint lighting_texture_loc = glGetUniformLocation(program, "lighting");
+	GLint los_texture_loc = glGetUniformLocation(program, "los");
+	glUniform1i(screen_texture_loc, 0);
+	glUniform1i(lighting_texture_loc, 1);
+	glUniform1i(los_texture_loc, 2);
+
+	glActiveTexture(GL_TEXTURE0);
+	gl_has_errors();
+	glBindTexture(GL_TEXTURE_2D, off_screen_render_buffer_color);
+	gl_has_errors();
+
+	glActiveTexture(GL_TEXTURE0 + 1);
+	glBindTexture(GL_TEXTURE_2D, lighting_buffer_color);
+	gl_has_errors();
+
+	glActiveTexture(GL_TEXTURE0 + 2);
+	glBindTexture(GL_TEXTURE_2D, los_buffer_color);
+	gl_has_errors();
+
+	// Draw
+	glDrawElements(GL_TRIANGLES,
+				   3,
+				   GL_UNSIGNED_SHORT,
+				   nullptr); // one triangle = 3 vertices; nullptr indicates that there is
+							 // no offset from the bound index buffer
+	gl_has_errors();
+}
 void RenderSystem::draw_triangles(const Transform& transform, const mat3& projection)
 {
 	// Get number of indices from index buffer, which has elements uint16_t
@@ -802,7 +1027,6 @@ void RenderSystem::draw_to_screen()
 
 	// Bind our texture in Texture Unit 0
 	glActiveTexture(GL_TEXTURE0);
-
 	glBindTexture(GL_TEXTURE_2D, off_screen_render_buffer_color);
 	gl_has_errors();
 	// Draw
@@ -823,25 +1047,14 @@ void RenderSystem::draw()
 	PlayerInactivePerception& player_perception = registry.get<PlayerInactivePerception>(player);
 	ColorState& inactive_color = player_perception.inactive;
 
+	// Reset lighting state
+	applying_lighting = false;
+
 	// First render to the custom framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
 	gl_has_errors();
-	// Clearing backbuffer
-	glViewport(0, 0, (GLsizei)screen_size_capped().x, (GLsizei)screen_size_capped().y);
-	glDepthRange(0.00001, 10);
-	if (inactive_color == ColorState::Blue) {
-		glClearColor(57.f / 256, 51.f / 256, 81.f / 256, 1.0);
-	} else {
-		glClearColor(58.f / 256, 66.f / 256, 60.f / 256, 1.0);
-	}
-	glClearDepth(1.f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_DEPTH_TEST); // native OpenGL does not work with a depth buffer
-							  // and alpha blending, one would have to sort
-							  // sprites back to front
-	gl_has_errors();
+	prepare_buffer((inactive_color == ColorState::Blue) ? vec3(57.f / 256, 51.f / 256, 81.f / 256)
+														: vec3(58.f / 256, 66.f / 256, 60.f / 256));
 	mat3 projection_2d = create_projection_matrix();
 
 	draw_map(projection_2d, inactive_color == ColorState::Blue ? ColorState::Red : ColorState::Blue);
@@ -853,29 +1066,52 @@ void RenderSystem::draw()
 		}
 	}
 
+	create_lighting_texture(projection_2d);
+	// Start applying lighting to various entities
+	applying_lighting = true;
+
+	
+
 	auto render_requests_lambda = [&](Entity entity, RenderRequest& render_request) {
 		if (render_request.visible) {
 			draw_textured_mesh(entity, render_request, projection_2d);
 		}
 	};
 
-	auto health_group_lambda = [&](Entity entity, Stats& stats, Enemy& /*enemy*/) {
-		Transform transform = get_transform(entity);
-		transform.translate(vec2(2 - MapUtility::tile_size / 2, -MapUtility::tile_size / 2));
-		transform.scale(vec2(MapUtility::tile_size - 4, 3));
-		draw_stat_bar(transform, stats, projection_2d, false);
+	auto health_group_lambda = [&](Entity entity, RenderRequest& request, Stats& stats, Enemy& /*enemy*/) {
+		if (!request.visible) {
+			return;
+		}
+		uvec2 tile;
+		Transform transform = get_transform(entity, &tile);
+		if (!lighting.is_visible(tile)) {
+			return;
+		}
+		vec2 shift = vec2(2 - MapUtility::tile_size / 2, -MapUtility::tile_size / 2);
+		vec2 scale = vec2(MapUtility::tile_size - 4, 3);
+		bool fancy = false;
+		if (MapHitbox* hitbox = registry.try_get<MapHitbox>(entity)) {
+			shift.x -= MapUtility::tile_size * hitbox->center.x;
+			shift.y -= MapUtility::tile_size * hitbox->center.y;
+			scale.x = MapUtility::tile_size * hitbox->area.x - 4;
+			scale.y = min(9.f, hitbox->area.x * scale.y);
+			fancy = true;
+		}
+		transform.translate(shift);
+		transform.scale(scale);
+		draw_stat_bar(transform, stats, projection_2d, fancy, scale.x / scale.y, entity);
 	};
 
 	// Renders entities + healthbars depending on which state we are in
 	if (inactive_color == ColorState::Red) {
 		registry.view<RenderRequest>(entt::exclude<Background, RedExclusive>).each(render_requests_lambda);
-		registry.view<Stats, Enemy>(entt::exclude<RedExclusive>).each(health_group_lambda);
+		registry.view<RenderRequest, Stats, Enemy>(entt::exclude<RedExclusive>).each(health_group_lambda);
 	} else if (inactive_color == ColorState::Blue) {
 		registry.view<RenderRequest>(entt::exclude<Background, BlueExclusive>).each(render_requests_lambda);
-		registry.view<Stats, Enemy>(entt::exclude<BlueExclusive>).each(health_group_lambda);
+		registry.view<RenderRequest, Stats, Enemy>(entt::exclude<BlueExclusive>).each(health_group_lambda);
 	} else {
 		registry.view<RenderRequest>().each(render_requests_lambda);
-		registry.view<Stats, Enemy>().each(health_group_lambda);
+		registry.view<RenderRequest, Stats, Enemy>().each(health_group_lambda);
 	}
 
 	// Renders effects (ie spells), intended to be overlayed on top of regular render effects
@@ -886,6 +1122,11 @@ void RenderSystem::draw()
 			draw_effect(entity, effect_render_request, projection_2d);
 		}
 	}
+
+	draw_lighting(projection_2d);
+
+	// Done using lighting
+	applying_lighting = false;
 
 	draw_ui(projection_2d);
 
@@ -1012,6 +1253,30 @@ void RenderSystem::on_resize(int width, int height)
 	screen_size = { width, height };
 
 	glBindTexture(GL_TEXTURE_2D, off_screen_render_buffer_color);
+	glTexImage2D(GL_TEXTURE_2D,
+				 0,
+				 GL_RGBA,
+				 (GLsizei)screen_size_capped().x,
+				 (GLsizei)screen_size_capped().y,
+				 0,
+				 GL_RGBA,
+				 GL_UNSIGNED_BYTE,
+				 nullptr);
+	gl_has_errors();
+
+	glBindTexture(GL_TEXTURE_2D, lighting_buffer_color);
+	glTexImage2D(GL_TEXTURE_2D,
+				 0,
+				 GL_RGBA,
+				 (GLsizei)screen_size_capped().x,
+				 (GLsizei)screen_size_capped().y,
+				 0,
+				 GL_RGBA,
+				 GL_UNSIGNED_BYTE,
+				 nullptr);
+	gl_has_errors();
+
+	glBindTexture(GL_TEXTURE_2D, los_buffer_color);
 	glTexImage2D(GL_TEXTURE_2D,
 				 0,
 				 GL_RGBA,

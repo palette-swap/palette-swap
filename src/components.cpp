@@ -586,3 +586,12 @@ Entity AOESource::add(Entity parent)
 	}
 	return new_aoe;
 }
+
+void BigRoom::add_room(Entity big_room, Entity room)
+{
+	BigRoom& big_room_component = registry.get_or_emplace<BigRoom>(big_room);
+	BigRoomElement& element = registry.get_or_emplace<BigRoomElement>(room);
+	element.big_room = big_room;
+	element.next_room = big_room_component.first_room;
+	big_room_component.first_room = room;
+}
