@@ -10,6 +10,7 @@
 #include "animation_system.hpp"
 #include "combat_system.hpp"
 #include "lighting_system.hpp"
+#include "loot_system.hpp"
 #include "map_generator_system.hpp"
 #include "physics_system.hpp"
 #include "render_system.hpp"
@@ -28,6 +29,9 @@ int main()
 	// Audio core
 	std::shared_ptr<SoLoud::Soloud> so_loud = std::make_shared<SoLoud::Soloud>();
 	so_loud->init();
+
+	// Loot System
+	std::shared_ptr<LootSystem> loot = std::make_shared<LootSystem>();
 
 	// Combat System
 	std::shared_ptr<CombatSystem> combat = std::make_shared<CombatSystem>();
@@ -52,7 +56,7 @@ int main()
 
 	// Global systems
 	Debug debugging;
-	WorldSystem world(debugging, combat, map, turns, animations, ui, so_loud, stories, tutorials);
+	WorldSystem world(debugging, animations, combat, loot, map, stories, turns, tutorials, ui, so_loud);
 	LightingSystem lighting;
 	RenderSystem renderer(debugging, lighting);
 	PhysicsSystem physics(debugging, map);

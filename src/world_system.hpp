@@ -28,14 +28,15 @@
 class WorldSystem {
 public:
 	WorldSystem(Debug& debugging,
-				std::shared_ptr<CombatSystem> combat,
-				std::shared_ptr<MapGeneratorSystem> map,
-				std::shared_ptr<TurnSystem> turns,
 				std::shared_ptr<AnimationSystem> animations,
-				std::shared_ptr<UISystem> ui,
-				std::shared_ptr<SoLoud::Soloud> so_loud,
+				std::shared_ptr<CombatSystem> combat,
+				std::shared_ptr<LootSystem> loot,
+				std::shared_ptr<MapGeneratorSystem> map,
 				std::shared_ptr<StorySystem> story,
-				std::shared_ptr<TutorialSystem> tutorials);
+				std::shared_ptr<TurnSystem> turns,
+				std::shared_ptr<TutorialSystem> tutorials,
+				std::shared_ptr<UISystem> ui,
+				std::shared_ptr<SoLoud::Soloud> so_loud);
 
 	// Creates a window
 	GLFWwindow* create_window(int width, int height);
@@ -132,11 +133,12 @@ private:
 
 	std::shared_ptr<AnimationSystem> animations;
 	std::shared_ptr<CombatSystem> combat;
+	std::shared_ptr<LootSystem> loot;
 	std::shared_ptr<MapGeneratorSystem> map_generator;
-	std::shared_ptr<TurnSystem> turns;
-	std::shared_ptr<UISystem> ui;
 	std::shared_ptr<StorySystem> story;
+	std::shared_ptr<TurnSystem> turns;
 	std::shared_ptr<TutorialSystem> tutorials;
+	std::shared_ptr<UISystem> ui;
 
 	bool is_editing_map = false;
 };

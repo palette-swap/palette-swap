@@ -18,30 +18,33 @@
 
 // Create the world
 WorldSystem::WorldSystem(Debug& debugging,
-						 std::shared_ptr<CombatSystem> combat,
-						 std::shared_ptr<MapGeneratorSystem> map,
-						 std::shared_ptr<TurnSystem> turns,
 						 std::shared_ptr<AnimationSystem> animations,
-						 std::shared_ptr<UISystem> ui,
-						 std::shared_ptr<SoLoud::Soloud> so_loud,
+						 std::shared_ptr<CombatSystem> combat,
+						 std::shared_ptr<LootSystem> loot,
+						 std::shared_ptr<MapGeneratorSystem> map,
 						 std::shared_ptr<StorySystem> story,
-						 std::shared_ptr<TutorialSystem> tutorials)
+						 std::shared_ptr<TurnSystem> turns,
+						 std::shared_ptr<TutorialSystem> tutorials,
+						 std::shared_ptr<UISystem> ui,
+						 std::shared_ptr<SoLoud::Soloud> so_loud)
 
 	: debugging(debugging)
-	, so_loud(std::move(so_loud))
 	, bgm_red()
 	, bgm_blue()
 	, rng(std::make_shared<std::default_random_engine>(std::default_random_engine(std::random_device()())))
 	, animations(std::move(animations))
 	, combat(std::move(combat))
+	, loot(std::move(loot))
 	, map_generator(std::move(map))
-	, turns(std::move(turns))
-	, ui(std::move(ui))
 	, story(std::move(story))
+	, turns(std::move(turns))
 	, tutorials(std::move(tutorials))
+	, ui(std::move(ui))
+	, so_loud(std::move(so_loud))
 {
-	this->combat->init(rng, this->animations, this->map_generator, this->tutorials);
-	this->combat->on_pickup([this](const Entity& item, size_t slot) { this->ui->add_to_inventory(item, slot); });
+	this->combat->init(rng, this->animations, this->loot, this->map_generator, this->tutorials);
+	this->loot->init(rng, this->tutorials);
+	this->loot->on_pickup([this](const Entity& item, size_t slot) { this->ui->add_to_inventory(item, slot); });
 	this->combat->on_death([this](const Entity& /*entity*/) { this->ui->update_resource_count(); });
 	this->ui->on_show_world([this]() { return_arrow_to_player(); });
 }
@@ -245,8 +248,8 @@ void WorldSystem::restart_game()
 	vec2 player_location = MapUtility::map_position_to_world_position(player_starting_point);
 	player_arrow = create_arrow(player_location);
 
-	// Restart the CombatSystem
-	combat->restart_game();
+	// Restart the LootSystem
+	loot->restart_game();
 
 	//Entity boss_entry_entity = animations->create_boss_entry_entity(EnemyType::KingMush, player_starting_point + uvec2(10, 2));
 	// Restart the UISystem
@@ -381,7 +384,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 			break;
 		}
 		case GLFW_KEY_LEFT_SHIFT: {
-			if (turns->ready_to_act(player) && combat->try_pickup_items(player)) {
+			if (turns->ready_to_act(player) && loot->try_pickup_items(player)) {
 				tutorials->destroy_tooltip(TutorialTooltip::ItemDropped);
 				end_player_turn();
 			}
@@ -419,7 +422,7 @@ bool WorldSystem::check_debug_keys(int key, int action, int mod)
 	// Drop loot on your current location
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_ALT) != 0 && key == GLFW_KEY_L) {
 		uvec2 pos = registry.get<MapPosition>(player).position;
-		combat->drop_loot(pos);
+		loot->drop_loot(pos);
 	}
 
 	// Give more resources
