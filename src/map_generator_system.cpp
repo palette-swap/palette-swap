@@ -1,5 +1,6 @@
 #include "map_generator_system.hpp"
 #include "turn_system.hpp"
+#include "ui_system.hpp"
 
 #include <iostream>
 #include <queue>
@@ -15,8 +16,8 @@
 
 using namespace MapUtility;
 
-MapGeneratorSystem::MapGeneratorSystem(std::shared_ptr<TurnSystem> turns)
-	: turns(std::move(turns))
+MapGeneratorSystem::MapGeneratorSystem(std::shared_ptr<TurnSystem> turns, std::shared_ptr<UISystem> ui_system)
+	: turns(std::move(turns)), ui_system(std::move(ui_system))
 {
 	init();
 }
@@ -284,7 +285,14 @@ static bool is_grass_tile(TileID tile_id)
 static bool is_floor_tile(TileID tile_id)
 {
 	// floor are the first col of the sprite sheet
-	return (tile_id % 8 == 0);
+	const static std::set<uint8_t> floor_tiles(
+		{0, 4, 5, 6, 7, 8, 16, 24, 32, 40, 52}
+	);
+	return floor_tiles.find(tile_id) != floor_tiles.end();
+}
+static bool is_door_tile(TileID tile_id)
+{
+	return (60 <= tile_id && tile_id < 64);
 }
 static bool is_next_level_tile(TileID tile_id)
 {
@@ -293,6 +301,28 @@ static bool is_next_level_tile(TileID tile_id)
 static bool is_last_level_tile(TileID tile_id)
 {
 	return tile_id == tile_last_level;
+}
+static bool is_locked_chest_tile(TileID tile_id)
+{
+	return tile_id == 48;
+}
+
+static bool is_wall_tile(TileID tile_id)
+{
+	int tile_row = tile_id / tile_sprite_sheet_size;
+	int tile_col = tile_id % tile_sprite_sheet_size;
+	if (0 <= tile_row && tile_row < 4 && 1 <= tile_col && tile_col <= 3) {
+		return true;
+	}
+
+	const static std::set<uint8_t> blocking_tiles({
+		20, 21, 22, 23, // torch
+		44, 45, 46, 47, // chest
+		60, 61, 62, // door
+		56, 57, 58, // cracked wall
+	});
+
+	return blocking_tiles.find(tile_id) != blocking_tiles.end();
 }
 
 bool MapGeneratorSystem::walkable(uvec2 pos) const
@@ -303,7 +333,8 @@ bool MapGeneratorSystem::walkable(uvec2 pos) const
 
 	TileID tile_id = get_tile_id_from_map_pos(pos);
 
-	return (is_floor_tile(tile_id) || is_trap_tile(tile_id) || is_next_level_tile(tile_id) || is_last_level_tile(tile_id) || is_grass_tile(tile_id));
+	return (is_floor_tile(tile_id) || is_trap_tile(tile_id) || is_next_level_tile(tile_id) || is_last_level_tile(tile_id) || is_grass_tile(tile_id)
+			|| (tile_id == 63 && is_door_tile(tile_id)) || (tile_id == 59));
 }
 
 bool MapGeneratorSystem::walkable_and_free(Entity entity, uvec2 pos, bool check_active_color) const
@@ -344,7 +375,7 @@ bool MapGeneratorSystem::is_wall(uvec2 pos) const
 		return false;
 	}
 
-	return wall_tiles().find(get_tile_id_from_map_pos(pos)) != wall_tiles().end();
+	return is_wall_tile(get_tile_id_from_map_pos(pos));
 }
 
 std::vector<uvec2> make_path(std::unordered_map<uvec2, uvec2>& parent, uvec2 start_pos, uvec2 target)
@@ -690,29 +721,42 @@ bool MapGeneratorSystem::interact_with_surrounding_tile(Entity player)
 {
 	uvec2 player_position = registry.get<MapPosition>(player).position;
 
-	RoomID current_room = current_map().at(player_position.y / room_size).at(player_position.x / room_size);
-
 	const static std::array<std::array<int, 2>, 4> directions = {{
 		{ -1, 0 },
 		{ 0, -1 },
 		{ 1, 0 },
 		{ 0, 1 }
 	}};
-	int player_row_in_room = player_position.y % room_size;
-	int player_col_in_room = player_position.x % room_size;
+	int player_row = player_position.y / map_size;
+	int player_col = player_position.x % map_size;
 
 	auto & level_animated_tiles = get_level_animated_tiles(current_level);
-	auto & room_animated_tiles =  level_animated_tiles.at(current_room);
 
 	for (const auto & direction : directions) {
-		int row = player_row_in_room + direction[0];
-		int col = player_col_in_room + direction[1];
-		if (row < 0 || row >= room_size || col < 0 || col >= room_size) {
+		int target_row = player_position.y + direction[0];
+		int target_col = player_position.x + direction[1];
+
+		if (target_row < 0 || target_row >= map_size * room_size || target_col < 0 || target_col >= map_size * room_size) {
 			continue;
 		}
 
-		const auto & animated_tile = room_animated_tiles.find(row * room_size + col);
+		RoomID target_room = current_map().at(target_row / room_size).at(target_col / room_size);
+		auto & room_animated_tiles =  level_animated_tiles.at(target_room);
+
+		const auto & animated_tile = room_animated_tiles.find((target_row % room_size) * room_size + target_col % room_size);
 		if (animated_tile != room_animated_tiles.end() && animated_tile->second.usage_count > 0) {
+			if (animated_room_buffer.find(target_room) == animated_room_buffer.end()) {
+				animated_room_buffer.emplace(target_room);
+			}
+			if(is_door_tile(animated_tile->second.tile_id) || is_locked_chest_tile(animated_tile->second.tile_id)) {
+				Inventory& inventory = registry.get<Inventory>(player);
+				if (inventory.resources.at((size_t)Resource::Key) == 0) {
+					continue;
+				}
+				inventory.resources.at((size_t)Resource::Key)--;
+				ui_system->update_resource_count();
+			}
+
 			animated_tile->second.activated = true;
 			animated_tile->second.usage_count --;
 		}
@@ -726,31 +770,31 @@ void MapGeneratorSystem::step(float elapsed_ms)
 	LevelConfiguration & level_conf = level_configurations.at(current_level);
 	auto & animated_tiles = get_level_animated_tiles(current_level);
 
-	std::list<RoomID> animation_completed_rooms;
+	std::vector<RoomID> animation_completed_rooms;
 
 	for (RoomID room_index : animated_room_buffer) {
 		bool all_animations_completed = true;
-		for (auto & animated_tile_iter : animated_tiles.at(room_index)) {
-			AnimatedTile & animated_tile = animated_tile_iter.second;
-			if (!animated_tile.activated) {
+		std::map<int, AnimatedTile> & room_animated_tile = animated_tiles.at(room_index);
+		for (auto & animated_tile_iter : room_animated_tile) {
+			if (!animated_tile_iter.second.activated) {
 				continue;
 			}
 
-			animated_tile.elapsed_time += elapsed_ms;
-			if (animated_tile.elapsed_time > 100.f / animated_tile.speed_adjustment) {
-				animated_tile.elapsed_time = 0;
-				if (animated_tile.usage_count == 0 && animated_tile.frame + 1 == animated_tile.max_frames) {
-					animated_tile.activated = false;
+			animated_tile_iter.second.elapsed_time += elapsed_ms;
+			if (animated_tile_iter.second.elapsed_time > 100.f / animated_tile_iter.second.speed_adjustment) {
+				animated_tile_iter.second.elapsed_time = 0;
+				if (animated_tile_iter.second.usage_count == 0 && animated_tile_iter.second.frame + 1 == animated_tile_iter.second.max_frames) {
+					animated_tile_iter.second.activated = false;
 					continue;
 				}
-				animated_tile.frame = ((animated_tile.frame) + 1) % animated_tile.max_frames;
+				animated_tile_iter.second.frame = ((animated_tile_iter.second.frame) + 1) % animated_tile_iter.second.max_frames;
 
-				level_conf.room_layouts.at(room_index).at(animated_tile_iter.first) = animated_tile.tile_id + animated_tile.frame;
-				if (animated_tile.is_trigger && animated_tile.frame == 0) {
-					animated_tile.activated = false;
+				level_conf.room_layouts.at(room_index).at(animated_tile_iter.first) = animated_tile_iter.second.tile_id + animated_tile_iter.second.frame;
+				if (animated_tile_iter.second.is_trigger && animated_tile_iter.second.frame == 0) {
+					animated_tile_iter.second.activated = false;
 				}
 			}
-			if (animated_tile.frame != 0) {
+			if ((animated_tile_iter.second.is_trigger && animated_tile_iter.second.activated) || animated_tile_iter.second.frame != 0) {
 				all_animations_completed = false;
 			}
 		}
@@ -799,6 +843,7 @@ OPTIONS
 	C/V increase/decrease number of traps in a room
 	T/V increase/decrease room smoothness(by running a customized cellular automata)
 	G/H increase/decrease enemy density in a room
+	U/I increase/decrease room difficulty
 		)";
 	std::cout << map_editor_instruction << std::endl;
 
@@ -1027,5 +1072,25 @@ void MapGeneratorSystem::decrease_enemy_density()
 	}
 	curr_conf.enemies_density -= 0.1;
 	std::cout << "Current enemy density: " << curr_conf.enemies_density << std::endl;
+	regenerate_map();
+}
+void MapGeneratorSystem::increase_room_difficulty()
+{
+	LevelGenConf& curr_conf = level_generation_confs.at(current_level - num_predefined_levels);
+	if (curr_conf.room_difficulty == INT_MAX) {
+		return;
+	}
+	curr_conf.room_difficulty ++;
+	std::cout << "Current room difficulty: " << curr_conf.room_difficulty << std::endl;
+	regenerate_map();
+}
+void MapGeneratorSystem::decrease_room_difficulty()
+{
+	LevelGenConf& curr_conf = level_generation_confs.at(current_level - num_predefined_levels);
+	if (curr_conf.room_difficulty == 1) {
+		return;
+	}
+	curr_conf.room_difficulty --;
+	std::cout << "Current room difficulty: " << curr_conf.room_difficulty << std::endl;
 	regenerate_map();
 }

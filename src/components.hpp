@@ -462,20 +462,22 @@ enum class Resource {
 	HealthPotion = 0,
 	ManaPotion = HealthPotion + 1,
 	PaletteSwap = ManaPotion + 1,
-	Count = PaletteSwap + 1,
+	Key = PaletteSwap + 1,
+	Count = Key + 1,
 };
 
 const std::array<std::string_view, (size_t)Resource::Count> resource_names = {
 	"Health Potion",
 	"Mana Potion",
 	"Palette Swap",
+	"Key",
 };
 
 struct Inventory {
 	static constexpr size_t inventory_size = 12;
 	std::array<Entity, inventory_size> inventory;
 	SlotList<Entity> equipped;
-	std::array<size_t, (size_t)Resource::Count> resources = { 3, 1, 3 };
+	std::array<size_t, (size_t)Resource::Count> resources = { 3, 1, 3, 10 };
 	Inventory()
 		: inventory()
 		, equipped()

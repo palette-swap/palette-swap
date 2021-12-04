@@ -34,14 +34,14 @@ int main()
 	// Turn System
 	std::shared_ptr<TurnSystem> turns = std::make_shared<TurnSystem>();
 
-	// Map system
-	std::shared_ptr<MapGeneratorSystem> map = std::make_shared<MapGeneratorSystem>(turns);
-
 	// Animation System
 	std::shared_ptr<AnimationSystem> animations = std::make_shared<AnimationSystem>();
 
 	// UI System
 	std::shared_ptr<UISystem> ui = std::make_shared<UISystem>();
+
+	// Map system
+	std::shared_ptr<MapGeneratorSystem> map = std::make_shared<MapGeneratorSystem>(turns, ui);
 
 	// Story System
 	std::shared_ptr<StorySystem> stories = std::make_shared<StorySystem>(animations);

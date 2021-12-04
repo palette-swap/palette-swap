@@ -5,6 +5,7 @@
 #include "map_generator.hpp"
 #include "map_utility.hpp"
 class TurnSystem;
+class UISystem;
 
 #include <array>
 #include <set>
@@ -119,8 +120,10 @@ private:
 	// buffer to save rooms that need to be animated, room is removed from the buffer once all animations are completed
 	std::set<MapUtility::RoomID> animated_room_buffer;
 
+	std::shared_ptr<UISystem> ui_system;
+
 public:
-	explicit MapGeneratorSystem(std::shared_ptr<TurnSystem> turns);
+	explicit MapGeneratorSystem(std::shared_ptr<TurnSystem> turns, std::shared_ptr<UISystem> ui_system);
 	void init();
 
 	// Get the current level mapping
@@ -205,4 +208,6 @@ public:
 	void decrease_room_smoothness();
 	void increase_enemy_density();
 	void decrease_enemy_density();
+	void increase_room_difficulty();
+	void decrease_room_difficulty();
 };

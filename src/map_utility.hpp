@@ -77,6 +77,8 @@ struct LevelGenConf {
 	// enemy properties
 	double enemies_density = 0.5;
 
+	unsigned int room_difficulty = 10;
+
 	void serialize(const std::string& prefix, rapidjson::Document& json) const;
 	void deserialize(const std::string& prefix, const rapidjson::Document& json);
 };
