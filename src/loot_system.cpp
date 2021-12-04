@@ -59,7 +59,8 @@ bool LootSystem::try_pickup_items(Entity player)
 {
 	MapPosition& player_pos = registry.get<MapPosition>(player);
 	for (auto [entity, resource, pos] : registry.view<ResourcePickup, MapPosition>().each()) {
-		if (player_pos.position == pos.position) {
+		ivec2 distance = abs(ivec2(player_pos.position - pos.position));
+		if (distance.x <= 1 && distance.y <= 1) {
 			registry.get<Inventory>(player).resources.at((size_t)resource.resource)++;
 			registry.destroy(entity);
 
