@@ -108,6 +108,8 @@ void AISystem::step(float /*elapsed_ms*/)
 				default:
 					throw std::runtime_error("Invalid enemy behaviour.");
 				}
+
+				combat->apply_decrement_per_turn_effects(enemy_entity);
 			}
 		}
 

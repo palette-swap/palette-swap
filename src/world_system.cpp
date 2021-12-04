@@ -162,7 +162,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 
 	// Player is stunned.
 	if (turns->ready_to_act(player) && combat->get_decrement_effect(player, Effect::Stun) > 0) {
-		turns->skip_team_action(player);
+		end_player_turn();
 	}
 	if ((registry.get<Stats>(player).health <= 0) && turns->ready_to_act(player)) {
 		restart_game();
@@ -185,7 +185,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 			if (entity == player_arrow) {
 				registry.remove<ResolvedProjectile>(entity);
 				player_arrow_fired = false;
-				turns->complete_team_action(player);
+				end_player_turn();
 				return_arrow_to_player();
 			} else {
 				registry.destroy(entity);
@@ -322,7 +322,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 {
 	// Player is stunned.
 	if (turns->ready_to_act(player) && combat->get_decrement_effect(player, Effect::Stun) > 0) {
-		turns->skip_team_action(player);
+		end_player_turn();
 	}
 
 	if (check_debug_keys(key, action, mod)) {
@@ -383,14 +383,14 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		case GLFW_KEY_LEFT_SHIFT: {
 			if (turns->ready_to_act(player) && combat->try_pickup_items(player)) {
 				tutorials->destroy_tooltip(TutorialTooltip::ItemDropped);
-				turns->skip_team_action(player);
+				end_player_turn();
 			}
 			break;
 		}
 		case GLFW_KEY_H: {
 			if (turns->ready_to_act(player) && combat->try_drink_potion(player)) {
 				ui->update_resource_count();
-				turns->skip_team_action(player);
+				end_player_turn();
 			}
 		}
 		default:
@@ -560,7 +560,7 @@ void WorldSystem::move_player(Direction direction)
 
 	// Player is immobilized.
 	if (turns->ready_to_act(player) && combat->get_decrement_effect(player, Effect::Immobilize) > 0) {
-		turns->skip_team_action(player);
+		end_player_turn();
 	}
 
 	MapPosition& map_pos = registry.get<MapPosition>(player);
@@ -597,7 +597,7 @@ void WorldSystem::move_player(Direction direction)
 	}
 
 	map_pos.position = new_pos;
-	turns->complete_team_action(player);
+	end_player_turn();
 
 	// TODO: move the logics to map generator system
 	if (map_generator->is_next_level_tile(new_pos)) {
@@ -617,6 +617,19 @@ void WorldSystem::move_player(Direction direction)
 		registry.get<Stats>(player).health -= 10;
 	}
 	story->check_cutscene();
+}
+
+void WorldSystem::end_player_turn()
+{
+	if (turns->get_active_team() != player) {
+		return;
+	}
+	combat->apply_decrement_per_turn_effects(player);
+	if (turns->ready_to_act(player)) {
+		turns->skip_team_action(player);
+	} else {
+		turns->complete_team_action(player);
+	}
 }
 
 void WorldSystem::try_change_color()
@@ -651,7 +664,7 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 {
 	// Player is stunned.
 	if (turns->ready_to_act(player) && combat->get_decrement_effect(player, Effect::Stun) > 0) {
-		turns->skip_team_action(player);
+		end_player_turn();
 	}
 
 	if (story->in_cutscene()) {
@@ -750,5 +763,5 @@ void WorldSystem::try_adjacent_attack(Attack& attack)
 	if (combat->do_attack(player, attack, mouse_map_pos)) {
 		so_loud->play(light_sword_wav);
 	}
-	turns->complete_team_action(player);
+	end_player_turn();
 }

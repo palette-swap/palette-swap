@@ -84,6 +84,9 @@ private:
 	// if the tile is blocked by a wall, player won't move
 	void move_player(Direction direction);
 
+	// end player turn, downtick relevant bits
+	void end_player_turn();
+
 	// Flips color state.
 	void try_change_color();
 

@@ -100,13 +100,41 @@ bool CombatSystem::try_drink_potion(Entity player)
 	return true;
 }
 
-int CombatSystem::get_decrement_effect(Entity entity, Effect effect)
+int CombatSystem::get_effect(Entity entity, Effect effect) const
 {
 	ActiveConditions* conditions = registry.try_get<ActiveConditions>(entity);
 	if (conditions == nullptr) {
 		return 0;
 	}
+	return conditions->conditions.at((size_t)effect);
+}
+
+int CombatSystem::get_decrement_effect(Entity entity, Effect effect)
+{
+	ActiveConditions* conditions = registry.try_get<ActiveConditions>(entity);
+	if (conditions == nullptr || conditions->conditions.at((size_t)effect) == 0) {
+		return 0;
+	}
 	return conditions->conditions.at((size_t)effect)--;
+}
+
+void CombatSystem::apply_decrement_per_turn_effects(Entity entity)
+{
+	for (int i = 0; i < num_per_turn_conditions; i++) {
+		auto effect = (Effect)(num_per_use_conditions + i);
+		int amount = get_decrement_effect(entity, effect);
+		switch (effect) {
+		case Effect::Bleed:
+		case Effect::Burn: {
+			DamageType type = (effect == Effect::Bleed) ? DamageType::Physical : DamageType::Fire;
+			Stats& stats = registry.get<Stats>(entity);
+			stats.health -= max(amount + stats.damage_modifiers[static_cast<int>(type)], 0);
+			break;
+		}
+		default:
+			break;
+		}
+	}
 }
 
 bool CombatSystem::is_valid_attack(Entity attacker, Attack& attack, uvec2 target)
@@ -126,8 +154,8 @@ template <typename ColorExclusive> bool CombatSystem::is_valid_attack(Entity att
 	uvec2 attacker_pos = registry.get<MapPosition>(attacker).position;
 	auto view = registry.view<MapPosition, Enemy, Stats>(entt::exclude<ColorExclusive>);
 	for (const Entity target_entity : view) {
-		if (target_entity != attacker && attack.is_in_range(
-				attacker_pos, target, view.template get<MapPosition>(target_entity).position)) {
+		if (target_entity != attacker
+			&& attack.is_in_range(attacker_pos, target, view.template get<MapPosition>(target_entity).position)) {
 
 			return true;
 		}
@@ -215,20 +243,21 @@ bool CombatSystem::do_attack(Entity attacker_entity, Attack& attack, Entity targ
 
 	Stats& attacker = registry.get<Stats>(attacker_entity);
 	Stats& target = registry.get<Stats>(target_entity);
-	// Roll a random to hit between min and max (inclusive), add attacker's to_hit_bonus
+	// Roll a random to hit between min and max (inclusive), add attacker's to_hit_bonus and subtract disarmed amount
 	std::uniform_int_distribution<int> attack_roller(attack.to_hit_min, attack.to_hit_max);
-	int attack_roll = attack_roller(*rng) + attacker.to_hit_bonus;
+	int attack_roll = attack_roller(*rng) + attacker.to_hit_bonus - get_effect(attacker_entity, Effect::Disarm);
 
-	// It hits if the attack roll is >= the target's evasion
-	bool success = attack_roll >= target.evasion;
+	// It hits if the attack roll is >= the target's evasion minus entangled amount
+	bool success = attack_roll >= target.evasion - get_effect(target_entity, Effect::Entangle);
 	if (success) {
 		// Roll a random damage between min and max (inclusive), then
-		// add attacker's damage_bonus and the target's damage_modifiers
+		// add attacker's damage_bonus and the target's damage_modifiers, take away weakened amount
 		std::uniform_int_distribution<int> damage_roller(attack.damage_min, attack.damage_max);
-		target.health -= max(damage_roller(*rng) + attacker.damage_bonus
+		int dmg = max(damage_roller(*rng) + attacker.damage_bonus - get_effect(attacker_entity, Effect::Weaken)
 								 + target.damage_modifiers[static_cast<int>(attack.damage_type)],
 							 0);
-		do_attack_effects(attacker_entity, attack, target_entity);
+		target.health -= dmg;
+		do_attack_effects(attacker_entity, attack, target_entity, dmg);
 	}
 
 	for (const auto& callback : attack_callbacks) {
@@ -292,7 +321,7 @@ void CombatSystem::kill(Entity attacker_entity, Entity target_entity)
 {
 	const Enemy& enemy = registry.get<Enemy>(target_entity);
 	Stats& stats = registry.get<Stats>(attacker_entity);
-	
+
 	if (enemy.type == EnemyType::TrainingDummy) {
 		// Regen 100% of total mana with a successful kill of training dummies.
 		stats.mana = stats.mana_max;
@@ -367,7 +396,7 @@ bool CombatSystem::can_reach(Entity attacker, Attack& attack, uvec2 target)
 	return true;
 }
 
-void CombatSystem::do_attack_effects(Entity attacker, Attack& attack, Entity target)
+void CombatSystem::do_attack_effects(Entity attacker, Attack& attack, Entity target, int damage)
 {
 	static std::uniform_real_distribution<float> effect_roller(0, 1);
 	Entity effect_entity = attack.effects;
@@ -380,8 +409,12 @@ void CombatSystem::do_attack_effects(Entity attacker, Attack& attack, Entity tar
 				try_shove(attacker, effect, target);
 				break;
 			}
+			case Effect::Crit: {
+				registry.get<Stats>(target).health -= damage * (effect.magnitude - 1);
+				break;
+			}
 			default: {
-				size_t effect_index = (size_t)effect.effect;
+				auto effect_index = (size_t)effect.effect;
 				assert(effect_index < num_conditions);
 				ActiveConditions& conditions = registry.get_or_emplace<ActiveConditions>(target);
 				conditions.conditions.at(effect_index) = max(effect.magnitude, conditions.conditions.at(effect_index));
@@ -419,7 +452,8 @@ void CombatSystem::try_shove(Entity attacker, EffectEntry& effect, Entity target
 			return false;
 		};
 		auto try_y = [&]() -> bool {
-			if (abs(shift.y) > 0 && map->walkable_and_free(target, uvec2(t_pos.position.x, t_pos.position.y + shift_sign.y))) {
+			if (abs(shift.y) > 0
+				&& map->walkable_and_free(target, uvec2(t_pos.position.x, t_pos.position.y + shift_sign.y))) {
 				t_pos.position.y += shift_sign.y;
 				shift.y -= shift_sign.y;
 				return true;

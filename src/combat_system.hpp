@@ -23,7 +23,9 @@ public:
 	bool try_drink_potion(Entity player);
 
 	// Conditions
+	int get_effect(Entity entity, Effect effect) const;
 	int get_decrement_effect(Entity entity, Effect effect);
+	void apply_decrement_per_turn_effects(Entity entity);
 
 	bool is_valid_attack(Entity attacker, Attack& attack, uvec2 target);
 	template <typename ColorExclusive> bool is_valid_attack(Entity attacker, Attack& attack, uvec2 target);
@@ -47,7 +49,7 @@ private:
 	void kill(Entity attacker_entity, Entity entity);
 
 	// Attack Effects e.g. Shove, Stun
-	void do_attack_effects(Entity attacker, Attack& attack, Entity target);
+	void do_attack_effects(Entity attacker, Attack& attack, Entity target, int damage);
 	void try_shove(Entity attacker, EffectEntry& effect, Entity target);
 
 	void load_items();

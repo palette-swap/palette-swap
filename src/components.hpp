@@ -436,21 +436,24 @@ struct Attack {
 };
 
 enum class Effect {
+	// Per-Use conditions
 	Immobilize = 0,
 	Stun = Immobilize + 1,
+	// Per-Turn conditions
 	Disarm = Stun + 1,
 	Entangle = Disarm + 1,
 	Weaken = Entangle + 1,
 	Bleed = Weaken + 1,
 	Burn = Bleed + 1,
-	// If you add any more condition effects, update num_conditions
 	// Make sure non-condition effects are last
 	Crit = Burn + 1,
 	Shove = Crit + 1,
 	Count = Shove + 1,
 };
 
-constexpr size_t num_conditions = (size_t)Effect::Burn + 1;
+constexpr size_t num_conditions = (size_t)Effect::Crit;
+constexpr size_t num_per_use_conditions = (size_t)Effect::Disarm;
+constexpr size_t num_per_turn_conditions = num_conditions - num_per_use_conditions;
 
 // see damage_type_names for comment explanation
 constexpr std::array<std::string_view, (size_t)Effect::Count> effect_names = {
