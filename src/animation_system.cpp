@@ -315,12 +315,14 @@ Entity AnimationSystem::create_boss_entry_entity(EnemyType boss_type, uvec2 map_
 	entry_animation.state = 0;
 	entry_animation.speed_adjustment = 0.5;
 
+	registry.emplace<EntryAnimationEnemy>(boss_entry_entity, boss_type);
+
 	return boss_entry_entity;
 }
 
 void AnimationSystem::trigger_full_boss_intro(const Entity& boss_entity) {
 	Animation& boss_animation = registry.get<Animation>(boss_entity);
-	EnemyType boss_type = registry.get<Enemy>(boss_entity).type;
+	EnemyType boss_type = registry.get<EntryAnimationEnemy>(boss_entity).intro_enemy_type;
 	boss_animation.max_frames = boss_type_entry_animation_map.at(boss_type).max_frames;
 	boss_animation.frame = 0;
 	registry.emplace<UndisplayEventAnimation>(boss_entity);

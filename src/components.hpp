@@ -594,6 +594,10 @@ struct BossEntryAnimation {
 	int max_frames;
 };
 
+struct EntryAnimationEnemy {
+	EnemyType intro_enemy_type;
+};
+
 // Maps enemy types to corresponding animation profile
 // Remember to add a mapping to a new texture (or use a default such as a slime)/enemy type
 // This will help load the animation by enemy type when you load enemies
