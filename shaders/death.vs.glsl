@@ -43,8 +43,8 @@ void main()
 
 	vec3 distort_position = in_position;
 
-	// TODO: Incrementaly applies a folding effect based on frame currently rendered
-	
+	distort_position.x += 0.2 * sin(time/2);
+
 
 	if (frame >= 1) {
 		if ((texcoord.y - top_side)/height <= 0.4) {
@@ -65,8 +65,6 @@ void main()
 			distort_position.x -= max_fold_length * abs((texcoord.x - (right_side - 0.25)))/0.25;
 		}
 	}
-
-
 
 	// Creates output positions
 	vec3 pos = projection * transform * vec3(distort_position.xy, 1.0);
