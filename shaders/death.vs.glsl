@@ -44,39 +44,26 @@ void main()
 	
 
 //	 Distorts the death animation sinusoidally
-	distort_position.x += 0.03 * sin(time);
-	distort_position.y += 0.03 * sin(time);
-
-////	 Distorts the render left and right
-//	if ((abs(texcoord.x - left_side))/width <= 0.5) {
-//		distort_position.x += 0.01 * frame;
-//	} else {
-//		distort_position.x -= 0.01 * frame;
-//	}
-//
-//	if ((abs(texcoord.y - top_side))/height <= 0.5) {
-//		distort_position.y += 0.01 * frame;
-//	} else {
-//		distort_position.y -= 0.01 * frame;
-//	}
+	distort_position.x += 0.02 * sin(time);
+	distort_position.y += 0.02 * sin(time);
 
 	if (frame >= 1) {
 		if ((texcoord.y - top_side)/height <= 0.4) {
-			distort_position.y += 0.3 * abs((texcoord.y - (top_side + 0.3)))/0.3;
+			distort_position.y += 0.25 * abs((texcoord.y - (top_side + 0.25)))/0.25;
 		}
 
 		if ((texcoord.y - top_side)/height >= 0.6) {
-			distort_position.y -= 0.3 * abs((texcoord.y - (bottom_side - 0.3)))/0.3;
+			distort_position.y -= 0.25 * abs((texcoord.y - (bottom_side - 0.25)))/0.25;
 		}
 	}
 
 	if (frame >= 3) {
 		if ((texcoord.x - left_side)/width <= 0.4) {
-			distort_position.x += 0.3 * abs((texcoord.x - (left_side + 0.3)))/0.3;
+			distort_position.x += 0.25 * abs((texcoord.x - (left_side + 0.25)))/0.25;
 		}
 
 		if ((texcoord.x - left_side)/width >= 0.6) {
-			distort_position.x -= 0.3 * abs((texcoord.x - (right_side - 0.3)))/0.3;
+			distort_position.x -= 0.25 * abs((texcoord.x - (right_side - 0.25)))/0.25;
 		}
 	}
 
