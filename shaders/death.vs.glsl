@@ -46,10 +46,6 @@ void main()
 	// TODO: Incrementaly applies a folding effect based on frame currently rendered
 	
 
-//	 Distorts the death animation sinusoidally
-	distort_position.x += 0.01 * sin(time/2);
-	distort_position.y -= 0.01 * sin(time);
-
 	if (frame >= 1) {
 		if ((texcoord.y - top_side)/height <= 0.4) {
 			distort_position.y += max_fold_length * abs((texcoord.y - (top_side + 0.25)))/0.25;
