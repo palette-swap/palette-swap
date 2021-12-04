@@ -231,9 +231,6 @@ void WorldSystem::restart_game()
 	map_generator->load_initial_level();
 	uvec2 player_starting_point = registry.get<MapPosition>(player).position;
 
-	// TODO: Should move into create_player (under world init) afterwards
-	animations->set_player_animation(player);
-
 	// Initializes the perception of the player for what is inactive
 	PlayerInactivePerception& inactive_perception = registry.get<PlayerInactivePerception>(player);
 	inactive_perception.inactive = turns->get_inactive_color();
@@ -324,6 +321,17 @@ void WorldSystem::return_arrow_to_player()
 // On key callback
 void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 {
+	// Player is stunned.
+	if (turns->ready_to_act(player)) {
+		if (Stunned* stunned = registry.try_get<Stunned>(player)) {
+			if (--(stunned->rounds) <= 0) {
+				registry.erase<Stunned>(player);
+			}
+			turns->skip_team_action(player);
+			return;
+		}
+	}
+
 	if (check_debug_keys(key, action, mod)) {
 		return;
 	}
@@ -419,6 +427,21 @@ bool WorldSystem::check_debug_keys(int key, int action, int mod)
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_ALT) != 0 && key == GLFW_KEY_L) {
 		uvec2 pos = registry.get<MapPosition>(player).position;
 		combat->drop_loot(pos);
+	}
+
+	// Give more resources
+	Inventory& inventory = registry.get<Inventory>(player);
+	if (key == GLFW_KEY_F1) {
+		inventory.resources.at((size_t)Resource::HealthPotion)++;
+		ui->update_resource_count();
+	}
+	if (key == GLFW_KEY_F2) {
+		inventory.resources.at((size_t)Resource::ManaPotion)++;
+		ui->update_resource_count();
+	}
+	if (key == GLFW_KEY_F3) {
+		inventory.resources.at((size_t)Resource::PaletteSwap)++;
+		ui->update_resource_count();
 	}
 
 	// Debugging
@@ -542,6 +565,15 @@ void WorldSystem::move_player(Direction direction)
 		return;
 	}
 
+	// Player is immobilized.
+	if (Immobilized* immobilized = registry.try_get<Immobilized>(player)) {
+		if (--(immobilized->rounds) <= 0) {
+			registry.erase<Immobilized>(player);
+		}
+		turns->skip_team_action(player);
+		return;
+	}
+
 	MapPosition& map_pos = registry.get<MapPosition>(player);
 	WorldPosition& arrow_position = registry.get<WorldPosition>(player_arrow);
 	uvec2 new_pos = map_pos.position;
@@ -607,13 +639,14 @@ void WorldSystem::try_change_color()
 	if (inventory.resources.at((size_t)Resource::PaletteSwap) == 0) {
 		return;
 	}
-	inventory.resources.at((size_t)Resource::PaletteSwap)--;
-	ui->update_resource_count();
 	MapPosition player_pos = registry.get<MapPosition>(player);
 
 	if (map_generator->walkable_and_free(player, player_pos.position, false)) {
 		ColorState inactive_color = turns->get_inactive_color();
 		turns->set_active_color(inactive_color);
+
+		inventory.resources.at((size_t)Resource::PaletteSwap)--;
+		ui->update_resource_count();
 
 		so_loud->fadeVolume((inactive_color == ColorState::Red ? bgm_red : bgm_blue), -1, .25);
 		so_loud->fadeVolume((inactive_color == ColorState::Red ? bgm_blue : bgm_red), 0, .25);
@@ -627,6 +660,17 @@ void WorldSystem::try_change_color()
 // TODO: Integrate into turn state to only enable if player's turn is on
 void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 {
+	// Player is stunned.
+	if (turns->ready_to_act(player)) {
+		if (Stunned* stunned = registry.try_get<Stunned>(player)) {
+			if (--(stunned->rounds) <= 0) {
+				registry.erase<Stunned>(player);
+			}
+			turns->skip_team_action(player);
+			return;
+		}
+	}
+
 	if (story->in_cutscene()) {
 		story->on_mouse_click(button, action);
 		return;

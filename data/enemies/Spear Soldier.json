@@ -1,9 +1,9 @@
 {
-  "type": 9,
+  "type": 11,
   "state": 0,
-  "radius": 6,
-  "speed": 2,
-  "attack_range": 1,
+  "radius": 5,
+  "speed": 1,
+  "attack_range": 2,
   "stats": {
     "health": 100,
     "health_max": 100,

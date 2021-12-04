@@ -26,8 +26,6 @@ AISystem::AISystem(const Debug& debugging,
 
 	enemy_attack1_wav.load(audio_path("enemy_attack1.wav").c_str());
 
-	king_mush_summon_wav.load(audio_path("King Mush Shrooma.wav").c_str());
-	king_mush_aoe_wav.load(audio_path("King Mush Fudun.wav").c_str());
 
 	std::vector<std::function<void(const Entity& attacker, const Entity& target)>> callbacks;
 
@@ -116,12 +114,19 @@ void AISystem::step(float /*elapsed_ms*/)
 					break;
 
 				// Boss Enemy Behaviours (Behaviour Trees)
-				case EnemyBehaviour::Summoner: {
-					if (bosses.find(enemy_entity) == bosses.end()) {
-						// A boss entity occurs for the 1st time, create its corresponding behaviour tree & initialize.
-						bosses[enemy_entity] = SummonerTree::summoner_tree_factory(this);
+				case EnemyBehaviour::Summoner:
+				case EnemyBehaviour::WeaponMaster: {
+					// If a boss entity occurs for the 1st time, create its corresponding behaviour tree & initialize.
+					if ((bosses.find(enemy_entity) == bosses.end())) {
+						if (enemy.behaviour == EnemyBehaviour::Summoner) {
+							bosses[enemy_entity] = SummonerTree::summoner_tree_factory(this);
+						} else if (enemy.behaviour == EnemyBehaviour::WeaponMaster) {
+							bosses[enemy_entity] = WeaponMasterTree::weapon_master_tree_factory(this);
+						}
 						bosses[enemy_entity]->init(enemy_entity);
 					}
+
+					// Run the behaviour tree of a boss.
 					if (bosses[enemy_entity]->process(enemy_entity, this) != BTState::Running) {
 						bosses[enemy_entity]->init(enemy_entity);
 					}
@@ -508,25 +513,52 @@ void AISystem::become_immortal(const Entity& entity, bool flag)
 void AISystem::become_powerup(const Entity& entity, bool flag)
 {
 	Enemy& enemy = registry.get<Enemy>(entity);
-	enemy.radius *= 2;
-	enemy.attack_range *= 2;
+	Stats& stats = registry.get<Stats>(entity);
+	Attack& base_attack = stats.base_attack;
+	if (flag) {
+		enemy.radius *= 2;
+		enemy.attack_range *= 2;
+
+		stats.damage_bonus *= 2;
+
+		base_attack.damage_min *= 2;
+		base_attack.damage_max *= 2;
+	} else {
+		enemy.radius /= 2;
+		enemy.attack_range /= 2;
+
+		stats.damage_bonus /= 2;
+
+		base_attack.damage_min /= 2;
+		base_attack.damage_max /= 2;
+	}
+}
+
+void AISystem::add_attack_effect(const Entity& entity, Effect effect, float chance, int magnitude)
+{
+	Entity effect_entity = registry.create();
+	EffectEntry& effect_entry = registry.emplace<EffectEntry>(effect_entity);
+	effect_entry.next_effect = entt::null;
+	effect_entry.effect = effect;
+	effect_entry.chance = chance;
+	effect_entry.magnitude = magnitude;
 
 	Stats& stats = registry.get<Stats>(entity);
-	if (flag) {
-		stats.to_hit_bonus *= 2;
-		stats.base_attack.to_hit_min *= 2;
-		stats.base_attack.to_hit_max *= 2;
-		stats.damage_bonus *= 2;
-		stats.base_attack.damage_min *= 2;
-		stats.base_attack.damage_max *= 2;
-	} else {
-		stats.to_hit_bonus /= 2;
-		stats.base_attack.to_hit_min /= 2;
-		stats.base_attack.to_hit_max /= 2;
-		stats.damage_bonus /= 2;
-		stats.base_attack.damage_min /= 2;
-		stats.base_attack.damage_max /= 2;
+	Entity head_entity = stats.base_attack.effects;
+	stats.base_attack.effects = effect_entity;
+	effect_entry.next_effect = head_entity;
+}
+
+void AISystem::clear_attack_effects(const Entity& entity)
+{
+	Stats& stats = registry.get<Stats>(entity);
+	Entity cur_entity = stats.base_attack.effects;
+	while (cur_entity != entt::null) {
+		Entity next_entity = registry.get<EffectEntry>(cur_entity).next_effect;
+		registry.destroy(cur_entity);
+		cur_entity = next_entity;
 	}
+	stats.base_attack.effects = entt::null;
 }
 
 void AISystem::summon_enemies(const Entity& entity, EnemyType enemy_type, int num)
@@ -544,8 +576,6 @@ void AISystem::summon_enemies(const Entity& entity, EnemyType enemy_type, int nu
 			}
 		}
 	}
-
-	so_loud->play(king_mush_summon_wav);
 }
 
 void AISystem::release_aoe(const std::vector<Entity>& aoe)
@@ -559,7 +589,9 @@ void AISystem::release_aoe(const std::vector<Entity>& aoe)
 			attack_player(aoe_square);
 		}
 
-		animations->trigger_aoe_attack_animation(aoe_square);
+		// TODO: specifify type of aoe that needs to be displayed, there may be multiple. Default is currently
+		// set to state 1
+		animations->trigger_aoe_attack_animation(aoe_square, 4);
 		// Released AOE squares will be destroyed in the next turn.
 		registry.get<AOESquare>(aoe_square).is_released = true;
 	}

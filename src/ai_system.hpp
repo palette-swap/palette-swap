@@ -13,8 +13,8 @@
 
 #include "soloud_wav.h"
 
-static void debug_log(std::string string) {
-	// printf(string);
+static void debug_log(std::string str) {
+	 printf(str.c_str());
 }
 
 class AISystem {
@@ -84,6 +84,12 @@ private:
 	// An entity become powerup if flag is true. Otherwise cancel powerup.
 	void become_powerup(const Entity& entity, bool flag);
 
+	// An entity is added with an attack effect.
+	void add_attack_effect(const Entity& entity, Effect effect, float chance, int magnitude);
+
+	// An entity is cleared with all attack effects.
+	void clear_attack_effects(const Entity& entity);
+
 	// An entity summons new enemies with a certain type and number.
 	void summon_enemies(const Entity& entity, EnemyType enemy_type, int num);
 
@@ -106,8 +112,6 @@ private:
 	// Sound stuff
 	std::shared_ptr<SoLoud::Soloud> so_loud;
 	SoLoud::Wav enemy_attack1_wav;
-	SoLoud::Wav king_mush_summon_wav;
-	SoLoud::Wav king_mush_aoe_wav;
 
 	// Entity representing the enemy team's turn.
 	Entity enemy_team;
@@ -148,7 +152,7 @@ private:
 
 		virtual BTState handle_process_result(BTState state)
 		{
-			process_count += state != BTState::Running ? 1 : 0;
+			process_count += (state != BTState::Running) ? 1 : 0;
 			return state;
 		}
 
@@ -162,10 +166,13 @@ private:
 	// Leaf action node: SummonEnemies
 	class SummonEnemies : public BTNode {
 	public:
-		SummonEnemies(EnemyType type, int num)
+		SummonEnemies(int animation, std::string summon_sound, EnemyType type, int num)
 			: m_type(type)
 			, m_num(num)
+			, m_animation(animation)
+
 		{
+			summon_effect.load(audio_path(summon_sound).c_str());
 		}
 
 		void init(Entity /*e*/) override
@@ -178,26 +185,29 @@ private:
 			debug_log("Debug: SummonEnemies.process\n");
 
 			ai->summon_enemies(e, m_type, m_num);
-
 			ai->switch_enemy_state(e, EnemyState::Idle);
-			ai->animations->boss_event_animation(e, 2);
-
+			ai->so_loud->play(summon_effect);
+			ai->animations->boss_event_animation(e, m_animation);
 			return handle_process_result(BTState::Success);
 		}
 
 	private:
 		EnemyType m_type;
 		int m_num;
+		int m_animation;
+		SoLoud::Wav summon_effect;
 	};
 
 	// Leaf action node: AOEAttack
 	class AOEAttack : public BTNode {
 	public:
-		explicit AOEAttack(std::vector<ivec2> area_pattern, Entity target)
+		explicit AOEAttack(std::vector<ivec2> area_pattern, std::string aoe_sound, int aoe_attack, Entity target)
 			: is_charged(false)
 			, m_aoe_shape(std::move(area_pattern))
+			, m_aoe_attack(aoe_attack)
 			, target(target)
 		{
+			aoe_effect.load(audio_path(aoe_sound).c_str());
 		}
 
 		void init(Entity /*e*/) override
@@ -246,8 +256,8 @@ private:
 			ai->release_aoe(m_aoe);
 
 			ai->switch_enemy_state(e, EnemyState::Idle);
-			ai->animations->boss_event_animation(e, 4);
-			ai->so_loud->play(ai->king_mush_aoe_wav);
+			ai->animations->boss_event_animation(e, m_aoe_attack);
+			ai->so_loud->play(aoe_effect);
 			return handle_process_result(BTState::Success);
 		}
 
@@ -255,6 +265,8 @@ private:
 		bool is_charged;
 		std::vector<ivec2> m_aoe_shape;
 		std::vector<Entity> m_aoe;
+		int m_aoe_attack;
+		SoLoud::Wav aoe_effect;
 		Entity target;
 	};
 
@@ -567,26 +579,150 @@ private:
 	// Leaf action node: RegularAttack
 	class RegularAttack : public BTNode {
 	public:
+		RegularAttack(int animation)
+			: m_animation(animation)
+		{
+		}
 		void init(Entity /*e*/) override { debug_log("Debug: RegularAttack.init\n"); }
 
 		BTState process(Entity e, AISystem* ai) override
 		{
 			debug_log("Debug: RegularAttack.process\n");
 
-			ai->attack_player(e);
-
 			ai->switch_enemy_state(e, EnemyState::Idle);
+			ai->animations->boss_special_attack_animation(e, m_animation);
 
-			// Gets information related to where the boss is attacking from a ranged. 
-			// Can be moved into animation ssytem to make this portion clearer and free or registry accesses
-			Entity player_entity = registry.view<Player>().front();
-			uvec2 player_location = registry.get<MapPosition>(player_entity).position;
-			EnemyType boss_enemy_type = registry.get<Enemy>(e).type;
-
-			ai->animations->boss_ranged_attack(boss_enemy_type, player_location);
+			ai->attack_player(e);
 
 			return handle_process_result(BTState::Success);
 		}
+
+	private:
+		int m_animation;
+	};
+
+	// Leaf action node: FireAttack (high damage)
+	class FireAttack : public BTNode {
+	public:
+		FireAttack(int animation)
+			: m_animation(animation)
+		{
+		}
+		void init(Entity /*e*/) override { debug_log("Debug: FireAttack.init\n"); }
+
+		BTState process(Entity e, AISystem* ai) override
+		{
+			debug_log("Debug: FireAttack.process\n");
+
+			ai->switch_enemy_state(e, EnemyState::Idle);
+			ai->animations->boss_special_attack_animation(e, m_animation);
+
+			ai->become_powerup(e, true);
+			ai->attack_player(e);
+			ai->become_powerup(e, false);
+
+			return handle_process_result(BTState::Success);
+		}
+
+	private:
+		int m_animation;
+	};
+
+	// Leaf action node: IceAttack (stun effect)
+	class IceAttack : public BTNode {
+	public:
+		IceAttack(int animation, float chance, int magnitude)
+			: m_animation(animation)
+			, m_chance(chance)
+			, m_magnitude(magnitude)
+		{
+		}
+
+		void init(Entity /*e*/) override { debug_log("Debug: IceAttack.init\n"); }
+
+		BTState process(Entity e, AISystem* ai) override
+		{
+			debug_log("Debug: IceAttack.process\n");
+
+			ai->switch_enemy_state(e, EnemyState::Idle);
+			ai->animations->boss_special_attack_animation(e, m_animation);
+
+			ai->add_attack_effect(e, Effect::Stun, m_chance, m_magnitude);
+			ai->attack_player(e);
+			ai->clear_attack_effects(e);
+
+			return handle_process_result(BTState::Success);
+		}
+
+	private:
+		int m_animation;
+		float m_chance;
+		int m_magnitude;
+	};
+
+	// Leaf action node: GaleAttack (shove effect)
+	class GaleAttack : public BTNode {
+	public:
+		GaleAttack(int animation, float chance, int magnitude)
+			: m_animation(animation)
+			, m_chance(chance)
+			, m_magnitude(magnitude)
+		{
+		}
+
+		void init(Entity /*e*/) override { debug_log("Debug: GaleAttack.init\n"); }
+
+		BTState process(Entity e, AISystem* ai) override
+		{
+			debug_log("Debug: GaleAttack.process\n");
+
+			ai->switch_enemy_state(e, EnemyState::Idle);
+			ai->animations->boss_special_attack_animation(e, m_animation);
+
+			ai->add_attack_effect(e, Effect::Shove, m_chance, m_magnitude);
+			ai->attack_player(e);
+			ai->clear_attack_effects(e);
+
+			return handle_process_result(BTState::Success);
+		}
+
+	private:
+		int m_animation;
+		float m_chance;
+		int m_magnitude;
+	};
+
+	// Leaf action node: TarAttack (immobilize effect and evasion down effect)
+	class TarAttack : public BTNode {
+	public:
+		TarAttack(int animation, float chance, int magnitude)
+			: m_animation(animation) 
+			, m_chance(chance)
+			, m_magnitude(magnitude)
+		{
+		}
+
+		void init(Entity /*e*/) override { debug_log("Debug: TarAttack.init\n"); }
+
+		BTState process(Entity e, AISystem* ai) override
+		{
+			debug_log("Debug: TarAttack.process\n");
+
+			ai->switch_enemy_state(e, EnemyState::Idle);
+			ai->animations->boss_special_attack_animation(e, m_animation);
+
+			ai->add_attack_effect(e, Effect::Immobilize, m_chance, m_magnitude);
+			ai->add_attack_effect(e, Effect::EvasionDown, m_chance, m_magnitude);
+			ai->attack_player(e);
+			ai->clear_attack_effects(e);
+
+			return handle_process_result(BTState::Success);
+		}
+
+	private:
+		int m_animation;
+		float m_chance;
+		int m_magnitude;
 	};
 
 	// Leaf action node: RecoverHealth
@@ -660,10 +796,11 @@ private:
 			m_children.push_back(std::move(child));
 		}
 
-		void init(Entity e) override {
+		void init(Entity e) override
+		{
 			debug_log("Debug: Selector.init\n");
 			m_index = -1;
-			for (const auto& child: m_children) {
+			for (const auto& child : m_children) {
 				child->init(e);
 			}
 			m_default_child->init(e);
@@ -698,6 +835,66 @@ private:
 		std::unique_ptr<BTNode> m_default_child;
 	};
 
+	// Composite logic node: Sequence
+	class Sequence : public BTNode {
+
+	public:
+		Sequence()
+			: m_index(0)
+		{
+		}
+
+		void add_child(std::unique_ptr<BTNode> child)
+		{
+			m_children.push_back(std::move(child));
+		}
+
+		void init(Entity e) override
+		{
+			debug_log("Debug: Sequence.init\n");
+
+			// Trivial case.
+			if (m_children.empty()) {
+				return;
+			}
+
+			m_index = 0;
+			// Initialize the first child.
+			const auto& child = m_children[m_index];
+			child->init(e);
+		}
+
+		BTState process(Entity e, AISystem* ai) override
+		{
+			debug_log("Debug: Sequence.process\n");
+
+			// Trivial case.
+			if (m_children.empty()) {
+				return handle_process_result(BTState::Success);
+			}
+
+			// Process current child.
+			BTState state = m_children[m_index]->process(e, ai);
+
+			// Select a new active child and initialize its internal state.
+			if (state == BTState::Success) {
+				++m_index;
+				if (m_index < m_children.size()) {
+					m_children[m_index]->init(e);
+					return handle_process_result(BTState::Running);
+				} else {
+					return handle_process_result(BTState::Success);
+				}
+			} else {
+				return handle_process_result(BTState::Failure);
+			}
+		}
+		
+	private:
+		int m_index;
+		std::vector<std::unique_ptr<BTNode>> m_children;
+	};
+
 	class SummonerTree : public BTNode {
 	public:
 		explicit SummonerTree(std::unique_ptr<BTNode> child)
@@ -724,15 +921,15 @@ private:
 		static std::unique_ptr<BTNode> summoner_tree_factory(AISystem* ai)
 		{
 			// Selector - active
-			auto summon_enemies = std::make_unique<SummonEnemies>(EnemyType::Mushroom, 1);
+			auto summon_enemies = std::make_unique<SummonEnemies>(2, "King Mush Shrooma.wav", EnemyType::Mushroom, 1);
 			Entity player = registry.view<Player>().front();
 			std::vector<ivec2> aoe_shape;
 			aoe_shape.emplace_back(0, 0);
 			aoe_shape.emplace_back(0, -1);
 			aoe_shape.emplace_back(-1, 0);
 			aoe_shape.emplace_back(1, 0);
-			auto aoe_attack = std::make_unique<AOEAttack>(aoe_shape, player);
-			auto regular_attack = std::make_unique<RegularAttack>();
+			auto aoe_attack = std::make_unique<AOEAttack>(aoe_shape, "King Mush Fudun.wav ", 4, player);
+			auto regular_attack = std::make_unique<RegularAttack>(1);
 			auto selector_active = std::make_unique<Selector>(std::move(regular_attack));
 			Selector* p = selector_active.get();
 			selector_active->add_precond_and_child(
@@ -761,7 +958,7 @@ private:
 			// Selector - alive
 			auto selector_alive = std::make_unique<Selector>(std::move(selector_idle));
 			selector_alive->add_precond_and_child(
-				// Summoner switch to attack if it spots the player during active.
+				// Summoner switch to active if it spots the player.
 				[ai](Entity e) { return ai->is_player_spotted(e); },
 				std::move(selector_active));
 
@@ -880,6 +1077,82 @@ private:
 			auto selector_alive = std::make_unique<Selector>(std::move(selector_active));
 
 			return std::make_unique<SummonerTree>(std::move(selector_alive));
+		}
+
+	private:
+		std::unique_ptr<BTNode> m_child;
+	};
+
+	class WeaponMasterTree : public BTNode {
+	public:
+		explicit WeaponMasterTree(std::unique_ptr<BTNode> child)
+			: m_child(std::move(child))
+		{
+		}
+
+		void init(Entity e) override
+		{
+			debug_log("Debug: WeaponMasterTree.init\n");
+			m_child->init(e);
+		}
+
+		BTState process(Entity e, AISystem* ai) override
+		{
+			debug_log("--------------------------------------------------\n");
+			debug_log("Debug: WeaponMasterTree.process\n");
+			BTState state = m_child->process(e, ai);
+			std::string message = "Debug: State after process = ";
+			message += state_names.at((size_t)state);
+			debug_log(message + "\n");
+			return handle_process_result(state);
+		}
+
+		static std::unique_ptr<BTNode> weapon_master_tree_factory(AISystem* ai)
+		{
+			// Selector - special attack
+			auto fire_attack = std::make_unique<FireAttack>(2);
+			auto ice_attack = std::make_unique<IceAttack>(3, 1.0f, 1);
+			auto gale_attack = std::make_unique<GaleAttack>(5, 1.0f, 1);
+			auto tar_attack = std::make_unique<TarAttack>(4, 1.0f, 1);
+			auto selector_special_attack = std::make_unique<Selector>(std::move(tar_attack));
+			Selector* p = selector_special_attack.get();
+			selector_special_attack->add_precond_and_child(
+				// WeaponMaster has 25% chance to make a fire attack during special attack mode.
+				[ai](Entity /*e*/) { return ai->chance_to_happen(0.25f); },
+				std::move(fire_attack));
+			selector_special_attack->add_precond_and_child(
+				// WeaponMaster has 25% chance to make a ice attack during special attack mode.
+				[ai](Entity /*e*/) { return ai->chance_to_happen(0.33f); },
+				std::move(ice_attack));
+			selector_special_attack->add_precond_and_child(
+				// WeaponMaster has 25% chance to make a gale attack during special attack mode.
+				[ai](Entity /*e*/) { return ai->chance_to_happen(0.50f); },
+				std::move(gale_attack));
+				// WeaponMaster has 25% chance to make a tar attack during special attack mode.
+
+			// Selector - active
+			auto regular_attack = std::make_unique<RegularAttack>(1);
+			auto sequence_active = std::make_unique<Sequence>();
+			sequence_active->add_child(std::move(regular_attack));
+			sequence_active->add_child(std::move(selector_special_attack));
+
+			// Selector - idle
+			auto recover_health = std::make_unique<RecoverHealth>(0.20f);
+			auto do_nothing = std::make_unique<DoNothing>();
+			auto selector_idle = std::make_unique<Selector>(std::move(do_nothing));
+			selector_idle->add_precond_and_child(
+				// WeaponMaster recover 20% HP if its HP is not full during idle.
+				[ai](Entity e) { return ai->is_health_below(e, 1.00f); },
+				std::move(recover_health));
+
+			// Selector - alive
+			auto selector_alive = std::make_unique<Selector>(std::move(selector_idle));
+			selector_alive->add_precond_and_child(
+				// WeaponMaster switch to active if it spots the player.
+				[ai](Entity e) { return ai->is_player_spotted(e); },
+				std::move(sequence_active));
+
+			return std::make_unique<WeaponMasterTree>(std::move(selector_alive));
 		}
 
 	private:
