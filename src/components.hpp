@@ -556,6 +556,13 @@ constexpr std::array<std::string_view, (size_t)Resource::Count> resource_names =
 	"Palette Swap",	 //
 };
 
+// see damage_type_names for comment explanation
+constexpr std::array<ivec2, (size_t)Resource::Count> resource_textures = {
+	{0, 4}, //
+	{1, 4}, //
+	{0, 5}, //
+};
+
 struct Inventory {
 	static constexpr size_t inventory_size = 12;
 	std::array<Entity, inventory_size> inventory;

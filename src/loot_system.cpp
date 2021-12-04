@@ -111,7 +111,7 @@ bool LootSystem::try_pickup_items(Entity player)
 	return false;
 }
 
-void LootSystem::drop_loot(uvec2 position)
+void LootSystem::drop_loot(uvec2 center_position)
 {
 	// Initial Drop rates are as follows
 	// 1-2: Nothing
@@ -133,18 +133,15 @@ void LootSystem::drop_loot(uvec2 position)
 	}
 	loot_misses = 0;
 	if (result <= 5 || all_dropped) {
-		// Potion
-		Entity potion = registry.create();
 		bool mana = (all_dropped && result <= 6) || (!all_dropped && result == 3);
-		registry.emplace<ResourcePickup>(potion, mana ? Resource::ManaPotion : Resource::HealthPotion);
-		registry.emplace<MapPosition>(potion, position);
-		registry.emplace<RenderRequest>(
-			potion, TEXTURE_ASSET_ID::ICONS, EFFECT_ASSET_ID::SPRITESHEET, GEOMETRY_BUFFER_ID::SPRITE, true);
-		registry.emplace<TextureOffset>(potion, ivec2(mana ? 1 : 0, 4), vec2(32, 32));
-		registry.emplace<Color>(potion, vec3(1));
-		tutorials->trigger_tooltip(TutorialTooltip::ItemDropped, potion);
+		drop_resource_pickup(center_position, mana ? Resource::ManaPotion : Resource::HealthPotion);
 		return;
 	}
+	drop_item(center_position);
+}
+
+void LootSystem::drop_item(uvec2 position) {
+
 	Entity template_entity = loot_list.at(looted++ % loot_list.size());
 	ItemTemplate& item = registry.get<ItemTemplate>(template_entity);
 	Entity loot = registry.create();
@@ -155,6 +152,18 @@ void LootSystem::drop_loot(uvec2 position)
 	registry.emplace<TextureOffset>(loot, item.texture_offset, item.texture_size);
 	registry.emplace<Color>(loot, vec3(1));
 	tutorials->trigger_tooltip(TutorialTooltip::ItemDropped, loot);
+}
+
+void LootSystem::drop_resource_pickup(uvec2 position, Resource resource) {
+	// Potion
+	Entity pickup = registry.create();
+	registry.emplace<ResourcePickup>(pickup, resource);
+	registry.emplace<MapPosition>(pickup, position);
+	registry.emplace<RenderRequest>(
+		pickup, TEXTURE_ASSET_ID::ICONS, EFFECT_ASSET_ID::SPRITESHEET, GEOMETRY_BUFFER_ID::SPRITE, true);
+	registry.emplace<TextureOffset>(pickup, resource_textures.at((size_t)resource), vec2(32, 32));
+	registry.emplace<Color>(pickup, vec3(1));
+	tutorials->trigger_tooltip(TutorialTooltip::ItemDropped, pickup);
 }
 
 void LootSystem::on_pickup(const std::function<void(const Entity& item, size_t slot)>& on_pickup_callback)

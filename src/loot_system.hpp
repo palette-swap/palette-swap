@@ -13,7 +13,9 @@ public:
 
 	bool try_pickup_items(Entity player);
 
-	void drop_loot(uvec2 position);
+	void drop_loot(uvec2 center_position);
+	void drop_item(uvec2 position);
+	void drop_resource_pickup(uvec2 position, Resource resource);
 
 	void on_pickup(const std::function<void(const Entity& item, size_t slot)>& on_pickup_callback);
 
