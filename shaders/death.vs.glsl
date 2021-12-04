@@ -43,7 +43,7 @@ void main()
 
 	vec3 distort_position = in_position;
 
-	distort_position.x += 0.2 * sin(time/2);
+	distort_position.x += 0.1 * sin(time/2);
 
 
 	if (frame >= 1) {
