@@ -566,9 +566,9 @@ void AISystem::summon_enemies(const Entity& entity, EnemyType enemy_type, int nu
 	}
 }
 
-void AISystem::release_aoe(const std::vector<Entity>& aoe)
+void AISystem::release_aoe(const std::vector<Entity>& aoe_entities)
 {
-	for (const Entity& aoe_square : aoe) {
+	for (const Entity& aoe_square : aoe_entities) {
 		const vec2& aoe_square_world_pos = registry.get<WorldPosition>(aoe_square).position;
 		const uvec2& aoe_square_map_pos = MapUtility::world_position_to_map_position(aoe_square_world_pos);
 		Entity player = registry.view<Player>().front();
