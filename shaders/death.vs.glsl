@@ -48,21 +48,21 @@ void main()
 
 	if (frame >= 1) {
 		if ((texcoord.y - top_side)/height <= 0.4) {
-			distort_position.y += max_fold_length * abs((texcoord.y - (top_side + 0.25)))/0.25;
+			distort_position.y += max_fold_length * abs((texcoord.y - (top_side + max_fold_length)))/max_fold_length;
 		}
 
 		if ((texcoord.y - top_side)/height >= 0.6) {
-			distort_position.y -= max_fold_length * abs((texcoord.y - (bottom_side - 0.25)))/0.25;
+			distort_position.y -= max_fold_length * abs((texcoord.y - (bottom_side - max_fold_length)))/max_fold_length;
 		}
 	}
 
 	if (frame >= 3) {
 		if ((texcoord.x - left_side)/width <= 0.4) {
-			distort_position.x += max_fold_length * abs((texcoord.x - (left_side + 0.25)))/0.25;
+			distort_position.x += max_fold_length * abs((texcoord.x - (left_side + max_fold_length)))/max_fold_length;
 		}
 
 		if ((texcoord.x - left_side)/width >= 0.6) {
-			distort_position.x -= max_fold_length * abs((texcoord.x - (right_side - 0.25)))/0.25;
+			distort_position.x -= max_fold_length * abs((texcoord.x - (right_side - max_fold_length)))/max_fold_length;
 		}
 	}
 
