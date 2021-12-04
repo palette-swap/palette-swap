@@ -43,34 +43,43 @@ void main()
 	// TODO: Incrementaly applies a folding effect based on frame currently rendered
 	
 
-	// Distorts the death animation sinusoidally
-	distort_position.x += 0.2 * sin(time);
-	distort_position.y += 0.05 * sin(time);
+//	 Distorts the death animation sinusoidally
+	distort_position.x += 0.03 * sin(time);
+	distort_position.y += 0.03 * sin(time);
 
-	// Distorts the render left and right
-	if ((abs(texcoord.x - left_side))/width <= 0.5) {
-		distort_position.x += 0.10 * frame;
-	} else {
-		distort_position.x -= 0.10 * frame;
-	}
-
-	if ((abs(texcoord.y - top_side))/height <= 0.5) {
-		distort_position.y += 0.05 * frame;
-	} else {
-		distort_position.y -= 0.05 * frame;
-	}
+////	 Distorts the render left and right
+//	if ((abs(texcoord.x - left_side))/width <= 0.5) {
+//		distort_position.x += 0.01 * frame;
+//	} else {
+//		distort_position.x -= 0.01 * frame;
+//	}
+//
+//	if ((abs(texcoord.y - top_side))/height <= 0.5) {
+//		distort_position.y += 0.01 * frame;
+//	} else {
+//		distort_position.y -= 0.01 * frame;
+//	}
 
 	if (frame >= 1) {
-		if ((texcoord.y - top_side)/height <= 0.2) {
-			distort_position.y += 0.2 * abs((texcoord.y - (top_side + 0.2)))/0.2;
+		if ((texcoord.y - top_side)/height <= 0.4) {
+			distort_position.y += 0.3 * abs((texcoord.y - (top_side + 0.3)))/0.3;
+		}
+
+		if ((texcoord.y - top_side)/height >= 0.6) {
+			distort_position.y -= 0.3 * abs((texcoord.y - (bottom_side - 0.3)))/0.3;
 		}
 	}
 
-	if (frame >= 2) {
-		if ((texcoord.y - top_side)/height >= 0.8) {
-			distort_position.y -= 0.2 * abs((texcoord.y - (bottom_side - 0.2)))/0.2;
+	if (frame >= 3) {
+		if ((texcoord.x - left_side)/width <= 0.4) {
+			distort_position.x += 0.3 * abs((texcoord.x - (left_side + 0.3)))/0.3;
+		}
+
+		if ((texcoord.x - left_side)/width >= 0.6) {
+			distort_position.x -= 0.3 * abs((texcoord.x - (right_side - 0.3)))/0.3;
 		}
 	}
+
 
 
 	// Creates output positions

@@ -183,7 +183,7 @@ void AnimationSystem::set_enemy_death_animation(const Entity& enemy)
 	// Copies over enemy animation states from previous animation
 	AnimationSystem::copy_animation_settings(enemy_animation, enemy_death_animation);
 	// Changes death animation settings slightly
-	enemy_death_animation.display_color.w = 0.8f;
+	enemy_death_animation.display_color = { 1, 1, 1, 0.8f };
 	enemy_death_animation.speed_adjustment = enemy_death_animation_speed;
 }
 
