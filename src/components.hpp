@@ -433,28 +433,33 @@ struct Attack {
 };
 
 enum class Effect {
-	Shove = 0,
-	Immobilize = Shove + 1,
+	Immobilize = 0,
 	Stun = Immobilize + 1,
 	Disarm = Stun + 1,
 	Entangle = Disarm + 1,
 	Weaken = Entangle + 1,
-	Crit = Weaken + 1,
-	Bleed = Crit + 1,
+	Bleed = Weaken + 1,
 	Burn = Bleed + 1,
-	Count = Burn + 1,
+	// If you add any more condition effects, update num_conditions
+	// Make sure non-condition effects are last
+	Crit = Burn + 1,
+	Shove = Crit + 1,
+	Count = Shove + 1,
 };
 
-const std::array<std::string_view, (size_t)Effect::Count> effect_names = {
-	"Shove",
-	"Immobilize",
-	"Stun",
-	"Disarm",
-	"Entangle",
-	"Weaken",
-	"Crit",
-	"Bleed",
-	"Burn",
+constexpr size_t num_conditions = (size_t)Effect::Burn + 1;
+
+// see damage_type_names for comment explanation
+constexpr std::array<std::string_view, (size_t)Effect::Count> effect_names = {
+	"Immobilize", //
+	"Stun",		  //
+	"Disarm",	  //
+	"Entangle",	  //
+	"Weaken",	  //
+	"Bleed",	  //
+	"Burn",		  //
+	"Crit",		  //
+	"Shove",	  //
 };
 
 struct EffectEntry {
@@ -464,12 +469,8 @@ struct EffectEntry {
 	int magnitude;
 };
 
-struct Stunned {
-	int rounds = 1;
-};
-
-struct Immobilized {
-	int rounds = 1;
+struct ActiveConditions {
+	std::array<int, num_conditions> conditions;
 };
 
 struct Stats {

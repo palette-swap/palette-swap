@@ -5,6 +5,7 @@ TabWidth: 4
 IndentWidth: 4
 ContinuationIndentWidth: 4
 AlignAfterOpenBracket: Align
+AlignTrailingComments: true
 BinPackParameters: false
 BinPackArguments: false
 ColumnLimit: 120

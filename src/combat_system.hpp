@@ -22,6 +22,9 @@ public:
 	bool try_pickup_items(Entity player);
 	bool try_drink_potion(Entity player);
 
+	// Conditions
+	int get_decrement_effect(Entity entity, Effect effect);
+
 	bool is_valid_attack(Entity attacker, Attack& attack, uvec2 target);
 	template <typename ColorExclusive> bool is_valid_attack(Entity attacker, Attack& attack, uvec2 target);
 	bool do_attack(Entity attacker, Attack& attack, uvec2 target);

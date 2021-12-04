@@ -153,8 +153,6 @@ void WorldSystem::init(RenderSystem* renderer_arg)
 // Update our game world
 bool WorldSystem::step(float elapsed_ms_since_last_update)
 {
-	// Get the screen dimensions
-
 	// Remove debug info from the last step
 	auto debug_view = registry.view<DebugComponent>();
 	registry.destroy(debug_view.begin(), debug_view.end());
@@ -162,6 +160,10 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	// Processing the player state
 	assert(registry.size<ScreenState>() <= 1);
 
+	// Player is stunned.
+	if (turns->ready_to_act(player) && combat->get_decrement_effect(player, Effect::Stun) > 0) {
+		turns->skip_team_action(player);
+	}
 	if ((registry.get<Stats>(player).health <= 0) && turns->ready_to_act(player)) {
 		restart_game();
 		return true;
@@ -319,14 +321,8 @@ void WorldSystem::return_arrow_to_player()
 void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 {
 	// Player is stunned.
-	if (turns->ready_to_act(player)) {
-		if (Stunned* stunned = registry.try_get<Stunned>(player)) {
-			if (--(stunned->rounds) <= 0) {
-				registry.erase<Stunned>(player);
-			}
-			turns->skip_team_action(player);
-			return;
-		}
+	if (turns->ready_to_act(player) && combat->get_decrement_effect(player, Effect::Stun) > 0) {
+		turns->skip_team_action(player);
 	}
 
 	if (check_debug_keys(key, action, mod)) {
@@ -563,12 +559,8 @@ void WorldSystem::move_player(Direction direction)
 	}
 
 	// Player is immobilized.
-	if (Immobilized* immobilized = registry.try_get<Immobilized>(player)) {
-		if (--(immobilized->rounds) <= 0) {
-			registry.erase<Immobilized>(player);
-		}
+	if (turns->ready_to_act(player) && combat->get_decrement_effect(player, Effect::Immobilize) > 0) {
 		turns->skip_team_action(player);
-		return;
 	}
 
 	MapPosition& map_pos = registry.get<MapPosition>(player);
@@ -658,14 +650,8 @@ void WorldSystem::try_change_color()
 void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 {
 	// Player is stunned.
-	if (turns->ready_to_act(player)) {
-		if (Stunned* stunned = registry.try_get<Stunned>(player)) {
-			if (--(stunned->rounds) <= 0) {
-				registry.erase<Stunned>(player);
-			}
-			turns->skip_team_action(player);
-			return;
-		}
+	if (turns->ready_to_act(player) && combat->get_decrement_effect(player, Effect::Stun) > 0) {
+		turns->skip_team_action(player);
 	}
 
 	if (story->in_cutscene()) {

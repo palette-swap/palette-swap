@@ -58,10 +58,7 @@ void AISystem::step(float /*elapsed_ms*/)
 			ColorState active_world_color = turns->get_active_color();
 			if (((uint8_t)active_world_color & (uint8_t)enemy.team) > 0) {
 
-				if (Stunned* stunned = registry.try_get<Stunned>(enemy_entity)) {
-					if (--(stunned->rounds) <= 0) {
-						registry.erase<Stunned>(enemy_entity);
-					}
+				if (combat->get_decrement_effect(enemy_entity, Effect::Stun) > 0) {
 					continue;
 				}
 
@@ -404,10 +401,7 @@ bool AISystem::move(const Entity& entity, const uvec2& map_pos)
 {
 	MapPosition& entity_map_pos = registry.get<MapPosition>(entity);
 
-	if (Immobilized* immobilized = registry.try_get<Immobilized>(entity)) {
-		if (--(immobilized->rounds) <= 0) {
-			registry.erase<Immobilized>(entity);
-		}
+	if (combat->get_decrement_effect(entity, Effect::Immobilize) > 0) {
 		return false;
 	}
 

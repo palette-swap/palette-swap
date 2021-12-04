@@ -100,6 +100,15 @@ bool CombatSystem::try_drink_potion(Entity player)
 	return true;
 }
 
+int CombatSystem::get_decrement_effect(Entity entity, Effect effect)
+{
+	ActiveConditions* conditions = registry.try_get<ActiveConditions>(entity);
+	if (conditions == nullptr) {
+		return 0;
+	}
+	return conditions->conditions.at((size_t)effect)--;
+}
+
 bool CombatSystem::is_valid_attack(Entity attacker, Attack& attack, uvec2 target)
 {
 	ColorState& inactive_color = registry.get<PlayerInactivePerception>(registry.view<Player>().front()).inactive;
@@ -362,6 +371,7 @@ void CombatSystem::do_attack_effects(Entity attacker, Attack& attack, Entity tar
 {
 	static std::uniform_real_distribution<float> effect_roller(0, 1);
 	Entity effect_entity = attack.effects;
+
 	while (effect_entity != entt::null) {
 		EffectEntry effect = registry.get<EffectEntry>(effect_entity);
 		if (effect_roller(*rng) <= effect.chance) {
@@ -370,25 +380,13 @@ void CombatSystem::do_attack_effects(Entity attacker, Attack& attack, Entity tar
 				try_shove(attacker, effect, target);
 				break;
 			}
-			case Effect::Immobilize: {
-				Immobilized& immobilized = registry.get_or_emplace<Immobilized>(target, effect.magnitude);
-				immobilized.rounds = max(immobilized.rounds, effect.magnitude);
+			default: {
+				size_t effect_index = (size_t)effect.effect;
+				assert(effect_index < num_conditions);
+				ActiveConditions& conditions = registry.get_or_emplace<ActiveConditions>(target);
+				conditions.conditions.at(effect_index) = max(effect.magnitude, conditions.conditions.at(effect_index));
 				break;
 			}
-			case Effect::Stun: {
-				Stunned& stunned = registry.get_or_emplace<Stunned>(target, effect.magnitude);
-				stunned.rounds = max(stunned.rounds, effect.magnitude);
-				break;
-			}
-			case Effect::Entangle: {
-				StatBoosts& boosts = registry.get_or_emplace<StatBoosts>(target);
-				int evasion_old = boosts.evasion;
-				boosts.evasion = max(boosts.evasion - effect.magnitude, min(boosts.evasion, -effect.magnitude));
-				registry.get<Stats>(target).evasion += boosts.evasion - evasion_old;
-				break;
-			}
-			default:
-				break;
 			}
 		}
 		effect_entity = effect.next_effect;
