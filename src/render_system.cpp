@@ -794,6 +794,8 @@ void RenderSystem::draw_map(const mat3& projection, ColorState color)
 
 void RenderSystem::toggle_lighting() { use_lighting = !use_lighting; }
 
+void RenderSystem::set_lighting(bool enabled) { use_lighting = enabled; }
+
 void RenderSystem::prepare_for_lit_entity(GLuint program) const
 {
 

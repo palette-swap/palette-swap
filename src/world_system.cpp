@@ -471,6 +471,7 @@ bool WorldSystem::check_debug_keys(int key, int action, int mod)
 		if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_M) {
 			is_editing_map = false;
 			map_generator->stop_editing_level();
+			renderer->set_lighting(true);
 			return false;
 		}
 
@@ -532,6 +533,7 @@ bool WorldSystem::check_debug_keys(int key, int action, int mod)
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_M) {
 		is_editing_map = true;
 		map_generator->start_editing_level();
+		renderer->set_lighting(false);
 		return true;
 	}
 	return false;
