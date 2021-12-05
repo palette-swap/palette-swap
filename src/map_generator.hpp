@@ -29,7 +29,8 @@ private:
 		// templated rooms
 		Entrance, // starting room
 		Exit, // ending room
-		Event, // event room
+		Reward, // reward room
+		Hidden, // a hidden room
 		Big, // 4*4 big room, should be enough for now, the room position will be top left room
 	};
 
@@ -53,7 +54,7 @@ private:
 		std::default_random_engine enemy_random_eng_red;
 		std::default_random_engine enemy_random_eng_blue;
 
-		std::default_random_engine event_eng;
+		std::default_random_engine reward_room_eng;
 
 		// currently using a single seed seems to be enough, if we want more
 		// variety, we could use multiple seeds
@@ -64,7 +65,7 @@ private:
 			enemy_random_eng_red.seed(seed);
 			// use a different seed for the other dimension
 			enemy_random_eng_blue.seed(seed);
-			event_eng.seed(seed);
+			reward_room_eng.seed(seed);
 		}
 	};
 

@@ -16,7 +16,7 @@ static std::array<rapidjson::Document, (size_t)EnemyType::EnemyCount> enemy_temp
 static bool enemy_templates_loaded = false;
 
 // room templates
-static const size_t num_room_templates = 3;
+static const size_t num_room_templates = 4;
 static std::array<rapidjson::Document, num_room_templates> template_room_snapshot;
 static std::array<RoomLayout, num_room_templates> template_room_layout;
 static bool room_templates_loaded = false;
@@ -30,7 +30,7 @@ static std::string room_template_path(const std::string & name)
 	return data_path() + "/room_templates/" + std::string(name);
 }
 const static std::array<std::string, num_room_templates> room_templates_paths = {
-	room_template_path("entrance.json"), room_template_path("exit.json"), room_template_path("event.json"),
+	room_template_path("entrance.json"), room_template_path("exit.json"), room_template_path("reward.json"), room_template_path("hidden.json")
 };
 
 const static std::array<std::string, (size_t)EnemyType::EnemyCount> enemy_template_paths = {
@@ -199,6 +199,9 @@ const static uint8_t boundary_tile_outer_br = 34; // bot right
 // 2*2 room
 const static int big_room_size = 4;
 
+// position at the center of the room, used as a common magic number...
+const static uint32_t room_center_position = 44;
+
 // get the open direction of the room given the start room to end room, note the two rooms are expect to be neighbours
 static Direction get_open_direction(int from_room_index, int to_room_index)
 {
@@ -221,6 +224,35 @@ static Direction get_open_direction(int from_room_index, int to_room_index)
 	}
 	return Direction::Undefined;
 };
+
+// block the entrance with given tile and fillers
+static void place_tile_at_entrance(Direction entrance_direction, RoomLayout & room_layout, uint32_t tile_id, uint32_t filler)
+{
+	for (int i = room_entrance_start; i <= room_entrance_end; i++) {
+		uint32_t tile_to_spawn = (i == room_entrance_start) ? tile_id : filler;
+		switch (entrance_direction)
+		{
+		case Direction::Up: {
+			room_layout.at(i) = tile_to_spawn;
+			break;
+		};
+		case Direction::Left: {
+			room_layout.at(i * room_size) = tile_to_spawn;
+			break;
+		};
+		case Direction::Down: {
+			room_layout.at(room_size * (room_size - 1) + i) = tile_to_spawn;
+			break;
+		};
+		case Direction::Right: {
+			room_layout.at(room_size * i + room_size - 1) = tile_to_spawn;
+			break;
+		};
+		default:
+			break;
+		}
+	}
+}
 
 // randomly generate a floor tile from given floor tiles
 const static uint8_t generate_random_floor_tile(std::default_random_engine & random_eng)
@@ -606,68 +638,47 @@ void MapGenerator::generate_room(MapGenerator::PathNode * starting_node,
 				}
 			}
 			if (door_side != Direction::Undefined) {
-				for (int i = room_entrance_start; i <= room_entrance_end; i++) {
-					uint32_t tile_to_spawn = (i == room_entrance_start) ? door_tile : room_obstacle_mask;
-					switch (door_side)
-					{
-					case Direction::Up: {
-						room_layout.at(i) = tile_to_spawn;
-						break;
-					};
-					case Direction::Left: {
-						room_layout.at(i * room_size) = tile_to_spawn;
-						break;
-					};
-					case Direction::Down: {
-						room_layout.at(room_size * (room_size - 1) + i) = tile_to_spawn;
-						break;
-					};
-					case Direction::Right: {
-						room_layout.at(room_size * i + room_size - 1) = tile_to_spawn;
-						break;
-					};
-					default:
-						break;
-					}
-				}
+				place_tile_at_entrance(door_side, room_layout, door_tile, room_obstacle_mask);
 				max_keys_obtained --;
 			}
 		}
 	} else if (room_type == RoomType::Side) {
-		/* Might be okay to not do anything for side rooms, or we could have some templates */
+		// generate cracked blocks if has a child being hidden room
+		if (starting_node->children.size()) {
+			PathNode * child_room = *(starting_node->children.begin());
+			if (child_room->room_type == RoomType::Hidden) {
+				place_tile_at_entrance(get_open_direction(starting_node->position, child_room->position), room_layout, cracked_wall_tile, cracked_wall_tile);
+			}
+		}
 	} else {
 		room_layout = get_template_room_layout(room_type);
+
+		if (room_type == RoomType::Hidden) {
+			room_layout.at(room_center_position) = chest_tile;
+		} else if (room_type == RoomType::Reward) {
+			// choose something to spawn for reward room
+
+			std::uniform_int_distribution<int> event_room_type_dist(0, static_cast<int>(EventRoomType::None) - 1);
+			EventRoomType event_room_type = static_cast<EventRoomType>(event_room_type_dist(random_engs.reward_room_eng));
+
+			switch (event_room_type)
+			{
+			case EventRoomType::Key: {
+				// TODO: add key spawn, only spawn in blue dimension
+				// break;
+			}
+			case EventRoomType::Loot: {
+				// TODO: add loot spawn
+				// break;
+			}
+			case EventRoomType::Chest: {
+				// only spawn chest in red dimension
+				room_layout.at(room_center_position) = locked_chest_tile;
+			}
+			default:
+				break;
+		}
 	}
-
-	bool is_hidden_room = false;
-
-	if (room_type == RoomType::Event) {
-		// choose something to spawn for event room
-		std::bernoulli_distribution hidden_room_dist(0.5);
-		if (hidden_room_dist(random_engs.event_eng)) {
-			is_hidden_room = true;
-		}
-
-		std::uniform_int_distribution<int> event_room_type_dist(0, static_cast<int>(EventRoomType::None) - 1);
-		EventRoomType event_room_type = static_cast<EventRoomType>(event_room_type_dist(random_engs.event_eng));
-
-		switch (event_room_type)
-		{
-		case EventRoomType::Key: {
-			// TODO: add key spawn, only spawn in blue dimension
-			// break;
-		}
-		case EventRoomType::Loot: {
-			// TODO: add loot spawn
-			// break;
-		}
-		case EventRoomType::Chest: {
-			// only spawn chest in red dimension
-			room_layout.at(44) = locked_chest_tile;
-		}
-		default:
-			break;
-		}
 	}
 
 	std::bernoulli_distribution blocks_dist(0.05);
@@ -680,9 +691,6 @@ void MapGenerator::generate_room(MapGenerator::PathNode * starting_node,
 			// also add entrance paths to critical locations
 			if (is_on_entrance_path(room_index)) {
 				critical_locations.emplace(room_index);
-				if (is_hidden_room) {
-					room_layout.at(room_index) = cracked_wall_tile;
-				}
 			}
 
 			if (is_outside_tile(room_index)) {
@@ -702,7 +710,7 @@ void MapGenerator::generate_room(MapGenerator::PathNode * starting_node,
 	}
 
 	// smooth the room out based on specified iterations
-	if (room_type != RoomType::Event) {
+	if (room_type != RoomType::Reward && room_type != RoomType::Hidden) {
 		smooth_room(room_layout, level_gen_conf.room_smoothness, critical_locations);
 	}
 
@@ -723,14 +731,8 @@ void MapGenerator::generate_room(MapGenerator::PathNode * starting_node,
 	for (size_t room_tile_index = 0; room_tile_index < room_layout.size(); room_tile_index ++) {
 		const auto & animated_tile_iter = animated_tiles.find(room_layout.at(room_tile_index));
 		if (animated_tile_iter != animated_tiles.end()) {
-			if (animated_tile_iter->second.tile_id == chest_tile) {
-				if (dimension_dist(random_engs.general_eng)) {
-					animated_tiles_red.emplace(room_tile_index, animated_tile_iter->second);
-				} else {
-					animated_tiles_blue.emplace(room_tile_index, animated_tile_iter->second);
-				}
-			} else if (animated_tile_iter->second.tile_id == locked_chest_tile) {
-				// only spawn these locked chests in red dimension
+			if (animated_tile_iter->second.tile_id == chest_tile || animated_tile_iter->second.tile_id == locked_chest_tile) {
+				// only spawn chests in red dimension
 				animated_tiles_red.emplace(room_tile_index, animated_tile_iter->second);
 			} else {
 				animated_tiles_red.emplace(room_tile_index, animated_tile_iter->second);
@@ -850,6 +852,9 @@ void MapGenerator::generate_big_room(PathNode * starting_node,
 			if (room_neighbour_positions.find(2) != room_neighbour_positions.end()) {
 				open_directions.emplace(Direction::Left);
 			}
+			// these are for fixing the corner of a single room generated in big room
+			room_layouts.at(i).at(room_size - 1) = boundary_tile_top;
+			room_layouts.at(i).at(room_size * (room_size - 1)) = boundary_tile_left;
 			break;
 		}
 		case 1: {
@@ -859,6 +864,8 @@ void MapGenerator::generate_big_room(PathNode * starting_node,
 			if (room_neighbour_positions.find(3) != room_neighbour_positions.end()) {
 				open_directions.emplace(Direction::Right);
 			}
+			room_layouts.at(i).at(0) = boundary_tile_top;
+			room_layouts.at(i).at(room_size * room_size - 1) = boundary_tile_right;
 			break;
 		}
 		case 2: {
@@ -868,6 +875,8 @@ void MapGenerator::generate_big_room(PathNode * starting_node,
 			if (room_neighbour_positions.find(4) != room_neighbour_positions.end()) {
 				open_directions.emplace(Direction::Left);
 			}
+			room_layouts.at(i).at(0) = boundary_tile_left;
+			room_layouts.at(i).at(room_size * room_size - 1) = boundary_tile_bot;
 			break;
 		}
 		case 3: {
@@ -877,12 +886,16 @@ void MapGenerator::generate_big_room(PathNode * starting_node,
 			if (room_neighbour_positions.find(5) != room_neighbour_positions.end()) {
 				open_directions.emplace(Direction::Right);
 			}
+			room_layouts.at(i).at(room_size - 1) = boundary_tile_right;
+			room_layouts.at(i).at(room_size * (room_size - 1)) = boundary_tile_bot;
 			break;
 		}
 		default:
 			break;
 		}
 		update_room_tiles(room_layouts.at(i), open_directions, random_engs.general_eng);
+		// fix the boundary tiles on the side
+
 		level_conf.room_layouts.emplace_back(room_layouts.at(i));
 		level_conf.map_layout.at(starting_node->position / map_size + i / 2).at(starting_node->position % map_size + i % 2) = static_cast<RoomID>(level_conf.room_layouts.size() - 1);
 		
@@ -904,10 +917,11 @@ void MapGenerator::generate_enemies(PathNode * curr_room,
 	if (curr_room->room_type == RoomType::Big) {
 		std::uniform_int_distribution<int> boss_type_dist(static_cast<int>(EnemyType::KingMush), static_cast<int>(EnemyType::EnemyCount) - 1);
 		// spawn a boss
+		EnemyType boss_to_spawn = static_cast<EnemyType>(boss_type_dist(enemies_random_eng_red));
 		add_enemy_to_level_snapshot(
 			level_snap_shot,
 			ColorState::All,
-			static_cast<EnemyType>(boss_type_dist(enemies_random_eng_red)),
+			boss_to_spawn,
 			uvec2(room_map_col * room_size + room_size - 1, room_map_row * room_size + room_size - 1)
 		);
 		// rotate blue eng to keep them even
@@ -917,8 +931,16 @@ void MapGenerator::generate_enemies(PathNode * curr_room,
 
 	const static double max_enemies_density = 0.1;
 	const static uint8_t floor_tile = 0;
+
+	// shift the enemy generation rate
+	double enemy_gen_scaling = 1.0;
+	if (curr_room->room_type == RoomType::Hidden) {
+		enemy_gen_scaling = 2.0;
+	} else if (curr_room->room_type == RoomType::Reward) {
+		enemy_gen_scaling = 0.5;
+	}
 	// generate enemies
-	std::bernoulli_distribution enemies_dist(max_enemies_density * level_gen_conf.enemies_density);
+	std::bernoulli_distribution enemies_dist(max_enemies_density * level_gen_conf.enemies_density * enemy_gen_scaling);
 
 	// We don't spawn clone enemies
 	std::uniform_int_distribution<int> enemy_types_dist(1, static_cast<int>(EnemyType::KoboldMage));
@@ -1003,9 +1025,12 @@ bool MapGenerator::generate_path_from_node(PathNode * curr_room,
 		if (room_type == RoomType::Critical) {
 			curr_room->room_type = RoomType::Exit;
 		} else if (curr_room->room_type == RoomType::Side) {
-			std::bernoulli_distribution generate_event_room_dist(0.5);
-			if (true || generate_event_room_dist(random_eng)) {
-				curr_room->room_type = RoomType::Event;
+			// at the end of side room, we either generate a hidden room or a reward room
+			std::bernoulli_distribution generate_hidden_room_dist(0.5);
+			if (generate_hidden_room_dist(random_eng)) {
+				curr_room->room_type = RoomType::Hidden;
+			} else {
+				curr_room->room_type = RoomType::Reward;
 			}
 		}
 		return true;
