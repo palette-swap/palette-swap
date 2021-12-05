@@ -117,7 +117,8 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 	KING_MUSH_ENTRY = KING_MUSH_ATTACKS + 1,
 	TITHO = KING_MUSH_ENTRY + 1,
 	TITHO_ATTACKS = TITHO + 1,
-	DRAGON = TITHO_ATTACKS + 1,
+	TITHO_ENTRY = TITHO_ATTACKS + 1,
+	DRAGON = TITHO_ENTRY + 1,
 	DRAGON_ATTACKS = DRAGON + 1,
 	//NPCS
 	GUIDE = DRAGON_ATTACKS + 1,
@@ -157,6 +158,7 @@ static constexpr std::array<vec2, texture_count> scaling_factors = {
 	vec2(MapUtility::tile_size * 5, MapUtility::tile_size * 5),
 	vec2(MapUtility::tile_size * 5, MapUtility::tile_size * 5),
 	vec2(MapUtility::tile_size * 3, MapUtility::tile_size * 3),
+	vec2(MapUtility::tile_size * 5, MapUtility::tile_size * 5),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size * 0.5, MapUtility::tile_size * 0.5),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
@@ -616,6 +618,16 @@ struct AnimationProfile {
 	float travel_offset;
 };
 
+// Animation details for a boss's entry
+struct BossEntryAnimation {
+	TEXTURE_ASSET_ID texture;
+	int max_frames;
+};
+
+struct EntryAnimationEnemy {
+	EnemyType intro_enemy_type;
+};
+
 // Maps enemy types to corresponding animation profile
 // Remember to add a mapping to a new texture (or use a default such as a slime)/enemy type
 // This will help load the animation by enemy type when you load enemies
@@ -641,8 +653,9 @@ const std::array<AnimationProfile, static_cast<int>(EnemyType::EnemyCount)> enem
 	AnimationProfile { TEXTURE_ASSET_ID::SLIME, 0.f },
 };
 
-const std::map<EnemyType, TEXTURE_ASSET_ID> boss_type_entry_animation_map {
-	{ EnemyType::KingMush, TEXTURE_ASSET_ID::KING_MUSH_ENTRY },
+const std::map<EnemyType, BossEntryAnimation> boss_type_entry_animation_map {
+	{ EnemyType::KingMush, BossEntryAnimation { TEXTURE_ASSET_ID::KING_MUSH_ENTRY, 32 } },
+	{ EnemyType::Titho, BossEntryAnimation { TEXTURE_ASSET_ID::TITHO_ENTRY, 48 } },
 };
 
 const std::array<int, (size_t)EnemyState::EnemyStateCount> enemy_state_to_animation_state = {
