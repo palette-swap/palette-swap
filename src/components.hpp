@@ -565,7 +565,7 @@ constexpr std::array<std::string_view, (size_t)Resource::Count> resource_names =
 constexpr std::array<ivec2, (size_t)Resource::Count> resource_textures = {
 	ivec2(0, 4), //
 	ivec2(1, 4), //
-	ivec2(0, 5), //
+	ivec2(0, 6), //
 };
 
 struct Inventory {
