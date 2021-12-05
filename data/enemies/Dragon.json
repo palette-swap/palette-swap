@@ -1,12 +1,12 @@
 {
-  "type": 11,
+  "type": 17,
   "state": 0,
   "radius": 10,
   "speed": 0,
   "attack_range": 2,
   "stats": {
-    "health": 60,
-    "health_max": 100,
+    "health": 600,
+    "health_max": 600,
     "mana": 100,
     "mana_max": 100,
     "to_hit_bonus": 6,
@@ -14,10 +14,10 @@
     "evasion": 12,
     "attack": {
       "name": "",
-      "to_hit_min": 1,
+      "to_hit_min": 5,
       "to_hit_max": 20,
-      "damage_min": 5,
-      "damage_max": 15,
+      "damage_min": 8,
+      "damage_max": 25,
       "damage_type": 0,
       "targeting_type": 1
     }
