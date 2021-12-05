@@ -8,6 +8,7 @@
 #include "common.hpp"
 #include "components.hpp"
 
+#include "lighting_system.hpp"
 #include "map_generator_system.hpp"
 
 // System responsible for setting up OpenGL and for rendering all the
@@ -36,19 +37,28 @@ class RenderSystem {
 	// Make sure these paths remain in sync with the associated enumerators.
 	const std::array<std::string, texture_count> texture_paths = {
 			textures_path("./01-Player/Player Spritesheet.png"),
-			textures_path("./TrainingDummy/Dummy Spritesheet.png"),
-			textures_path("./Slime/Slime Spritesheet.png"),
-			textures_path("./Living Armor/Living Armor Spritesheet.png"),
-			textures_path("./Treeant/Treeant Spritesheet.png"),
-			textures_path("./Raven/Raven Spritesheet.png"),
-			textures_path("./Wraith/Wraith Spritesheet.png"),
-			textures_path("./Drake/Drake Spritesheet.png"),
-			textures_path("./Mushroom/Mushroom Spritesheet.png"),
-			textures_path("./Spider/Spider Spritesheet.png"),
-			textures_path("./Clone/Clone Spritesheet.png"),
+			textures_path("./03-Small Enemies/TrainingDummy/Dummy Spritesheet.png"),
+			textures_path("./03-Small Enemies/Slime/Slime Spritesheet.png"),
+			textures_path("./03-Small Enemies/Living Armor/Living Armor Spritesheet.png"),
+			textures_path("./03-Small Enemies/Treeant/Treeant Spritesheet.png"),
+			textures_path("./03-Small Enemies/Raven/Raven Spritesheet.png"),
+			textures_path("./03-Small Enemies/Wraith/Wraith Spritesheet.png"),
+			textures_path("./03-Small Enemies/Drake/Drake Spritesheet.png"),
+			textures_path("./03-Small Enemies/Mushroom/Mushroom Spritesheet.png"),
+			textures_path("./03-Small Enemies/Spider/Spider Spritesheet.png"),
+			textures_path("./03-Small Enemies/Clone/Clone Spritesheet.png"),
+			textures_path("./03-Small Enemies/Sword Soldier/Sword Soldier Spritesheet.png"),
+			textures_path("./03-Small Enemies/Spear Soldier/Spear Soldier Spritesheet.png"),
+			textures_path("./03-Small Enemies/Apparition/Apparition Spritesheet.png"),
+			textures_path("./03-Small Enemies/Kobold Warrior/Kobold Warrior Spritesheet.png"),
+			textures_path("./03-Small Enemies/Kobold Mage/Kobold Mage Spritesheet.png"),
 			textures_path("./02-Bosses/King Mush/King Mush Spritesheet.png"),
 			textures_path("./02-Bosses/King Mush/King Mush Attack Spritesheet.png"),
 			textures_path("./02-Bosses/King Mush/King Mush Entry Animation.png"),
+			textures_path("./02-Bosses/Titho/Titho Spritesheet.png"),
+			textures_path("./02-Bosses/Titho/Titho Attack Spritesheet.png"),
+			textures_path("./02-Bosses/Titho/Titho Entry Animation.png"),
+			textures_path("./04-NPCs/Guide/Guide Spritesheet.png"),
 			textures_path("cannon_ball.png"),
 			textures_path("/01-Player/Spell Spritesheet.png"),
 			textures_path("Tilesets/tile_set_red.png"),
@@ -76,6 +86,9 @@ class RenderSystem {
 		shader_path("water"),
 		shader_path("tilemap"),
 		shader_path("text_bubble"),
+		shader_path("light"),
+		shader_path("light_triangles"),
+		shader_path("lighting"),
 	};
 
 	// TODO: move these constants into animation system most likely, need to finalize
@@ -92,22 +105,6 @@ class RenderSystem {
 
 	static constexpr float entry_animation_height = 1.f;
 	static constexpr float entry_animation_width = 64.f;
-
-	// Static buffers
-	std::array<GLuint, geometry_count> vertex_buffers = {};
-	std::array<GLuint, geometry_count> index_buffers = {};
-	std::array<Mesh, geometry_count> meshes = {};
-
-	// Dynamic text buffers
-	struct TextData {
-		GLuint texture;
-		int texture_width;
-		int texture_height;
-	};
-	std::unordered_map<Text, TextData> text_buffers = {};
-	std::unordered_map<unsigned int, TTF_Font*> fonts = {};
-
-	std::shared_ptr<MapGeneratorSystem> map_generator;
 public:
 	// Initialize the window
 	bool init(int width, int height, GLFWwindow* window, std::shared_ptr<MapGeneratorSystem> map);
@@ -115,7 +112,7 @@ public:
 	// Destroy resources associated to one or all entities created by the system
 	~RenderSystem();
 
-	explicit RenderSystem(Debug & debugging);
+	RenderSystem(Debug & debugging, LightingSystem& lighting);
 	RenderSystem(const RenderSystem&) = delete; // copy constructor
 	RenderSystem& operator=(const RenderSystem&) = delete; // copy assignment
 	RenderSystem(RenderSystem&&) = delete; // move constructor
@@ -154,6 +151,7 @@ private:
 	// The draw loop first renders to this texture, then it is used for the water
 	// shader
 	bool init_screen_texture();
+	bool init_lighting();
 
 	////////////////////////////////////////////////////////
 	// General helper functions
@@ -162,10 +160,12 @@ private:
 	// Get UI scale based on difference between current window size and default
 	float get_ui_scale_factor() const;
 	// Helper to get position transform
-	Transform get_transform(Entity entity) const;
+	Transform get_transform(Entity entity, uvec2* tile = nullptr) const;
 	// Helper to get position transform without rotation
 	Transform get_transform_no_rotation(Entity entity) const;
 
+	// Helper to ready the current buffer for re-use
+	void prepare_buffer(vec3 color) const;
 	// Helper to ready to draw the Textured effect
 	void prepare_for_textured(GLuint texture_id);
 	// Helper to ready to draw the SpriteSheet effect
@@ -173,6 +173,7 @@ private:
 
 	// Generates raster texture of provided text
 	// Returns vbo, ibo
+	struct TextData;
 	TextData generate_text(const Text& text);
 
 	////////////////////////////////////////////////////////
@@ -187,6 +188,12 @@ private:
 	void draw_line(Entity entity, const Line& line, const mat3& projection);
 	void draw_map(const mat3& projection, ColorState color);
 
+	// Lighting
+	void prepare_for_lit_entity(GLuint program) const;
+	void create_lighting_texture(const mat3& projection);
+	void draw_light(Entity entity, const Light& light, const mat3& projection);
+	void draw_lighting(const mat3& projection);
+
 	void draw_triangles(const Transform& transform, const mat3& projection);
 	void draw_to_screen();
 	void update_camera_position(WorldPosition& camera_world_pos,
@@ -194,13 +201,39 @@ private:
 								const vec2& buffer_top_left,
 								const vec2& buffer_down_right);
 
+	// Static buffers
+	std::array<GLuint, geometry_count> vertex_buffers = {};
+	std::array<GLuint, geometry_count> index_buffers = {};
+	std::array<Mesh, geometry_count> meshes = {};
+
+	// Dynamic text buffers
+	struct TextData {
+		GLuint texture;
+		int texture_width;
+		int texture_height;
+	};
+	std::unordered_map<Text, TextData> text_buffers = {};
+	std::unordered_map<unsigned int, TTF_Font*> fonts = {};
+
+	std::shared_ptr<MapGeneratorSystem> map_generator;
+
+	// Lighting System
+	LightingSystem& lighting;
+	bool applying_lighting = true;
+
 	// Window handle
 	GLFWwindow* window = nullptr;
 
 	// Screen texture handles
 	GLuint frame_buffer = 0;
+	GLuint lighting_frame_buffer = 0;
+	GLuint los_frame_buffer = 0;
 	GLuint off_screen_render_buffer_color = 0;
 	GLuint off_screen_render_buffer_depth = 0;
+	GLuint lighting_buffer_color = 0;
+	GLuint lighting_buffer_depth = 0;
+	GLuint los_buffer_color = 0;
+	GLuint los_buffer_depth = 0;
 
 	
 	float screen_scale = window_default_scale;

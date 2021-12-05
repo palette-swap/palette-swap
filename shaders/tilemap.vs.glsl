@@ -5,6 +5,7 @@ in int cur_vertex_id;
 
 // Passed to fragment shader
 out vec2 texcoord;
+out vec2 world_pos;
 
 // Application data
 uniform mat3 transform;
@@ -59,6 +60,8 @@ void main()
 	int row = cur_vertex_id / (6 * int(room_size));
 	int col = (cur_vertex_id % (6 * int(room_size))) / 6;
 	vec3 vertex_position = vec3(vertex_positions[vertex_id].x + fraction * col, vertex_positions[vertex_id].y + fraction * row, 0.0);
+
+	world_pos = (transform * vec3(fraction * col - fraction * room_size / 2, fraction * row - fraction * room_size / 2, 1.0)).xy;
 
 	vec3 pos = projection * transform * vec3(vertex_position.xy, 1.0);
 	gl_Position = vec4(pos, 1.0);
