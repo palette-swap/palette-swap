@@ -422,7 +422,7 @@ bool WorldSystem::check_debug_keys(int key, int action, int mod)
 	// Drop loot on your current location
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_ALT) != 0 && key == GLFW_KEY_L) {
 		uvec2 pos = registry.get<MapPosition>(player).position;
-		loot->drop_loot(pos);
+		loot->drop_loot(pos, -1.f);
 	}
 
 	// Give more resources

@@ -181,8 +181,8 @@ bool CombatSystem::do_attack(Entity attacker_entity, Attack& attack, Entity targ
 		// add attacker's damage_bonus and the target's damage_modifiers, take away weakened amount
 		std::uniform_int_distribution<int> damage_roller(attack.damage_min, attack.damage_max);
 		int dmg = max(damage_roller(*rng) + attacker.damage_bonus - get_effect(attacker_entity, Effect::Weaken)
-								 + target.damage_modifiers[static_cast<int>(attack.damage_type)],
-							 0);
+						  + target.damage_modifiers[static_cast<int>(attack.damage_type)],
+					  0);
 		target.health -= dmg;
 		do_attack_effects(attacker_entity, attack, target_entity, dmg);
 	}
@@ -217,7 +217,9 @@ void CombatSystem::kill(Entity attacker_entity, Entity target_entity)
 		}
 	}
 
-	loot->drop_loot(registry.get<MapPosition>(target_entity).position);
+	float mode_tier = static_cast<float>(enemy.danger_rating) / static_cast<float>(max_danger_rating)
+		* static_cast<float>(loot->get_max_tier() - 1) + 1.f;
+	loot->drop_loot(registry.get<MapPosition>(target_entity).position, mode_tier, enemy.loot_multiplier);
 
 	// TODO: Animate death
 	registry.destroy(target_entity);

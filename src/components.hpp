@@ -337,9 +337,14 @@ struct Enemy {
 	uint speed = 1;
 	uint attack_range = 1;
 
+	uint danger_rating = 0;
+	uint loot_multiplier = 1;
+
 	void serialize(const std::string& prefix, rapidjson::Document& json) const;
 	void deserialize(const std::string& prefix, const rapidjson::Document& json, bool load_from_file = true);
 };
+
+constexpr uint max_danger_rating = 5;
 
 // Denotes that an enemy is a boss type
 struct Boss {

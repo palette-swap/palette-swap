@@ -91,7 +91,7 @@ bool LootSystem::try_pickup_items(Entity player)
 	return false;
 }
 
-void LootSystem::drop_loot(uvec2 center_position)
+void LootSystem::drop_loot(uvec2 center_position, float mode_tier, uint count)
 {
 	// Initial Drop rates are as follows
 	// 1-2: Nothing
@@ -104,42 +104,60 @@ void LootSystem::drop_loot(uvec2 center_position)
 	// 7-9: Health Potion
 
 	// This is tempered by increasing the floor by the number of consecutive misses
-	bool all_dropped = looted >= loot_count;
-	std::uniform_int_distribution<size_t> drop_chance(1 + loot_misses, 9);
-	size_t result = drop_chance(*rng);
-	if (result <= 3 || (all_dropped && result <= 4)) {
-		loot_misses++;
-		return;
+	static constexpr std::array<ivec2, 9> next_tile = {
+		ivec2(0, 0), ivec2(1, 0),	ivec2(-1, 0), ivec2(0, 1),	ivec2(0, -1),
+		ivec2(1, 1), ivec2(-1, -1), ivec2(-1, 1), ivec2(1, -1),
+	};
+	for (uint i = 0; i < count; i++) {
+		uvec2 position = uvec2(ivec2(center_position) + next_tile.at(i % 9));
+		bool all_dropped = looted >= loot_count;
+		std::uniform_int_distribution<size_t> drop_chance(1 + loot_misses, 9);
+		size_t result = drop_chance(*rng);
+		if (result <= 3 || (all_dropped && result <= 4)) {
+			loot_misses++;
+			continue;
+		}
+		loot_misses = 0;
+		if (result <= 5 || all_dropped) {
+			bool mana = (all_dropped && result <= 6) || (!all_dropped && result == 3);
+			drop_resource_pickup(position, mana ? Resource::ManaPotion : Resource::HealthPotion);
+			continue;
+		}
+		drop_item(position, mode_tier);
 	}
-	loot_misses = 0;
-	if (result <= 5 || all_dropped) {
-		bool mana = (all_dropped && result <= 6) || (!all_dropped && result == 3);
-		drop_resource_pickup(center_position, mana ? Resource::ManaPotion : Resource::HealthPotion);
-		return;
-	}
-	drop_item(center_position);
 }
 
-void LootSystem::drop_item(uvec2 position)
+void LootSystem::drop_item(uvec2 position, float mode_tier)
 {
-	Entity template_entity = entt::null;
-	for (size_t j = 0; j < loot_table.size(); j++) {
-		std::uniform_int_distribution<size_t> draw_from_list(0, loot_table.at(j).size() - looted_per_tier.at(j));
-		if (draw_from_list(*rng) > 0) {
-			template_entity = loot_table.at(j).at(looted_per_tier.at(j)++);
-			break;
-		}
+	if (looted >= loot_count) {
+		// Everything has dropped
+		return;
 	}
-	if (template_entity == entt::null) {
-		for (size_t j = 0; j < loot_table.size(); j++) {
-			if (looted_per_tier.at(j) < loot_table.at(j).size()) {
-				template_entity = loot_table.at(j).at(looted_per_tier.at(j)++);
+	Entity template_entity = entt::null;
+	if (mode_tier >= 0.f) {
+		// Distribute based on requested tier
+		auto distribution
+			= std::binomial_distribution<size_t>(get_max_tier(), mode_tier / static_cast<float>(get_max_tier()));
+		// Prevent infinite looping
+		for (size_t attempts = 0; attempts < 100; attempts++) {
+			const size_t tier = distribution(*rng);
+			if (looted_per_tier.at(tier) < loot_table.at(tier).size()) {
+				template_entity = loot_table.at(tier).at(looted_per_tier.at(tier)++);
+				looted++;
+				break;
+			}
+		}
+	} else {
+		// Just drop the lowest tier item available
+		for (size_t tier = 0; tier <= get_max_tier(); tier++) {
+			if (looted_per_tier.at(tier) < loot_table.at(tier).size()) {
+				template_entity = loot_table.at(tier).at(looted_per_tier.at(tier)++);
+				looted++;
 				break;
 			}
 		}
 	}
 	if (template_entity == entt::null) {
-		// Everything has dropped
 		return;
 	}
 	ItemTemplate& item = registry.get<ItemTemplate>(template_entity);
