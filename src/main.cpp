@@ -45,7 +45,7 @@ int main()
 	std::shared_ptr<UISystem> ui = std::make_shared<UISystem>();
 
 	// Story System
-	std::shared_ptr<StorySystem> stories = std::make_shared<StorySystem>(animations);
+	std::shared_ptr<StorySystem> stories = std::make_shared<StorySystem>(animations, map);
 
 	// Tutorial System
 	std::shared_ptr<TutorialSystem> tutorials = std::make_shared<TutorialSystem>();

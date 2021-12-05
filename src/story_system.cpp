@@ -5,15 +5,15 @@
 void StorySystem::restart_game()
 {
 	current_cutscene_entity = entt::null;
-	boss_created = false;
 	for (auto [entity, cutscene] : registry.view<CutScene>().each()) {
 		registry.destroy(cutscene.ui_entity);
 		registry.destroy(entity);
 	}
 }
 
-StorySystem::StorySystem(std::shared_ptr<AnimationSystem> animation_sys_ptr)
-	: animations(std::move(animation_sys_ptr))
+StorySystem::StorySystem(std::shared_ptr<AnimationSystem> animation_sys_ptr, std::shared_ptr<MapGeneratorSystem> map_system_ptr)
+	: animations(std::move(animation_sys_ptr)),
+		map_system(std::move(map_system_ptr))
 {
 }
 
@@ -52,10 +52,13 @@ void StorySystem::check_cutscene()
 
 	// TODO: check if player and trigger's entity is in the same room
 	for (auto [entity] : registry.view<RoomTrigger>().each()) {
-		MapUtility::RoomID player_room_idx = MapUtility::get_room_index(player_map_pos);
-
 		uvec2 trigger_map_pos = registry.get<MapPosition>(entity).position;
-		MapUtility::RoomID trigger_room_idx = MapUtility::get_room_index(trigger_map_pos);
+		MapUtility::RoomID player_room_idx = map_system->current_map()
+												  .at(player_map_pos.y / MapUtility::room_size)
+												  .at(player_map_pos.x / MapUtility::room_size);
+		MapUtility::RoomID trigger_room_idx = map_system->current_map()
+												  .at(trigger_map_pos.y / MapUtility::room_size)
+												  .at(trigger_map_pos.x / MapUtility::room_size);
 
 		if (player_room_idx == trigger_room_idx) {
 			current_cutscene_entity = entity;
@@ -161,17 +164,16 @@ void StorySystem::trigger_animation(CutSceneType type)
 	}
 }
 
+
+// TODO: Delete after integration with map system, only for testing
 void StorySystem::load_next_level()
 {
 	for (auto [entity, enemy] : registry.view<Enemy>().each()) {
-		if (enemy.type == EnemyType::KingMush) {
-			vec2 position = registry.get<MapPosition>(entity).position;
-			std::string texts("This is the boss! Beat it!");
-		}
-		
 		if (enemy.type == EnemyType::Titho) {
 			vec2 position = registry.get<MapPosition>(entity).position;
-			auto entry_entity = animations->create_boss_entry_entity(EnemyType::Titho, position);
+			std::string texts("This is the boss! Beat it!");
+			Entity entry_entity = animations->create_boss_entry_entity(enemy.type, position);
+			create_room_cutscene(entry_entity, CutSceneType::BossEntry, texts);
 		}
 	}
 }
