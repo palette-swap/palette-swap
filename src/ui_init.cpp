@@ -21,6 +21,8 @@ void UISystem::restart_game()
 
 	held_under_mouse = entt::null;
 	destroy_tooltip();
+	
+	previous_group = entt::null;
 
 	for (size_t i = 0; i < (size_t)Groups::Count; i++) {
 		groups.at(i) = create_ui_group(i == (size_t)Groups::MainMenu, (Groups)i);
@@ -108,23 +110,37 @@ void UISystem::restart_game()
 				  ButtonAction::SwitchToGroup,
 				  groups[(size_t)Groups::HUD],
 				  "Start");
+	create_button(groups[(size_t)Groups::MainMenu],
+				  vec2(.5, .65),
+				  vec2(.1, .1),
+				  vec4(.1, .1, .1, 1),
+				  ButtonAction::SwitchToGroup,
+				  groups[(size_t)Groups::Help],
+				  "Help");
 
 	// Pause Menu Background
 	create_background(groups[(size_t)Groups::PauseMenu], vec2(.5, .5), vec2(1, 1), 1.f, vec4(0, 0, 0, .5));
 
 	// Pause Menu
 	Entity paused = create_ui_text(
-		groups[(size_t)Groups::PauseMenu], vec2(.5, .25), "PAUSED", Alignment::Center, Alignment::Start, 120);
+		groups[(size_t)Groups::PauseMenu], vec2(.5, .2), "PAUSED", Alignment::Center, Alignment::Center, 120);
 	registry.get<Text>(paused).border = 12;
 	create_button(groups[(size_t)Groups::PauseMenu],
-				  vec2(.5, .5),
+				  vec2(.5, .45),
 				  vec2(.1, .1),
 				  vec4(.1, .1, .1, 1),
 				  ButtonAction::SwitchToGroup,
 				  groups[(size_t)Groups::HUD],
 				  "Resume");
 	create_button(groups[(size_t)Groups::PauseMenu],
-				  vec2(.5, .65),
+				  vec2(.5, .6),
+				  vec2(.1, .1),
+				  vec4(.1, .1, .1, 1),
+				  ButtonAction::SwitchToGroup,
+				  groups[(size_t)Groups::Help],
+				  "Help");
+	create_button(groups[(size_t)Groups::PauseMenu],
+				  vec2(.5, .75),
 				  vec2(.1, .1),
 				  vec4(.1, .1, .1, 1),
 				  ButtonAction::RestartGame,
@@ -160,6 +176,26 @@ void UISystem::restart_game()
 				  ButtonAction::RestartGame,
 				  entt::null,
 				  "Restart");
+
+	// Help Background
+	create_background(groups[(size_t)Groups::Help], vec2(.5, .5), vec2(1, 1), 1.f, vec4(0, 0, 0, 1));
+
+	// Help
+	Entity help
+		= create_ui_text(groups[(size_t)Groups::Help], vec2(.5, .1), "HELP", Alignment::Center, Alignment::Center, 120);
+	registry.get<Text>(help).border = 12;
+	create_button(groups[(size_t)Groups::Help],
+				  vec2(.02 * window_height_px / window_width_px, .02),
+				  vec2(.07 * window_height_px / window_width_px, .07),
+				  vec4(.1, .1, .1, 1),
+				  ButtonAction::GoToPreviousGroup,
+				  entt::null,
+				  "X",
+				  48u,
+				  Alignment::Start,
+				  Alignment::Start);
+	static constexpr std::string_view help_text = "=In Game=\n  WASD - Move\n  Left Click - Attack\n  H - Consume Health Potion\n  SPACE - Palette Swap\n  SHIFT - Pickup Item\n=Inventory=\n  Mouse Over + D - Drop\n=Menus=\n  I - Inventory\n  ESC - Pause";
+	create_ui_text(groups[(size_t)Groups::Help], vec2(.5, .6), help_text, Alignment::Center, Alignment::Center, 60);
 }
 
 Entity create_ui_group(bool visible, Groups identifier)

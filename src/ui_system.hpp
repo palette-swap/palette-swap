@@ -72,6 +72,8 @@ private:
 	Entity held_under_mouse = entt::null;
 	Entity tooltip = entt::null;
 
+	Entity previous_group = entt::null;
+
 	RenderSystem* renderer;
 	std::shared_ptr<LootSystem> loot;
 	std::shared_ptr<TutorialSystem> tutorials;

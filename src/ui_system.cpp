@@ -88,13 +88,16 @@ void UISystem::try_settle_held()
 
 void UISystem::switch_to_group(Entity group)
 {
-	if (registry.get<UIGroup>(group).visible) {
+	if (group == entt::null || registry.get<UIGroup>(group).visible) {
 		return;
 	}
 	bool was_inventory = registry.get<UIGroup>(groups[(size_t)Groups::Inventory]).visible;
 	try_settle_held();
 	destroy_tooltip();
 	for (auto [entity, other_group] : registry.view<UIGroup>().each()) {
+		if (other_group.visible && entity != group && entity != groups[(size_t)Groups::Tooltips]) {
+			previous_group = entity;
+		}
 		other_group.visible = entity == group || entity == groups[(size_t)Groups::Tooltips];
 	}
 	if (group == groups[(size_t)Groups::HUD]) {
@@ -199,6 +202,10 @@ void UISystem::do_action(Button& button)
 	switch (button.action) {
 	case ButtonAction::SwitchToGroup: {
 		switch_to_group(button.action_target);
+		break;
+	}
+	case ButtonAction::GoToPreviousGroup: {
+		switch_to_group(previous_group);
 		break;
 	}
 	case ButtonAction::TryHeal:

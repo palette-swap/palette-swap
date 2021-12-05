@@ -900,7 +900,8 @@ enum class Groups {
 	Inventory = HUD + 1,
 	MainMenu = Inventory + 1,
 	PauseMenu = MainMenu + 1,
-	DeathScreen = PauseMenu + 1,
+	Help = PauseMenu + 1,
+	DeathScreen = Help + 1,
 	VictoryScreen = DeathScreen + 1,
 	Tooltips = VictoryScreen + 1,
 	Count = Tooltips + 1,
@@ -989,6 +990,7 @@ template <> struct std::hash<Text> {
 
 enum class ButtonAction {
 	SwitchToGroup,
+	GoToPreviousGroup,
 	TryHeal,
 	TryMana,
 	TryPalette,
