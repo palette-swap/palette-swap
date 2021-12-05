@@ -788,7 +788,7 @@ MapGeneratorSystem::MoveState MapGeneratorSystem::move_player_to_tile(uvec2 from
 
 		if (is_trap_tile(current_animated_tile->second.tile_id)) {
 				registry.get<Stats>(player_entity).health -= 10;
-			}
+		}
 	}
 
 	registry.get<MapPosition>(player_entity).position = to_pos;
@@ -808,7 +808,10 @@ bool MapGeneratorSystem::interact_with_surrounding_tile(Entity player)
 	int player_row = player_position.y / map_size;
 	int player_col = player_position.x % map_size;
 
-	auto & level_animated_tiles = get_level_animated_tiles(current_level);
+	ColorState& inactive_color = registry.get<PlayerInactivePerception>(registry.view<Player>().front()).inactive;
+
+	auto & level_animated_tiles_red = level_configurations.at(current_level).animated_tiles_red;
+	auto & level_animated_tiles_blue = level_configurations.at(current_level).animated_tiles_blue;
 
 	for (const auto & direction : directions) {
 		int target_row = player_position.y + direction[0];
@@ -819,7 +822,8 @@ bool MapGeneratorSystem::interact_with_surrounding_tile(Entity player)
 		}
 
 		RoomID target_room = current_map().at(target_row / room_size).at(target_col / room_size);
-		auto & room_animated_tiles =  level_animated_tiles.at(target_room);
+		auto & room_animated_tiles = (inactive_color == ColorState::Blue) ? level_animated_tiles_red.at(target_room) : level_animated_tiles_blue.at(target_room);
+		auto & room_animated_tiles_inactive = (inactive_color == ColorState::Blue) ? level_animated_tiles_blue.at(target_room) : level_animated_tiles_red.at(target_room);
 
 		const auto & animated_tile = room_animated_tiles.find((target_row % room_size) * room_size + target_col % room_size);
 		if (animated_tile != room_animated_tiles.end() && animated_tile->second.usage_count > 0) {
@@ -837,6 +841,15 @@ bool MapGeneratorSystem::interact_with_surrounding_tile(Entity player)
 
 			animated_tile->second.activated = true;
 			animated_tile->second.usage_count --;
+
+			// update the state in the other dimension as well
+			if (animated_tile->second.dimension == ColorState::All) {
+				const auto & animated_tile_inactive = room_animated_tiles_inactive.find((target_row % room_size) * room_size + target_col % room_size);
+				animated_tile_inactive->second.usage_count --;
+				if (animated_tile_inactive->second.usage_count == 0) {
+					animated_tile_inactive->second.frame = animated_tile_inactive->second.max_frames - 1;
+				}
+			}
 		}
 	}
 	return true;

@@ -31,9 +31,11 @@ struct AnimatedTile {
 	bool activated;
 	// a sperate parameter as different tile can be of the same type
 	uint8_t tile_id;
-	float speed_adjustment = 0.6f;
+	ColorState dimension = ColorState::None;
 	// how many times the tile can be interacted, -1 means infinite
 	int usage_count = -1;
+
+	float speed_adjustment = 0.6f;
 	// animation frame, from 0 to 3
 	int frame = 0;
 	float elapsed_time = 0;

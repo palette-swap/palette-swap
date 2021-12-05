@@ -154,14 +154,14 @@ const static uint8_t locked_chest_tile = 48;
 // TODO:remove chest tile from trap tiles
 const static std::array<uint8_t, 3> trap_tiles = { 28, 36, 44 };
 const static std::map<TileID, AnimatedTile> animated_tiles = {
-	{28, AnimatedTile({true, false, 28})}, // spike
-	{36, AnimatedTile({false, true, 36})}, // fire
-	{52, AnimatedTile({true, false, 52, 1.0f})}, // grass
-	{44, AnimatedTile({true, false, 44, 0.6f, 1})}, // chest
-	{20, AnimatedTile({false, true, 20})}, // torch
-	{60, AnimatedTile({true, false, 60, 0.6f, 1})}, // door
-	{56, AnimatedTile({true, false, 56, 0.6f, 1})}, // cracked wall
-	{48, AnimatedTile({true, false, 48, 0.6f, 1})}, // locked chest
+	{28, AnimatedTile({true, false, 28, ColorState::All,})}, // spike
+	{36, AnimatedTile({false, true, 36, ColorState::All})}, // fire
+	{52, AnimatedTile({true, false, 52, ColorState::All, -1, 1.0f})}, // grass
+	{44, AnimatedTile({true, false, 44, ColorState::Red, 1})}, // chest
+	{20, AnimatedTile({false, true, 20, ColorState::All})}, // torch
+	{60, AnimatedTile({true, false, 60, ColorState::All, 1})}, // door
+	{56, AnimatedTile({true, false, 56, ColorState::All, 1})}, // cracked wall
+	{48, AnimatedTile({true, false, 48, ColorState::Red, 1 })}, // locked chest
 };
 
 const static std::array<uint8_t, 11> floor_tiles = { 0, 4, 5, 6, 7, 8, 16, 24, 32, 40, 52 }; 
@@ -731,9 +731,12 @@ void MapGenerator::generate_room(MapGenerator::PathNode * starting_node,
 	for (size_t room_tile_index = 0; room_tile_index < room_layout.size(); room_tile_index ++) {
 		const auto & animated_tile_iter = animated_tiles.find(room_layout.at(room_tile_index));
 		if (animated_tile_iter != animated_tiles.end()) {
-			if (animated_tile_iter->second.tile_id == chest_tile || animated_tile_iter->second.tile_id == locked_chest_tile) {
+			if (animated_tile_iter->second.dimension == ColorState::Red) {
 				// only spawn chests in red dimension
 				animated_tiles_red.emplace(room_tile_index, animated_tile_iter->second);
+			} else if (animated_tile_iter->second.dimension == ColorState::Blue) {
+				// only spawn chests in red dimension
+				animated_tiles_blue.emplace(room_tile_index, animated_tile_iter->second);
 			} else {
 				animated_tiles_red.emplace(room_tile_index, animated_tile_iter->second);
 				animated_tiles_blue.emplace(room_tile_index, animated_tile_iter->second);
