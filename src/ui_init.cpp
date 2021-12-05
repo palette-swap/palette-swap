@@ -21,6 +21,7 @@ void UISystem::restart_game()
 
 	held_under_mouse = entt::null;
 	destroy_tooltip();
+	attack_preview = entt::null;
 	
 	previous_group = entt::null;
 

@@ -456,6 +456,7 @@ void RenderSystem::draw_effect(Entity entity, const EffectRenderRequest& render_
 void RenderSystem::draw_ui_element(Entity entity, const UIRenderRequest& ui_render_request, const mat3& projection)
 {
 	Transform transform = get_transform(entity);
+	transform.rotate(ui_render_request.angle);
 	transform.scale(ui_render_request.size * screen_scale * vec2(window_width_px, window_height_px)
 					* ((registry.any_of<Background>(entity)) ? vec2(screen_size) / vec2(window_default_size)
 															 : vec2(get_ui_scale_factor())));
@@ -464,12 +465,17 @@ void RenderSystem::draw_ui_element(Entity entity, const UIRenderRequest& ui_rend
 		transform.translate(vec2(-.5f, 0));
 		draw_stat_bar(transform,
 					   registry.get<Stats>(registry.view<Player>().front()),
-					   projection,
-					   true,
-					   ui_render_request.size.x / ui_render_request.size.y * 2.f,
-					   entity);
-	} else if (ui_render_request.used_effect == EFFECT_ASSET_ID::RECTANGLE) {
-		draw_rectangle(entity, transform, ui_render_request.size * vec2(window_width_px, window_height_px), projection);
+					  projection,
+					  true,
+					  ui_render_request.size.x / ui_render_request.size.y * 2.f,
+					  entity);
+	} else if (ui_render_request.used_effect == EFFECT_ASSET_ID::RECTANGLE
+			   || ui_render_request.used_effect == EFFECT_ASSET_ID::OVAL) {
+		draw_rectangle(ui_render_request.used_effect,
+					   entity,
+					   transform,
+					   ui_render_request.size * vec2(window_width_px, window_height_px),
+					   projection);
 	} else if (ui_render_request.used_effect == EFFECT_ASSET_ID::SPRITESHEET) {
 
 		TextureOffset& texture_offset = registry.get<TextureOffset>(entity);
@@ -555,9 +561,9 @@ void RenderSystem::draw_stat_bar(
 	draw_triangles(transform, projection);
 }
 
-void RenderSystem::draw_rectangle(Entity entity, Transform transform, vec2 scale, const mat3& projection)
+void RenderSystem::draw_rectangle(EFFECT_ASSET_ID asset, Entity entity, Transform transform, vec2 scale, const mat3& projection)
 {
-	const auto program = (GLuint)effects.at((uint8)EFFECT_ASSET_ID::RECTANGLE);
+	const auto program = (GLuint)effects.at((uint8)asset);
 
 	// Setting shaders
 	glUseProgram(program);
@@ -595,7 +601,7 @@ void RenderSystem::draw_rectangle(Entity entity, Transform transform, vec2 scale
 	glUniform2f(scale_loc, scale.x, scale.y);
 
 	GLint thickness_loc = glGetUniformLocation(program, "thickness");
-	glUniform1f(thickness_loc, 6);
+	glUniform1f(thickness_loc, asset == EFFECT_ASSET_ID::RECTANGLE ? 6 : 4);
 
 	// Setup coloring
 	vec4 color = vec4(1);
@@ -909,7 +915,7 @@ void RenderSystem::draw_lighting(const mat3& projection)
 	for (auto [entity] : registry.view<LightingTile>().each()) {
 		Transform transform = get_transform(entity);
 		transform.scale(MapUtility::tile_size * vec2(1));
-		draw_rectangle(entity, transform, MapUtility::tile_size * vec2(1), projection);
+		draw_rectangle(EFFECT_ASSET_ID::RECTANGLE, entity, transform, MapUtility::tile_size * vec2(1), projection);
 	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);

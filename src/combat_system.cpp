@@ -75,7 +75,7 @@ bool CombatSystem::is_valid_attack(Entity attacker, Attack& attack, uvec2 target
 
 template <typename ColorExclusive> bool CombatSystem::is_valid_attack(Entity attacker, Attack& attack, uvec2 target)
 {
-	if (!can_reach(attacker, attack, target) || registry.get<Stats>(attacker).mana < attack.mana_cost) {
+	if (!attack.can_reach(attacker, target) || registry.get<Stats>(attacker).mana < attack.mana_cost) {
 		return false;
 	}
 	uvec2 attacker_pos = registry.get<MapPosition>(attacker).position;
@@ -110,7 +110,7 @@ bool CombatSystem::do_attack(Entity attacker, Attack& attack, uvec2 target)
 
 template <typename ColorExclusive> bool CombatSystem::do_attack(Entity attacker, Attack& attack, uvec2 target)
 {
-	if (!can_reach(attacker, attack, target) || registry.get<Stats>(attacker).mana < attack.mana_cost) {
+	if (!attack.can_reach(attacker, target) || registry.get<Stats>(attacker).mana < attack.mana_cost) {
 		return false;
 	}
 	registry.get<Stats>(attacker).mana -= attack.mana_cost;
@@ -260,18 +260,6 @@ std::string CombatSystem::make_attack_list(const Entity entity, size_t current_a
 				<< ((attack.targeting_type == TargetingType::Projectile) ? "Projectile)" : "Melee)");*/
 	}
 	return attacks.str();
-}
-
-bool CombatSystem::can_reach(Entity attacker, Attack& attack, uvec2 target)
-{
-	if (attack.targeting_type == TargetingType::Adjacent) {
-		ivec2 distance_vec = abs(ivec2(target - registry.get<MapPosition>(attacker).position));
-		int distance = abs(distance_vec.x - distance_vec.y) + min(distance_vec.x, distance_vec.y) * 3 / 2;
-		if (distance > attack.range) {
-			return false;
-		}
-	}
-	return true;
 }
 
 void CombatSystem::do_attack_effects(Entity attacker, Attack& attack, Entity target, int damage)

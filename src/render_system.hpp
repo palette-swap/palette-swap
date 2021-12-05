@@ -73,6 +73,7 @@ class RenderSystem {
 	const std::array<std::string, effect_count> effect_paths = {
 		shader_path("line"),			//
 		shader_path("rectangle"),		//
+		shader_path("oval"),			//
 		shader_path("enemy"),			//
 		shader_path("player"),			//
 		shader_path("boss_intro"),		//
@@ -182,7 +183,7 @@ private:
 	void draw_ui_element(Entity entity, const UIRenderRequest& ui_render_request, const mat3& projection);
 	void draw_stat_bar(
 		Transform transform, const Stats& stats, const mat3& projection, bool fancy, float ratio, Entity entity);
-	void draw_rectangle(Entity entity, Transform transform, vec2 scale, const mat3& projection);
+	void draw_rectangle(EFFECT_ASSET_ID asset, Entity entity, Transform transform, vec2 scale, const mat3& projection);
 	void draw_text(Entity entity, const Text& text, const mat3& projection);
 	void draw_line(Entity entity, const Line& line, const mat3& projection);
 	void draw_map(const mat3& projection, ColorState color);

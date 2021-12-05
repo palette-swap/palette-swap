@@ -321,7 +321,7 @@ void WorldSystem::return_arrow_to_player()
 {
 	dvec2 mouse_pos = {};
 	glfwGetCursorPos(window, &mouse_pos.x, &mouse_pos.y);
-	on_mouse_move(vec2(mouse_pos));
+	on_mouse_move(mouse_pos);
 }
 
 // On key callback
@@ -540,7 +540,7 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 	vec2 mouse_screen_pos = renderer->mouse_pos_to_screen_pos(mouse_position);
 	if (ui->player_can_act() && !player_arrow_fired) {
 
-		vec2 mouse_world_position = renderer->screen_position_to_world_position(mouse_screen_pos);
+		vec2 mouse_world_pos = renderer->screen_position_to_world_position(mouse_screen_pos);
 
 		Velocity& arrow_velocity = registry.get<Velocity>(player_arrow);
 		WorldPosition& arrow_position = registry.get<WorldPosition>(player_arrow);
@@ -549,7 +549,7 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 		vec2 player_screen_position = MapUtility::map_position_to_world_position(player_map_position.position);
 
 		// Calculated Euclidean difference between player and arrow
-		vec2 eucl_diff = mouse_world_position - player_screen_position;
+		vec2 eucl_diff = mouse_world_pos - player_screen_position;
 
 		// Calculates arrow position based on position of mouse relative to player
 		vec2 new_arrow_position = normalize(eucl_diff) * spell_distance_from_player + player_screen_position;
@@ -574,7 +574,6 @@ void WorldSystem::move_player(Direction direction)
 	}
 
 	MapPosition& map_pos = registry.get<MapPosition>(player);
-	WorldPosition& arrow_position = registry.get<WorldPosition>(player_arrow);
 	uvec2 new_pos = map_pos.position;
 
 	if (direction == Direction::Left && map_pos.position.x > 0) {
@@ -601,13 +600,10 @@ void WorldSystem::move_player(Direction direction)
 	// Allows player to run if all checks have been passed, inputs running direction as an animation event
 	animations->player_running_animation(player, map_pos.position, new_pos);
 
-	// Temp update for arrow position
-	if (!player_arrow_fired) {
-		arrow_position.position += (vec2(new_pos) - vec2(map_pos.position)) * MapUtility::tile_size;
-	}
-
 	map_pos.position = new_pos;
 	end_player_turn();
+
+	return_arrow_to_player();
 
 	// TODO: move the logics to map generator system
 	if (map_generator->is_next_level_tile(new_pos)) {
@@ -706,6 +702,7 @@ void WorldSystem::on_mouse_scroll(float offset)
 {
 	if (ui->player_can_act()) {
 		this->renderer->scale_on_scroll(offset);
+		return_arrow_to_player();
 	}
 }
 

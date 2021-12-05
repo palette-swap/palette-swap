@@ -168,7 +168,8 @@ static constexpr std::array<vec2, texture_count> scaling_factors = {
 enum class EFFECT_ASSET_ID {
 	LINE = 0,
 	RECTANGLE = LINE + 1,
-	ENEMY = RECTANGLE + 1,
+	OVAL = RECTANGLE + 1,
+	ENEMY = OVAL + 1,
 	PLAYER = ENEMY + 1,
 	BOSS_INTRO_SHADER = PLAYER + 1,
 	HEALTH = BOSS_INTRO_SHADER + 1,
@@ -431,6 +432,7 @@ struct Attack {
 
 	int mana_cost = 0;
 
+	bool can_reach(Entity attacker, uvec2 target) const;
 	bool is_in_range(uvec2 source, uvec2 target, uvec2 pos) const;
 
 	void serialize(const std::string& prefix, rapidjson::Document& json) const;

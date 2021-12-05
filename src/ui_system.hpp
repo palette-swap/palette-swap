@@ -45,6 +45,10 @@ private:
 	// Set tooltip alignment based on its position
 	void align_tooltip(vec2 new_pos);
 
+	
+	void destroy_attack_preview();
+	void update_attack_preview(uvec2 mouse_map_pos);
+
 	bool can_insert_into_slot(Entity item, Entity container);
 	void insert_into_slot(Entity item, Entity container);
 	bool swap_or_move_item(ScreenPosition& container_pos,
@@ -71,6 +75,7 @@ private:
 	std::array<Entity, (size_t)Groups::Count> groups = { entt::null };
 	Entity held_under_mouse = entt::null;
 	Entity tooltip = entt::null;
+	Entity attack_preview = entt::null;
 
 	Entity previous_group = entt::null;
 

@@ -213,6 +213,18 @@ void Enemy::deserialize(const std::string& prefix, const rapidjson::Document& js
 	}
 }
 
+bool Attack::can_reach(Entity attacker, uvec2 target) const
+{
+	if (targeting_type == TargetingType::Adjacent) {
+		ivec2 distance_vec = abs(ivec2(target - registry.get<MapPosition>(attacker).position));
+		int distance = abs(distance_vec.x - distance_vec.y) + min(distance_vec.x, distance_vec.y) * 3 / 2;
+		if (distance > range) {
+			return false;
+		}
+	}
+	return true;
+}
+
 bool Attack::is_in_range(uvec2 source, uvec2 target, uvec2 pos) const
 {
 	dvec2 area = dvec2(parallel_size - 1, perpendicular_size - 1);
