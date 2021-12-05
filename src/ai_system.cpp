@@ -633,7 +633,7 @@ std::vector<Entity> AISystem::summon_victims(const Entity& entity, EnemyType ene
 	return result;
 }
 
-void AISystem::release_aoe(const std::vector<Entity>& aoe_entities)
+void AISystem::release_aoe(const std::vector<Entity>& aoe_entities, int attack_state)
 {
 	for (const Entity& aoe_square : aoe_entities) {
 		const vec2& aoe_square_world_pos = registry.get<WorldPosition>(aoe_square).position;
@@ -646,7 +646,7 @@ void AISystem::release_aoe(const std::vector<Entity>& aoe_entities)
 
 		// TODO: specifify type of aoe that needs to be displayed, there may be multiple. Default is currently
 		// set to state 1
-		animations->trigger_aoe_attack_animation(aoe_square, 4);
+		animations->trigger_aoe_attack_animation(aoe_square, attack_state);
 		// Released AOE squares will be destroyed in the next turn.
 		registry.get<AOESquare>(aoe_square).is_released = true;
 	}

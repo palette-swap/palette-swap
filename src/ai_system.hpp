@@ -92,7 +92,7 @@ private:
 	std::vector<Entity> summon_victims(const Entity& entity, EnemyType enemy_type, int num);
 
 	// AOE attack.
-	void release_aoe(const std::vector<Entity>& aoe);
+	void release_aoe(const std::vector<Entity>& aoe, int attack_state);
 
 	// Return line of tiles from a to b
 	static std::vector<ivec2> draw_tile_line(ivec2 a, ivec2 b, int offset = 0);
@@ -345,7 +345,7 @@ private:
 		BTState release_aoe(Entity e, AISystem* ai)
 		{
 			// Release AOE.
-			ai->release_aoe(aoe_entities);
+			ai->release_aoe(aoe_entities, aoe_attack_state);
 
 			ai->switch_enemy_state(e, EnemyState::Idle);
 			ai->animations->boss_event_animation(e, aoe_attack_state);

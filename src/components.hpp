@@ -154,7 +154,7 @@ static constexpr std::array<vec2, texture_count> scaling_factors = {
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size * 3, MapUtility::tile_size * 3),
-	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size * 3, MapUtility::tile_size * 3),
 	vec2(MapUtility::tile_size * 5, MapUtility::tile_size * 5),
 	vec2(MapUtility::tile_size * 5, MapUtility::tile_size * 5),
 	vec2(MapUtility::tile_size * 3, MapUtility::tile_size * 3),
