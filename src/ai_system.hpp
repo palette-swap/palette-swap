@@ -232,29 +232,12 @@ private:
 				}
 
 				// Create AOE stats.
-				//Stats& aoe_stats = registry.get<Stats>(e);
-				//aoe_stats.base_attack.damage_min *= 2;
-				//aoe_stats.base_attack.damage_max *= 2;
-				//aoe_stats.damage_bonus *= 2;
-
-				//Enemy& enemy = registry.get<Enemy>(e);
-
-				//// Create AOE.
-				//aoe_entities = create_aoe(aoe_area, aoe_stats, enemy.type, e);
-
-				//ai->switch_enemy_state(e, EnemyState::Charging);
-
-				//return handle_process_result(BTState::Running);
-				return prepare_aoe(e, ai, aoe_area);
+				return handle_process_result(prepare_aoe(e, ai, aoe_area));
 			}
 			// Release AOE.
-			//ai->release_aoe(aoe_entities);
-
-			//ai->switch_enemy_state(e, EnemyState::Idle);
-			//ai->animations->boss_event_animation(e, aoe_attack_state);
-			//ai->so_loud->play(aoe_effect);
-			return release_aoe(e, ai);
+			return handle_process_result(release_aoe(e, ai));
 		}
+
 		BTState prepare_aoe(Entity e, AISystem* ai, std::vector<uvec2> aoe_area) {
 			Stats& aoe_stats = registry.get<Stats>(e);
 			aoe_stats.base_attack.damage_min *= 2;
@@ -268,7 +251,7 @@ private:
 
 			ai->switch_enemy_state(e, EnemyState::Charging);
 
-			return handle_process_result(BTState::Running);
+			return BTState::Running;
 		}
 
 		BTState release_aoe(Entity e, AISystem* ai)
@@ -279,10 +262,10 @@ private:
 			ai->switch_enemy_state(e, EnemyState::Idle);
 			ai->animations->boss_event_animation(e, aoe_attack_state);
 			ai->so_loud->play(aoe_effect);
-			return handle_process_result(BTState::Success);
+			return BTState::Success;
 		}
 
-	private:
+	protected:
 		bool is_charged;
 		std::vector<ivec2> aoe_shape;
 		std::vector<Entity> aoe_entities;
@@ -292,23 +275,20 @@ private:
 	};
 
 	// Leaf action node: AOEAttack
-	class AOERandomAttack : public BTNode {
+	class AOERandomAttack : public AOEAttack {
 	public:
 		explicit AOERandomAttack(
 			std::string aoe_sound, int aoe_attack_state, Entity target, int num_attacks, int radius)
-			: is_charged(false)
-			, aoe_attack_state(aoe_attack_state)
-			, target(target)
+			: AOEAttack({}, aoe_sound, aoe_attack_state, target)
 			, num_attacks(num_attacks)
 			, radius(radius)
 		{
-			aoe_effect.load(audio_path(aoe_sound).c_str());
 			dist = std::uniform_int_distribution<int>(-radius, radius);
 		}
 
 		void init(Entity /*e*/) override
 		{
-			debug_log("Debug: AOEAttack.init\n");
+			debug_log("Debug: AOERandomAttack.init\n");
 			is_charged = false;
 			aoe_entities.clear();
 		}
@@ -362,46 +342,24 @@ private:
 				std::vector<uvec2> aoe_area;
 				for (ivec2 point : attack_points) {
 					for (const ivec2& map_pos_offset : aoe_shape) {
-						const ivec2& map_pos = point + map_pos_offset + static_cast<ivec2>(target_map_pos);
+						const ivec2& map_pos = point + map_pos_offset + ivec2(target_map_pos);
 						if (map_pos.x >= 0 || map_pos.y >= 0) {
 							aoe_area.emplace_back(map_pos);
 						}
 					}
 				}
 				// Create AOE stats.
-				Stats aoe_stats = registry.get<Stats>(e);
-				aoe_stats.base_attack.damage_min *= 2;
-				aoe_stats.base_attack.damage_max *= 2;
-				aoe_stats.damage_bonus *= 2;
-
-				Enemy enemy = registry.get<Enemy>(e);
-
-				// Create AOE.
-				aoe_entities = create_aoe(aoe_area, aoe_stats, enemy.type, e);
-
-				ai->switch_enemy_state(e, EnemyState::Charging);
-
-				return handle_process_result(BTState::Running);
+				return handle_process_result(prepare_aoe(e, ai, aoe_area));
 			}
 			// Release AOE.
-			ai->release_aoe(aoe_entities);
-			aoe_entities.clear();
-
-			ai->switch_enemy_state(e, EnemyState::Idle);
-			ai->animations->boss_event_animation(e, aoe_attack_state);
-			return handle_process_result(BTState::Success);
+			return handle_process_result(release_aoe(e, ai));
 		}
 
 	private:
-		bool is_charged;
 		int num_attacks;
 		int radius;
 		std::uniform_int_distribution<int> dist;
-		std::vector<Entity> aoe_entities;
-		int aoe_attack_state;
-		SoLoud::Wav aoe_effect;
-		Entity target;
-		std::vector<ivec2> aoe_shape = { { 0, 0 }, { 0, 1 }, { 0, -1 }, { 1, 0 }, { -1, 0 } };
+		const std::vector<ivec2> aoe_shape = { { 0, 0 }, { 0, 1 }, { 0, -1 }, { 1, 0 }, { -1, 0 } };
 		// All attacks are in a + pattern
 		// ┌───┐
 		// │ x │
@@ -411,16 +369,13 @@ private:
 	};
 
 	// Leaf action node: AOEAttack
-	class AOEConeAttack : public BTNode {
+	class AOEConeAttack : public AOEAttack {
 	public:
 		explicit AOEConeAttack(std::string aoe_sound, int aoe_attack_state, Entity attacker, Entity target)
-			: is_charged(false)
-			, aoe_attack_state(aoe_attack_state)
+			: AOEAttack({}, aoe_sound, aoe_attack_state, target)
 			, attacker(attacker)
-			, target(target)
 			, min_length(15)
 		{
-			aoe_effect.load(audio_path(aoe_sound).c_str());
 		}
 
 		void init(Entity /*e*/) override
@@ -432,7 +387,7 @@ private:
 
 		BTState process(Entity e, AISystem* ai) override
 		{
-			debug_log("Debug: AOEAttack.process\n");
+			debug_log("Debug: AOEConeAttack.process\n");
 
 			if (!is_charged) {
 				// Charging
@@ -478,47 +433,23 @@ private:
 				}
 
 				// Create AOE stats.
-				Stats aoe_stats = registry.get<Stats>(e);
-				aoe_stats.base_attack.damage_min *= 2;
-				aoe_stats.base_attack.damage_max *= 2;
-				aoe_stats.damage_bonus *= 2;
-
-				Enemy enemy = registry.get<Enemy>(e);
-
-				// Create AOE.
-				aoe_entities = create_aoe(aoe_area, aoe_stats, enemy.type, e);
-
-				ai->switch_enemy_state(e, EnemyState::Charging);
-
-				return handle_process_result(BTState::Running);
+				return handle_process_result(prepare_aoe(e, ai, aoe_area));
 			}
 			// Release AOE.
-			ai->release_aoe(aoe_entities);
 			aoe_shape.clear();
-
-			ai->switch_enemy_state(e, EnemyState::Idle);
-			ai->animations->boss_event_animation(e, aoe_attack_state);
-			return handle_process_result(BTState::Success);
+			return handle_process_result(release_aoe(e, ai));
 		}
 
 	private:
-		bool is_charged;
-		std::vector<ivec2> aoe_shape;
-		std::vector<Entity> aoe_entities;
-		int aoe_attack_state;
-		SoLoud::Wav aoe_effect;
 		Entity attacker;
-		Entity target;
 		int min_length;
 	};
 
 	// Leaf action node: AOERingAttack
-	class AOERingAttack : public BTNode {
+	class AOERingAttack : public AOEAttack {
 	public:
 		explicit AOERingAttack(std::string aoe_sound, int aoe_attack_state, int max_radius, Entity target)
-			: is_charged(false)
-			, aoe_attack_state(aoe_attack_state)
-			, target(target)
+			: AOEAttack({}, aoe_sound, aoe_attack_state, target)
 			, max_radius(max_radius)
 		{
 			radius = 3;
@@ -533,9 +464,9 @@ private:
 
 		BTState process(Entity e, AISystem* ai) override
 		{
-			debug_log("Debug: AOEAttack.process\n");
+			debug_log("Debug: AOERingAttack.process\n");
 
-			do {
+			while (radius < max_radius) {
 				if (!is_charged) {
 					// Charging
 					is_charged = true;
@@ -568,47 +499,21 @@ private:
 					}
 
 					// Create AOE stats.
-					Stats aoe_stats = registry.get<Stats>(e);
-					aoe_stats.base_attack.damage_min *= 2;
-					aoe_stats.base_attack.damage_max *= 2;
-					aoe_stats.damage_bonus *= 2;
-
-					Enemy enemy = registry.get<Enemy>(e);
-
-					// Create AOE.
-					aoe_entities = create_aoe(aoe_area, aoe_stats, enemy.type, e);
-
-					ai->switch_enemy_state(e, EnemyState::Charging);
-
-					return handle_process_result(BTState::Running);
+					return handle_process_result(prepare_aoe(e, ai, aoe_area));
 				}
 				// Release AOE.
-				ai->release_aoe(aoe_entities);
-
-				ai->switch_enemy_state(e, EnemyState::Idle);
-				ai->animations->boss_event_animation(e, aoe_attack_state);
+				release_aoe(e, ai);
 
 				is_charged = false;
 				radius++;
-			} while (radius < max_radius);
-
-			ai->switch_enemy_state(e, EnemyState::Idle);
-
-			// release_aoe(e, ai);
-
-			registry.destroy(e);
+			}
 
 			return handle_process_result(BTState::Success);
 		}
 
-	private:
-		bool is_charged;
+	protected:
 		int radius;
 		int max_radius;
-		std::vector<Entity> aoe_entities;
-		int aoe_attack_state;
-		SoLoud::Wav aoe_effect;
-		Entity target;
 	};
 
 	// Leaf action node: RegularAttack
@@ -921,7 +826,7 @@ private:
 					return handle_process_result(BTState::Success);
 				}
 			} else {
-				return handle_process_result(BTState::Failure);
+				return handle_process_result(state);
 			}
 		}
 		
@@ -1107,12 +1012,16 @@ private:
 		{
 			// Selector - active
 			auto aoe_attack = std::make_unique<AOERingAttack>("King Mush Shrooma.wav", 7, 10, target);
-			auto selector_active = std::make_unique<Selector>(std::move(aoe_attack));
+			auto self_destruct = std::make_unique<SelfDestruct>();
+			//auto selector_active = std::make_unique<Selector>(std::move(aoe_attack));
+			auto sequence = std::make_unique<Sequence>();
+			sequence->add_child(std::move(aoe_attack));
+			sequence->add_child(std::move(self_destruct));
 
 			// Selector - alive
-			auto selector_alive = std::make_unique<Selector>(std::move(selector_active));
+			//auto selector_alive = std::make_unique<Selector>(std::move(sequence));
 
-			return std::make_unique<SummonerTree>(std::move(selector_alive));
+			return std::make_unique<AOEEmitterTree>(std::move(sequence));
 		}
 
 	private:
