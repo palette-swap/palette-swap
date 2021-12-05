@@ -370,6 +370,7 @@ private:
 			: AOEAttack({}, aoe_sound, aoe_attack_state, target)
 			, num_attacks(num_attacks)
 			, radius(radius)
+			, attack_state(aoe_attack_state)
 		{
 			dist = std::uniform_int_distribution<int>(-radius, radius);
 		}
@@ -448,6 +449,7 @@ private:
 		int radius;
 		std::uniform_int_distribution<int> dist;
 		const std::vector<ivec2> aoe_shape = { { 0, 0 }, { 0, 1 }, { 0, -1 }, { 1, 0 }, { -1, 0 } };
+		int attack_state;
 		// All attacks are in a + pattern
 		// ┌───┐
 		// │ x │
@@ -523,7 +525,6 @@ private:
 				// Create AOE stats.
 				return handle_process_result(prepare_aoe(e, ai, aoe_area));
 			}
-			// Release AOE.
 			aoe_shape.clear();
 			return handle_process_result(release_aoe(e, ai));
 		}
@@ -539,6 +540,7 @@ private:
 		explicit AOERingAttack(std::string aoe_sound, int aoe_attack_state, int max_radius, Entity target)
 			: AOEAttack({}, aoe_sound, aoe_attack_state, target)
 			, max_radius(max_radius)
+			, attack_state(aoe_attack_state)
 		{
 			radius = 3;
 		}
@@ -602,6 +604,7 @@ private:
 	protected:
 		int radius;
 		int max_radius;
+		int attack_state;
 	};
 
 	// Leaf action node: RegularAttack
@@ -1038,7 +1041,7 @@ private:
 			altars.push_back({ dragon_map_pos.x + 2, dragon_map_pos.y - 2 }); // top right altar
 			altars.push_back({ dragon_map_pos.x - 2, dragon_map_pos.y + 2 }); // bottom left altar
 			altars.push_back({ dragon_map_pos.x + 2, dragon_map_pos.y + 2 }); // bottom right altar
-			auto summon_victims = std::make_unique<SummonVictims>(2, "King Mush Shrooma.wav", EnemyType::KoboldMage, altars.size(), altars); // TODO (Evan): dragon's animation & sound for SummonVictims.
+			auto summon_victims = std::make_unique<SummonVictims>(2, "Dragon Roar.wav", EnemyType::KoboldMage, altars.size(), altars);
 			selector_active->add_precond_and_child(
 				// Dragon summons victims when its HP is below 50%.
 				[ai](Entity e) {
@@ -1046,7 +1049,7 @@ private:
 				},
 				std::move(summon_victims));
 
-			auto sacrifice_victims = std::make_unique<SacrificeVictims>(2, "King Mush Shrooma.wav", 0.25f); // TODO (Evan): dragon's animation & sound for SacrificeVictims.
+			auto sacrifice_victims = std::make_unique<SacrificeVictims>(4, "Dragon Long Roar.wav", 0.25f);
 			selector_active->add_precond_and_child(
 				// Dragon sacrifices victims when the victims are all active (ie. They are all at an altar).
 				[ai](Entity e) {
@@ -1064,20 +1067,20 @@ private:
 				std::move(sacrifice_victims));
 
 			auto summon_aoe_emitter
-				= std::make_unique<SummonEnemies>(3, "King Mush Shrooma.wav", EnemyType::AOERingGen, 1);
+				= std::make_unique<SummonEnemies>(3, "Dragon Attack Roar.wav", EnemyType::AOERingGen, 2);
 			selector_active->add_precond_and_child(
 				[p](Entity /*e*/) { return ((p->get_process_count()+2) % 5 == 0); },
 				std::move(summon_aoe_emitter)
 			);
 
-			auto wild_surge = std::make_unique<AOERandomAttack>("King Mush Shrooma.wav", 5, e, 10, 8);
+			auto wild_surge = std::make_unique<AOERandomAttack>("Dragon Roar.wav", 5, e, 10, 8);
 			selector_active->add_precond_and_child(
 				[p](Entity /*e*/) { return p->get_process_count() % 5 == 0; }, 
 				std::move(wild_surge)
 			);
 
 			Entity player = registry.view<Player>().front();
-			auto cone_attack = std::make_unique<AOEConeAttack>("King Mush Shrooma.wav", 6, e, player);
+			auto cone_attack = std::make_unique<AOEConeAttack>("Dragon Attack Roar.wav", 6, e, player);
 			selector_active->add_precond_and_child(
 				[p](Entity /*e*/) { return p->get_process_count() % 2 == 0; }, 
 				std::move(cone_attack)
@@ -1133,7 +1136,7 @@ private:
 		static std::unique_ptr<BTNode> aoe_emitter_tree_factory(AISystem* ai, Entity target)
 		{
 			// Selector - active
-			auto aoe_attack = std::make_unique<AOERingAttack>("King Mush Shrooma.wav", 7, 10, target);
+			auto aoe_attack = std::make_unique<AOERingAttack>("Dragon Roar.wav", 7, 10, target);
 			auto self_destruct = std::make_unique<SelfDestruct>();
 			//auto selector_active = std::make_unique<Selector>(std::move(aoe_attack));
 			auto sequence = std::make_unique<Sequence>();
