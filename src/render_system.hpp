@@ -124,6 +124,7 @@ public:
 
 	// Draw UI entities over top
 	void draw_ui(const mat3& projection);
+	void toggle_lighting();
 
 	mat3 create_projection_matrix();
 	vec2 mouse_pos_to_screen_pos(dvec2 mouse_pos) const;
@@ -221,6 +222,7 @@ private:
 	// Lighting System
 	LightingSystem& lighting;
 	bool applying_lighting = true;
+	bool use_lighting = true;
 
 	// Window handle
 	GLFWwindow* window = nullptr;

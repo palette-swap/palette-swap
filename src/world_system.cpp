@@ -418,6 +418,11 @@ bool WorldSystem::check_debug_keys(int key, int action, int mod)
 		restart_game();
 	}
 
+	// Toggle Lighting
+	if (action == GLFW_RELEASE && (mod & GLFW_MOD_ALT) != 0 && key == GLFW_KEY_F) {
+		renderer->toggle_lighting();
+	}
+
 	// God mode
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_ALT) != 0 && key == GLFW_KEY_G) {
 		Stats& stats = registry.get<Stats>(player);

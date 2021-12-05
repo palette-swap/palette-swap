@@ -754,7 +754,7 @@ void RenderSystem::draw_map(const mat3& projection, ColorState color)
 	glBindTexture(GL_TEXTURE_2D, texture_id);
 	gl_has_errors();
 	for (auto [entity, room] : registry.view<Room>().each()) {
-		if (!room.visible) {
+		if (use_lighting && !room.visible) {
 			continue;
 		}
 
@@ -791,6 +791,8 @@ void RenderSystem::draw_map(const mat3& projection, ColorState color)
 		draw_triangles(transform, projection);
 	}
 }
+
+void RenderSystem::toggle_lighting() { use_lighting = !use_lighting; }
 
 void RenderSystem::prepare_for_lit_entity(GLuint program) const
 {
@@ -1072,11 +1074,11 @@ void RenderSystem::draw()
 		}
 	}
 
-	create_lighting_texture(projection_2d);
-	// Start applying lighting to various entities
-	applying_lighting = true;
-
-	
+	if (use_lighting) {
+		create_lighting_texture(projection_2d);
+		// Start applying lighting to various entities
+		applying_lighting = true;
+	}
 
 	auto render_requests_lambda = [&](Entity entity, RenderRequest& render_request) {
 		if (render_request.visible) {
@@ -1129,10 +1131,12 @@ void RenderSystem::draw()
 		}
 	}
 
-	draw_lighting(projection_2d);
+	if (use_lighting) {
+		draw_lighting(projection_2d);
 
-	// Done using lighting
-	applying_lighting = false;
+		// Done using lighting
+		applying_lighting = false;
+	}
 
 	draw_ui(projection_2d);
 
