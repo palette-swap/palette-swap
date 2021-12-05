@@ -36,13 +36,14 @@ void StorySystem::on_key(int /*key*/, int action, int /*mod*/)
 
 void StorySystem::check_cutscene()
 {
+	Entity player = registry.view<Player>().front();
+	uvec2 player_map_pos = registry.get<MapPosition>(player).position;
+	vec2 player_world_pos = MapUtility::map_position_to_world_position(player_map_pos);
 
 	for (auto [entity, radius_trigger] : registry.view<RadiusTrigger>().each()) {
-		Entity player = registry.view<Player>().front();
-		vec2 player_pos = MapUtility::map_position_to_world_position(registry.get<MapPosition>(player).position);
-
+		
 		vec2 trigger_pos = registry.get<WorldPosition>(entity).position;
-		if (length(trigger_pos - player_pos) <= radius_trigger.radius * MapUtility::tile_size) {
+		if (length(trigger_pos - player_world_pos) <= radius_trigger.radius * MapUtility::tile_size) {
 			current_cutscene_entity = entity;
 			CutScene c = registry.get<CutScene>(entity);
 			trigger_cutscene(c);
@@ -50,6 +51,18 @@ void StorySystem::check_cutscene()
 	}
 
 	// TODO: check if player and trigger's entity is in the same room
+	for (auto [entity] : registry.view<RoomTrigger>().each()) {
+		MapUtility::RoomID player_room_idx = MapUtility::get_room_index(player_map_pos);
+
+		uvec2 trigger_map_pos = registry.get<MapPosition>(entity).position;
+		MapUtility::RoomID trigger_room_idx = MapUtility::get_room_index(trigger_map_pos);
+
+		if (player_room_idx == trigger_room_idx) {
+			current_cutscene_entity = entity;
+			CutScene c = registry.get<CutScene>(entity);
+			trigger_cutscene(c);
+		}
+	}
 }
 
 void StorySystem::step()
@@ -159,7 +172,6 @@ void StorySystem::load_next_level()
 		if (enemy.type == EnemyType::Titho) {
 			vec2 position = registry.get<MapPosition>(entity).position;
 			auto entry_entity = animations->create_boss_entry_entity(EnemyType::Titho, position);
-			create_cutscene(entry_entity, entity, CutSceneType::BossEntry, 350, "This is the boss. Beat it!");
 		}
 	}
 }
