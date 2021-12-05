@@ -6,16 +6,22 @@
 
 void UISystem::on_key(int key, int action, int /*mod*/)
 {
-	if (!registry.get<UIGroup>(groups[(size_t)Groups::MainMenu]).visible) {
-		if (action == GLFW_PRESS && key == GLFW_KEY_I) {
-			if (player_can_act()) {
-				switch_to_group(groups[(size_t)Groups::Inventory]);
-				tutorials->destroy_tooltip(TutorialTooltip::ItemPickedUp);
-			} else {
-				switch_to_group(groups[(size_t)Groups::HUD]);
-			}
+	if (!game_in_progress()) {
+		return;
+	}
+
+	if (action == GLFW_PRESS && key == GLFW_KEY_I) {
+		if (!is_group_visible(Groups::Inventory)) {
+			switch_to_group(groups[(size_t)Groups::Inventory]);
+			tutorials->destroy_tooltip(TutorialTooltip::ItemPickedUp);
+		} else {
+			switch_to_group(groups[(size_t)Groups::HUD]);
 		}
-		if (action == GLFW_PRESS && key == GLFW_KEY_ESCAPE) {
+	}
+	if (action == GLFW_PRESS && key == GLFW_KEY_ESCAPE) {
+		if (!is_group_visible(Groups::PauseMenu)) {
+			switch_to_group(groups[(size_t)Groups::PauseMenu]);
+		} else {
 			switch_to_group(groups[(size_t)Groups::HUD]);
 		}
 	}
@@ -67,6 +73,9 @@ void UISystem::try_settle_held()
 
 void UISystem::switch_to_group(Entity group)
 {
+	if (registry.get<UIGroup>(group).visible) {
+		return;
+	}
 	bool was_inventory = registry.get<UIGroup>(groups[(size_t)Groups::Inventory]).visible;
 	try_settle_held();
 	destroy_tooltip();
@@ -86,6 +95,8 @@ void UISystem::switch_to_group(Entity group)
 		tutorials->destroy_tooltip(TutorialTooltip::ItemPickedUp);
 	}
 }
+
+bool UISystem::is_group_visible(Groups group) { return registry.get<UIGroup>(groups[(size_t)group]).visible; }
 
 void UISystem::destroy_tooltip()
 {
@@ -197,6 +208,10 @@ void UISystem::do_action(Button& button)
 		tutorials->destroy_tooltip(TutorialTooltip::UseResource);
 		break;
 	}
+	case ButtonAction::RestartGame: {
+		restart_world();
+		break;
+	}
 	default:
 		break;
 	}
@@ -298,7 +313,12 @@ void UISystem::on_mouse_move(vec2 mouse_screen_pos)
 	}
 }
 
-bool UISystem::player_can_act() { return registry.get<UIGroup>(groups[(size_t)Groups::HUD]).visible; }
+bool UISystem::player_can_act() { return is_group_visible(Groups::HUD); }
+
+bool UISystem::game_in_progress()
+{
+	return is_group_visible(Groups::HUD) || is_group_visible(Groups::Inventory) || is_group_visible(Groups::PauseMenu);
+}
 
 bool UISystem::has_current_attack() const
 {
@@ -350,6 +370,11 @@ void UISystem::update_resource_count()
 		registry.get<Text>(resource_displays.at(i)).text
 			= std::to_string(registry.get<Inventory>(registry.view<Player>().front()).resources.at(i));
 	}
+}
+
+void UISystem::end_game(bool victory)
+{
+	switch_to_group(groups.at((size_t)(victory ? Groups::VictoryScreen : Groups::DeathScreen)));
 }
 
 void UISystem::set_current_attack(Slot slot, size_t attack)

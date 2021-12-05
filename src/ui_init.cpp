@@ -3,11 +3,13 @@
 
 void UISystem::init(RenderSystem* render_system,
 					std::shared_ptr<TutorialSystem> tutorial_system,
-					std::function<void()> try_change_color)
+					std::function<void()> try_change_color,
+					std::function<void()> restart_world)
 {
 	renderer = render_system;
 	tutorials = std::move(tutorial_system);
 	this->try_change_color = std::move(try_change_color);
+	this->restart_world = std::move(restart_world);
 }
 
 void UISystem::restart_game()
@@ -19,7 +21,7 @@ void UISystem::restart_game()
 	destroy_tooltip();
 
 	for (size_t i = 0; i < (size_t)Groups::Count; i++) {
-		groups.at(i) = create_ui_group(i > 1, (Groups)i);
+		groups.at(i) = create_ui_group(i == (size_t)Groups::MainMenu, (Groups)i);
 	}
 
 	Entity player = registry.view<Player>().front();
@@ -104,6 +106,58 @@ void UISystem::restart_game()
 				  ButtonAction::SwitchToGroup,
 				  groups[(size_t)Groups::HUD],
 				  "Start");
+
+	// Pause Menu Background
+	create_background(groups[(size_t)Groups::PauseMenu], vec2(.5, .5), vec2(1, 1), 1.f, vec4(0, 0, 0, .5));
+
+	// Pause Menu
+	Entity paused = create_ui_text(
+		groups[(size_t)Groups::PauseMenu], vec2(.5, .25), "PAUSED", Alignment::Center, Alignment::Start, 120);
+	registry.get<Text>(paused).border = 12;
+	create_button(groups[(size_t)Groups::PauseMenu],
+				  vec2(.5, .5),
+				  vec2(.1, .1),
+				  vec4(.1, .1, .1, 1),
+				  ButtonAction::SwitchToGroup,
+				  groups[(size_t)Groups::HUD],
+				  "Resume");
+	create_button(groups[(size_t)Groups::PauseMenu],
+				  vec2(.5, .65),
+				  vec2(.1, .1),
+				  vec4(.1, .1, .1, 1),
+				  ButtonAction::RestartGame,
+				  entt::null,
+				  "Restart");
+
+	// Death Screen Background
+	create_background(groups[(size_t)Groups::DeathScreen], vec2(.5, .5), vec2(1, 1), 1.f, vec4(0, 0, 0, .5));
+
+	// Death Screen
+	Entity you_died = create_ui_text(
+		groups[(size_t)Groups::DeathScreen], vec2(.5, .25), "YOU DIED", Alignment::Center, Alignment::Start, 120);
+	registry.get<Text>(you_died).border = 12;
+	create_button(groups[(size_t)Groups::DeathScreen],
+				  vec2(.5, .5),
+				  vec2(.1, .1),
+				  vec4(.1, .1, .1, 1),
+				  ButtonAction::RestartGame,
+				  entt::null,
+				  "Restart");
+
+	// Victory Screen Background
+	create_background(groups[(size_t)Groups::VictoryScreen], vec2(.5, .5), vec2(1, 1), 1.f, vec4(1, 1, 1, 1));
+
+	// Victory Screen
+	Entity you_won = create_ui_text(
+		groups[(size_t)Groups::VictoryScreen], vec2(.5, .25), "YOU WON!", Alignment::Center, Alignment::Start, 120);
+	registry.get<Text>(you_won).border = 12;
+	create_button(groups[(size_t)Groups::VictoryScreen],
+				  vec2(.5, .5),
+				  vec2(.1, .1),
+				  vec4(.1, .1, .1, 1),
+				  ButtonAction::RestartGame,
+				  entt::null,
+				  "Restart");
 }
 
 Entity create_ui_group(bool visible, Groups identifier)

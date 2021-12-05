@@ -8,7 +8,10 @@
 class UISystem {
 public:
 
-	void init(RenderSystem* render_system, std::shared_ptr<TutorialSystem> tutorial_system, std::function<void()> change_color);
+	void init(RenderSystem* render_system,
+			  std::shared_ptr<TutorialSystem> tutorial_system,
+			  std::function<void()> change_color,
+			  std::function<void()> restart_world);
 
 	void restart_game();
 
@@ -17,6 +20,7 @@ public:
 	void on_mouse_move(vec2 mouse_screen_pos);
 
 	bool player_can_act();
+	bool game_in_progress();
 
 	bool has_current_attack() const;
 	Attack& get_current_attack();
@@ -26,10 +30,13 @@ public:
 	void add_to_inventory(Entity item, size_t slot);
 	void update_resource_count();
 
+	void end_game(bool victory);
+
 private:
 	void try_settle_held();
 
 	void switch_to_group(Entity group);
+	bool is_group_visible(Groups group);
 
 	// Remove tooltip from group, destroy entity
 	void destroy_tooltip();
@@ -66,6 +73,7 @@ private:
 	RenderSystem* renderer;
 	std::shared_ptr<TutorialSystem> tutorials;
 	std::function<void()> try_change_color;
+	std::function<void()> restart_world;
 
 	std::vector<std::function<void()>> show_world_callbacks;
 };

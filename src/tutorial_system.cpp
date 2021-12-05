@@ -46,7 +46,7 @@ void TutorialSystem::trigger_tooltip(TutorialTooltip tip, Entity target)
 		break;
 	}
 	case TutorialTooltip::ReadyToEquip: {
-		message = "Drag to slot to equip";
+		message = "Drag to slot to equip\n Press D to drop";
 		alignments.second = Alignment::Start;
 		pos = registry.get<ScreenPosition>(target).position + registry.get<UIRenderRequest>(target).size * vec2(0, .5);
 		is_world = false;
@@ -54,7 +54,7 @@ void TutorialSystem::trigger_tooltip(TutorialTooltip tip, Entity target)
 		break;
 	}
 	case TutorialTooltip::OpenedInventory: {
-		message = "Click to Close or press ESC";
+		message = "Click to Close or press I";
 		alignments.first = Alignment::Start;
 		target = get_tooltip_target(tip);
 		pos = registry.get<ScreenPosition>(target).position + registry.get<UIRenderRequest>(target).size * vec2(1, .5);

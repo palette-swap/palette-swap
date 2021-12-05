@@ -141,7 +141,8 @@ GLFWwindow* WorldSystem::create_window(int width, int height)
 void WorldSystem::init(RenderSystem* renderer_arg)
 {
 	this->renderer = renderer_arg;
-	ui->init(renderer_arg, tutorials, [this]() { try_change_color(); });
+	ui->init(
+		renderer_arg, tutorials, [this]() { try_change_color(); }, [this]() { restart_game(); });
 	animations->init(renderer_arg);
 
 	// Playing background music indefinitely
@@ -168,11 +169,11 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		end_player_turn();
 	}
 	if ((registry.get<Stats>(player).health <= 0) && turns->ready_to_act(player)) {
-		restart_game();
+		ui->end_game(false);
 		return true;
 	}
 	if (end_of_game && turns->ready_to_act(player)) {
-		restart_game();
+		ui->end_game(true);
 		return true;
 	}
 
@@ -204,6 +205,9 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 // Reset the world state to its initial state
 void WorldSystem::restart_game()
 {
+	so_loud->seek(bgm_red, 0);
+	so_loud->seek(bgm_blue, 0);
+
 	// Debugging for memory/component leaks
 	std::cout << "Alive: " << registry.alive() << std::endl;
 	printf("Restarting\n");

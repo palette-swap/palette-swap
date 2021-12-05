@@ -899,7 +899,10 @@ enum class Groups {
 	HUD = 0,
 	Inventory = HUD + 1,
 	MainMenu = Inventory + 1,
-	Tooltips = MainMenu + 1,
+	PauseMenu = MainMenu + 1,
+	DeathScreen = PauseMenu + 1,
+	VictoryScreen = DeathScreen + 1,
+	Tooltips = VictoryScreen + 1,
 	Count = Tooltips + 1,
 };
 
@@ -989,6 +992,7 @@ enum class ButtonAction {
 	TryHeal,
 	TryMana,
 	TryPalette,
+	RestartGame,
 };
 
 struct Button {
