@@ -11,7 +11,7 @@
   "enemies": [
     {
       "team": 3,
-      "type": 16,
+      "type": 18,
       "tile_area": [ 3, 3 ],
       "tile_center": [ 1, 1 ],
       "state": 0,

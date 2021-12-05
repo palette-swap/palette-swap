@@ -425,7 +425,11 @@ void RenderSystem::draw_effect(Entity entity, const EffectRenderRequest& render_
 	}
 
 	if (render_request.used_effect == EFFECT_ASSET_ID::AOE) {
+		
 		AOESquare& aoe_status = registry.get<AOESquare>(entity);
+		if (!aoe_status.actual_attack_displayed) {
+			transform.scale(vec2(1 / 3.f, 1 / 3.f));
+		}
 		GLint actual_aoe = glGetUniformLocation(program, "actual_aoe");
 		glUniform1i(actual_aoe, static_cast<GLint>(aoe_status.actual_attack_displayed));
 	}

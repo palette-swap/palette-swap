@@ -58,6 +58,8 @@ class RenderSystem {
 			textures_path("./02-Bosses/Titho/Titho Spritesheet.png"),
 			textures_path("./02-Bosses/Titho/Titho Attack Spritesheet.png"),
 			textures_path("./02-Bosses/Titho/Titho Entry Animation.png"),
+			textures_path("./02-Bosses/Dragon/Dragon Spritesheet.png"),
+			textures_path("./02-Bosses/Dragon/Dragon Attack Spritesheet.png"),
 			textures_path("./04-NPCs/Guide/Guide Spritesheet.png"),
 			textures_path("cannon_ball.png"),
 			textures_path("/01-Player/Spell Spritesheet.png"),

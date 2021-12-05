@@ -159,6 +159,8 @@ static constexpr std::array<vec2, texture_count> scaling_factors = {
 	vec2(MapUtility::tile_size * 5, MapUtility::tile_size * 5),
 	vec2(MapUtility::tile_size * 3, MapUtility::tile_size * 3),
 	vec2(MapUtility::tile_size * 5, MapUtility::tile_size * 5),
+	vec2(MapUtility::tile_size * 5, MapUtility::tile_size * 5),
+	vec2(MapUtility::tile_size * 3, MapUtility::tile_size * 3),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size * 0.5, MapUtility::tile_size * 0.5),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
@@ -284,7 +286,7 @@ enum class EnemyType {
 	EnemyCount = AOERingGen + 1,
 };
 
-const std::array<EnemyType, ((size_t)EnemyType::EnemyCount - (size_t)EnemyType::KingMush)> enemy_type_bosses = {
+const std::array<EnemyType, ((size_t)EnemyType::AOERingGen - (size_t)EnemyType::KingMush)> enemy_type_bosses = {
 	EnemyType::KingMush,
 	EnemyType::Titho,
 	EnemyType::Dragon,
@@ -649,13 +651,14 @@ const std::array<AnimationProfile, static_cast<int>(EnemyType::EnemyCount)> enem
 	AnimationProfile { TEXTURE_ASSET_ID::KOBOLD_MAGE, 0.f },
 	AnimationProfile { TEXTURE_ASSET_ID::KING_MUSH, 0.f }, 
 	AnimationProfile { TEXTURE_ASSET_ID::TITHO, 0.f },
-	AnimationProfile { TEXTURE_ASSET_ID::KING_MUSH, 0.f },
-	AnimationProfile { TEXTURE_ASSET_ID::SLIME, 0.f },
+	AnimationProfile { TEXTURE_ASSET_ID::DRAGON, 0.f },
+	AnimationProfile { TEXTURE_ASSET_ID::DRAGON, 0.f },
 };
 
 const std::map<EnemyType, BossEntryAnimation> boss_type_entry_animation_map {
 	{ EnemyType::KingMush, BossEntryAnimation { TEXTURE_ASSET_ID::KING_MUSH_ENTRY, 32 } },
 	{ EnemyType::Titho, BossEntryAnimation { TEXTURE_ASSET_ID::TITHO_ENTRY, 48 } },
+	{ EnemyType::Dragon, BossEntryAnimation { TEXTURE_ASSET_ID::TITHO_ENTRY, 48 } },
 };
 
 const std::array<int, (size_t)EnemyState::EnemyStateCount> enemy_state_to_animation_state = {
@@ -764,8 +767,8 @@ const std::array<int, (size_t)DamageType::Count> damage_type_to_spell_impact = {
 const std::map<EnemyType, TEXTURE_ASSET_ID> boss_type_attack_spritesheet { 
 	{ EnemyType::KingMush, TEXTURE_ASSET_ID::KING_MUSH_ATTACKS } ,
 	{ EnemyType::Titho, TEXTURE_ASSET_ID::TITHO_ATTACKS },
-	{ EnemyType::Dragon, TEXTURE_ASSET_ID::KING_MUSH_ATTACKS },
-	{ EnemyType::AOERingGen, TEXTURE_ASSET_ID::KING_MUSH_ATTACKS },
+	{ EnemyType::Dragon, TEXTURE_ASSET_ID::DRAGON_ATTACKS },
+	{ EnemyType::AOERingGen, TEXTURE_ASSET_ID::DRAGON_ATTACKS },
 };
 
 struct RoomAnimation {

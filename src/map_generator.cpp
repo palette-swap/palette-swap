@@ -25,7 +25,8 @@ const static std::array<std::string, (size_t)EnemyType::EnemyCount> enemy_templa
 	enemy_template_path("Drake.json"),		   enemy_template_path("Mushroom.json"), enemy_template_path("Spider.json"),		 
 	enemy_template_path("Clone.json"),		   enemy_template_path("Sword Soldier.json"),	   enemy_template_path("Spear Soldier.json"),
 	enemy_template_path("Apparition.json"),	   enemy_template_path("Kobold Warrior.json"),
-	enemy_template_path("Kobold Mage.json"),   enemy_template_path("KingMush.json"), enemy_template_path("Titho.json"),
+	enemy_template_path("Kobold Mage.json"),   enemy_template_path("KingMush.json"), enemy_template_path("Titho.json"),		   
+	enemy_template_path("Dragon.json"),
 };
 
 static void load_enemies_from_file()
