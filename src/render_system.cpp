@@ -1053,8 +1053,8 @@ void RenderSystem::draw()
 	// First render to the custom framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
 	gl_has_errors();
-	prepare_buffer((inactive_color == ColorState::Blue) ? vec3(57.f / 256, 51.f / 256, 81.f / 256)
-														: vec3(58.f / 256, 66.f / 256, 60.f / 256));
+	prepare_buffer((inactive_color == ColorState::Blue) ? vec3(7.f / 256, 6.f / 256, 6.f / 256)
+														: vec3(7.f / 256, 6.f / 256, 6.f / 256));
 	mat3 projection_2d = create_projection_matrix();
 
 	draw_map(projection_2d, inactive_color == ColorState::Blue ? ColorState::Red : ColorState::Blue);

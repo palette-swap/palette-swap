@@ -1,1 +1,1 @@
-{"generation_conf":{"seed":193,"level_path_length":7,"room_density":0.10000000000000004,"side_room_percentage":0.0,"room_path_complexity":0.10000000000000003,"room_traps_density":0.0,"room_smoothness":0,"enemies_density":0.15}}
+{"generation_conf":{"seed":195,"level_path_length":6,"room_density":0.10000000000000003,"side_room_percentage":0.0,"room_path_complexity":0.10000000000000003,"room_traps_density":0.0,"room_smoothness":0,"enemies_density":0.15,"room_difficulty":1}}

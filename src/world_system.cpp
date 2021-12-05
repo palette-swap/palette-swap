@@ -385,7 +385,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 			break;
 		}
 		case GLFW_KEY_LEFT_SHIFT: {
-			if (turns->ready_to_act(player) && combat->try_pickup_items(player)) {
+			if (turns->ready_to_act(player) && (combat->try_pickup_items(player) || map_generator->interact_with_surrounding_tile(player))) {
 				tutorials->destroy_tooltip(TutorialTooltip::ItemDropped);
 				turns->skip_team_action(player);
 			}
@@ -501,7 +501,11 @@ bool WorldSystem::check_debug_keys(int key, int action, int mod)
 			map_generator->increase_enemy_density();
 		} else if (key == GLFW_KEY_H && (action == GLFW_RELEASE)) {
 			map_generator->decrease_enemy_density();
-		}
+		} else if (key == GLFW_KEY_U && (action == GLFW_RELEASE)) {
+			map_generator->increase_room_difficulty();
+		} else if (key == GLFW_KEY_I && (action == GLFW_RELEASE)) {
+			map_generator->decrease_room_difficulty();
+		} 
 		return true;
 	}
 	// for debugging levels
@@ -604,25 +608,16 @@ void WorldSystem::move_player(Direction direction)
 		arrow_position.position += (vec2(new_pos) - vec2(map_pos.position)) * MapUtility::tile_size;
 	}
 
-	map_pos.position = new_pos;
+	MapGeneratorSystem::MoveState move_ret = map_generator->move_player_to_tile(map_pos.position, new_pos);
+	if (move_ret == MapGeneratorSystem::MoveState::Failed) {
+		return;
+	}
+
 	turns->complete_team_action(player);
 
 	// TODO: move the logics to map generator system
-	if (map_generator->is_next_level_tile(new_pos)) {
-		if (map_generator->is_last_level()) {
-			end_of_game = true;
-			return;
-		}
-
-		map_generator->load_next_level();
+	if (move_ret == MapGeneratorSystem::MoveState::NextLevel) {
 		story->load_next_level();
-		animations->set_all_inactive_colours(turns->get_inactive_color());
-	} else if (map_generator->is_last_level_tile(new_pos)) {
-		map_generator->load_last_level();
-		animations->set_all_inactive_colours(turns->get_inactive_color());
-	} else if (map_generator->is_trap_tile(new_pos)) {
-		// TODO: add different effects for trap tiles
-		registry.get<Stats>(player).health -= 10;
 	}
 	story->check_cutscene();
 }
