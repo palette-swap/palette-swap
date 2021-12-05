@@ -160,6 +160,11 @@ void LootSystem::drop_item(uvec2 position, float mode_tier)
 	if (template_entity == entt::null) {
 		return;
 	}
+	drop_item(position, template_entity);
+}
+
+void LootSystem::drop_item(uvec2 position, Entity template_entity)
+{
 	ItemTemplate& item = registry.get<ItemTemplate>(template_entity);
 	Entity loot = registry.create();
 	registry.emplace<Item>(loot, template_entity);

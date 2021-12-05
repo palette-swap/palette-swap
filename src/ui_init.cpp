@@ -2,11 +2,13 @@
 #include "ui_system.hpp"
 
 void UISystem::init(RenderSystem* render_system,
+					std::shared_ptr<LootSystem> loot_system,
 					std::shared_ptr<TutorialSystem> tutorial_system,
 					std::function<void()> try_change_color,
 					std::function<void()> restart_world)
 {
 	renderer = render_system;
+	loot = std::move(loot_system);
 	tutorials = std::move(tutorial_system);
 	this->try_change_color = std::move(try_change_color);
 	this->restart_world = std::move(restart_world);

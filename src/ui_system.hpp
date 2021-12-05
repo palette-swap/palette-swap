@@ -2,6 +2,7 @@
 
 #include "components.hpp"
 
+#include "loot_system.hpp"
 #include "render_system.hpp"
 #include "tutorial_system.hpp"
 
@@ -9,13 +10,14 @@ class UISystem {
 public:
 
 	void init(RenderSystem* render_system,
+			  std::shared_ptr<LootSystem> loot_system,
 			  std::shared_ptr<TutorialSystem> tutorial_system,
 			  std::function<void()> change_color,
 			  std::function<void()> restart_world);
 
 	void restart_game();
 
-	void on_key(int key, int action, int /*mod*/);
+	void on_key(int key, int action, int /*mod*/, dvec2 mouse_screen_pos);
 	bool on_left_click(int action, dvec2 mouse_screen_pos);
 	void on_mouse_move(vec2 mouse_screen_pos);
 
@@ -71,6 +73,7 @@ private:
 	Entity tooltip = entt::null;
 
 	RenderSystem* renderer;
+	std::shared_ptr<LootSystem> loot;
 	std::shared_ptr<TutorialSystem> tutorials;
 	std::function<void()> try_change_color;
 	std::function<void()> restart_world;

@@ -4,7 +4,7 @@
 
 #include "geometry.hpp"
 
-void UISystem::on_key(int key, int action, int /*mod*/)
+void UISystem::on_key(int key, int action, int /*mod*/, dvec2 mouse_screen_pos)
 {
 	if (!game_in_progress()) {
 		return;
@@ -19,10 +19,25 @@ void UISystem::on_key(int key, int action, int /*mod*/)
 		}
 	}
 	if (action == GLFW_PRESS && key == GLFW_KEY_ESCAPE) {
-		if (!is_group_visible(Groups::PauseMenu)) {
+		if (player_can_act()) {
 			switch_to_group(groups[(size_t)Groups::PauseMenu]);
 		} else {
 			switch_to_group(groups[(size_t)Groups::HUD]);
+		}
+	}
+
+	if (action == GLFW_PRESS && key == GLFW_KEY_D && is_group_visible(Groups::Inventory)) {
+		for (auto [entity, draggable, element, screen_pos, interact_area] :
+			 registry.view<Draggable, UIElement, ScreenPosition, InteractArea>().each()) {
+			if (element.visible && Geometry::Rectangle(screen_pos.position, interact_area.size).contains(vec2(mouse_screen_pos))) {
+				loot->drop_item(registry.get<MapPosition>(registry.view<Player>().front()).position,
+								registry.get<Item>(entity).item_template);
+				insert_into_slot(entt::null, draggable.container);
+				registry.get<UISlot>(draggable.container).contents = entt::null;
+				UIGroup::remove_element(element.group, entity, UILayer::Content);
+				registry.destroy(entity);
+				break;
+			}
 		}
 	}
 

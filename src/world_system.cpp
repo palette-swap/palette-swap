@@ -142,7 +142,7 @@ void WorldSystem::init(RenderSystem* renderer_arg)
 {
 	this->renderer = renderer_arg;
 	ui->init(
-		renderer_arg, tutorials, [this]() { try_change_color(); }, [this]() { restart_game(); });
+		renderer_arg, loot, tutorials, [this]() { try_change_color(); }, [this]() { restart_game(); });
 	animations->init(renderer_arg);
 
 	// Playing background music indefinitely
@@ -336,7 +336,10 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 		return;
 	}
 	if (turns->ready_to_act(player)) {
-		ui->on_key(key, action, mod);
+		// Get screen position of mouse
+		dvec2 mouse_screen_pixels_pos = {};
+		glfwGetCursorPos(window, &mouse_screen_pixels_pos.x, &mouse_screen_pixels_pos.y);
+		ui->on_key(key, action, mod, renderer->mouse_pos_to_screen_pos(mouse_screen_pixels_pos));
 	}
 	if (!ui->player_can_act()) {
 		return;
