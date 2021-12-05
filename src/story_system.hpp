@@ -26,14 +26,13 @@ private:
 	Entity current_cutscene_entity = entt::null;
 	std::deque<std::string> conversations;
 	std::deque<std::string> text_frames; 
-	void trigger_cutscene(CutScene& c, const vec2& trigger_pos);
+	void trigger_cutscene(CutScene& c);
 	void proceed_conversation();
-	bool in_cutscene_animation();
 	void render_text_each_frame();
-	void trigger_conversation(const vec2& trigger_pos);
+	void trigger_conversation();
 
 	// max text length for one conversation
-	static constexpr uint max_line_len = 40;
+	static constexpr uint max_line_len = 80;
 	static constexpr uint max_word_in_conversation = 7;
 
 	std::shared_ptr<AnimationSystem> animations;

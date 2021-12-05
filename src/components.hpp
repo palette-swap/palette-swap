@@ -117,7 +117,7 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 	KING_MUSH_ENTRY = KING_MUSH_ATTACKS + 1,
 	TITHO = KING_MUSH_ENTRY + 1,
 	TITHO_ATTACKS = TITHO + 1,
-	//NPCS
+	// NPCS
 	GUIDE = TITHO_ATTACKS + 1,
 	// Misc Assets
 	CANNONBALL = GUIDE + 1,
@@ -263,15 +263,15 @@ enum class EnemyBehaviour {
 };
 
 const std::array<EnemyBehaviour, (size_t)EnemyType::EnemyCount> enemy_type_to_behaviour = {
-	EnemyBehaviour::Dummy,		EnemyBehaviour::Cowardly,  EnemyBehaviour::Basic,	 EnemyBehaviour::Defensive,
-	EnemyBehaviour::Aggressive, EnemyBehaviour::Basic,	   EnemyBehaviour::Basic,	 EnemyBehaviour::Cowardly,
-	EnemyBehaviour::Aggressive, EnemyBehaviour::Defensive, EnemyBehaviour::Basic,	 EnemyBehaviour::Basic,
-	EnemyBehaviour::Basic,		EnemyBehaviour::Basic,	   EnemyBehaviour::Basic,	 EnemyBehaviour::Summoner,
+	EnemyBehaviour::Dummy,		  EnemyBehaviour::Cowardly,  EnemyBehaviour::Basic, EnemyBehaviour::Defensive,
+	EnemyBehaviour::Aggressive,   EnemyBehaviour::Basic,	 EnemyBehaviour::Basic, EnemyBehaviour::Cowardly,
+	EnemyBehaviour::Aggressive,   EnemyBehaviour::Defensive, EnemyBehaviour::Basic, EnemyBehaviour::Basic,
+	EnemyBehaviour::Basic,		  EnemyBehaviour::Basic,	 EnemyBehaviour::Basic, EnemyBehaviour::Summoner,
 	EnemyBehaviour::WeaponMaster,
 };
 
 // Small Enemy Behaviours (State Machines) uses the following states.
-// Dummy:			Idle, Active. 
+// Dummy:			Idle, Active.
 // Basic:			Idle, Active.
 // Cowardly:		Idle, Active, Flinched.
 // Defensive:		Idle, Active, Immortal.
@@ -556,22 +556,22 @@ struct AnimationProfile {
 // Remember to add a mapping to a new texture (or use a default such as a slime)/enemy type
 // This will help load the animation by enemy type when you load enemies
 const std::array<AnimationProfile, static_cast<int>(EnemyType::EnemyCount)> enemy_type_to_animation_profile {
-	AnimationProfile { TEXTURE_ASSET_ID::DUMMY, 0.f }, 
-	AnimationProfile { TEXTURE_ASSET_ID::SLIME, 0.2f }, 
+	AnimationProfile { TEXTURE_ASSET_ID::DUMMY, 0.f },
+	AnimationProfile { TEXTURE_ASSET_ID::SLIME, 0.2f },
 	AnimationProfile { TEXTURE_ASSET_ID::RAVEN, 0.f },
-	AnimationProfile { TEXTURE_ASSET_ID::ARMOR, 0.f }, 
-	AnimationProfile { TEXTURE_ASSET_ID::TREEANT, 0.f }, 
+	AnimationProfile { TEXTURE_ASSET_ID::ARMOR, 0.f },
+	AnimationProfile { TEXTURE_ASSET_ID::TREEANT, 0.f },
 	AnimationProfile { TEXTURE_ASSET_ID::WRAITH, 0.1f },
-	AnimationProfile { TEXTURE_ASSET_ID::DRAKE, 0.1f }, 
-	AnimationProfile { TEXTURE_ASSET_ID::MUSHROOM, 0.2f }, 
+	AnimationProfile { TEXTURE_ASSET_ID::DRAKE, 0.1f },
+	AnimationProfile { TEXTURE_ASSET_ID::MUSHROOM, 0.2f },
 	AnimationProfile { TEXTURE_ASSET_ID::SPIDER, 0.2f },
-	AnimationProfile { TEXTURE_ASSET_ID::CLONE, 0.f }, 
+	AnimationProfile { TEXTURE_ASSET_ID::CLONE, 0.f },
 	AnimationProfile { TEXTURE_ASSET_ID::SWORD_SOLDIER, 0.f },
 	AnimationProfile { TEXTURE_ASSET_ID::SPEAR_SOLDIER, 0.f },
 	AnimationProfile { TEXTURE_ASSET_ID::APPARITION, 0.f },
 	AnimationProfile { TEXTURE_ASSET_ID::KOBOLD_WARRIOR, 0.f },
 	AnimationProfile { TEXTURE_ASSET_ID::KOBOLD_MAGE, 0.f },
-	AnimationProfile { TEXTURE_ASSET_ID::KING_MUSH, 0.f }, 
+	AnimationProfile { TEXTURE_ASSET_ID::KING_MUSH, 0.f },
 	AnimationProfile { TEXTURE_ASSET_ID::TITHO, 0.f },
 };
 
@@ -645,7 +645,7 @@ struct TransientEventAnimation {
 };
 
 // Denotes that an animation event should stop being displayed after completion, but not erased
-// Currently used for boss AOEs, as well as boss intro animations 
+// Currently used for boss AOEs, as well as boss intro animations
 struct UndisplayEventAnimation {
 	int frame = 0;
 };
@@ -682,9 +682,9 @@ const std::array<int, (size_t)DamageType::Count> damage_type_to_spell_impact = {
 	7, // Wind effect
 };
 
-const std::map<EnemyType, TEXTURE_ASSET_ID> boss_type_attack_spritesheet { 
-	{ EnemyType::KingMush, TEXTURE_ASSET_ID::KING_MUSH_ATTACKS } ,
-	{EnemyType::Titho, TEXTURE_ASSET_ID::TITHO_ATTACKS } };
+const std::map<EnemyType, TEXTURE_ASSET_ID> boss_type_attack_spritesheet {
+	{ EnemyType::KingMush, TEXTURE_ASSET_ID::KING_MUSH_ATTACKS }, { EnemyType::Titho, TEXTURE_ASSET_ID::TITHO_ATTACKS }
+};
 //---------------------------------------------------------------------------
 //-------------------------		    Physics         -------------------------
 //---------------------------------------------------------------------------
@@ -921,13 +921,21 @@ struct Button {
 };
 
 enum class CutSceneType {
-	BossEntry
+	BossEntry = 0,
+	ItemDrop = BossEntry + 1,
+	Count = ItemDrop + 1,
+};
+
+struct RoomTrigger {
+};
+
+struct RadiusTrigger {
+	// radius is based on number of TILE
+	float radius;
 };
 // CutScene
 struct CutScene {
-	Entity actual_entity;
-	Entity cutscene_ui;
 	CutSceneType type;
-	float radius;
+	Entity ui_entity;
 	std::string texts;
 };

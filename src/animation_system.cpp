@@ -301,6 +301,7 @@ void AnimationSystem::player_red_blue_animation(const Entity& player, ColorState
 	}
 }
 
+// TODO: remove boss intro entity and simply use boss entity itself to register animation for cutscene
 Entity AnimationSystem::create_boss_entry_entity(EnemyType boss_type, uvec2 map_position) {
 
 	auto boss_entry_entity = registry.create();

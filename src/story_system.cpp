@@ -7,7 +7,7 @@ void StorySystem::restart_game()
 	current_cutscene_entity = entt::null;
 	boss_created = false;
 	for (auto [entity, cutscene] : registry.view<CutScene>().each()) {
-		registry.destroy(cutscene.cutscene_ui);
+		registry.destroy(cutscene.ui_entity);
 		registry.destroy(entity);
 	}
 }
@@ -36,15 +36,20 @@ void StorySystem::on_key(int /*key*/, int action, int /*mod*/)
 
 void StorySystem::check_cutscene()
 {
-	Entity player = registry.view<Player>().front();
-	vec2 player_pos = MapUtility::map_position_to_world_position(registry.get<MapPosition>(player).position);
-	for (auto [entity, cutscene] : registry.view<CutScene>().each()) {
-		vec2 trigger_pos = MapUtility::map_position_to_world_position(registry.get<MapPosition>(entity).position);
-		if (length(trigger_pos - player_pos) <= cutscene.radius) {
+
+	for (auto [entity, radius_trigger] : registry.view<RadiusTrigger>().each()) {
+		Entity player = registry.view<Player>().front();
+		vec2 player_pos = MapUtility::map_position_to_world_position(registry.get<MapPosition>(player).position);
+
+		vec2 trigger_pos = registry.get<WorldPosition>(entity).position;
+		if (length(trigger_pos - player_pos) <= radius_trigger.radius * MapUtility::tile_size) {
 			current_cutscene_entity = entity;
-			trigger_cutscene(cutscene, trigger_pos);
+			CutScene c = registry.get<CutScene>(entity);
+			trigger_cutscene(c);
 		}
 	}
+
+	// TODO: check if player and trigger's entity is in the same room
 }
 
 void StorySystem::step()
@@ -53,44 +58,39 @@ void StorySystem::step()
 		return;
 	}
 
-	if (animations->boss_intro_complete(current_cutscene_entity) && !boss_created) {
-		Entity actual_entity = registry.get<CutScene>(current_cutscene_entity).actual_entity;
-		registry.get<RenderRequest>(actual_entity).visible = true;
-		boss_created = true;
-	}
 	CutScene c = registry.get<CutScene>(current_cutscene_entity);
-	if (!registry.get<UIGroup>(c.cutscene_ui).visible && animations->boss_intro_complete(current_cutscene_entity)) {
+	if (!registry.get<UIGroup>(c.ui_entity).visible && animations->boss_intro_complete(current_cutscene_entity)) {
 		registry.destroy(current_cutscene_entity);
 		current_cutscene_entity = entt::null;
-		boss_created = false;
 	}
 	render_text_each_frame();
 }
 
-void StorySystem::trigger_cutscene(CutScene& c, const vec2& trigger_pos)
+void StorySystem::trigger_cutscene(CutScene& c)
 {
-
-	std::stringstream ss(c.texts);
-	int word_count = 0;
-	std::string buff;
-	std::string acc;
-	while (getline(ss, buff, ' ')) {
-		acc += buff + " ";
-		if (++word_count >= max_word_in_conversation) {
-			conversations.push_back(acc);
-			acc = "";
-			word_count = 0;
-		}
-	}
-	conversations.push_back(acc);
 	trigger_animation(c.type);
-	trigger_conversation(trigger_pos);
+	if (!c.texts.empty()) {
+		std::stringstream ss(c.texts);
+		int word_count = 0;
+		std::string buff;
+		std::string acc;
+		while (getline(ss, buff, ' ')) {
+			acc += buff + " ";
+			if (++word_count >= max_word_in_conversation) {
+				conversations.push_back(acc);
+				acc = "";
+				word_count = 0;
+			}
+		}
+		conversations.push_back(acc);
+		trigger_conversation();
+	}
 }
 
 void StorySystem::proceed_conversation()
 {
 	CutScene& c = registry.get<CutScene>(current_cutscene_entity);
-	Entity ui_entity = c.cutscene_ui;
+	Entity ui_entity = c.ui_entity;
 
 	if (conversations.empty() && text_frames.empty()) {
 		registry.get<UIGroup>(ui_entity).visible = false;
@@ -109,23 +109,13 @@ void StorySystem::proceed_conversation()
 	}
 }
 
-bool StorySystem::in_cutscene_animation()
-{
-	assert(current_cutscene_entity != entt::null);
-	if (registry.any_of<Animation>(current_cutscene_entity)) {
-		Animation a = registry.get<Animation>(current_cutscene_entity);
-		return a.frame <= a.max_frames - 2;
-	}
-	return false;
-}
-
 void StorySystem::render_text_each_frame()
 {
 	if (text_frames.empty()) {
 		return;
 	}
 	CutScene c = registry.get<CutScene>(current_cutscene_entity);
-	UIGroup group = registry.get<UIGroup>(c.cutscene_ui);
+	UIGroup group = registry.get<UIGroup>(c.ui_entity);
 	Entity text_entity = group.first_elements.at(static_cast<size_t>(UILayer::Content));
 	Text& text_comp = registry.get<Text>(text_entity);
 
@@ -138,14 +128,11 @@ void StorySystem::render_text_each_frame()
 	}
 }
 
-void StorySystem::trigger_conversation(const vec2& trigger_pos)
+void StorySystem::trigger_conversation()
 {
 	CutScene c = registry.get<CutScene>(current_cutscene_entity);
-	Entity camera = registry.view<Camera>().front();
-	WorldPosition& camera_world_pos = registry.get<WorldPosition>(camera);
-	UIGroup& ui_group = registry.get<UIGroup>(c.cutscene_ui);
+	UIGroup& ui_group = registry.get<UIGroup>(c.ui_entity);
 	ui_group.visible = true;
-	camera_world_pos.position = trigger_pos;
 	proceed_conversation();
 }
 
@@ -161,14 +148,12 @@ void StorySystem::trigger_animation(CutSceneType type)
 	}
 }
 
-void StorySystem::load_next_level() { 
+void StorySystem::load_next_level()
+{
 	for (auto [entity, enemy] : registry.view<Enemy>().each()) {
 		if (enemy.type == EnemyType::KingMush) {
 			vec2 position = registry.get<MapPosition>(entity).position;
-			auto entry_entity = animations->create_boss_entry_entity(EnemyType::KingMush, position);
-			std::string texts("sssssssssssssssssssssssssssssssssssssssssssss");
-			create_cutscene(entry_entity, entity, CutSceneType::BossEntry, 350, texts);
-			// printf("Number of conversation characters: %d", texts.length());
+			std::string texts("This is the boss! Beat it!");
 		}
 	}
 }
