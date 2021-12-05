@@ -182,7 +182,7 @@ void UISystem::restart_game()
 
 	// Help
 	Entity help
-		= create_ui_text(groups[(size_t)Groups::Help], vec2(.5, .1), "HELP", Alignment::Center, Alignment::Center, 120);
+		= create_ui_text(groups[(size_t)Groups::Help], vec2(.5, .15), "HELP", Alignment::Center, Alignment::Center, 120);
 	registry.get<Text>(help).border = 12;
 	create_button(groups[(size_t)Groups::Help],
 				  vec2(.02 * window_height_px / window_width_px, .02),
@@ -194,7 +194,18 @@ void UISystem::restart_game()
 				  48u,
 				  Alignment::Start,
 				  Alignment::Start);
-	static constexpr std::string_view help_text = "=In Game=\n  WASD - Move\n  Left Click - Attack\n  H - Consume Health Potion\n  SPACE - Palette Swap\n  SHIFT - Pickup Item\n=Inventory=\n  Mouse Over + D - Drop\n=Menus=\n  I - Inventory\n  ESC - Pause";
+	static constexpr std::string_view help_text = 1 + R"(
+                ==In Game==
+WASD                 -                  Move
+Left Click           -                Attack
+H                    - Consume Health Potion
+SPACE                -          Palette Swap
+SHIFT                -           Pickup Item
+               ==Inventory==
+Mouse Over + D       -                  Drop
+                 ==Menus==
+I                    -             Inventory
+ESC                  -                 Pause)";
 	create_ui_text(groups[(size_t)Groups::Help], vec2(.5, .6), help_text, Alignment::Center, Alignment::Center, 60);
 }
 
