@@ -218,7 +218,7 @@ void CombatSystem::kill(Entity attacker_entity, Entity target_entity)
 	}
 
 	float mode_tier = static_cast<float>(enemy.danger_rating) / static_cast<float>(max_danger_rating)
-		* static_cast<float>(loot->get_max_tier() - 1) + 1.f;
+		* static_cast<float>(loot->get_max_tier() - 1) + .5f;
 	loot->drop_loot(registry.get<MapPosition>(target_entity).position, mode_tier, enemy.loot_multiplier);
 
 	// TODO: Animate death
