@@ -1,4 +1,7 @@
 {
+  "big_rooms": [
+    [ 42, 43, 44, 45, 52, 53, 54, 55 ]
+  ],
   "player": {
     "position": {
       "x": 22,
@@ -8,9 +11,9 @@
   "enemies": [
     {
       "team": 3,
-      "type": 15,
+      "type": 16,
       "tile_area": [ 3, 3 ],
-      "tile_center":  [1, 1],
+      "tile_center": [ 1, 1 ],
       "state": 0,
       "radius": 10,
       "speed": 0,

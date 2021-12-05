@@ -36,4 +36,28 @@ struct Circle {
 	bool intersects(Circle c) const { return glm::distance2(center, c.center) <= radius * radius; }
 	bool intersects(const Rectangle& r) const;
 };
+
+struct Triangle {
+	std::array<vec2, 3> vertices;
+
+	Triangle(vec2 v1, vec2 v2, vec2 v3)
+		: vertices({ v1, v2, v3 })
+	{
+	}
+
+	float slope_inverse(size_t start_index, size_t end_index);
+
+	vec3 cartesian_to_barycentric(const vec2& p) const;
+	virtual bool contains(const vec2& p) const;
+
+};
+
+struct Cone: Triangle {
+	// Vertices specified in clockwise order
+	Cone(vec2 v1_origin, vec2 v2, vec2 v3)
+		: Triangle(v1_origin, v2, v3)
+	{
+	}
+	bool contains(const vec2& p) const override;
+};
 } // namespace Geometry

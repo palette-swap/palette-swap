@@ -117,8 +117,9 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 	KING_MUSH_ENTRY = KING_MUSH_ATTACKS + 1,
 	TITHO = KING_MUSH_ENTRY + 1,
 	TITHO_ATTACKS = TITHO + 1,
-	// NPCS
-	GUIDE = TITHO_ATTACKS + 1,
+	TITHO_ENTRY = TITHO_ATTACKS + 1,
+	//NPCS
+	GUIDE = TITHO_ENTRY + 1,
 	// Misc Assets
 	CANNONBALL = GUIDE + 1,
 	SPELLS = CANNONBALL + 1,
@@ -155,6 +156,7 @@ static constexpr std::array<vec2, texture_count> scaling_factors = {
 	vec2(MapUtility::tile_size * 5, MapUtility::tile_size * 5),
 	vec2(MapUtility::tile_size * 5, MapUtility::tile_size * 5),
 	vec2(MapUtility::tile_size * 3, MapUtility::tile_size * 3),
+	vec2(MapUtility::tile_size * 5, MapUtility::tile_size * 5),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size * 0.5, MapUtility::tile_size * 0.5),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
@@ -180,7 +182,10 @@ enum class EFFECT_ASSET_ID {
 	WATER = AOE + 1,
 	TILE_MAP = WATER + 1,
 	TEXT_BUBBLE = TILE_MAP + 1,
-	EFFECT_COUNT = TEXT_BUBBLE + 1,
+	LIGHT = TEXT_BUBBLE + 1,
+	LIGHT_TRIANGLES = LIGHT + 1,
+	LIGHTING = LIGHT_TRIANGLES + 1,
+	EFFECT_COUNT = LIGHTING + 1,
 };
 constexpr int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 
@@ -195,7 +200,8 @@ enum class GEOMETRY_BUFFER_ID : uint8_t {
 	DEBUG_LINE = LINE + 1,
 	SCREEN_TRIANGLE = DEBUG_LINE + 1,
 	ROOM = SCREEN_TRIANGLE + 1,
-	GEOMETRY_COUNT = ROOM + 1
+	LIGHTING_TRIANGLES = ROOM + 1,
+	GEOMETRY_COUNT = LIGHTING_TRIANGLES + 1,
 };
 const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 
@@ -204,6 +210,19 @@ struct Room {
 	// this can have potential bug if we have up to 255 rooms, but we probably won't...
 	MapUtility::RoomID room_id = 0xff;
 	int level = -1;
+	// Position within a particular map
+	uint8_t room_index = 0;
+	bool visible = false;
+};
+
+struct BigRoom {
+	Entity first_room = entt::null;
+	static void add_room(Entity big_room, Entity room);
+};
+
+struct BigRoomElement {
+	Entity big_room = entt::null;
+	Entity next_room = entt::null;
 };
 
 // For TileMap vertex buffers, we need a separate tile_texture float because we want
@@ -214,6 +233,23 @@ struct TileMapVertex {
 };
 
 enum class ColorState { None = 0, Red = 1, Blue = 2, All = Blue + 1 };
+
+//---------------------------------------------------------------------------
+//-------------------------        Lighting         -------------------------
+//---------------------------------------------------------------------------
+
+struct LightingTriangle {
+	vec2 p1;
+	vec2 p2;
+	vec2 p3;
+};
+
+struct LightingTile {
+};
+
+struct Light {
+	float radius;
+};
 
 //---------------------------------------------------------------------------
 //-------------------------           AI            -------------------------
@@ -552,6 +588,16 @@ struct AnimationProfile {
 	float travel_offset;
 };
 
+// Animation details for a boss's entry
+struct BossEntryAnimation {
+	TEXTURE_ASSET_ID texture;
+	int max_frames;
+};
+
+struct EntryAnimationEnemy {
+	EnemyType intro_enemy_type;
+};
+
 // Maps enemy types to corresponding animation profile
 // Remember to add a mapping to a new texture (or use a default such as a slime)/enemy type
 // This will help load the animation by enemy type when you load enemies
@@ -575,8 +621,9 @@ const std::array<AnimationProfile, static_cast<int>(EnemyType::EnemyCount)> enem
 	AnimationProfile { TEXTURE_ASSET_ID::TITHO, 0.f },
 };
 
-const std::map<EnemyType, TEXTURE_ASSET_ID> boss_type_entry_animation_map {
-	{ EnemyType::KingMush, TEXTURE_ASSET_ID::KING_MUSH_ENTRY },
+const std::map<EnemyType, BossEntryAnimation> boss_type_entry_animation_map {
+	{ EnemyType::KingMush, BossEntryAnimation { TEXTURE_ASSET_ID::KING_MUSH_ENTRY, 32 } },
+	{ EnemyType::Titho, BossEntryAnimation { TEXTURE_ASSET_ID::TITHO_ENTRY, 48 } },
 };
 
 const std::array<int, (size_t)EnemyState::EnemyStateCount> enemy_state_to_animation_state = {
@@ -682,8 +729,14 @@ const std::array<int, (size_t)DamageType::Count> damage_type_to_spell_impact = {
 	7, // Wind effect
 };
 
-const std::map<EnemyType, TEXTURE_ASSET_ID> boss_type_attack_spritesheet {
-	{ EnemyType::KingMush, TEXTURE_ASSET_ID::KING_MUSH_ATTACKS }, { EnemyType::Titho, TEXTURE_ASSET_ID::TITHO_ATTACKS }
+const std::map<EnemyType, TEXTURE_ASSET_ID> boss_type_attack_spritesheet { 
+	{ EnemyType::KingMush, TEXTURE_ASSET_ID::KING_MUSH_ATTACKS } ,
+	{EnemyType::Titho, TEXTURE_ASSET_ID::TITHO_ATTACKS } };
+
+struct RoomAnimation {
+	uvec2 start_tile;
+	float dist_per_second = MapUtility::tile_size * 6.f;
+	float elapsed_time = 0;
 };
 //---------------------------------------------------------------------------
 //-------------------------		    Physics         -------------------------
