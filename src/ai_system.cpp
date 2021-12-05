@@ -46,7 +46,22 @@ AISystem::AISystem(const Debug& debugging,
 					registry.destroy(temp);
 				}
 			}
+
+			// Destroy all victims of dragon.
+			if (auto* dragon = registry.try_get<Dragon>(entity)) {
+				for (Entity victim : dragon->victims) {
+					registry.destroy(victim);
+				}
+			}
+
 			bosses.erase(entity);
+		}
+
+		// If entity is a victim of dragon, remove it from dragon's victims list.
+		if (auto* victim = registry.try_get<Victim>(entity)) {
+			Entity owner = victim->owner;
+			Dragon& dragon = registry.get<Dragon>(owner);
+			dragon.victims.erase(std::remove(dragon.victims.begin(), dragon.victims.end(), entity), dragon.victims.end());
 		}
 	});
 }
@@ -111,6 +126,10 @@ void AISystem::step(float /*elapsed_ms*/)
 
 				case EnemyBehaviour::Aggressive:
 					execute_aggressive_sm(enemy_entity);
+					break;
+
+				case EnemyBehaviour::Sacrificed:
+					execute_sacrificed_sm(enemy_entity);
 					break;
 
 				// Boss Enemy Behaviours (Behaviour Trees)
@@ -370,6 +389,29 @@ void AISystem::execute_aggressive_sm(const Entity& entity)
 	}
 }
 
+void AISystem::execute_sacrificed_sm(const Entity& entity)
+{
+	const Enemy& enemy = registry.get<Enemy>(entity);
+
+	switch (enemy.state) {
+
+	case EnemyState::Idle:
+		if (is_at_nest(entity)) {
+			switch_enemy_state(entity, EnemyState::Active);
+		} else {
+			approach_nest(entity, enemy.speed);
+		}
+		break;
+
+	case EnemyState::Active:
+		// Do nothing
+		break;
+
+	default:
+		throw std::runtime_error("Invalid enemy state for enemy behaviour Sacrificed.");
+	}
+}
+
 void AISystem::switch_enemy_state(const Entity& enemy_entity, EnemyState new_state)
 {
 	Enemy& enemy = registry.get<Enemy>(enemy_entity);
@@ -564,6 +606,31 @@ void AISystem::summon_enemies(const Entity& entity, EnemyType enemy_type, int nu
 			}
 		}
 	}
+}
+
+std::vector<Entity> AISystem::summon_victims(const Entity& entity, EnemyType enemy_type, int num)
+{
+	std::vector<Entity> result;
+
+	MapPosition& map_pos = registry.get<MapPosition>(entity);
+
+	for (size_t i = 0; i < num; ++i) {
+		uvec2 new_map_pos = { map_pos.position.x - 2 - i, map_pos.position.y };
+		uvec2 alt_new_map_pos = { map_pos.position.x + 2 + i, map_pos.position.y };
+
+		Entity e = entt::null;
+		if (map_generator->walkable_and_free(entt::null, new_map_pos)) {
+			e = create_enemy(ColorState::All, enemy_type, new_map_pos);
+		} else if (map_generator->walkable_and_free(entt::null, alt_new_map_pos)) {
+			e = create_enemy(ColorState::All, enemy_type, alt_new_map_pos);
+		}
+
+		if (e != entt::null) {
+			result.push_back(e);
+		}
+	}
+
+	return result;
 }
 
 void AISystem::release_aoe(const std::vector<Entity>& aoe_entities)

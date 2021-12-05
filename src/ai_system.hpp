@@ -39,6 +39,7 @@ private:
 	void execute_cowardly_sm(const Entity& entity);
 	void execute_defensive_sm(const Entity& entity);
 	void execute_aggressive_sm(const Entity& entity);
+	void execute_sacrificed_sm(const Entity& entity);
 
 	// Switch enemy state.
 	void switch_enemy_state(const Entity& enemy_entity, EnemyState new_state);
@@ -86,6 +87,9 @@ private:
 
 	// An entity summons new enemies with a certain type and number.
 	void summon_enemies(const Entity& entity, EnemyType enemy_type, int num);
+
+	// An entity summons victims for sacrifice later.
+	std::vector<Entity> summon_victims(const Entity& entity, EnemyType enemy_type, int num);
 
 	// AOE attack.
 	void release_aoe(const std::vector<Entity>& aoe);
@@ -190,6 +194,90 @@ private:
 		int m_num;
 		int m_animation;
 		SoLoud::Wav summon_effect;
+	};
+
+	// Leaf action node: SummonVictims
+	class SummonVictims : public BTNode {
+	public:
+		SummonVictims(int animation, std::string summon_sound, EnemyType type, int num, std::vector<uvec2> altars)
+			: m_type(type)
+			, m_num(num)
+			, m_animation(animation)
+			, m_altars(altars)
+
+		{
+			summon_effect.load(audio_path(summon_sound).c_str());
+		}
+
+		void init(Entity /*e*/) override { debug_log("Debug: SummonVictims.init\n"); }
+
+		BTState process(Entity e, AISystem* ai) override
+		{
+			debug_log("Debug: SummonVictims.process\n");
+
+			ai->switch_enemy_state(e, EnemyState::Idle);
+			ai->animations->boss_event_animation(e, m_animation);
+			ai->so_loud->play(summon_effect);
+
+			Dragon& dragon = registry.get<Dragon>(e);
+			dragon.is_sacrifice_used = true;
+			dragon.victims = ai->summon_victims(e, m_type, m_num);
+			assert(dragon.victims.size() <= m_altars.size());
+			for (size_t i = 0; i < dragon.victims.size(); ++i) {
+				Enemy& victim_enemy = registry.get<Enemy>(dragon.victims[i]);
+				victim_enemy.behaviour = EnemyBehaviour::Sacrificed;
+				victim_enemy.nest_map_pos = m_altars[i];
+				registry.emplace<Victim>(dragon.victims[i], e);
+			}
+
+			return handle_process_result(BTState::Success);
+		}
+
+	private:
+		EnemyType m_type;
+		int m_num;
+		std::vector<uvec2> m_altars;
+		int m_animation;
+		SoLoud::Wav summon_effect;
+	};
+
+	// Leaf action node: SacrificeVictims
+	class SacrificeVictims : public BTNode {
+	public:
+		SacrificeVictims(int animation, std::string sound, float recover_ratio)
+			: m_animation(animation)
+			, m_recover_ratio(recover_ratio)
+
+		{
+			m_sound.load(audio_path(sound).c_str());
+		}
+
+		void init(Entity /*e*/) override { debug_log("Debug: SacrificeVictims.init\n"); }
+
+		BTState process(Entity e, AISystem* ai) override
+		{
+			debug_log("Debug: SacrificeVictims.process\n");
+
+			ai->switch_enemy_state(e, EnemyState::Idle);
+			ai->animations->boss_event_animation(e, m_animation);
+			ai->so_loud->play(m_sound);
+
+			// Sacrifice all victims of dragon to recover HP.
+			Dragon& dragon = registry.get<Dragon>(e);
+			for (Entity victim : dragon.victims) {
+				registry.destroy(victim);
+				m_recover_ratio += 0.25f;
+			}
+			dragon.victims.clear();
+			ai->recover_health(e, m_recover_ratio);
+
+			return handle_process_result(BTState::Success);
+		}
+
+	private:
+		int m_animation;
+		SoLoud::Wav m_sound;
+		float m_recover_ratio;
 	};
 
 	// Leaf action node: AOEAttack
@@ -936,10 +1024,44 @@ private:
 
 		static std::unique_ptr<BTNode> dragon_tree_factory(AISystem* ai, Entity e)
 		{
+			registry.emplace<Dragon>(e);
+
 			// Selector - active
 			auto do_nothing_1 = std::make_unique<DoNothing>();
 			auto selector_active = std::make_unique<Selector>(std::move(do_nothing_1));
 			Selector* p = selector_active.get();
+
+			
+			uvec2 dragon_map_pos = registry.get<MapPosition>(e).position;
+			std::vector<uvec2> altars;
+			altars.push_back({ dragon_map_pos.x - 2, dragon_map_pos.y - 2 }); // top left altar
+			altars.push_back({ dragon_map_pos.x + 2, dragon_map_pos.y - 2 }); // top right altar
+			altars.push_back({ dragon_map_pos.x - 2, dragon_map_pos.y + 2 }); // bottom left altar
+			altars.push_back({ dragon_map_pos.x + 2, dragon_map_pos.y + 2 }); // bottom right altar
+			auto summon_victims = std::make_unique<SummonVictims>(2, "King Mush Shrooma.wav", EnemyType::KoboldMage, altars.size(), altars); // TODO (Evan): dragon's animation & sound for SummonVictims.
+			selector_active->add_precond_and_child(
+				// Dragon summons victims when its HP is below 50%.
+				[ai](Entity e) {
+					return (!registry.get<Dragon>(e).is_sacrifice_used) && (ai->is_health_below(e, 0.50f));
+				},
+				std::move(summon_victims));
+
+			auto sacrifice_victims = std::make_unique<SacrificeVictims>(2, "King Mush Shrooma.wav", 0.25f); // TODO (Evan): dragon's animation & sound for SacrificeVictims.
+			selector_active->add_precond_and_child(
+				// Dragon sacrifices victims when the victims are all active (ie. They are all at an altar).
+				[ai](Entity e) {
+					Dragon& dragon = registry.get<Dragon>(e);
+					if (dragon.victims.size() == 0) {
+						return false;
+					}
+					for (Entity victim : dragon.victims) {
+						if (registry.get<Enemy>(victim).state != EnemyState::Active) {
+							return false;
+						}
+					}
+					return true;
+				},
+				std::move(sacrifice_victims));
 
 			auto summon_aoe_emitter
 				= std::make_unique<SummonEnemies>(3, "King Mush Shrooma.wav", EnemyType::AOERingGen, 1);

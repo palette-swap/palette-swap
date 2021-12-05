@@ -283,6 +283,7 @@ enum class EnemyType {
 const std::array<EnemyType, ((size_t)EnemyType::EnemyCount - (size_t)EnemyType::KingMush)> enemy_type_bosses = {
 	EnemyType::KingMush,
 	EnemyType::Titho,
+	EnemyType::Dragon,
 };
 
 enum class EnemyBehaviour {
@@ -292,8 +293,9 @@ enum class EnemyBehaviour {
 	Cowardly = Basic + 1,
 	Defensive = Cowardly + 1,
 	Aggressive = Defensive + 1,
+	Sacrificed = Aggressive + 1,
 	// Boss Enemy Behaviours (Behaviour Trees)
-	Summoner = Aggressive + 1,
+	Summoner = Sacrificed + 1,
 	WeaponMaster = Summoner + 1,
 	Dragon = WeaponMaster + 1,
 	AOERingGen = Dragon + 1,
@@ -301,19 +303,20 @@ enum class EnemyBehaviour {
 };
 
 const std::array<EnemyBehaviour, (size_t)EnemyType::EnemyCount> enemy_type_to_behaviour = {
-	EnemyBehaviour::Dummy,		EnemyBehaviour::Cowardly,  EnemyBehaviour::Basic,	 EnemyBehaviour::Defensive,
-	EnemyBehaviour::Aggressive, EnemyBehaviour::Basic,	   EnemyBehaviour::Basic,	 EnemyBehaviour::Cowardly,
-	EnemyBehaviour::Aggressive, EnemyBehaviour::Defensive, EnemyBehaviour::Basic,	 EnemyBehaviour::Basic,
-	EnemyBehaviour::Basic,		EnemyBehaviour::Basic,	   EnemyBehaviour::Basic,	 EnemyBehaviour::Summoner,
-	EnemyBehaviour::WeaponMaster,	EnemyBehaviour::Dragon,	EnemyBehaviour::AOERingGen,
+	EnemyBehaviour::Dummy,		  EnemyBehaviour::Cowardly,	 EnemyBehaviour::Basic,		 EnemyBehaviour::Defensive,
+	EnemyBehaviour::Aggressive,	  EnemyBehaviour::Basic,	 EnemyBehaviour::Basic,		 EnemyBehaviour::Cowardly,
+	EnemyBehaviour::Aggressive,	  EnemyBehaviour::Defensive, EnemyBehaviour::Basic,		 EnemyBehaviour::Basic,
+	EnemyBehaviour::Basic,		  EnemyBehaviour::Basic,	 EnemyBehaviour::Basic,		 EnemyBehaviour::Summoner,
+	EnemyBehaviour::WeaponMaster, EnemyBehaviour::Dragon,	 EnemyBehaviour::AOERingGen,
 };
 
 // Small Enemy Behaviours (State Machines) uses the following states.
-// Dummy:			Idle, Active. 
+// Dummy:			Idle, Active.
 // Basic:			Idle, Active.
 // Cowardly:		Idle, Active, Flinched.
 // Defensive:		Idle, Active, Immortal.
 // Aggressive:		Idle, Active, Powerup.
+// Sacrificed:		Idle, Active.
 //
 // Boss Enemy Behaviours (Behaviour Trees) uses the following states.
 // Summoner:		Idle, Charging.
@@ -343,6 +346,17 @@ struct Enemy {
 
 	void serialize(const std::string& prefix, rapidjson::Document& json) const;
 	void deserialize(const std::string& prefix, const rapidjson::Document& json, bool load_from_file = true);
+};
+
+// Structure to store dragon boss information.
+struct Dragon {
+	bool is_sacrifice_used = false;
+	std::vector<Entity> victims;
+};
+
+// Structure to store victim information.
+struct Victim {
+	Entity owner = entt::null;
 };
 
 // Denotes that an enemy is a boss type

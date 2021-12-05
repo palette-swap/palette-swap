@@ -124,21 +124,31 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 		enemy.speed = 1;
 		enemy.attack_range = 1;
 		break;
+
+	case EnemyType::KoboldMage:
+		enemy.radius = 10;
+		enemy.speed = 1;
+		enemy.attack_range = 1;
+		break;
+
 	case EnemyType::KingMush:
 		enemy.radius = 10;
 		enemy.speed = 0;
 		enemy.attack_range = 10;
 		break;
+
 	case EnemyType::Dragon:
 		enemy.radius = 10;
 		enemy.speed = 0;
 		enemy.attack_range = 3;
 		break;
+
 	case EnemyType::AOERingGen:
 		enemy.radius = 0;
 		enemy.speed = 0;
 		enemy.attack_range = 0;
 		break;
+
 	default:
 		throw std::runtime_error("Invalid enemy type.");
 	}
