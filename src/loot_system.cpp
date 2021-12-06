@@ -57,8 +57,13 @@ void LootSystem::restart_game()
 
 bool LootSystem::try_pickup_items(Entity player)
 {
+	ColorState& inactive_color = registry.get<PlayerInactivePerception>(player).inactive;
 	MapPosition& player_pos = registry.get<MapPosition>(player);
 	for (auto [entity, resource, pos] : registry.view<ResourcePickup, MapPosition>().each()) {
+		if ((inactive_color == ColorState::Red && registry.any_of<RedExclusive>(entity))
+			|| (inactive_color == ColorState::Blue && registry.any_of<BlueExclusive>(entity))) {
+				continue;
+		}
 		ivec2 distance = abs(ivec2(player_pos.position - pos.position));
 		if (distance.x <= 1 && distance.y <= 1) {
 			registry.get<Inventory>(player).resources.at((size_t)resource.resource)++;
@@ -185,6 +190,9 @@ void LootSystem::drop_resource_pickup(uvec2 position, Resource resource) {
 		pickup, TEXTURE_ASSET_ID::ICONS, EFFECT_ASSET_ID::SPRITESHEET, GEOMETRY_BUFFER_ID::SPRITE, true);
 	registry.emplace<TextureOffset>(pickup, resource_textures.at((size_t)resource), vec2(32, 32));
 	registry.emplace<Color>(pickup, vec3(1));
+	if (resource == Resource::Key) {
+		registry.emplace<BlueExclusive>(pickup);
+	}
 	tutorials->trigger_tooltip(TutorialTooltip::ItemDropped, pickup);
 }
 
