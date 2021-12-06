@@ -16,8 +16,8 @@
 
 using namespace MapUtility;
 
-MapGeneratorSystem::MapGeneratorSystem(std::shared_ptr<TurnSystem> turns, std::shared_ptr<UISystem> ui_system)
-	: turns(std::move(turns)), ui_system(std::move(ui_system))
+MapGeneratorSystem::MapGeneratorSystem(std::shared_ptr<TurnSystem> turns, std::shared_ptr<UISystem> ui_system, std::shared_ptr<LootSystem> loot_system)
+	: turns(std::move(turns)), ui_system(std::move(ui_system)), loot_system(std::move(loot_system))
 {
 	init();
 }
@@ -306,6 +306,10 @@ static bool is_locked_chest_tile(TileID tile_id)
 {
 	return tile_id == 48;
 }
+static bool is_chest_tile(TileID tile_id)
+{
+	return tile_id == 44;
+}
 
 static bool is_wall_tile(TileID tile_id)
 {
@@ -550,6 +554,20 @@ void MapGeneratorSystem::snapshot_level()
 	// save player position
 	registry.get<MapPosition>(registry.view<Player>().front()).serialize("/player", level_snapshot);
 
+	int item_index = 0;
+	for (auto [entity, item, map_position] : registry.view<Item, MapPosition>().each()) {
+		std::string item_prefix = "/items/" + std::to_string(i++);
+		item.serialize(item_prefix, level_snapshot);
+		map_position.serialize(item_prefix, level_snapshot);
+	}
+
+	int resource_index = 0;
+	for (auto [entity, resource_pickup, map_position] : registry.view<ResourcePickup, MapPosition>().each()) {
+		std::string resource_index = "/resources/" + std::to_string(i++);
+		resource_pickup.serialize(resource_index, level_snapshot);
+		map_position.serialize(resource_index, level_snapshot);
+	}
+
 	rapidjson::StringBuffer buffer;
 	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 	level_snapshot.Accept(writer);
@@ -615,6 +633,36 @@ void MapGeneratorSystem::load_level(int level)
 	// update player position
 	Entity player = registry.view<Player>().front();
 	registry.get<MapPosition>(player).deserialize(player , "/player", json_doc);
+
+	// load items
+	if (json_doc.HasMember("items") && json_doc["items"].IsArray()) {
+		const rapidjson::Value& items = json_doc["items"];
+		for (rapidjson::SizeType i = 0; i < items.Size(); i++) {
+			if (!items[i].IsNull()) {
+				std::string item_prefix = "/items/" + std::to_string(i);
+				Item item_component;
+				item_component.deserialize(item_prefix, json_doc);
+				MapPosition map_position(uvec2(0,0));
+				map_position.deserialize(entt::null, item_prefix, json_doc);
+				loot_system->drop_item(map_position.position, item_component.item_template);
+			}
+		}
+	}
+
+	// load resource
+	if (json_doc.HasMember("resources") && json_doc["resources"].IsArray()) {
+		const rapidjson::Value& resources = json_doc["resources"];
+		for (rapidjson::SizeType i = 0; i < resources.Size(); i++) {
+			if (!resources[i].IsNull()) {
+				std::string resource_prefix = "/resources/" + std::to_string(i);
+				ResourcePickup resource_pickup;
+				resource_pickup.deserialize(resource_prefix, json_doc);
+				MapPosition map_position(uvec2(0,0));
+				map_position.deserialize(entt::null, resource_prefix, json_doc);
+				loot_system->drop_resource_pickup(map_position.position, resource_pickup.resource);
+			}
+		}
+	}
 
 	uvec2 player_initial_position = registry.get<MapPosition>(player).position;
 	RoomID starting_room = get_level_layout(level).at(player_initial_position.y / room_size).at(player_initial_position.x / room_size);
@@ -808,6 +856,7 @@ bool MapGeneratorSystem::interact_with_surrounding_tile(Entity player)
 
 	auto & level_animated_tiles_red = level_configurations.at(current_level).animated_tiles_red;
 	auto & level_animated_tiles_blue = level_configurations.at(current_level).animated_tiles_blue;
+	Inventory& inventory = registry.get<Inventory>(player);
 
 	for (const auto & direction : directions) {
 		int target_row = player_position.y + direction[0];
@@ -826,13 +875,23 @@ bool MapGeneratorSystem::interact_with_surrounding_tile(Entity player)
 			if (animated_room_buffer.find(target_room) == animated_room_buffer.end()) {
 				animated_room_buffer.emplace(target_room);
 			}
-			if(is_door_tile(animated_tile->second.tile_id) || is_locked_chest_tile(animated_tile->second.tile_id)) {
-				Inventory& inventory = registry.get<Inventory>(player);
+			if(is_door_tile(animated_tile->second.tile_id)) {
 				if (inventory.resources.at((size_t)Resource::Key) == 0) {
 					continue;
 				}
 				inventory.resources.at((size_t)Resource::Key)--;
 				ui_system->update_resource_count();
+			}
+			if (is_locked_chest_tile(animated_tile->second.tile_id)) {
+				if (inventory.resources.at((size_t)Resource::Key) == 0) {
+					continue;
+				}
+				inventory.resources.at((size_t)Resource::Key)--;
+				ui_system->update_resource_count();
+				loot_system->drop_loot(player_position, 4.0, 2);
+			}
+			if (is_chest_tile(animated_tile->second.tile_id)) {
+				loot_system->drop_loot(player_position, 2.0, 1);
 			}
 
 			animated_tile->second.activated = true;

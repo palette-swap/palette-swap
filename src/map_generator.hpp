@@ -105,6 +105,7 @@ private:
 	static void generate_room(PathNode * starting_node,
 							  MapUtility::LevelGenConf level_gen_conf,
 							  MapUtility::LevelConfiguration & level_conf,
+							  rapidjson::Document & level_snap_shot,
 							  RoomGenerationEngines & random_engs,
 							  int & max_keys_obtained,
 							  bool is_debugging);

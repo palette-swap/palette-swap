@@ -113,6 +113,24 @@ add_enemy_to_level_snapshot(rapidjson::Document& level_snap_shot, ColorState tea
 	map_position.serialize(enemy_prefix, level_snap_shot);
 }
 
+
+static void add_key_to_level_snapshot(rapidjson::Document& level_snap_shot, uvec2 map_pos)
+{
+	if (!level_snap_shot.HasMember("resources")) {
+		rapidjson::Value resource_array(rapidjson::kArrayType);
+		level_snap_shot.AddMember("resources", resource_array, level_snap_shot.GetAllocator());
+	}
+	rapidjson::SizeType resource_index = level_snap_shot["resources"].Size();
+	std::string resource_prefix = "/resources/" + std::to_string(resource_index);
+
+	ResourcePickup resource_pickup;
+	resource_pickup.resource = Resource::Key;
+	resource_pickup.serialize(resource_prefix, level_snap_shot);
+
+	MapPosition map_position(map_pos);
+	map_position.serialize(resource_prefix, level_snap_shot);
+}
+
 ////////////////////////////////////
 // Helpers for procedural generation
 const static std::map<Direction, std::array<int, 2>> direction_vec = {
@@ -443,6 +461,7 @@ static void smooth_room(RoomLayout& curr_layout, uint iterations, const std::set
 void MapGenerator::generate_room(MapGenerator::PathNode * starting_node,
 								 MapUtility::LevelGenConf level_gen_conf,
 								 MapUtility::LevelConfiguration & level_conf,
+								 rapidjson::Document & level_snap_shot,
 								 RoomGenerationEngines & random_engs,
 								 int & max_keys_obtained,
 								 bool is_debugging)
@@ -652,7 +671,7 @@ void MapGenerator::generate_room(MapGenerator::PathNode * starting_node,
 		room_layout = get_template_room_layout(room_type);
 
 		if (room_type == RoomType::Hidden) {
-			room_layout.at(room_center_position) = chest_tile;
+			room_layout.at(room_center_position) = locked_chest_tile;
 		} else if (room_type == RoomType::Reward) {
 			// choose something to spawn for reward room
 
@@ -661,18 +680,23 @@ void MapGenerator::generate_room(MapGenerator::PathNode * starting_node,
 
 			switch (event_room_type)
 			{
-			case EventRoomType::Key: {
-				// TODO: add key spawn, only spawn in blue dimension
-				// break;
+			case EventRoomType::Chest: {
+				// only spawn chest in red dimension
+				room_layout.at(room_center_position) = locked_chest_tile;
+				break;
 			}
 			case EventRoomType::Loot: {
 				// TODO: add loot spawn
 				// break;
 			}
-			case EventRoomType::Chest: {
-				// only spawn chest in red dimension
-				room_layout.at(room_center_position) = locked_chest_tile;
+			case EventRoomType::Key: {
+				add_key_to_level_snapshot(level_snap_shot,
+										  uvec2((starting_node->position % map_size) * room_size + room_center_position % room_size,
+										  		(starting_node->position / map_size) * room_size + room_center_position / room_size));
+				max_keys_obtained ++;
+				break;
 			}
+			
 			default:
 				break;
 		}
@@ -1159,15 +1183,24 @@ void MapGenerator::traverse_path_and_generate_rooms(MapGenerator::PathNode * sta
 	if (starting_node->room_type == RoomType::Big) {
 		generate_big_room(starting_node, level_gen_conf, level_conf, room_rand_eng, max_keys_obtained);
 	} else {
-		generate_room(starting_node, level_gen_conf, level_conf, room_rand_eng, max_keys_obtained, false);
+		generate_room(starting_node, level_gen_conf, level_conf, level_snap_shot, room_rand_eng, max_keys_obtained, false);
 	}
 
 	generate_enemies(starting_node, level_gen_conf, level_conf.room_layouts.back(), level_snap_shot, room_rand_eng.enemy_random_eng_red, room_rand_eng.enemy_random_eng_blue);
 
 	// refresh general random engine
 	room_rand_eng.general_eng.seed(level_gen_conf.seed);
+	// geenrate critical room first to let max keys obtained to be updated
+	PathNode * next_critical_room = nullptr;
 	for (auto & child : starting_node->children) {
-		traverse_path_and_generate_rooms(child, level_gen_conf, level_conf, level_snap_shot, room_rand_eng, max_keys_obtained);
+		if (child->room_type == RoomType::Critical) {
+			next_critical_room = child;
+		} else {
+			traverse_path_and_generate_rooms(child, level_gen_conf, level_conf, level_snap_shot, room_rand_eng, max_keys_obtained);
+		}
+	}
+	if (next_critical_room != nullptr) {
+		traverse_path_and_generate_rooms(next_critical_room, level_gen_conf, level_conf, level_snap_shot, room_rand_eng, max_keys_obtained);
 	}
 }
 
@@ -1255,7 +1288,7 @@ LevelConfiguration MapGenerator::generate_level(LevelGenConf level_gen_conf, boo
 	rapidjson::CreateValueByPointer(level_snap_shot, rapidjson::Pointer("/enemies/0"));
 
 	// generate specific rooms and enemies
-	int max_keys_obtained = 1;
+	int max_keys_obtained = 0;
 	traverse_path_and_generate_rooms(starting_room, level_gen_conf, level_conf, level_snap_shot, room_rand_engines, max_keys_obtained);
 	
 	clear_generated_path(starting_room);

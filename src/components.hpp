@@ -578,13 +578,14 @@ constexpr std::array<ivec2, (size_t)Resource::Count> resource_textures = {
 	ivec2(0, 4), //
 	ivec2(1, 4), //
 	ivec2(0, 6), //
+	ivec2(2, 4), //
 };
 
 struct Inventory {
 	static constexpr size_t inventory_size = 12;
 	std::array<Entity, inventory_size> inventory;
 	SlotList<Entity> equipped;
-	std::array<size_t, (size_t)Resource::Count> resources = { 3, 1, 3, 10 };
+	std::array<size_t, (size_t)Resource::Count> resources = { 3, 1, 3, 2 };
 	Inventory()
 		: inventory()
 		, equipped()
@@ -598,11 +599,16 @@ struct Inventory {
 
 struct ResourcePickup {
 	Resource resource = Resource::HealthPotion;
+	void serialize(const std::string& prefix, rapidjson::Document& json) const;
+	void deserialize(const std::string& prefix, const rapidjson::Document& json);
 };
 
 struct Item {
 	Entity item_template;
 	std::string get_description(bool detailed) const;
+
+	void serialize(const std::string& prefix, rapidjson::Document& json) const;
+	void deserialize(const std::string& prefix, const rapidjson::Document& json);
 };
 
 struct ItemTemplate {

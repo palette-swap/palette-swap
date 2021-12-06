@@ -2,6 +2,7 @@
 
 #include "common.hpp"
 #include "components.hpp"
+#include "loot_system.hpp"
 #include "map_generator.hpp"
 #include "map_utility.hpp"
 class TurnSystem;
@@ -13,7 +14,6 @@ class UISystem;
 // Manages and store the generated maps
 class MapGeneratorSystem {
 private:
-	std::shared_ptr<TurnSystem> turns;
 	/////////////////////////////////////////////
 	// Helper functions to retrieve file paths
 	static std::string predefined_rooms_path(const std::string& name)
@@ -114,9 +114,11 @@ private:
 	std::set<MapUtility::RoomID> animated_room_buffer;
 
 	std::shared_ptr<UISystem> ui_system;
+	std::shared_ptr<LootSystem> loot_system;
+	std::shared_ptr<TurnSystem> turns;
 
 public:
-	explicit MapGeneratorSystem(std::shared_ptr<TurnSystem> turns, std::shared_ptr<UISystem> ui_system);
+	explicit MapGeneratorSystem(std::shared_ptr<TurnSystem> turns, std::shared_ptr<UISystem> ui_system, std::shared_ptr<LootSystem> loot_system);
 	void init();
 
 	// Get the current level mapping
