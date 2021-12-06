@@ -368,11 +368,12 @@ private:
 	class AOERandomAttack : public AOEAttack {
 	public:
 		explicit AOERandomAttack(
-			std::string aoe_sound, int aoe_attack_state, Entity target, int num_attacks, int radius)
+			std::string aoe_sound, int aoe_attack_state, int aoe_charge_state, Entity target, int num_attacks, int radius)
 			: AOEAttack({}, aoe_sound, aoe_attack_state, target)
 			, num_attacks(num_attacks)
 			, radius(radius)
 			, attack_state(aoe_attack_state)
+			, charge_state(aoe_charge_state)
 		{
 			dist = std::uniform_int_distribution<int>(-radius, radius);
 		}
@@ -390,6 +391,7 @@ private:
 
 			if (!is_charged) {
 				// Charging
+				ai->animations->set_enemy_state(e, charge_state);
 				is_charged = true;
 
 				// Compute AOE area using AOE shape and player position.
@@ -452,6 +454,7 @@ private:
 		std::uniform_int_distribution<int> dist;
 		const std::vector<ivec2> aoe_shape = { { 0, 0 }, { 0, 1 }, { 0, -1 }, { 1, 0 }, { -1, 0 } };
 		int attack_state;
+		int charge_state;
 		// All attacks are in a + pattern
 		// ┌───┐
 		// │ x │
@@ -463,10 +466,11 @@ private:
 	// Leaf action node: AOEAttack
 	class AOEConeAttack : public AOEAttack {
 	public:
-		explicit AOEConeAttack(std::string aoe_sound, int aoe_attack_state, Entity attacker, Entity target)
+		explicit AOEConeAttack(std::string aoe_sound, int aoe_attack_state, int aoe_charge_state, Entity attacker, Entity target)
 			: AOEAttack({}, aoe_sound, aoe_attack_state, target)
 			, attacker(attacker)
 			, min_length(15)
+			, charge_state(aoe_charge_state)
 		{
 		}
 
@@ -484,6 +488,7 @@ private:
 			if (!is_charged) {
 				// Charging
 				is_charged = true;
+				ai->animations->set_enemy_state(e, charge_state);
 
 				MapPosition* ap = registry.try_get<MapPosition>(attacker);
 				MapPosition* mp = registry.try_get<MapPosition>(target);
@@ -534,6 +539,7 @@ private:
 	private:
 		Entity attacker;
 		int min_length;
+		int charge_state;
 	};
 
 	// Leaf action node: AOERingAttack
@@ -989,7 +995,7 @@ private:
 
 			// Selector - idle
 			auto recover_health = std::make_unique<RecoverHealth>(0.20f);
-			auto do_nothing = std::make_unique<DoNothing>();
+			auto do_nothing = std::make_unique<DoNothing>(0);
 			auto selector_idle = std::make_unique<Selector>(std::move(do_nothing));
 			selector_idle->add_precond_and_child(
 				// Summoner recover 20% HP if its HP is not full during idle.
@@ -1077,7 +1083,7 @@ private:
 				std::move(sacrifice_victims));
 
 			auto summon_aoe_emitter
-				= std::make_unique<SummonEnemies>(3, "Dragon Long Roar.wav", EnemyType::AOERingGen, 1);
+				= std::make_unique<SummonEnemies>(0, "Dragon Long Roar.wav", EnemyType::AOERingGen, 1);
 			auto do_nothing_aoe = std::make_unique<DoNothing>(3/*TODO: Insert AOE animation here */);
 			auto aoe_sequence = std::make_unique<Sequence>();
 			aoe_sequence->add_child(std::move(summon_aoe_emitter));
@@ -1087,14 +1093,14 @@ private:
 			);
 			
 
-			auto wild_surge = std::make_unique<AOERandomAttack>("Dragon Roar.wav", 5, e, 10, 8);
+			auto wild_surge = std::make_unique<AOERandomAttack>("Dragon Roar.wav", 5, 3, e, 10, 8);
 			selector_active->add_precond_and_child(
 				[p](Entity /*e*/) { return p->get_process_count() % 5 == 0; }, 
 				std::move(wild_surge)
 			);
 
 			Entity player = registry.view<Player>().front();
-			auto cone_attack = std::make_unique<AOEConeAttack>("Dragon Long Roar.wav", 6, e, player);
+			auto cone_attack = std::make_unique<AOEConeAttack>("Dragon Long Roar.wav", 6, 3, e, player);
 			selector_active->add_precond_and_child(
 				[p](Entity /*e*/) { return p->get_process_count() % 2 == 0; }, 
 				std::move(cone_attack)
