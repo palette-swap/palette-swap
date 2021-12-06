@@ -16,19 +16,22 @@ Entity create_player(uvec2 pos)
 
 	// Setup Casting
 	Entity fireball_entity = registry.create();
-	Attack& fireball = registry.emplace<Attack>(fireball_entity, "Fireball", -3, 10, 20, 30, DamageType::Fire, TargetingType::Projectile, -1);
+	Attack& fireball = registry.emplace<Attack>(fireball_entity, "Fireball", -3, 13, 10, 20, DamageType::Fire, TargetingType::Projectile, -1);
 	fireball.mana_cost = 25;
 	fireball.parallel_size = 4;
 	fireball.perpendicular_size = 4;
+	Entity burn_entity = registry.create();
+	EffectEntry& burn = registry.emplace<EffectEntry>(burn_entity, entt::null, Effect::Burn, .95f, 5);
+	fireball.effects = burn_entity;
 	inventory.equipped.at(static_cast<uint8>(Slot::Spell1))
 		= create_spell("Fireball", std::vector<Entity>({ fireball_entity }));
 	registry.get<ItemTemplate>(inventory.equipped.at(static_cast<uint8>(Slot::Spell1))).texture_offset = ivec2(0, 3);
 
 	// Setup Sword
 	Entity light_entity = registry.create();
-	registry.emplace<Attack>(light_entity, "Light", 4, 18, 12, 22, DamageType::Physical, TargetingType::Adjacent);
+	registry.emplace<Attack>(light_entity, "Slice", 4, 18, 8, 18, DamageType::Physical, TargetingType::Adjacent);
 	Entity heavy_entity = registry.create();
-	registry.emplace<Attack>(heavy_entity, "Heavy", 1, 14, 20, 30, DamageType::Physical, TargetingType::Adjacent);
+	registry.emplace<Attack>(heavy_entity, "Stab", 1, 14, 15, 25, DamageType::Physical, TargetingType::Adjacent);
 	inventory.equipped.at(static_cast<uint8>(Slot::Weapon))
 		= create_weapon("Sword", std::vector<Entity>({ light_entity, heavy_entity }));
 

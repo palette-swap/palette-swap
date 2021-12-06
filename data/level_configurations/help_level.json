@@ -11,7 +11,9 @@
   "enemies": [
     {
       "team": 3,
-      "type": 17,
+      "type": 16,
+      "danger_rating": 5,
+      "loot_multiplier": 5,
       "tile_area": [ 3, 3 ],
       "tile_center": [ 1, 1 ],
       "state": 0,
@@ -48,6 +50,7 @@
     {
       "team": 1,
       "type": 0,
+      "danger_rating": 0,
       "state": 0,
       "radius": 0,
       "speed": 0,
@@ -82,6 +85,7 @@
     {
       "team": 1,
       "type": 0,
+      "danger_rating": 0,
       "state": 0,
       "radius": 0,
       "speed": 0,
@@ -116,6 +120,7 @@
     {
       "team": 1,
       "type": 0,
+      "danger_rating": 0,
       "state": 1,
       "radius": 0,
       "speed": 0,
@@ -150,6 +155,7 @@
     {
       "team": 2,
       "type": 0,
+      "danger_rating": 0,
       "state": 0,
       "radius": 0,
       "speed": 0,
@@ -184,6 +190,7 @@
     {
       "team": 2,
       "type": 0,
+      "danger_rating": 0,
       "state": 0,
       "radius": 0,
       "speed": 0,
@@ -218,6 +225,7 @@
     {
       "team": 2,
       "type": 0,
+      "danger_rating": 0,
       "state": 1,
       "radius": 0,
       "speed": 0,
