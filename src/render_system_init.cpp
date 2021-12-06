@@ -183,6 +183,52 @@ void RenderSystem::initialize_gl_geometry_buffers()
 	const std::vector<uint16_t> enemy_indices = { 0, 3, 1, 1, 3, 2 };
 	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::SMALL_SPRITE, enemy_vertices, enemy_indices);
 	
+	float constexpr sw_third = (sprite_size / spritesheet_width) / 3;
+	float constexpr sh_third = (sprite_size / spritesheet_height) / 3;
+	//////////////////////////
+	// The position corresponds to the center of the texture.
+	std::vector<TexturedVertex> death_vertices(16);
+	death_vertices[0].position = { -1.f / 2, +1.f / 2, 0.f };
+	death_vertices[1].position = { -1.f / 4, +1.f / 2, 0.f };
+	death_vertices[2].position = { +1.f / 4, +1.f / 2, 0.f };
+	death_vertices[3].position = { +1.f / 2, +1.f / 2, 0.f };
+	death_vertices[4].position = { -1.f / 2, +1.f / 4, 0.f };
+	death_vertices[5].position = { -1.f / 4, +1.f / 4, 0.f };
+	death_vertices[6].position = { +1.f / 4, +1.f / 4, 0.f };
+	death_vertices[7].position = { +1.f / 2, +1.f / 4, 0.f };
+	death_vertices[8].position = { -1.f / 2, -1.f / 4, 0.f };
+	death_vertices[9].position = { -1.f / 4, -1.f / 4, 0.f };
+	death_vertices[10].position = { +1.f / 4, -1.f / 4, 0.f };
+	death_vertices[11].position = { +1.f / 2, -1.f / 4, 0.f };
+	death_vertices[8].position = { -1.f / 2, -1.f / 2, 0.f };
+	death_vertices[9].position = { -1.f / 4, -1.f / 2, 0.f };
+	death_vertices[10].position = { +1.f / 4, -1.f / 2, 0.f };
+	death_vertices[11].position = { +1.f / 2, -1.f / 2, 0.f };
+	death_vertices[0].texcoord = { 0, sprite_size / spritesheet_height };
+	death_vertices[1].texcoord = { 0 + sw_third, sprite_size / spritesheet_height };
+	death_vertices[2].texcoord = { 0 + sw_third * 2, sprite_size / spritesheet_height };
+	death_vertices[3].texcoord = { 0 + sw_third * 3, sprite_size / spritesheet_height };
+	death_vertices[4].texcoord = { 0, (sprite_size / spritesheet_height) - sh_third };
+	death_vertices[5].texcoord = { 0 + sw_third, (sprite_size / spritesheet_height) - sh_third };
+	death_vertices[6].texcoord = { 0 + sw_third * 2, (sprite_size / spritesheet_height) - sh_third };
+	death_vertices[7].texcoord = { 0 + sw_third * 3, (sprite_size / spritesheet_height) - sh_third };
+	death_vertices[8].texcoord = { 0, (sprite_size / spritesheet_height) - sh_third };
+	death_vertices[9].texcoord = { 0 + sw_third, (sprite_size / spritesheet_height) - sh_third * 2 };
+	death_vertices[10].texcoord = { 0 + sw_third * 2, (sprite_size / spritesheet_height) - sh_third * 2 };
+	death_vertices[11].texcoord = { 0 + sw_third * 3, (sprite_size / spritesheet_height) - sh_third * 2 };
+	death_vertices[7].texcoord = { 0 + sw_third * 3, (sprite_size / spritesheet_height) - sh_third * 2 };
+	death_vertices[8].texcoord = { 0, 0 };
+	death_vertices[9].texcoord = { 0 + sw_third, 0};
+	death_vertices[10].texcoord = { 0 + sw_third * 2, 0 };
+	death_vertices[11].texcoord = { 0 + sw_third * 3, 0 };
+
+	// Counterclockwise as it's the default opengl front winding direction.
+	const std::vector<uint16_t> death_indices = { 0, 4, 1, 1, 4, 5, 1, 5, 2, 2, 5, 6, 2, 6, 3, 3, 6, 7, 
+												  4, 8, 5, 5, 8, 9, 5, 9, 6, 6, 9, 10, 6, 10, 7, 7, 10, 11, 
+												  8, 12, 9, 9, 12, 13, 9, 13, 10, 10, 13, 14, 10, 14, 11, 11, 14, 15 };
+	 //const std::vector<uint16_t> death_indices = { 0, 3, 8, 8, 3, 11};
+	bind_vbo_and_ibo((uint)GEOMETRY_BUFFER_ID::DEATH, death_vertices, death_indices);
+	
 	//////////////////////////
 	// The position corresponds to the center of the texture.
 	std::vector<TexturedVertex> entry_vertices(4);
