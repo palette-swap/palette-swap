@@ -36,13 +36,13 @@ private:
 	////////////////////////////////
 	/// Actual file paths
 	const std::array<std::string, MapUtility::num_predefined_rooms> predefined_room_paths = {
-		predefined_rooms_path("room_big_top_left.csv"), // 0
-		predefined_rooms_path("room_big_top_right.csv"), // 1
-		predefined_rooms_path("room_big_bot_left.csv"), // 2
-		predefined_rooms_path("room_big_bot_right.csv"), // 3
-		predefined_rooms_path("room_big_side_top.csv"), // 4
-		predefined_rooms_path("room_big_side_bot.csv"), // 5
-		predefined_rooms_path("room_void.csv"), // 6
+		predefined_rooms_path("room_big_top_left.csv"),			   // 0
+		predefined_rooms_path("room_big_top_right.csv"),		   // 1
+		predefined_rooms_path("room_big_bot_left.csv"),			   // 2
+		predefined_rooms_path("room_big_bot_right.csv"),		   // 3
+		predefined_rooms_path("room_big_side_top.csv"),			   // 4
+		predefined_rooms_path("room_big_side_bot.csv"),			   // 5
+		predefined_rooms_path("room_void.csv"),					   // 6
 		predefined_rooms_path("room_big_side_bot_next_level.csv"), // 7
 	};
 	const std::array<std::string, MapUtility::num_predefined_levels> predefined_level_paths
@@ -118,7 +118,9 @@ private:
 	std::shared_ptr<TurnSystem> turns;
 
 public:
-	explicit MapGeneratorSystem(std::shared_ptr<TurnSystem> turns, std::shared_ptr<UISystem> ui_system, std::shared_ptr<LootSystem> loot_system);
+	explicit MapGeneratorSystem(std::shared_ptr<TurnSystem> turns,
+								std::shared_ptr<UISystem> ui_system,
+								std::shared_ptr<LootSystem> loot_system);
 	void init();
 
 	// Get the current level mapping
@@ -144,6 +146,7 @@ public:
 	MapUtility::TileID get_tile_id_from_room(int level, MapUtility::RoomID room_id, uint8_t row, uint8_t col) const;
 
 	// states after we attempted to move the player
+	// TODO: should be able to remove this once moved story system to map system
 	enum class MoveState {
 		Success,
 		Failed,

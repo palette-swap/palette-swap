@@ -24,14 +24,6 @@ using MapLayout = std::array<std::array<MapUtility::RoomID, MapUtility::room_siz
 // to uin8_t Predefined room ids: 0 -- void room
 using RoomLayout = std::array<uint32_t, MapUtility::room_size * MapUtility::room_size>;
 
-enum class TileType {
-	Floor,
-	Trap,
-	Door,
-	BreakableWall,
-	Chest,
-};
-
 struct AnimatedTile {
 	// indicates if the tile is activated or always animated
 	bool is_trigger;
@@ -94,10 +86,10 @@ struct LevelGenConf {
 
 struct MapAreaIterator {
 	using iterator_category = std::input_iterator_tag; // NOLINT(readability-identifier-naming)
-	using difference_type = vec2; // NOLINT(readability-identifier-naming)
-	using value_type = const uvec2; // NOLINT(readability-identifier-naming)
-	using pointer = value_type*; // NOLINT(readability-identifier-naming)
-	using reference = value_type&; // NOLINT(readability-identifier-naming)
+	using difference_type = vec2;					   // NOLINT(readability-identifier-naming)
+	using value_type = const uvec2;					   // NOLINT(readability-identifier-naming)
+	using pointer = value_type*;					   // NOLINT(readability-identifier-naming)
+	using reference = value_type&;					   // NOLINT(readability-identifier-naming)
 
 	reference operator*() const { return current_pos; }
 	pointer operator->() { return &current_pos; }

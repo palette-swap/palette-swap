@@ -16,8 +16,12 @@
 
 using namespace MapUtility;
 
-MapGeneratorSystem::MapGeneratorSystem(std::shared_ptr<TurnSystem> turns, std::shared_ptr<UISystem> ui_system, std::shared_ptr<LootSystem> loot_system)
-	: turns(std::move(turns)), ui_system(std::move(ui_system)), loot_system(std::move(loot_system))
+MapGeneratorSystem::MapGeneratorSystem(std::shared_ptr<TurnSystem> turns,
+									   std::shared_ptr<UISystem> ui_system,
+									   std::shared_ptr<LootSystem> loot_system)
+	: turns(std::move(turns))
+	, ui_system(std::move(ui_system))
+	, loot_system(std::move(loot_system))
 {
 	init();
 }
@@ -123,7 +127,6 @@ void MapGeneratorSystem::load_final_level()
 	level_conf.animated_tiles_blue.resize(predefined_room_paths.size());
 
 	level_configurations.emplace_back(level_conf);
-
 }
 
 void MapGeneratorSystem::load_generated_level_configurations()
@@ -203,11 +206,8 @@ static void load_enemy(unsigned int enemy_index, const rapidjson::Document& json
 	}
 
 	enemy_animation.state = enemy_state_to_animation_state.at(static_cast<size_t>(enemy_component.state));
-	registry.emplace<RenderRequest>(entity,
-									enemy_profile.texture,
-									EFFECT_ASSET_ID::ENEMY,
-									GEOMETRY_BUFFER_ID::SMALL_SPRITE,
-									visible);
+	registry.emplace<RenderRequest>(
+		entity, enemy_profile.texture, EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::SMALL_SPRITE, visible);
 	if (enemy_component.team == ColorState::Red) {
 		enemy_animation.color = ColorState::Red;
 		enemy_animation.display_color = { AnimationUtility::default_enemy_red, 1 };
@@ -279,37 +279,18 @@ static bool is_trap_tile(TileID tile_id)
 	const int trap_tile_start_row = trap_tile_start_id / tile_sprite_sheet_size;
 	const int trap_tile_start_col = trap_tile_start_id % tile_sprite_sheet_size;
 
-	return ((trap_tile_start_row <= (tile_id / tile_sprite_sheet_size) && (tile_id / tile_sprite_sheet_size) <= trap_tile_start_row + num_trap_tiles - 1)
-		&& (trap_tile_start_col <= (tile_id % tile_sprite_sheet_size) && (tile_id % tile_sprite_sheet_size) <= trap_tile_start_col + 4 - 1));
+	return ((trap_tile_start_row <= (tile_id / tile_sprite_sheet_size)
+			 && (tile_id / tile_sprite_sheet_size) <= trap_tile_start_row + num_trap_tiles - 1)
+			&& (trap_tile_start_col <= (tile_id % tile_sprite_sheet_size)
+				&& (tile_id % tile_sprite_sheet_size) <= trap_tile_start_col + 4 - 1));
 }
-static bool is_grass_tile(TileID tile_id)
-{
-	return (52 <= tile_id && tile_id < 56);
-}
-static bool is_floor_tile(TileID tile_id)
-{
-	return floor_tiles().find(tile_id) != floor_tiles().end();
-}
-static bool is_door_tile(TileID tile_id)
-{
-	return (60 <= tile_id && tile_id < 64);
-}
-static bool is_next_level_tile(TileID tile_id)
-{
-	return tile_id == next_level_tile;
-}
-static bool is_last_level_tile(TileID tile_id)
-{
-	return tile_id == last_level_tile;
-}
-static bool is_locked_chest_tile(TileID tile_id)
-{
-	return tile_id == 48;
-}
-static bool is_chest_tile(TileID tile_id)
-{
-	return tile_id == 44;
-}
+static bool is_grass_tile(TileID tile_id) { return (52 <= tile_id && tile_id < 56); }
+static bool is_floor_tile(TileID tile_id) { return floor_tiles().find(tile_id) != floor_tiles().end(); }
+static bool is_door_tile(TileID tile_id) { return (60 <= tile_id && tile_id < 64); }
+static bool is_next_level_tile(TileID tile_id) { return tile_id == next_level_tile; }
+static bool is_last_level_tile(TileID tile_id) { return tile_id == last_level_tile; }
+static bool is_locked_chest_tile(TileID tile_id) { return tile_id == 48; }
+static bool is_chest_tile(TileID tile_id) { return tile_id == 44; }
 
 static bool is_wall_tile(TileID tile_id)
 {
@@ -320,10 +301,20 @@ static bool is_wall_tile(TileID tile_id)
 	}
 
 	const static std::set<uint8_t> blocking_tiles({
-		20, 21, 22, 23, // torch
-		44, 45, 46, 47, // chest
-		60, 61, 62, // door
-		56, 57, 58, // cracked wall
+		20,
+		21,
+		22,
+		23, // torch
+		44,
+		45,
+		46,
+		47, // chest
+		60,
+		61,
+		62, // door
+		56,
+		57,
+		58, // cracked wall
 	});
 
 	return blocking_tiles.find(tile_id) != blocking_tiles.end();
@@ -337,8 +328,9 @@ bool MapGeneratorSystem::walkable(uvec2 pos) const
 
 	TileID tile_id = get_tile_id_from_map_pos(pos);
 
-	return (is_floor_tile(tile_id) || is_trap_tile(tile_id) || is_next_level_tile(tile_id) || is_last_level_tile(tile_id) || is_grass_tile(tile_id)
-			|| (tile_id == 63 && is_door_tile(tile_id)) || (tile_id == 59));
+	return (is_floor_tile(tile_id) || is_trap_tile(tile_id) || is_next_level_tile(tile_id)
+			|| is_last_level_tile(tile_id) || is_grass_tile(tile_id) || (tile_id == 63 && is_door_tile(tile_id))
+			|| (tile_id == 59));
 }
 
 bool MapGeneratorSystem::walkable_and_free(Entity entity, uvec2 pos, bool check_active_color) const
@@ -354,13 +346,13 @@ template <typename ColorExclusive> bool MapGeneratorSystem::walkable_and_free(En
 		return false;
 	}
 	for (auto [entity_other, map_pos] :
-		registry.view<MapPosition>(entt::exclude<ColorExclusive, Item, ResourcePickup>).each()) {
+		 registry.view<MapPosition>(entt::exclude<ColorExclusive, Item, ResourcePickup>).each()) {
 		if (entity != entity_other && map_pos.position == pos) {
 			return false;
 		}
 	}
 	for (auto [entity_other, map_size, map_pos] :
-		registry.view<MapHitbox, MapPosition>(entt::exclude<ColorExclusive, Item, ResourcePickup>).each()) {
+		 registry.view<MapHitbox, MapPosition>(entt::exclude<ColorExclusive, Item, ResourcePickup>).each()) {
 		auto it = MapArea(map_pos, map_size);
 		if (entity == entity_other) {
 			continue;
@@ -370,7 +362,6 @@ template <typename ColorExclusive> bool MapGeneratorSystem::walkable_and_free(En
 		}
 	}
 	return true;
-
 }
 
 bool MapGeneratorSystem::is_wall(uvec2 pos) const
@@ -397,7 +388,8 @@ std::vector<uvec2> make_path(std::unordered_map<uvec2, uvec2>& parent, uvec2 sta
 }
 
 // See https://en.wikipedia.org/wiki/A*_search_algorithm for algorithm reference
-std::vector<uvec2> MapGeneratorSystem::shortest_path(Entity entity, uvec2 start_pos, uvec2 target, bool use_a_star) const
+std::vector<uvec2>
+MapGeneratorSystem::shortest_path(Entity entity, uvec2 start_pos, uvec2 target, bool use_a_star) const
 {
 	if (!use_a_star) {
 		return bfs(entity, start_pos, target);
@@ -470,7 +462,8 @@ std::vector<uvec2> MapGeneratorSystem::bfs(Entity entity, uvec2 start_pos, uvec2
 		for (uvec2 neighbour :
 			 { curr + uvec2(1, 0), uvec2(curr.x - 1, curr.y), curr + uvec2(0, 1), uvec2(curr.x, curr.y - 1) }) {
 			// Check if neighbour is not already visited, and is walkable
-			if (neighbour == target || (walkable_and_free(entity, neighbour) && parent.find(neighbour) == parent.end())) {
+			if (neighbour == target
+				|| (walkable_and_free(entity, neighbour) && parent.find(neighbour) == parent.end())) {
 				// Enqueue neighbour
 				frontier.push(neighbour);
 				// Set curr as the parent of neighbour
@@ -631,7 +624,7 @@ void MapGeneratorSystem::load_level(int level)
 
 	// update player position
 	Entity player = registry.view<Player>().front();
-	registry.get<MapPosition>(player).deserialize(player , "/player", json_doc);
+	registry.get<MapPosition>(player).deserialize(player, "/player", json_doc);
 
 	// load items
 	if (json_doc.HasMember("items") && json_doc["items"].IsArray()) {
@@ -641,7 +634,7 @@ void MapGeneratorSystem::load_level(int level)
 				std::string item_prefix = "/items/" + std::to_string(i);
 				Item item_component;
 				item_component.deserialize(item_prefix, json_doc);
-				MapPosition map_position(uvec2(0,0));
+				MapPosition map_position(uvec2(0, 0));
 				map_position.deserialize(entt::null, item_prefix, json_doc);
 				loot_system->drop_item(map_position.position, item_component.item_template);
 			}
@@ -656,7 +649,7 @@ void MapGeneratorSystem::load_level(int level)
 				std::string resource_prefix = "/resources/" + std::to_string(i);
 				ResourcePickup resource_pickup;
 				resource_pickup.deserialize(resource_prefix, json_doc);
-				MapPosition map_position(uvec2(0,0));
+				MapPosition map_position(uvec2(0, 0));
 				map_position.deserialize(entt::null, resource_prefix, json_doc);
 				loot_system->drop_resource_pickup(map_position.position, resource_pickup.resource);
 			}
@@ -664,7 +657,8 @@ void MapGeneratorSystem::load_level(int level)
 	}
 
 	uvec2 player_initial_position = registry.get<MapPosition>(player).position;
-	RoomID starting_room = get_level_layout(level).at(player_initial_position.y / room_size).at(player_initial_position.x / room_size);
+	RoomID starting_room
+		= get_level_layout(level).at(player_initial_position.y / room_size).at(player_initial_position.x / room_size);
 	animated_room_buffer.emplace(starting_room);
 
 	if (level == 0) {
@@ -783,7 +777,7 @@ std::vector<std::map<int, AnimatedTile>>& MapGeneratorSystem::get_level_animated
 {
 	ColorState& inactive_color = registry.get<PlayerInactivePerception>(registry.view<Player>().front()).inactive;
 
-	LevelConfiguration & level_conf = level_configurations.at(level);
+	LevelConfiguration& level_conf = level_configurations.at(level);
 	return (inactive_color == ColorState::Blue) ? level_conf.animated_tiles_red : level_conf.animated_tiles_blue;
 }
 
@@ -819,62 +813,64 @@ MapGeneratorSystem::MoveState MapGeneratorSystem::move_player_to_tile(uvec2 from
 
 	Entity player_entity = registry.view<Player>().front();
 	ColorState& inactive_color = registry.get<PlayerInactivePerception>(player_entity).inactive;
-	LevelConfiguration & level_conf = level_configurations.at(current_level);
-	auto & animated_tiles = (inactive_color == ColorState::Blue) ? level_conf.animated_tiles_red : level_conf.animated_tiles_blue;
+	LevelConfiguration& level_conf = level_configurations.at(current_level);
+	auto& animated_tiles
+		= (inactive_color == ColorState::Blue) ? level_conf.animated_tiles_red : level_conf.animated_tiles_blue;
 
 	int tile_position_in_room = (to_pos.y % room_size) * room_size + to_pos.x % room_size;
-	const auto & current_animated_tile = animated_tiles.at(to_room).find(tile_position_in_room);
+	const auto& current_animated_tile = animated_tiles.at(to_room).find(tile_position_in_room);
 	if (current_animated_tile != animated_tiles.at(to_room).end()) {
 		if (current_animated_tile->second.is_trigger) {
 			current_animated_tile->second.activated = true;
 		}
 
 		if (is_trap_tile(current_animated_tile->second.tile_id)) {
-				registry.get<Stats>(player_entity).health -= 10;
+			registry.get<Stats>(player_entity).health -= 10;
 		}
 	}
 
 	registry.get<MapPosition>(player_entity).position = to_pos;
-	return MapGeneratorSystem::MoveState::Success;;
+	return MapGeneratorSystem::MoveState::Success;
+	;
 }
 
 bool MapGeneratorSystem::interact_with_surrounding_tile(Entity player)
 {
 	uvec2 player_position = registry.get<MapPosition>(player).position;
 
-	const static std::array<std::array<int, 2>, 4> directions = {{
-		{ -1, 0 },
-		{ 0, -1 },
-		{ 1, 0 },
-		{ 0, 1 }
-	}};
+	const static std::array<std::array<int, 2>, 4> directions = { { { -1, 0 }, { 0, -1 }, { 1, 0 }, { 0, 1 } } };
 	int player_row = player_position.y / map_size;
 	int player_col = player_position.x % map_size;
 
 	ColorState& inactive_color = registry.get<PlayerInactivePerception>(registry.view<Player>().front()).inactive;
 
-	auto & level_animated_tiles_red = level_configurations.at(current_level).animated_tiles_red;
-	auto & level_animated_tiles_blue = level_configurations.at(current_level).animated_tiles_blue;
+	auto& level_animated_tiles_red = level_configurations.at(current_level).animated_tiles_red;
+	auto& level_animated_tiles_blue = level_configurations.at(current_level).animated_tiles_blue;
 	Inventory& inventory = registry.get<Inventory>(player);
 
-	for (const auto & direction : directions) {
+	for (const auto& direction : directions) {
 		int target_row = player_position.y + direction[0];
 		int target_col = player_position.x + direction[1];
 
-		if (target_row < 0 || target_row >= map_size * room_size || target_col < 0 || target_col >= map_size * room_size) {
+		if (target_row < 0 || target_row >= map_size * room_size || target_col < 0
+			|| target_col >= map_size * room_size) {
 			continue;
 		}
 
 		RoomID target_room = current_map().at(target_row / room_size).at(target_col / room_size);
-		auto & room_animated_tiles = (inactive_color == ColorState::Blue) ? level_animated_tiles_red.at(target_room) : level_animated_tiles_blue.at(target_room);
-		auto & room_animated_tiles_inactive = (inactive_color == ColorState::Blue) ? level_animated_tiles_blue.at(target_room) : level_animated_tiles_red.at(target_room);
+		auto& room_animated_tiles = (inactive_color == ColorState::Blue) ? level_animated_tiles_red.at(target_room)
+																		 : level_animated_tiles_blue.at(target_room);
+		auto& room_animated_tiles_inactive = (inactive_color == ColorState::Blue)
+			? level_animated_tiles_blue.at(target_room)
+			: level_animated_tiles_red.at(target_room);
 
-		const auto & animated_tile = room_animated_tiles.find((target_row % room_size) * room_size + target_col % room_size);
+		const auto& animated_tile
+			= room_animated_tiles.find((target_row % room_size) * room_size + target_col % room_size);
 		if (animated_tile != room_animated_tiles.end() && animated_tile->second.usage_count > 0) {
 			if (animated_room_buffer.find(target_room) == animated_room_buffer.end()) {
 				animated_room_buffer.emplace(target_room);
 			}
-			if(is_door_tile(animated_tile->second.tile_id)) {
+			if (is_door_tile(animated_tile->second.tile_id)) {
 				if (inventory.resources.at((size_t)Resource::Key) == 0) {
 					continue;
 				}
@@ -894,12 +890,13 @@ bool MapGeneratorSystem::interact_with_surrounding_tile(Entity player)
 			}
 
 			animated_tile->second.activated = true;
-			animated_tile->second.usage_count --;
+			animated_tile->second.usage_count--;
 
 			// update the state in the other dimension as well
 			if (animated_tile->second.dimension == ColorState::All) {
-				const auto & animated_tile_inactive = room_animated_tiles_inactive.find((target_row % room_size) * room_size + target_col % room_size);
-				animated_tile_inactive->second.usage_count --;
+				const auto& animated_tile_inactive
+					= room_animated_tiles_inactive.find((target_row % room_size) * room_size + target_col % room_size);
+				animated_tile_inactive->second.usage_count--;
 				if (animated_tile_inactive->second.usage_count == 0) {
 					animated_tile_inactive->second.frame = animated_tile_inactive->second.max_frames - 1;
 				}
@@ -912,15 +909,15 @@ bool MapGeneratorSystem::interact_with_surrounding_tile(Entity player)
 void MapGeneratorSystem::step(float elapsed_ms)
 {
 	Entity player_entity = registry.view<Player>().front();
-	LevelConfiguration & level_conf = level_configurations.at(current_level);
-	auto & animated_tiles = get_level_animated_tiles(current_level);
+	LevelConfiguration& level_conf = level_configurations.at(current_level);
+	auto& animated_tiles = get_level_animated_tiles(current_level);
 
 	std::vector<RoomID> animation_completed_rooms;
 
 	for (RoomID room_index : animated_room_buffer) {
 		bool all_animations_completed = true;
-		std::map<int, AnimatedTile> & room_animated_tile = animated_tiles.at(room_index);
-		for (auto & animated_tile_iter : room_animated_tile) {
+		std::map<int, AnimatedTile>& room_animated_tile = animated_tiles.at(room_index);
+		for (auto& animated_tile_iter : room_animated_tile) {
 			if (!animated_tile_iter.second.activated) {
 				continue;
 			}
@@ -928,18 +925,22 @@ void MapGeneratorSystem::step(float elapsed_ms)
 			animated_tile_iter.second.elapsed_time += elapsed_ms;
 			if (animated_tile_iter.second.elapsed_time > 100.f / animated_tile_iter.second.speed_adjustment) {
 				animated_tile_iter.second.elapsed_time = 0;
-				if (animated_tile_iter.second.usage_count == 0 && animated_tile_iter.second.frame + 1 == animated_tile_iter.second.max_frames) {
+				if (animated_tile_iter.second.usage_count == 0
+					&& animated_tile_iter.second.frame + 1 == animated_tile_iter.second.max_frames) {
 					animated_tile_iter.second.activated = false;
 					continue;
 				}
-				animated_tile_iter.second.frame = ((animated_tile_iter.second.frame) + 1) % animated_tile_iter.second.max_frames;
+				animated_tile_iter.second.frame
+					= ((animated_tile_iter.second.frame) + 1) % animated_tile_iter.second.max_frames;
 
-				level_conf.room_layouts.at(room_index).at(animated_tile_iter.first) = animated_tile_iter.second.tile_id + animated_tile_iter.second.frame;
+				level_conf.room_layouts.at(room_index).at(animated_tile_iter.first)
+					= animated_tile_iter.second.tile_id + animated_tile_iter.second.frame;
 				if (animated_tile_iter.second.is_trigger && animated_tile_iter.second.frame == 0) {
 					animated_tile_iter.second.activated = false;
 				}
 			}
-			if ((animated_tile_iter.second.is_trigger && animated_tile_iter.second.activated) || animated_tile_iter.second.frame != 0) {
+			if ((animated_tile_iter.second.is_trigger && animated_tile_iter.second.activated)
+				|| animated_tile_iter.second.frame != 0) {
 				all_animations_completed = false;
 			}
 		}
@@ -948,7 +949,7 @@ void MapGeneratorSystem::step(float elapsed_ms)
 		}
 	}
 
-	uvec2 & player_position = registry.get<MapPosition>(player_entity).position;
+	uvec2& player_position = registry.get<MapPosition>(player_entity).position;
 	RoomID current_room_index = current_map().at(player_position.y / room_size).at(player_position.x / room_size);
 	for (RoomID room_index : animation_completed_rooms) {
 		if (room_index != current_room_index) {
@@ -1225,7 +1226,7 @@ void MapGeneratorSystem::increase_room_difficulty()
 	if (curr_conf.room_difficulty == INT_MAX) {
 		return;
 	}
-	curr_conf.room_difficulty ++;
+	curr_conf.room_difficulty++;
 	std::cout << "Current room difficulty: " << curr_conf.room_difficulty << std::endl;
 	regenerate_map();
 }
@@ -1235,7 +1236,7 @@ void MapGeneratorSystem::decrease_room_difficulty()
 	if (curr_conf.room_difficulty == 1) {
 		return;
 	}
-	curr_conf.room_difficulty --;
+	curr_conf.room_difficulty--;
 	std::cout << "Current room difficulty: " << curr_conf.room_difficulty << std::endl;
 	regenerate_map();
 }
