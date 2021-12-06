@@ -34,10 +34,18 @@ private:
 	void trigger_conversation();
 
 	// max text length for one conversation
-	static constexpr uint max_line_len = 80;
+	static constexpr uint max_line_len = 40;
 	static constexpr uint max_word_in_conversation = 7;
 
 	std::shared_ptr<AnimationSystem> animations;
 	std::shared_ptr<MapGeneratorSystem> map_system;
+
+	std::vector<std::string> help_texts
+		= { std::string("You know...I’m no longer here"),
+			std::string("I can’t stop you from going forwards...but know that you don’t have to keep going for me"),
+			std::string("This road will eventually end, but yours has not…"),
+			std::string("Come home."),
+			std::string("There are still people worth protecting"),
+			std::string("These demons will keep haunting you no matter where you choose to run, face them") };
 
 };

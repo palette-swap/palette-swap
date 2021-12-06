@@ -98,7 +98,9 @@ void StorySystem::step()
 void StorySystem::trigger_cutscene(CutScene& c)
 {
 	trigger_animation(c.type);
-	if (!c.texts.empty()) {
+	conversations.insert(conversations.begin(), c.texts.begin(), c.texts.end());
+	trigger_conversation();
+	/*if (!c.texts.empty()) {
 		std::stringstream ss(c.texts);
 		int total_char_count = 0;
 		std::string buff;
@@ -114,7 +116,7 @@ void StorySystem::trigger_cutscene(CutScene& c)
 		}
 		conversations.push_back(acc);
 		trigger_conversation();
-	}
+	}*/
 }
 
 void StorySystem::proceed_conversation()
@@ -137,6 +139,12 @@ void StorySystem::proceed_conversation()
 	for (char c : text_in_frame) {
 		text_frames.emplace_back(1, c);
 	}
+
+	UIGroup group = registry.get<UIGroup>(c.ui_entity);
+	Entity text_entity = group.first_elements.at(static_cast<size_t>(UILayer::Content));
+	Text& text_comp = registry.get<Text>(text_entity);
+	text_comp.text = "";
+
 }
 
 void StorySystem::render_text_each_frame()
@@ -201,7 +209,6 @@ void StorySystem::load_next_level()
 
 	for (auto [entity] : registry.view<Guide>().each()) {
 		vec2 position = registry.get<MapPosition>(entity).position;
-		std::string texts("Hello warriors! I am here to provide guidence");
-		create_radius_cutscene(entity, 10.f, CutSceneType::NPCEntry, texts, entity);
+		create_radius_cutscene(entity, 10.f, CutSceneType::NPCEntry, help_texts, entity);
 	}
 }

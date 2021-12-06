@@ -285,9 +285,6 @@ const std::array<EnemyType, ((size_t)EnemyType::EnemyCount - (size_t)EnemyType::
 	EnemyType::Titho,
 };
 
-const std::array<std::string, ((size_t)EnemyType::EnemyCount - (size_t)EnemyType::KingMush)> boss_cutscene_texts
-	= { "King Mush is here!", "Titho is here!" };
-
 enum class EnemyBehaviour {
 	// Small Enemy Behaviours (State Machines)
 	Dummy = 0,
@@ -999,6 +996,29 @@ struct RadiusTrigger {
 struct CutScene {
 	CutSceneType type;
 	Entity ui_entity;
-	std::string texts;
+	std::vector<std::string> texts;
 	Entity actual_entity;
 };
+
+const std::array<std::vector<std::string>, 4>
+	boss_cutscene_texts = {
+		std::vector<std::string> {
+			std::string("Hmm? How did this ruffian find their way into my kingly chambers?"),
+			std::string("Wait, there is only one possible explanation for this..."),
+			std::string("An ASSASSIN?! Guards, to me! Defend your new king!"),
+		},
+		std::vector<std::string> {
+			std::string("Ah, it's you again! It has been too long since we last sparred."),
+			std::string("Do you think you will defeat my master this time? Or perhaps I shall have the honor of "
+						"drawing your blood first."),
+			std::string("Now, ON YOUR GUARD."),
+		},
+		std::vector<std::string> {
+			std::string("And here you are at last. Finally at the end of your vainglorious crusade."),
+			std::string("Tell me, do you truly believe that all your efforts have meant something? That slaying my "
+						"subordinates in any way inconveniences me?"),
+			std::string("Impudent whelp, I am the master of time! Your efforts will mean nothing and your victories "
+						"will crumble before you eyes."),
+			std::string("Now grovel, worm, and witness the power of a god!"),
+		},
+	};
