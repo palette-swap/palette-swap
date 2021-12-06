@@ -172,6 +172,35 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 	return entity;
 }
 
+Entity create_aoe_emitter(ColorState team, uvec2 map_pos) 
+{
+	auto entity = registry.create();
+
+	registry.emplace<MapPosition>(entity, map_pos);
+
+	// Set up enemy stats to be weaker than the player
+	Stats& stats = registry.emplace<Stats>(entity);
+	stats.health = 50;
+	stats.health_max = 50;
+	stats.to_hit_bonus = 6;
+	stats.evasion = 12;
+	stats.base_attack.damage_min = 5;
+	stats.base_attack.damage_max = 15;
+
+	Enemy& enemy = registry.emplace<Enemy>(entity);
+
+	enemy.team = team;
+	enemy.type = EnemyType::AOERingGen;
+	enemy.behaviour = EnemyBehaviour::AOERingGen;
+	enemy.state = EnemyState::Active;
+	enemy.nest_map_pos = map_pos;
+	enemy.radius = 0;
+	enemy.speed = 0;
+	enemy.attack_range = 0;
+
+	return entity;
+}
+
 Entity create_guide( uvec2 map_pos)
 {
 	auto entity = registry.create();

@@ -382,7 +382,7 @@ struct AOESquare {
 	bool is_released = false;
 };
 
-struct Uninteractable {
+struct Environmental {
 };
 
 struct RedExclusive {

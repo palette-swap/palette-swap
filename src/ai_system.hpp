@@ -348,7 +348,9 @@ private:
 			ai->release_aoe(aoe_entities, aoe_attack_state);
 
 			ai->switch_enemy_state(e, EnemyState::Idle);
-			ai->animations->boss_event_animation(e, aoe_attack_state);
+			if (registry.try_get<Animation>(e)) {
+				ai->animations->boss_event_animation(e, aoe_attack_state);
+			}
 			ai->so_loud->play(aoe_effect);
 			return BTState::Success;
 		}
@@ -784,6 +786,10 @@ private:
 	// Leaf action node: DoNothing
 	class DoNothing : public BTNode {
 	public:
+		explicit DoNothing(int aoe_attack_state = 0) : aoe_attack_state(aoe_attack_state)
+		{
+		}
+
 		void init(Entity /*e*/) override { debug_log("Debug: DoNothing.init\n"); }
 
 		BTState process(Entity e, AISystem* ai) override
@@ -791,9 +797,13 @@ private:
 			debug_log("Debug: DoNothing.process\n");
 
 			ai->switch_enemy_state(e, EnemyState::Idle);
+			ai->animations->boss_event_animation(e, aoe_attack_state);
 
 			return handle_process_result(BTState::Success);
 		}
+
+	protected:
+		int aoe_attack_state;
 	};
 
 	// Leaf action node: SelfDestruct
@@ -1067,11 +1077,15 @@ private:
 				std::move(sacrifice_victims));
 
 			auto summon_aoe_emitter
-				= std::make_unique<SummonEnemies>(3, "Dragon Attack Roar.wav", EnemyType::AOERingGen, 2);
+				= std::make_unique<SummonEnemies>(3, "Dragon Attack Roar.wav", EnemyType::AOERingGen, 1);
+			auto do_nothing_aoe = std::make_unique<DoNothing>(3/*TODO: Insert AOE animation here */);
+			auto aoe_sequence = std::make_unique<Sequence>();
+			aoe_sequence->add_child(std::move(summon_aoe_emitter));
+			aoe_sequence->add_child(std::move(do_nothing_aoe));
 			selector_active->add_precond_and_child(
-				[p](Entity /*e*/) { return ((p->get_process_count()+2) % 5 == 0); },
-				std::move(summon_aoe_emitter)
+				[p](Entity /*e*/) { return ((p->get_process_count()+2) % 5 == 0); }, std::move(aoe_sequence)
 			);
+			
 
 			auto wild_surge = std::make_unique<AOERandomAttack>("Dragon Roar.wav", 5, e, 10, 8);
 			selector_active->add_precond_and_child(

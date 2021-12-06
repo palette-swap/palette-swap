@@ -179,6 +179,10 @@ void AISystem::step(float /*elapsed_ms*/)
 			}
 		}
 
+		//for (auto [entity, env_effect] : registry.view<Environmental>().each()) {
+
+		//}
+
 		turns->complete_team_action(enemy_team);
 	}
 
@@ -416,8 +420,11 @@ void AISystem::switch_enemy_state(const Entity& enemy_entity, EnemyState new_sta
 {
 	Enemy& enemy = registry.get<Enemy>(enemy_entity);
 	enemy.state = new_state;
-	int new_state_id = enemy_state_to_animation_state.at(static_cast<size_t>(new_state));
-	animations->set_enemy_state(enemy_entity, new_state_id);
+	if (registry.try_get<Animation>(enemy_entity))
+	{
+		int new_state_id = enemy_state_to_animation_state.at(static_cast<size_t>(new_state));
+		animations->set_enemy_state(enemy_entity, new_state_id);
+	}
 }
 
 bool AISystem::is_player_spotted(const Entity& entity)
@@ -596,8 +603,9 @@ void AISystem::summon_enemies(const Entity& entity, EnemyType enemy_type, int nu
 	MapPosition& map_pos = registry.get<MapPosition>(entity);
 
 	if (enemy_type == EnemyType::AOERingGen) {
-		Entity entity = create_enemy(ColorState::All, EnemyType::AOERingGen, map_pos.position);
-		registry.emplace<Uninteractable>(entity);
+
+		Entity entity = create_aoe_emitter(ColorState::All, map_pos.position);
+		registry.emplace<Environmental>(entity);
 	} else {
 		for (size_t i = 0; i < num; ++i) {
 			uvec2 new_map_pos = { map_pos.position.x - 2 - i, map_pos.position.y };

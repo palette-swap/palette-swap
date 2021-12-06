@@ -8,6 +8,8 @@ Entity create_player(uvec2 pos);
 Entity create_camera(uvec2 pos);
 // the enemy
 Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos);
+// aoe emitter
+Entity create_aoe_emitter(ColorState team, uvec2 map_pos);
 // the guide (singular available NPC currently)
 Entity create_guide(uvec2 map_pos);
 // the AOE

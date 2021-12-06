@@ -276,13 +276,13 @@ template <typename ColorExclusive> bool MapGeneratorSystem::walkable_and_free(En
 		return false;
 	}
 	for (auto [entity_other, map_pos] :
-		registry.view<MapPosition>(entt::exclude<ColorExclusive, Item, ResourcePickup, Uninteractable>).each()) {
+		 registry.view<MapPosition>(entt::exclude<ColorExclusive, Item, ResourcePickup, Environmental>).each()) {
 		if (entity != entity_other && map_pos.position == pos) {
 			return false;
 		}
 	}
 	for (auto [entity_other, map_size, map_pos] :
-		 registry.view<MapHitbox, MapPosition>(entt::exclude<ColorExclusive, Item, ResourcePickup, Uninteractable>)
+		 registry.view<MapHitbox, MapPosition>(entt::exclude<ColorExclusive, Item, ResourcePickup, Environmental>)
 			 .each()) {
 		auto it = MapArea(map_pos, map_size);
 		if (entity == entity_other) {
