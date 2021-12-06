@@ -107,77 +107,80 @@ void AISystem::step(float /*elapsed_ms*/)
 							continue;
 						}
 
-				switch (enemy.behaviour) {
+						switch (enemy.behaviour) {
 
-				// Small Enemy Behaviours (State Machines)
-				case EnemyBehaviour::Dummy:
-					execute_dummy_sm(enemy_entity);
-					break;
+						// Small Enemy Behaviours (State Machines)
+						case EnemyBehaviour::Dummy:
+							execute_dummy_sm(enemy_entity);
+							break;
 
-				case EnemyBehaviour::Basic:
-					execute_basic_sm(enemy_entity);
-					break;
+						case EnemyBehaviour::Basic:
+							execute_basic_sm(enemy_entity);
+							break;
 
-				case EnemyBehaviour::Cowardly:
-					execute_cowardly_sm(enemy_entity);
-					break;
+						case EnemyBehaviour::Cowardly:
+							execute_cowardly_sm(enemy_entity);
+							break;
 
-				case EnemyBehaviour::Defensive:
-					execute_defensive_sm(enemy_entity);
-					break;
+						case EnemyBehaviour::Defensive:
+							execute_defensive_sm(enemy_entity);
+							break;
 
-				case EnemyBehaviour::Aggressive:
-					execute_aggressive_sm(enemy_entity);
-					break;
+						case EnemyBehaviour::Aggressive:
+							execute_aggressive_sm(enemy_entity);
+							break;
 
-				case EnemyBehaviour::Sacrificed:
-					execute_sacrificed_sm(enemy_entity);
-					break;
+						case EnemyBehaviour::Sacrificed:
+							execute_sacrificed_sm(enemy_entity);
+							break;
 
-				// Boss Enemy Behaviours (Behaviour Trees)
-				case EnemyBehaviour::Summoner:
-				case EnemyBehaviour::WeaponMaster: {
-					// If a boss entity occurs for the 1st time, create its corresponding behaviour tree & initialize.
-					if ((bosses.find(enemy_entity) == bosses.end())) {
-						if (enemy.behaviour == EnemyBehaviour::Summoner) {
-							bosses[enemy_entity] = SummonerTree::summoner_tree_factory(this);
-						} else if (enemy.behaviour == EnemyBehaviour::WeaponMaster) {
-							bosses[enemy_entity] = WeaponMasterTree::weapon_master_tree_factory(this);
+						// Boss Enemy Behaviours (Behaviour Trees)
+						case EnemyBehaviour::Summoner:
+						case EnemyBehaviour::WeaponMaster: {
+							// If a boss entity occurs for the 1st time, create its corresponding behaviour tree &
+							// initialize.
+							if ((bosses.find(enemy_entity) == bosses.end())) {
+								if (enemy.behaviour == EnemyBehaviour::Summoner) {
+									bosses[enemy_entity] = SummonerTree::summoner_tree_factory(this);
+								} else if (enemy.behaviour == EnemyBehaviour::WeaponMaster) {
+									bosses[enemy_entity] = WeaponMasterTree::weapon_master_tree_factory(this);
+								}
+
+							break;
+							}
+						} 
+						case EnemyBehaviour::Dragon: {
+							if (bosses.find(enemy_entity) == bosses.end()) {
+								// A boss entity occurs for the 1st time, create its corresponding behaviour tree &
+								// initialize.
+								bosses[enemy_entity] = DragonTree::dragon_tree_factory(this, enemy_entity);
+								bosses[enemy_entity]->init(enemy_entity);
+							}
+							if (bosses[enemy_entity]->process(enemy_entity, this) != BTState::Running) {
+								bosses[enemy_entity]->init(enemy_entity);
+							}
+							break;
 						}
-
+						case EnemyBehaviour::AOERingGen: {
+							if (bosses.find(enemy_entity) == bosses.end()) {
+								// A boss entity occurs for the 1st time, create its corresponding behaviour tree &
+								// initialize.
+								bosses[enemy_entity] = AOEEmitterTree::aoe_emitter_tree_factory(this, enemy_entity);
+								bosses[enemy_entity]->init(enemy_entity);
+							}
+							if (bosses[enemy_entity]->process(enemy_entity, this) != BTState::Running) {
+								bosses[enemy_entity]->init(enemy_entity);
+							}
+							break;
+						}
 						default:
 							throw std::runtime_error("Invalid enemy behaviour.");
 						}
 					}
-					break;
+					
 				}
-				case EnemyBehaviour::Dragon: {
-					if (bosses.find(enemy_entity) == bosses.end()) {
-						// A boss entity occurs for the 1st time, create its corresponding behaviour tree & initialize.
-						bosses[enemy_entity] = DragonTree::dragon_tree_factory(this, enemy_entity);
-						bosses[enemy_entity]->init(enemy_entity);
-					}
-					if (bosses[enemy_entity]->process(enemy_entity, this) != BTState::Running) {
-						bosses[enemy_entity]->init(enemy_entity);
-					}
-					break;
-				}
-				case EnemyBehaviour::AOERingGen: { 
-					if (bosses.find(enemy_entity) == bosses.end()) {
-						// A boss entity occurs for the 1st time, create its corresponding behaviour tree & initialize.
-						bosses[enemy_entity] = AOEEmitterTree::aoe_emitter_tree_factory(this, enemy_entity);
-						bosses[enemy_entity]->init(enemy_entity);
-					}
-					if (bosses[enemy_entity]->process(enemy_entity, this) != BTState::Running) {
-						bosses[enemy_entity]->init(enemy_entity);
-					}
-					break;
-				}
-				default:
-					throw std::runtime_error("Invalid enemy behaviour.");
-				}
-				
 			}
+		}
 
 		//for (auto [entity, env_effect] : registry.view<Environmental>().each()) {
 
