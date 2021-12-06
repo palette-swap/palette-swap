@@ -9,6 +9,8 @@
 class UISystem {
 public:
 
+	explicit UISystem(Debug& debugging);
+
 	void init(RenderSystem* render_system,
 			  std::shared_ptr<LootSystem> loot_system,
 			  std::shared_ptr<TutorialSystem> tutorial_system,
@@ -78,6 +80,8 @@ private:
 	Entity attack_preview = entt::null;
 
 	Entity previous_group = entt::null;
+
+	Debug& debugging;
 
 	RenderSystem* renderer;
 	std::shared_ptr<LootSystem> loot;

@@ -30,6 +30,8 @@ int main()
 	std::shared_ptr<SoLoud::Soloud> so_loud = std::make_shared<SoLoud::Soloud>();
 	so_loud->init();
 
+	Debug debugging;
+
 	// Loot System
 	std::shared_ptr<LootSystem> loot = std::make_shared<LootSystem>();
 
@@ -46,7 +48,7 @@ int main()
 	std::shared_ptr<AnimationSystem> animations = std::make_shared<AnimationSystem>();
 
 	// UI System
-	std::shared_ptr<UISystem> ui = std::make_shared<UISystem>();
+	std::shared_ptr<UISystem> ui = std::make_shared<UISystem>(debugging);
 
 	// Story System
 	std::shared_ptr<StorySystem> stories = std::make_shared<StorySystem>(animations);
@@ -55,7 +57,6 @@ int main()
 	std::shared_ptr<TutorialSystem> tutorials = std::make_shared<TutorialSystem>();
 
 	// Global systems
-	Debug debugging;
 	WorldSystem world(debugging, animations, combat, loot, map, stories, turns, tutorials, ui, so_loud);
 	LightingSystem lighting;
 	RenderSystem renderer(debugging, lighting);

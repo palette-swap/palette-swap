@@ -366,7 +366,7 @@ void UISystem::on_mouse_move(vec2 mouse_screen_pos)
 		}
 	}
 	if (player_can_act()) {
-		if (has_current_attack() && get_current_attack().targeting_type == TargetingType::Adjacent) {
+		if (debugging.in_debug_mode && has_current_attack() && get_current_attack().targeting_type == TargetingType::Adjacent) {
 			update_attack_preview(mouse_map_pos);
 		} else {
 			destroy_attack_preview();

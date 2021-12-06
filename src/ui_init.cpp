@@ -1,6 +1,10 @@
 #include "ui_init.hpp"
 #include "ui_system.hpp"
 
+UISystem::UISystem(Debug& debugging): debugging(debugging) {
+
+}
+
 void UISystem::init(RenderSystem* render_system,
 					std::shared_ptr<LootSystem> loot_system,
 					std::shared_ptr<TutorialSystem> tutorial_system,
