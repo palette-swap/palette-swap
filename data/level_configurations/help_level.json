@@ -5,7 +5,7 @@
   "player": {
     "position": {
       "x": 30,
-      "y": 50
+      "y": 53
     }
   },
   "enemies": [
@@ -22,11 +22,11 @@
       "attack_range": 10,
       "nest_position": {
         "x": 30,
-        "y": 46
+        "y": 42
       },
       "position": {
         "x": 30,
-        "y": 46
+        "y": 42
       },
       "stats": {
         "health": 300,

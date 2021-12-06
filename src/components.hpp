@@ -118,8 +118,11 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 	TITHO = KING_MUSH_ENTRY + 1,
 	TITHO_ATTACKS = TITHO + 1,
 	TITHO_ENTRY = TITHO_ATTACKS + 1,
+	DRAGON = TITHO_ENTRY + 1,
+	DRAGON_ATTACKS = DRAGON + 1,
+	DRAGON_ENTRY = DRAGON_ATTACKS + 1,
 	//NPCS
-	GUIDE = TITHO_ENTRY + 1,
+	GUIDE = DRAGON_ENTRY + 1,
 	// Misc Assets
 	CANNONBALL = GUIDE + 1,
 	SPELLS = CANNONBALL + 1,
@@ -152,7 +155,10 @@ static constexpr std::array<vec2, texture_count> scaling_factors = {
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size * 3, MapUtility::tile_size * 3),
-	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size * 3, MapUtility::tile_size * 3),
+	vec2(MapUtility::tile_size * 5, MapUtility::tile_size * 5),
+	vec2(MapUtility::tile_size * 5, MapUtility::tile_size * 5),
+	vec2(MapUtility::tile_size * 3, MapUtility::tile_size * 3),
 	vec2(MapUtility::tile_size * 5, MapUtility::tile_size * 5),
 	vec2(MapUtility::tile_size * 5, MapUtility::tile_size * 5),
 	vec2(MapUtility::tile_size * 3, MapUtility::tile_size * 3),
@@ -280,12 +286,15 @@ enum class EnemyType {
 	// Boss Enemy Types
 	KingMush = KoboldMage + 1,
 	Titho = KingMush + 1,
-	EnemyCount = Titho + 1,
+	Dragon = Titho + 1,
+	AOERingGen = Dragon + 1,
+	EnemyCount = AOERingGen + 1,
 };
 
-const std::array<EnemyType, ((size_t)EnemyType::EnemyCount - (size_t)EnemyType::KingMush)> enemy_type_bosses = {
+const std::array<EnemyType, ((size_t)EnemyType::AOERingGen - (size_t)EnemyType::KingMush)> enemy_type_bosses = {
 	EnemyType::KingMush,
 	EnemyType::Titho,
+	EnemyType::Dragon,
 };
 
 enum class EnemyBehaviour {
@@ -295,26 +304,30 @@ enum class EnemyBehaviour {
 	Cowardly = Basic + 1,
 	Defensive = Cowardly + 1,
 	Aggressive = Defensive + 1,
+	Sacrificed = Aggressive + 1,
 	// Boss Enemy Behaviours (Behaviour Trees)
-	Summoner = Aggressive + 1,
+	Summoner = Sacrificed + 1,
 	WeaponMaster = Summoner + 1,
-	EnemyBehaviourCount = WeaponMaster + 1,
+	Dragon = WeaponMaster + 1,
+	AOERingGen = Dragon + 1,
+	EnemyBehaviourCount = AOERingGen + 1,
 };
 
 const std::array<EnemyBehaviour, (size_t)EnemyType::EnemyCount> enemy_type_to_behaviour = {
-	EnemyBehaviour::Dummy,		  EnemyBehaviour::Cowardly,	 EnemyBehaviour::Basic, EnemyBehaviour::Defensive,
-	EnemyBehaviour::Aggressive,	  EnemyBehaviour::Basic,	 EnemyBehaviour::Basic, EnemyBehaviour::Cowardly,
-	EnemyBehaviour::Aggressive,	  EnemyBehaviour::Defensive, EnemyBehaviour::Basic, EnemyBehaviour::Basic,
-	EnemyBehaviour::Basic,		  EnemyBehaviour::Basic,	 EnemyBehaviour::Basic, EnemyBehaviour::Summoner,
-	EnemyBehaviour::WeaponMaster,
+	EnemyBehaviour::Dummy,		  EnemyBehaviour::Cowardly,	 EnemyBehaviour::Basic,		 EnemyBehaviour::Defensive,
+	EnemyBehaviour::Aggressive,	  EnemyBehaviour::Basic,	 EnemyBehaviour::Basic,		 EnemyBehaviour::Cowardly,
+	EnemyBehaviour::Aggressive,	  EnemyBehaviour::Defensive, EnemyBehaviour::Basic,		 EnemyBehaviour::Basic,
+	EnemyBehaviour::Basic,		  EnemyBehaviour::Basic,	 EnemyBehaviour::Basic,		 EnemyBehaviour::Summoner,
+	EnemyBehaviour::WeaponMaster, EnemyBehaviour::Dragon,	 EnemyBehaviour::AOERingGen,
 };
 
 // Small Enemy Behaviours (State Machines) uses the following states.
-// Dummy:			Idle, Active. 
+// Dummy:			Idle, Active.
 // Basic:			Idle, Active.
 // Cowardly:		Idle, Active, Flinched.
 // Defensive:		Idle, Active, Immortal.
 // Aggressive:		Idle, Active, Powerup.
+// Sacrificed:		Idle, Active.
 //
 // Boss Enemy Behaviours (Behaviour Trees) uses the following states.
 // Summoner:		Idle, Charging.
@@ -349,6 +362,17 @@ struct Enemy {
 	void deserialize(const std::string& prefix, const rapidjson::Document& json, bool load_from_file = true);
 };
 
+// Structure to store dragon boss information.
+struct Dragon {
+	bool is_sacrifice_used = false;
+	std::vector<Entity> victims;
+};
+
+// Structure to store victim information.
+struct Victim {
+	Entity owner = entt::null;
+};
+
 struct LastKnownPlayerLocation {
 	uvec2 position;
 };
@@ -359,10 +383,20 @@ constexpr uint max_danger_rating = 5;
 struct Boss {
 };
 
+struct AOESource {
+	Entity children = entt::null;
+	static Entity add(Entity parent);
+};
+
 struct AOESquare {
+	Entity parent;
+	Entity next_aoe;
 	// Released AOE square will be destroyed in the next turn.
 	bool actual_attack_displayed = false;
 	bool is_released = false;
+};
+
+struct Environmental {
 };
 
 struct RedExclusive {
@@ -671,11 +705,14 @@ constexpr std::array<AnimationProfile, static_cast<int>(EnemyType::EnemyCount)> 
 	AnimationProfile { TEXTURE_ASSET_ID::KOBOLD_MAGE, 0.f },
 	AnimationProfile { TEXTURE_ASSET_ID::KING_MUSH, 0.f }, 
 	AnimationProfile { TEXTURE_ASSET_ID::TITHO, 0.f },
+	AnimationProfile { TEXTURE_ASSET_ID::DRAGON, 0.f },
+	AnimationProfile { TEXTURE_ASSET_ID::DRAGON, 0.f },
 };
 
 const std::map<EnemyType, BossEntryAnimation> boss_type_entry_animation_map {
 	{ EnemyType::KingMush, BossEntryAnimation { TEXTURE_ASSET_ID::KING_MUSH_ENTRY, 32 } },
 	{ EnemyType::Titho, BossEntryAnimation { TEXTURE_ASSET_ID::TITHO_ENTRY, 48 } },
+	{ EnemyType::Dragon, BossEntryAnimation { TEXTURE_ASSET_ID::DRAGON_ENTRY, 42 } },
 };
 
 constexpr std::array<int, (size_t)EnemyState::EnemyStateCount> enemy_state_to_animation_state = {
@@ -781,9 +818,11 @@ constexpr std::array<int, (size_t)DamageType::Count> damage_type_to_spell_impact
 	7, // Wind effect
 };
 
-const std::map<EnemyType, TEXTURE_ASSET_ID> boss_type_attack_spritesheet {
-	{ EnemyType::KingMush, TEXTURE_ASSET_ID::KING_MUSH_ATTACKS },
+const std::map<EnemyType, TEXTURE_ASSET_ID> boss_type_attack_spritesheet { 
+	{ EnemyType::KingMush, TEXTURE_ASSET_ID::KING_MUSH_ATTACKS } ,
 	{ EnemyType::Titho, TEXTURE_ASSET_ID::TITHO_ATTACKS },
+	{ EnemyType::Dragon, TEXTURE_ASSET_ID::DRAGON_ATTACKS },
+	{ EnemyType::AOERingGen, TEXTURE_ASSET_ID::DRAGON_ATTACKS },
 };
 
 struct RoomAnimation {
