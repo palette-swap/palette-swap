@@ -1084,7 +1084,7 @@ private:
 
 			auto summon_aoe_emitter
 				= std::make_unique<SummonEnemies>(0, "Dragon Long Roar.wav", EnemyType::AOERingGen, 1);
-			auto do_nothing_aoe = std::make_unique<DoNothing>(3/*TODO: Insert AOE animation here */);
+			auto do_nothing_aoe = std::make_unique<DoNothing>(7);
 			auto aoe_sequence = std::make_unique<Sequence>();
 			aoe_sequence->add_child(std::move(summon_aoe_emitter));
 			aoe_sequence->add_child(std::move(do_nothing_aoe));
