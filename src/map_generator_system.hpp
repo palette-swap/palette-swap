@@ -123,7 +123,6 @@ private:
 
 	// Sound effects
 	SoLoud::Wav spike_wav;
-	SoLoud::Wav fire_spell_wav;
 
 public:
 	explicit MapGeneratorSystem(std::shared_ptr<TurnSystem> turns,
