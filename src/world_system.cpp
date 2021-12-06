@@ -625,7 +625,7 @@ void WorldSystem::move_player(Direction direction)
 	return_arrow_to_player();
 
 	// TODO: move the logics to map generator system
-	if (move_ret == MapGeneratorSystem::MoveState::NextLevel) {
+	if (move_ret == MapGeneratorSystem::MoveState::NextLevel || move_ret == MapGeneratorSystem::MoveState::LastLevel) {
 		story->load_next_level();
 	}
 	story->check_cutscene();
