@@ -50,6 +50,9 @@ void CombatSystem::apply_decrement_per_turn_effects(Entity entity)
 	for (int i = 0; i < num_per_turn_conditions; i++) {
 		auto effect = (Effect)(num_per_use_conditions + i);
 		int amount = get_decrement_effect(entity, effect);
+		if (amount <= 0) {
+			continue;
+		}
 		switch (effect) {
 		case Effect::Bleed:
 		case Effect::Burn: {
