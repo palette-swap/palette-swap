@@ -4,9 +4,16 @@
 #include "rapidjson/document.h"
 #include "rapidjson/rapidjson.h"
 
+#include <set>
+
 namespace MapUtility {
 static constexpr uint8_t num_predefined_rooms = 8;
 static constexpr uint8_t num_predefined_levels = 1;
+
+// common tiles used by map generater and map generator system
+static const uint8_t next_level_tile = 14;
+static const uint8_t last_level_tile = 15;
+const std::set<uint8_t>& floor_tiles();
 
 // 10*10 grid used to represent map layout
 using MapLayout = std::array<std::array<MapUtility::RoomID, MapUtility::room_size>, MapUtility::room_size>;
@@ -17,23 +24,17 @@ using MapLayout = std::array<std::array<MapUtility::RoomID, MapUtility::room_siz
 // to uin8_t Predefined room ids: 0 -- void room
 using RoomLayout = std::array<uint32_t, MapUtility::room_size * MapUtility::room_size>;
 
-enum class TileType {
-	Floor,
-	Trap,
-	Door,
-	BreakableWall,
-	Chest,
-};
-
 struct AnimatedTile {
 	// indicates if the tile is activated or always animated
 	bool is_trigger;
 	bool activated;
 	// a sperate parameter as different tile can be of the same type
 	uint8_t tile_id;
-	float speed_adjustment = 0.6f;
+	ColorState dimension = ColorState::None;
 	// how many times the tile can be interacted, -1 means infinite
 	int usage_count = -1;
+
+	float speed_adjustment = 0.6f;
 	// animation frame, from 0 to 3
 	int frame = 0;
 	float elapsed_time = 0;
@@ -85,10 +86,10 @@ struct LevelGenConf {
 
 struct MapAreaIterator {
 	using iterator_category = std::input_iterator_tag; // NOLINT(readability-identifier-naming)
-	using difference_type = vec2; // NOLINT(readability-identifier-naming)
-	using value_type = const uvec2; // NOLINT(readability-identifier-naming)
-	using pointer = value_type*; // NOLINT(readability-identifier-naming)
-	using reference = value_type&; // NOLINT(readability-identifier-naming)
+	using difference_type = vec2;					   // NOLINT(readability-identifier-naming)
+	using value_type = const uvec2;					   // NOLINT(readability-identifier-naming)
+	using pointer = value_type*;					   // NOLINT(readability-identifier-naming)
+	using reference = value_type&;					   // NOLINT(readability-identifier-naming)
 
 	reference operator*() const { return current_pos; }
 	pointer operator->() { return &current_pos; }

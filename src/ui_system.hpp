@@ -2,21 +2,29 @@
 
 #include "components.hpp"
 
+#include "loot_system.hpp"
 #include "render_system.hpp"
 #include "tutorial_system.hpp"
 
 class UISystem {
 public:
 
-	void init(RenderSystem* render_system, std::shared_ptr<TutorialSystem> tutorial_system, std::function<void()> change_color);
+	explicit UISystem(Debug& debugging);
+
+	void init(RenderSystem* render_system,
+			  std::shared_ptr<LootSystem> loot_system,
+			  std::shared_ptr<TutorialSystem> tutorial_system,
+			  std::function<void()> change_color,
+			  std::function<void()> restart_world);
 
 	void restart_game();
 
-	void on_key(int key, int action, int /*mod*/);
+	void on_key(int key, int action, int /*mod*/, dvec2 mouse_screen_pos);
 	bool on_left_click(int action, dvec2 mouse_screen_pos);
 	void on_mouse_move(vec2 mouse_screen_pos);
 
 	bool player_can_act();
+	bool game_in_progress();
 
 	bool has_current_attack() const;
 	Attack& get_current_attack();
@@ -26,15 +34,22 @@ public:
 	void add_to_inventory(Entity item, size_t slot);
 	void update_resource_count();
 
+	void end_game(bool victory);
+
 private:
 	void try_settle_held();
 
 	void switch_to_group(Entity group);
+	bool is_group_visible(Groups group);
 
 	// Remove tooltip from group, destroy entity
 	void destroy_tooltip();
 	// Set tooltip alignment based on its position
 	void align_tooltip(vec2 new_pos);
+
+	
+	void destroy_attack_preview();
+	void update_attack_preview(uvec2 mouse_map_pos);
 
 	bool can_insert_into_slot(Entity item, Entity container);
 	void insert_into_slot(Entity item, Entity container);
@@ -62,10 +77,17 @@ private:
 	std::array<Entity, (size_t)Groups::Count> groups = { entt::null };
 	Entity held_under_mouse = entt::null;
 	Entity tooltip = entt::null;
+	Entity attack_preview = entt::null;
+
+	Entity previous_group = entt::null;
+
+	Debug& debugging;
 
 	RenderSystem* renderer;
+	std::shared_ptr<LootSystem> loot;
 	std::shared_ptr<TutorialSystem> tutorials;
 	std::function<void()> try_change_color;
+	std::function<void()> restart_world;
 
 	std::vector<std::function<void()>> show_world_callbacks;
 };

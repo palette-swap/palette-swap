@@ -1,5 +1,6 @@
 {
   "type": 5,
+  "danger_rating": 2,
   "state": 0,
   "radius": 1,
   "speed": 1,

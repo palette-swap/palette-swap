@@ -12,6 +12,7 @@
     {
       "team": 1,
       "type": 0,
+      "danger_rating": 0,
       "state": 0,
       "radius": 0,
       "speed": 0,
@@ -46,6 +47,7 @@
     {
       "team": 1,
       "type": 0,
+      "danger_rating": 0,
       "state": 0,
       "radius": 0,
       "speed": 0,
@@ -80,6 +82,7 @@
     {
       "team": 1,
       "type": 0,
+      "danger_rating": 0,
       "state": 1,
       "radius": 0,
       "speed": 0,
@@ -114,6 +117,7 @@
     {
       "team": 2,
       "type": 0,
+      "danger_rating": 0,
       "state": 0,
       "radius": 0,
       "speed": 0,
@@ -148,6 +152,7 @@
     {
       "team": 2,
       "type": 0,
+      "danger_rating": 0,
       "state": 0,
       "radius": 0,
       "speed": 0,
@@ -182,6 +187,7 @@
     {
       "team": 2,
       "type": 0,
+      "danger_rating": 0,
       "state": 1,
       "radius": 0,
       "speed": 0,

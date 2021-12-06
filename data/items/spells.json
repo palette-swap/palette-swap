@@ -1,0 +1,86 @@
+  [
+  {
+    "name": "Ice Orb",
+    "tier": 1,
+    "slots": [ "Spell" ],
+    "attacks": [
+      {
+        "name": "Ice Orb",
+        "mana_cost": 20,
+        "to_hit": [ 15, 20 ],
+        "damage": [ 0, 8 ],
+        "damage_type": "Cold",
+        "targeting_type": "Projectile",
+        "range": 4,
+        "effects": [
+          {
+            "effect": "Stun",
+            "magnitude": 3,
+            "chance": 0.95
+          },
+          {
+            "effect": "Weaken",
+            "magnitude": 7,
+            "chance": 0.75
+          }
+        ]
+      }
+    ],
+    "texture_offset": [ 1, 3 ]
+  },
+  {
+    "name": "Gale Blast",
+    "tier": 2,
+    "slots": [ "Spell" ],
+    "attacks": [
+      {
+        "name": "Gale Blast",
+        "mana_cost": 25,
+        "to_hit": [ 15, 20 ],
+        "damage": [ 10, 15 ],
+        "damage_type": "Wind",
+        "targeting_type": "Projectile",
+        "range": 4,
+        "parallel_size": 4,
+        "perpendicular_size": 4,
+        "effects": [
+          {
+            "effect": "Shove",
+            "magnitude": 4,
+            "chance": 0.95
+          }
+        ]
+      }
+    ],
+    "texture_offset": [ 3, 3 ]
+  },
+  {
+    "name": "Tar Ball",
+    "tier": 3,
+    "slots": [ "Spell" ],
+    "attacks": [
+      {
+        "name": "Tar Ball",
+        "mana_cost": 25,
+        "to_hit": [ 15, 25 ],
+        "damage": [ 8, 15 ],
+        "damage_type": "Earth",
+        "targeting_type": "Projectile",
+        "range": 4,
+        "effects": [
+          {
+            "effect": "Entangle",
+            "magnitude": 5,
+            "chance": 0.5
+          },
+          {
+            "effect": "Immobilize",
+            "magnitude": 2,
+            "chance": 0.95
+          }
+        ]
+      }
+    ],
+    "texture_offset": [ 2, 3 ]
+  }
+]

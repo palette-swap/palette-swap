@@ -5,14 +5,16 @@
 
 // AI logic
 AISystem::AISystem(const Debug& debugging,
+				   std::shared_ptr<AnimationSystem> animations,
 				   std::shared_ptr<CombatSystem> combat,
+				   LightingSystem& lighting,
 				   std::shared_ptr<MapGeneratorSystem> map_generator,
 				   std::shared_ptr<TurnSystem> turns,
-				   std::shared_ptr<AnimationSystem> animations,
 				   std::shared_ptr<SoLoud::Soloud> so_loud)
 	: debugging(debugging)
 	, animations(std::move(animations))
 	, combat(std::move(combat))
+	, lighting(lighting)
 	, map_generator(std::move(map_generator))
 	, turns(std::move(turns))
 	, so_loud(std::move(so_loud))
@@ -58,12 +60,12 @@ void AISystem::step(float /*elapsed_ms*/)
 				ColorState active_world_color = turns->get_active_color();
 				if (((uint8_t)active_world_color & (uint8_t)enemy.team) > 0) {
 
-					if (Stunned* stunned = registry.try_get<Stunned>(enemy_entity)) {
-						if (--(stunned->rounds) <= 0) {
-							registry.erase<Stunned>(enemy_entity);
-						}
-						continue;
-					}
+			ColorState active_world_color = turns->get_active_color();
+			if (((uint8_t)active_world_color & (uint8_t)enemy.team) > 0) {
+
+				if (combat->get_decrement_effect(enemy_entity, Effect::Stun) > 0) {
+					continue;
+				}
 
 					switch (enemy.behaviour) {
 
@@ -113,6 +115,8 @@ void AISystem::step(float /*elapsed_ms*/)
 						throw std::runtime_error("Invalid enemy behaviour.");
 					}
 				}
+
+				combat->apply_decrement_per_turn_effects(enemy_entity);
 			}
 		}
 
@@ -180,6 +184,8 @@ void AISystem::execute_basic_sm(const Entity& entity)
 			} else {
 				approach_player(entity, enemy.speed);
 			}
+		} else if (registry.any_of<LastKnownPlayerLocation>(entity)) {
+			approach_player(entity, enemy.speed);
 		} else {
 			switch_enemy_state(entity, EnemyState::Idle);
 		}
@@ -215,6 +221,8 @@ void AISystem::execute_cowardly_sm(const Entity& entity)
 			if (is_health_below(entity, 0.25f)) {
 				switch_enemy_state(entity, EnemyState::Flinched);
 			}
+		} else if (registry.any_of<LastKnownPlayerLocation>(entity)) {
+			approach_player(entity, enemy.speed);
 		} else {
 			switch_enemy_state(entity, EnemyState::Idle);
 		}
@@ -263,6 +271,8 @@ void AISystem::execute_defensive_sm(const Entity& entity)
 				become_immortal(entity, true);
 				switch_enemy_state(entity, EnemyState::Immortal);
 			}
+		} else if (registry.any_of<LastKnownPlayerLocation>(entity)) {
+			approach_player(entity, enemy.speed);
 		} else {
 			switch_enemy_state(entity, EnemyState::Idle);
 		}
@@ -304,6 +314,8 @@ void AISystem::execute_aggressive_sm(const Entity& entity)
 				become_powerup(entity, true);
 				switch_enemy_state(entity, EnemyState::Powerup);
 			}
+		} else if (registry.any_of<LastKnownPlayerLocation>(entity)) {
+			approach_player(entity, enemy.speed);
 		} else {
 			switch_enemy_state(entity, EnemyState::Idle);
 		}
@@ -341,8 +353,16 @@ bool AISystem::is_player_spotted(const Entity& entity)
 	uvec2 player_map_pos = registry.get<MapPosition>(registry.view<Player>().front()).position;
 	uvec2 entity_map_pos = registry.get<MapPosition>(entity).position;
 
-	ivec2 distance = entity_map_pos - player_map_pos;
-	return uint(abs(distance.x)) <= radius && uint(abs(distance.y)) <= radius;
+	if (!lighting.is_visible(entity_map_pos)) {
+		return false;
+	}
+
+	ivec2 distance2 = ivec2(entity_map_pos - player_map_pos) * ivec2(entity_map_pos - player_map_pos);
+	if (distance2.x + distance2.y <= 2 * radius * radius) {
+		registry.get_or_emplace<LastKnownPlayerLocation>(entity).position = player_map_pos;
+		return true;
+	}
+	return false;
 }
 
 bool AISystem::is_player_in_attack_range(const Entity& entity)
@@ -373,15 +393,19 @@ void AISystem::attack_player(const Entity& entity)
 
 bool AISystem::approach_player(const Entity& entity, uint speed)
 {
-	const uvec2 player_map_pos = registry.get<MapPosition>(registry.view<Player>().front()).position;
+	const uvec2 player_map_pos = registry.get<LastKnownPlayerLocation>(entity).position;
 	const uvec2 entity_map_pos = registry.get<MapPosition>(entity).position;
 
+	bool success = false;
 	std::vector<uvec2> shortest_path = map_generator->shortest_path(entity, entity_map_pos, player_map_pos);
 	if (shortest_path.size() > 2) {
 		uvec2 next_map_pos = shortest_path[min((size_t)speed, (shortest_path.size() - 2))];
-		return move(entity, next_map_pos);
+		success = move(entity, next_map_pos);
 	}
-	return false;
+	if (registry.get<MapPosition>(entity).position == player_map_pos) {
+		registry.remove<LastKnownPlayerLocation>(entity);
+	}
+	return success;
 }
 
 bool AISystem::approach_nest(const Entity& entity, uint speed)
@@ -406,10 +430,7 @@ bool AISystem::move(const Entity& entity, const uvec2& map_pos)
 {
 	MapPosition& entity_map_pos = registry.get<MapPosition>(entity);
 
-	if (Immobilized* immobilized = registry.try_get<Immobilized>(entity)) {
-		if (--(immobilized->rounds) <= 0) {
-			registry.erase<Immobilized>(entity);
-		}
+	if (combat->get_decrement_effect(entity, Effect::Immobilize) > 0) {
 		return false;
 	}
 

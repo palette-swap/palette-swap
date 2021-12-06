@@ -2,6 +2,7 @@
 
 #include "common.hpp"
 #include "components.hpp"
+#include "loot_system.hpp"
 #include "map_generator.hpp"
 #include "map_utility.hpp"
 #include "world_init.hpp"
@@ -11,17 +12,9 @@ class UISystem;
 #include <array>
 #include <set>
 
-namespace MapUtility {
-//////////////////////////////////////////
-// Defines different types of tiles
-const uint8_t tile_next_level = 14;
-const uint8_t tile_last_level = 15;
-} // namespace MapUtility
-
 // Manages and store the generated maps
 class MapGeneratorSystem {
 private:
-	std::shared_ptr<TurnSystem> turns;
 	/////////////////////////////////////////////
 	// Helper functions to retrieve file paths
 	static std::string predefined_rooms_path(const std::string& name)
@@ -44,13 +37,13 @@ private:
 	////////////////////////////////
 	/// Actual file paths
 	const std::array<std::string, MapUtility::num_predefined_rooms> predefined_room_paths = {
-		predefined_rooms_path("room_big_top_left.csv"), // 0
-		predefined_rooms_path("room_big_top_right.csv"), // 1
-		predefined_rooms_path("room_big_bot_left.csv"), // 2
-		predefined_rooms_path("room_big_bot_right.csv"), // 3
-		predefined_rooms_path("room_big_side_top.csv"), // 4
-		predefined_rooms_path("room_big_side_bot.csv"), // 5
-		predefined_rooms_path("room_void.csv"), // 6
+		predefined_rooms_path("room_big_top_left.csv"),			   // 0
+		predefined_rooms_path("room_big_top_right.csv"),		   // 1
+		predefined_rooms_path("room_big_bot_left.csv"),			   // 2
+		predefined_rooms_path("room_big_bot_right.csv"),		   // 3
+		predefined_rooms_path("room_big_side_top.csv"),			   // 4
+		predefined_rooms_path("room_big_side_bot.csv"),			   // 5
+		predefined_rooms_path("room_void.csv"),					   // 6
 		predefined_rooms_path("room_big_side_bot_next_level.csv"), // 7
 	};
 	const std::array<std::string, MapUtility::num_predefined_levels> predefined_level_paths
@@ -122,9 +115,13 @@ private:
 	std::set<MapUtility::RoomID> animated_room_buffer;
 
 	std::shared_ptr<UISystem> ui_system;
+	std::shared_ptr<LootSystem> loot_system;
+	std::shared_ptr<TurnSystem> turns;
 
 public:
-	explicit MapGeneratorSystem(std::shared_ptr<TurnSystem> turns, std::shared_ptr<UISystem> ui_system);
+	explicit MapGeneratorSystem(std::shared_ptr<TurnSystem> turns,
+								std::shared_ptr<UISystem> ui_system,
+								std::shared_ptr<LootSystem> loot_system);
 	void init();
 
 	// Get the current level mapping
@@ -150,6 +147,7 @@ public:
 	MapUtility::TileID get_tile_id_from_room(int level, MapUtility::RoomID room_id, uint8_t row, uint8_t col) const;
 
 	// states after we attempted to move the player
+	// TODO: should be able to remove this once moved story system to map system
 	enum class MoveState {
 		Success,
 		Failed,

@@ -170,7 +170,8 @@ static constexpr std::array<vec2, texture_count> scaling_factors = {
 enum class EFFECT_ASSET_ID {
 	LINE = 0,
 	RECTANGLE = LINE + 1,
-	ENEMY = RECTANGLE + 1,
+	OVAL = RECTANGLE + 1,
+	ENEMY = OVAL + 1,
 	PLAYER = ENEMY + 1,
 	DEATH = PLAYER + 1,
 	BOSS_INTRO_SHADER = DEATH + 1,
@@ -301,9 +302,9 @@ enum class EnemyBehaviour {
 };
 
 const std::array<EnemyBehaviour, (size_t)EnemyType::EnemyCount> enemy_type_to_behaviour = {
-	EnemyBehaviour::Dummy,		  EnemyBehaviour::Cowardly,  EnemyBehaviour::Basic, EnemyBehaviour::Defensive,
-	EnemyBehaviour::Aggressive,   EnemyBehaviour::Basic,	 EnemyBehaviour::Basic, EnemyBehaviour::Cowardly,
-	EnemyBehaviour::Aggressive,   EnemyBehaviour::Defensive, EnemyBehaviour::Basic, EnemyBehaviour::Basic,
+	EnemyBehaviour::Dummy,		  EnemyBehaviour::Cowardly,	 EnemyBehaviour::Basic, EnemyBehaviour::Defensive,
+	EnemyBehaviour::Aggressive,	  EnemyBehaviour::Basic,	 EnemyBehaviour::Basic, EnemyBehaviour::Cowardly,
+	EnemyBehaviour::Aggressive,	  EnemyBehaviour::Defensive, EnemyBehaviour::Basic, EnemyBehaviour::Basic,
 	EnemyBehaviour::Basic,		  EnemyBehaviour::Basic,	 EnemyBehaviour::Basic, EnemyBehaviour::Summoner,
 	EnemyBehaviour::WeaponMaster,
 };
@@ -342,9 +343,18 @@ struct Enemy {
 	uint attack_range = 1;
 	bool active = true;
 
+	uint danger_rating = 0;
+	uint loot_multiplier = 1;
+
 	void serialize(const std::string& prefix, rapidjson::Document& json) const;
 	void deserialize(const std::string& prefix, const rapidjson::Document& json, bool load_from_file = true);
 };
+
+struct LastKnownPlayerLocation {
+	uvec2 position;
+};
+
+constexpr uint max_danger_rating = 5;
 
 // Denotes that an enemy is a boss type
 struct Boss {
@@ -377,11 +387,20 @@ enum class DamageType {
 	Cold = Fire + 1,
 	Earth = Cold + 1,
 	Wind = Earth + 1,
-	Count = Wind + 1,
+	Light = Wind + 1,
+	Count = Light + 1,
 };
 
+// Appears to be an issue with clang-format always putting these on one line, putting a comment on each is purportedly
+// the best workaround
+// https://stackoverflow.com/questions/39144255/clang-format-removes-new-lines-in-array-definition-with-designators/39287832#39287832
 const std::array<std::string_view, (size_t)DamageType::Count> damage_type_names = {
-	"Physical", "Fire", "Cold", "Earth", "Wind",
+	"Physical", //
+	"Fire",		//
+	"Cold",		//
+	"Earth",	//
+	"Wind",		//
+	"Light",	//
 };
 
 enum class TargetingType {
@@ -422,6 +441,7 @@ struct Attack {
 
 	int mana_cost = 0;
 
+	bool can_reach(Entity attacker, uvec2 target) const;
 	bool is_in_range(uvec2 source, uvec2 target, uvec2 pos) const;
 
 	void serialize(const std::string& prefix, rapidjson::Document& json) const;
@@ -432,18 +452,36 @@ struct Attack {
 };
 
 enum class Effect {
-	Shove = 0,
-	Stun = Shove + 1,
-	EvasionDown = Stun + 1,
-	Immobilize = EvasionDown + 1,
-	Count = Immobilize + 1,
+	// Per-Use conditions
+	Immobilize = 0,
+	Stun = Immobilize + 1,
+	// Per-Turn conditions
+	Disarm = Stun + 1,
+	Entangle = Disarm + 1,
+	Weaken = Entangle + 1,
+	Bleed = Weaken + 1,
+	Burn = Bleed + 1,
+	// Make sure non-condition effects are last
+	Crit = Burn + 1,
+	Shove = Crit + 1,
+	Count = Shove + 1,
 };
 
-const std::array<std::string_view, (size_t)Effect::Count> effect_names = {
-	"Shove",
-	"Stun",
-	"EvasionDown",
-	"Immobilize",
+constexpr size_t num_conditions = (size_t)Effect::Crit;
+constexpr size_t num_per_use_conditions = (size_t)Effect::Disarm;
+constexpr size_t num_per_turn_conditions = num_conditions - num_per_use_conditions;
+
+// see damage_type_names for comment explanation
+constexpr std::array<std::string_view, (size_t)Effect::Count> effect_names = {
+	"Immobilize", //
+	"Stun",		  //
+	"Disarm",	  //
+	"Entangle",	  //
+	"Weaken",	  //
+	"Bleed",	  //
+	"Burn",		  //
+	"Crit",		  //
+	"Shove",	  //
 };
 
 struct EffectEntry {
@@ -453,12 +491,8 @@ struct EffectEntry {
 	int magnitude;
 };
 
-struct Stunned {
-	int rounds = 1;
-};
-
-struct Immobilized {
-	int rounds = 1;
+struct ActiveConditions {
+	std::array<int, num_conditions> conditions;
 };
 
 struct Stats {
@@ -532,18 +566,27 @@ enum class Resource {
 	Count = Key + 1,
 };
 
-const std::array<std::string_view, (size_t)Resource::Count> resource_names = {
-	"Health Potion",
-	"Mana Potion",
-	"Palette Swap",
-	"Key",
+// see damage_type_names for comment explanation
+constexpr std::array<std::string_view, (size_t)Resource::Count> resource_names = {
+	"Health Potion", //
+	"Mana Potion",	 //
+	"Palette Swap",	 //
+	"Key",           //
+};
+
+// see damage_type_names for comment explanation
+constexpr std::array<ivec2, (size_t)Resource::Count> resource_textures = {
+	ivec2(0, 4), //
+	ivec2(1, 4), //
+	ivec2(0, 6), //
+	ivec2(2, 4), //
 };
 
 struct Inventory {
 	static constexpr size_t inventory_size = 12;
 	std::array<Entity, inventory_size> inventory;
 	SlotList<Entity> equipped;
-	std::array<size_t, (size_t)Resource::Count> resources = { 3, 1, 3, 10 };
+	std::array<size_t, (size_t)Resource::Count> resources = { 3, 1, 3, 2 };
 	Inventory()
 		: inventory()
 		, equipped()
@@ -557,11 +600,16 @@ struct Inventory {
 
 struct ResourcePickup {
 	Resource resource = Resource::HealthPotion;
+	void serialize(const std::string& prefix, rapidjson::Document& json) const;
+	void deserialize(const std::string& prefix, const rapidjson::Document& json);
 };
 
 struct Item {
 	Entity item_template;
 	std::string get_description(bool detailed) const;
+
+	void serialize(const std::string& prefix, rapidjson::Document& json) const;
+	void deserialize(const std::string& prefix, const rapidjson::Document& json);
 };
 
 struct ItemTemplate {
@@ -606,9 +654,9 @@ struct EntryAnimationEnemy {
 // Maps enemy types to corresponding animation profile
 // Remember to add a mapping to a new texture (or use a default such as a slime)/enemy type
 // This will help load the animation by enemy type when you load enemies
-const std::array<AnimationProfile, static_cast<int>(EnemyType::EnemyCount)> enemy_type_to_animation_profile {
-	AnimationProfile { TEXTURE_ASSET_ID::DUMMY, 0.f },
-	AnimationProfile { TEXTURE_ASSET_ID::SLIME, 0.2f },
+constexpr std::array<AnimationProfile, static_cast<int>(EnemyType::EnemyCount)> enemy_type_to_animation_profile {
+	AnimationProfile { TEXTURE_ASSET_ID::DUMMY, 0.f }, 
+	AnimationProfile { TEXTURE_ASSET_ID::SLIME, 0.2f }, 
 	AnimationProfile { TEXTURE_ASSET_ID::RAVEN, 0.f },
 	AnimationProfile { TEXTURE_ASSET_ID::ARMOR, 0.f },
 	AnimationProfile { TEXTURE_ASSET_ID::TREEANT, 0.f },
@@ -631,7 +679,7 @@ const std::map<EnemyType, BossEntryAnimation> boss_type_entry_animation_map {
 	{ EnemyType::Titho, BossEntryAnimation { TEXTURE_ASSET_ID::TITHO_ENTRY, 48 } },
 };
 
-const std::array<int, (size_t)EnemyState::EnemyStateCount> enemy_state_to_animation_state = {
+constexpr std::array<int, (size_t)EnemyState::EnemyStateCount> enemy_state_to_animation_state = {
 	0, // Idle
 	1, // Active
 	2, // Flinched
@@ -726,7 +774,7 @@ struct EffectRenderRequest {
 	bool visible = true;
 };
 
-const std::array<int, (size_t)DamageType::Count> damage_type_to_spell_impact = {
+constexpr std::array<int, (size_t)DamageType::Count> damage_type_to_spell_impact = {
 	4, // Physical (default is fire effect)
 	4, // Fire effect
 	5, // Ice effect
@@ -734,9 +782,10 @@ const std::array<int, (size_t)DamageType::Count> damage_type_to_spell_impact = {
 	7, // Wind effect
 };
 
-const std::map<EnemyType, TEXTURE_ASSET_ID> boss_type_attack_spritesheet { 
-	{ EnemyType::KingMush, TEXTURE_ASSET_ID::KING_MUSH_ATTACKS } ,
-	{EnemyType::Titho, TEXTURE_ASSET_ID::TITHO_ATTACKS } };
+const std::map<EnemyType, TEXTURE_ASSET_ID> boss_type_attack_spritesheet {
+	{ EnemyType::KingMush, TEXTURE_ASSET_ID::KING_MUSH_ATTACKS },
+	{ EnemyType::Titho, TEXTURE_ASSET_ID::TITHO_ATTACKS },
+};
 
 struct RoomAnimation {
 	uvec2 start_tile;
@@ -880,7 +929,11 @@ enum class Groups {
 	HUD = 0,
 	Inventory = HUD + 1,
 	MainMenu = Inventory + 1,
-	Tooltips = MainMenu + 1,
+	PauseMenu = MainMenu + 1,
+	Help = PauseMenu + 1,
+	DeathScreen = Help + 1,
+	VictoryScreen = DeathScreen + 1,
+	Tooltips = VictoryScreen + 1,
 	Count = Tooltips + 1,
 };
 
@@ -967,9 +1020,11 @@ template <> struct std::hash<Text> {
 
 enum class ButtonAction {
 	SwitchToGroup,
+	GoToPreviousGroup,
 	TryHeal,
 	TryMana,
 	TryPalette,
+	RestartGame,
 };
 
 struct Button {
