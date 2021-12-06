@@ -179,9 +179,12 @@ void AISystem::step(float /*elapsed_ms*/)
 					}
 					
 				}
+
+				if (registry.valid(enemy_entity)) {
+					combat->apply_decrement_per_turn_effects(enemy_entity);
+				}
 			}
 		}
-
 		//for (auto [entity, env_effect] : registry.view<Environmental>().each()) {
 
 		//}

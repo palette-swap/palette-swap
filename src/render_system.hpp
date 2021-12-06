@@ -181,7 +181,7 @@ private:
 	// Generates raster texture of provided text
 	// Returns vbo, ibo
 	struct TextData;
-	TextData generate_text(const Text& text);
+	TextData generate_text(const Text& text, bool cursive);
 
 	////////////////////////////////////////////////////////
 	// Internal drawing functions for each entity type
