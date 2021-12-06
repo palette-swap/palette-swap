@@ -632,6 +632,20 @@ std::string Attack::get_description() const {
 	return description;
 }
 
+Entity AOESource::add(Entity parent)
+{
+	AOESource* source = registry.try_get<AOESource>(parent);
+	Entity new_aoe = registry.create();
+	if (source == nullptr) {
+		registry.emplace<AOESource>(parent, new_aoe);
+		registry.emplace<AOESquare>(new_aoe, parent, entt::null);
+	} else {
+		registry.emplace<AOESquare>(new_aoe, parent, source->children);
+		source->children = new_aoe;
+	}
+	return new_aoe;
+}
+
 void BigRoom::add_room(Entity big_room, Entity room)
 {
 	BigRoom& big_room_component = registry.get_or_emplace<BigRoom>(big_room);

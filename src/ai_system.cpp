@@ -37,9 +37,33 @@ AISystem::AISystem(const Debug& debugging,
 	this->combat->on_death([this](const Entity& entity) {
 		// If entity is a boss, remove its behaviour tree and AOE squares.
 		if (bosses.find(entity) != bosses.end()) {
+			// Destroy all children in AOEsource
+			if (auto* parent = registry.try_get<AOESource>(entity)) {
+				Entity iterator = parent->children;
+				auto view = registry.view<AOESquare>();
+				while (iterator != entt::null) {
+					const AOESquare& aoe_i = view.get<AOESquare>(iterator);
+					Entity temp = iterator;
+					iterator = aoe_i.next_aoe;
+					registry.destroy(temp);
+				}
+			}
+
+			// Destroy all victims of dragon.
+			if (auto* dragon = registry.try_get<Dragon>(entity)) {
+				for (Entity victim : dragon->victims) {
+					registry.destroy(victim);
+				}
+			}
+
 			bosses.erase(entity);
-			auto view = registry.view<AOESquare>();
-			registry.destroy(view.begin(), view.end());
+		}
+
+		// If entity is a victim of dragon, remove it from dragon's victims list.
+		if (auto* victim = registry.try_get<Victim>(entity)) {
+			Entity owner = victim->owner;
+			Dragon& dragon = registry.get<Dragon>(owner);
+			dragon.victims.erase(std::remove(dragon.victims.begin(), dragon.victims.end(), entity), dragon.victims.end());
 		}
 	});
 }
@@ -49,9 +73,25 @@ void AISystem::step(float /*elapsed_ms*/)
 	if (turns->execute_team_action(enemy_team)) {
 
 		// Released AOE squares are destroyed.
-		for (auto [aoe_square_entity, aoe_square] : registry.view<AOESquare>().each()) {
-			if (aoe_square.is_released) {
-				registry.destroy(aoe_square_entity);
+		auto view = registry.view<AOESquare>();
+		for (auto [entity, aoe_source] : registry.view<AOESource>().each()) {
+			Entity prev = entt::null;
+			Entity curr = aoe_source.children;
+			while (curr != entt::null) {
+				AOESquare& curr_square = view.get<AOESquare>(curr);
+				Entity next = curr_square.next_aoe;
+				if (curr_square.is_released) {
+					registry.destroy(curr);
+					curr = next;
+					if (prev != entt::null) {
+						view.get<AOESquare>(prev).next_aoe = curr;
+					} else {
+						aoe_source.children = curr;
+					}
+				} else {
+					prev = curr;
+					curr = next;
+				}
 			}
 		}
 
@@ -67,61 +107,82 @@ void AISystem::step(float /*elapsed_ms*/)
 							continue;
 						}
 
-						switch (enemy.behaviour) {
+				switch (enemy.behaviour) {
 
-						// Small Enemy Behaviours (State Machines)
-						case EnemyBehaviour::Dummy:
-							execute_dummy_sm(enemy_entity);
-							break;
+				// Small Enemy Behaviours (State Machines)
+				case EnemyBehaviour::Dummy:
+					execute_dummy_sm(enemy_entity);
+					break;
 
-						case EnemyBehaviour::Basic:
-							execute_basic_sm(enemy_entity);
-							break;
+				case EnemyBehaviour::Basic:
+					execute_basic_sm(enemy_entity);
+					break;
 
-						case EnemyBehaviour::Cowardly:
-							execute_cowardly_sm(enemy_entity);
-							break;
+				case EnemyBehaviour::Cowardly:
+					execute_cowardly_sm(enemy_entity);
+					break;
 
-						case EnemyBehaviour::Defensive:
-							execute_defensive_sm(enemy_entity);
-							break;
+				case EnemyBehaviour::Defensive:
+					execute_defensive_sm(enemy_entity);
+					break;
 
-						case EnemyBehaviour::Aggressive:
-							execute_aggressive_sm(enemy_entity);
-							break;
+				case EnemyBehaviour::Aggressive:
+					execute_aggressive_sm(enemy_entity);
+					break;
 
-						// Boss Enemy Behaviours (Behaviour Trees)
-						case EnemyBehaviour::Summoner:
-						case EnemyBehaviour::WeaponMaster: {
-							// If a boss entity occurs for the 1st time, create its corresponding behaviour tree &
-							// initialize.
-							if ((bosses.find(enemy_entity) == bosses.end())) {
-								if (enemy.behaviour == EnemyBehaviour::Summoner) {
-									bosses[enemy_entity] = SummonerTree::summoner_tree_factory(this);
-								} else if (enemy.behaviour == EnemyBehaviour::WeaponMaster) {
-									bosses[enemy_entity] = WeaponMasterTree::weapon_master_tree_factory(this);
-								}
-								bosses[enemy_entity]->init(enemy_entity);
-							}
+				case EnemyBehaviour::Sacrificed:
+					execute_sacrificed_sm(enemy_entity);
+					break;
 
-							// Run the behaviour tree of a boss.
-							if (bosses[enemy_entity]->process(enemy_entity, this) != BTState::Running) {
-								bosses[enemy_entity]->init(enemy_entity);
-							}
-							break;
+				// Boss Enemy Behaviours (Behaviour Trees)
+				case EnemyBehaviour::Summoner:
+				case EnemyBehaviour::WeaponMaster: {
+					// If a boss entity occurs for the 1st time, create its corresponding behaviour tree & initialize.
+					if ((bosses.find(enemy_entity) == bosses.end())) {
+						if (enemy.behaviour == EnemyBehaviour::Summoner) {
+							bosses[enemy_entity] = SummonerTree::summoner_tree_factory(this);
+						} else if (enemy.behaviour == EnemyBehaviour::WeaponMaster) {
+							bosses[enemy_entity] = WeaponMasterTree::weapon_master_tree_factory(this);
 						}
 
 						default:
 							throw std::runtime_error("Invalid enemy behaviour.");
 						}
 					}
-
-					combat->apply_decrement_per_turn_effects(enemy_entity);
+					break;
+				}
+				case EnemyBehaviour::Dragon: {
+					if (bosses.find(enemy_entity) == bosses.end()) {
+						// A boss entity occurs for the 1st time, create its corresponding behaviour tree & initialize.
+						bosses[enemy_entity] = DragonTree::dragon_tree_factory(this, enemy_entity);
+						bosses[enemy_entity]->init(enemy_entity);
+					}
+					if (bosses[enemy_entity]->process(enemy_entity, this) != BTState::Running) {
+						bosses[enemy_entity]->init(enemy_entity);
+					}
+					break;
+				}
+				case EnemyBehaviour::AOERingGen: { 
+					if (bosses.find(enemy_entity) == bosses.end()) {
+						// A boss entity occurs for the 1st time, create its corresponding behaviour tree & initialize.
+						bosses[enemy_entity] = AOEEmitterTree::aoe_emitter_tree_factory(this, enemy_entity);
+						bosses[enemy_entity]->init(enemy_entity);
+					}
+					if (bosses[enemy_entity]->process(enemy_entity, this) != BTState::Running) {
+						bosses[enemy_entity]->init(enemy_entity);
+					}
+					break;
+				}
+				default:
+					throw std::runtime_error("Invalid enemy behaviour.");
 				}
 				
 			}
 
-		}
+		//for (auto [entity, env_effect] : registry.view<Environmental>().each()) {
+
+		//}
+
 		turns->complete_team_action(enemy_team);
 	}
 
@@ -340,12 +401,38 @@ void AISystem::execute_aggressive_sm(const Entity& entity)
 	}
 }
 
+void AISystem::execute_sacrificed_sm(const Entity& entity)
+{
+	const Enemy& enemy = registry.get<Enemy>(entity);
+
+	switch (enemy.state) {
+
+	case EnemyState::Idle:
+		if (is_at_nest(entity)) {
+			switch_enemy_state(entity, EnemyState::Active);
+		} else {
+			approach_nest(entity, enemy.speed);
+		}
+		break;
+
+	case EnemyState::Active:
+		// Do nothing
+		break;
+
+	default:
+		throw std::runtime_error("Invalid enemy state for enemy behaviour Sacrificed.");
+	}
+}
+
 void AISystem::switch_enemy_state(const Entity& enemy_entity, EnemyState new_state)
 {
 	Enemy& enemy = registry.get<Enemy>(enemy_entity);
 	enemy.state = new_state;
-	int new_state_id = enemy_state_to_animation_state.at(static_cast<size_t>(new_state));
-	animations->set_enemy_state(enemy_entity, new_state_id);
+	if (registry.try_get<Animation>(enemy_entity))
+	{
+		int new_state_id = enemy_state_to_animation_state.at(static_cast<size_t>(new_state));
+		animations->set_enemy_state(enemy_entity, new_state_id);
+	}
 }
 
 bool AISystem::is_player_spotted(const Entity& entity)
@@ -462,7 +549,8 @@ bool AISystem::is_health_below(const Entity& entity, float ratio)
 	return static_cast<float>(stats.health) < static_cast<float>(stats.health_max) * ratio;
 }
 
-bool AISystem::chance_to_happen(float percent) {
+bool AISystem::chance_to_happen(float percent)
+{
 	float chance = uniform_dist(rng);
 	bool result = chance < percent;
 	return result;
@@ -531,17 +619,48 @@ void AISystem::summon_enemies(const Entity& entity, EnemyType enemy_type, int nu
 {
 	MapPosition& map_pos = registry.get<MapPosition>(entity);
 
-	for (size_t i = 0; i < num; ++i) {
-		uvec2 new_map_pos = { map_pos.position.x - 2 - i, map_pos.position.y};
-		if (map_generator->walkable_and_free(entt::null, new_map_pos)) {
-			create_enemy(turns->get_active_color(), enemy_type, new_map_pos);
+	if (enemy_type == EnemyType::AOERingGen) {
+
+		Entity entity = create_aoe_emitter(ColorState::All, map_pos.position);
+		registry.emplace<Environmental>(entity);
+	} else {
+		for (size_t i = 0; i < num; ++i) {
+			uvec2 new_map_pos = { map_pos.position.x - 2 - i, map_pos.position.y };
+			if (map_generator->walkable_and_free(entt::null, new_map_pos)) {
+				create_enemy(turns->get_active_color(), enemy_type, new_map_pos);
+			}
 		}
 	}
 }
 
-void AISystem::release_aoe(const std::vector<Entity>& aoe)
+std::vector<Entity> AISystem::summon_victims(const Entity& entity, EnemyType enemy_type, int num)
 {
-	for (const Entity& aoe_square : aoe) {
+	std::vector<Entity> result;
+
+	MapPosition& map_pos = registry.get<MapPosition>(entity);
+
+	for (size_t i = 0; i < num; ++i) {
+		uvec2 new_map_pos = { map_pos.position.x - 2 - i, map_pos.position.y };
+		uvec2 alt_new_map_pos = { map_pos.position.x + 2 + i, map_pos.position.y };
+
+		Entity e = entt::null;
+		if (map_generator->walkable_and_free(entt::null, new_map_pos)) {
+			e = create_enemy(ColorState::All, enemy_type, new_map_pos);
+		} else if (map_generator->walkable_and_free(entt::null, alt_new_map_pos)) {
+			e = create_enemy(ColorState::All, enemy_type, alt_new_map_pos);
+		}
+
+		if (e != entt::null) {
+			result.push_back(e);
+		}
+	}
+
+	return result;
+}
+
+void AISystem::release_aoe(const std::vector<Entity>& aoe_entities, int attack_state)
+{
+	for (const Entity& aoe_square : aoe_entities) {
 		const vec2& aoe_square_world_pos = registry.get<WorldPosition>(aoe_square).position;
 		const uvec2& aoe_square_map_pos = MapUtility::world_position_to_map_position(aoe_square_world_pos);
 		Entity player = registry.view<Player>().front();
@@ -552,10 +671,43 @@ void AISystem::release_aoe(const std::vector<Entity>& aoe)
 
 		// TODO: specifify type of aoe that needs to be displayed, there may be multiple. Default is currently
 		// set to state 1
-		animations->trigger_aoe_attack_animation(aoe_square, 4);
+		animations->trigger_aoe_attack_animation(aoe_square, attack_state);
 		// Released AOE squares will be destroyed in the next turn.
 		registry.get<AOESquare>(aoe_square).is_released = true;
 	}
+}
+
+std::vector<ivec2> AISystem::draw_tile_line(ivec2 a, ivec2 b, int offset) { 
+	// Based on Bresenham's line algorithm 
+	// https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
+	ivec2 diff = b - a;
+	int flip_x = ((diff.x < 0) ? -1 : 1);
+	int flip_y = ((diff.y < 0) ? -1 : 1);
+	diff.x *= flip_x;
+	diff.y *= flip_y;
+
+	bool flip_45 = (diff.x < diff.y);
+	if (flip_45) {
+		int temp = diff.x;
+		diff.x = diff.y;
+		diff.y = temp;
+	}
+
+	std::vector<ivec2> line_tiles;
+	float slope = (float)(diff.y) / (float)(diff.x);
+	for (int x = offset; x <= diff.x; x++) {
+		int x_i = x;
+		int y_i = (int)round(slope * x_i);
+
+		if (flip_45) {
+			int temp = x_i;
+			x_i = y_i;
+			y_i = temp;
+		}
+		line_tiles.emplace_back(x_i * flip_x + a.x, y_i * flip_y + a.y);
+	}
+	
+	return line_tiles; 
 }
 
 void AISystem::draw_pathing_debug()
