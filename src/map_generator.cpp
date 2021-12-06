@@ -34,7 +34,7 @@ const static std::array<std::string, num_room_templates> room_templates_paths = 
 																				  room_template_path("reward.json"),
 																				  room_template_path("hidden.json") };
 
-const static std::array<std::string, (size_t)EnemyType::EnemyCount> enemy_template_paths = {
+const static std::array<std::string, (size_t)EnemyType::EnemyCount - 1> enemy_template_paths = {
 	enemy_template_path("TrainingDummy.json"), enemy_template_path("Slime.json"),
 	enemy_template_path("Raven.json"),		   enemy_template_path("Armor.json"),
 	enemy_template_path("TreeAnt.json"),	   enemy_template_path("Wraith.json"),
@@ -610,7 +610,7 @@ void MapGenerator::generate_room(MapGenerator::PathNode* starting_node,
 
 	RoomLayout room_layout {};
 
-	if (room_type == RoomType::Critical) {
+	if (room_type == RoomType::Critical || room_type == RoomType::Side) {
 		room_layout.fill(room_floor_mask);
 		while (!sides_to_connect.empty()) {
 			Direction next_direction = get_next_direction(starting_direction);
@@ -669,18 +669,19 @@ void MapGenerator::generate_room(MapGenerator::PathNode* starting_node,
 				max_keys_obtained--;
 			}
 		}
-	} else if (room_type == RoomType::Side) {
-		// generate cracked blocks if has a child being hidden room
-		if (starting_node->children.size()) {
-			PathNode* child_room = *(starting_node->children.begin());
-			if (child_room->room_type == RoomType::Hidden) {
-				place_tile_at_entrance(get_open_direction(starting_node->position, child_room->position),
-									   room_layout,
-									   cracked_wall_tile,
-									   cracked_wall_tile);
+		if (room_type == RoomType::Side) {
+			// generate cracked blocks if has a child being hidden room
+			if (starting_node->children.size()) {
+				PathNode* child_room = *(starting_node->children.begin());
+				if (child_room->room_type == RoomType::Hidden) {
+					place_tile_at_entrance(get_open_direction(starting_node->position, child_room->position),
+										room_layout,
+										cracked_wall_tile,
+										cracked_wall_tile);
+				}
 			}
 		}
-	} else {
+	} else  {
 		room_layout = get_template_room_layout(room_type);
 
 		if (room_type == RoomType::Hidden) {
@@ -953,7 +954,7 @@ void MapGenerator::generate_enemies(PathNode* curr_room,
 	int room_map_col = room_position_on_map % room_size;
 	if (curr_room->room_type == RoomType::Big) {
 		std::uniform_int_distribution<int> boss_type_dist(static_cast<int>(EnemyType::KingMush),
-														  static_cast<int>(EnemyType::EnemyCount) - 1);
+														  static_cast<int>(EnemyType::EnemyCount) - 2);
 		// spawn a boss
 		EnemyType boss_to_spawn = static_cast<EnemyType>(boss_type_dist(enemies_random_eng_red));
 		add_enemy_to_level_snapshot(
