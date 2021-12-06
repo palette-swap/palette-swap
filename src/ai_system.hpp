@@ -7,6 +7,7 @@
 
 #include "animation_system.hpp"
 #include "combat_system.hpp"
+#include "lighting_system.hpp"
 #include "map_generator_system.hpp"
 #include "turn_system.hpp"
 #include "world_init.hpp"
@@ -20,10 +21,11 @@ static void debug_log(std::string str) {
 class AISystem {
 public:
 	AISystem(const Debug& debugging,
+			 std::shared_ptr<AnimationSystem> animations,
 			 std::shared_ptr<CombatSystem> combat,
+			 LightingSystem& lighting,
 			 std::shared_ptr<MapGeneratorSystem> map_generator,
 			 std::shared_ptr<TurnSystem> turns,
-			 std::shared_ptr<AnimationSystem> animations,
 			 std::shared_ptr<SoLoud::Soloud> so_loud);
 
 	void step(float elapsed_ms);
@@ -97,6 +99,7 @@ private:
 	// Related Systems
 	std::shared_ptr<AnimationSystem> animations;
 	std::shared_ptr<CombatSystem> combat;
+	LightingSystem& lighting;
 	std::shared_ptr<MapGeneratorSystem> map_generator;
 	std::shared_ptr<TurnSystem> turns;
 

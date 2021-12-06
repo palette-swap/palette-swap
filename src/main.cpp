@@ -60,7 +60,7 @@ int main()
 	LightingSystem lighting;
 	RenderSystem renderer(debugging, lighting);
 	PhysicsSystem physics(debugging, map);
-	AISystem ai(debugging, combat, map, turns, animations, so_loud);
+	AISystem ai(debugging, animations, combat, lighting, map, turns, so_loud);
 
 	// Initializing window
 	GLFWwindow* window = world.create_window(window_width_px, window_height_px);

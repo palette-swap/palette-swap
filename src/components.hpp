@@ -349,6 +349,10 @@ struct Enemy {
 	void deserialize(const std::string& prefix, const rapidjson::Document& json, bool load_from_file = true);
 };
 
+struct LastKnownPlayerLocation {
+	uvec2 position;
+};
+
 constexpr uint max_danger_rating = 5;
 
 // Denotes that an enemy is a boss type
