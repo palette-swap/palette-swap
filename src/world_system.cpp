@@ -358,7 +358,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 			Attack& current_attack = ui->get_current_attack();
 			EffectRenderRequest& arrow_render = registry.get<EffectRenderRequest>(player_arrow);
 
-			if (current_attack.damage_type == DamageType::Physical) {
+			if (current_attack.mana_cost == 0) {
 				animations->player_idle_animation(player);
 				arrow_render.visible = false;
 			} else {
