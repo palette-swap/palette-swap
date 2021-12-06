@@ -505,7 +505,6 @@ bool MapGeneratorSystem::is_last_level() const
 void MapGeneratorSystem::snapshot_level()
 {
 	rapidjson::Document level_snapshot;
-	level_snapshot.Parse(get_level_snap_shot(current_level).c_str());
 	rapidjson::CreateValueByPointer(level_snapshot, rapidjson::Pointer("/enemies/0"));
 
 	// Serialize enemies

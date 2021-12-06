@@ -68,7 +68,7 @@ void LightingSystem::spin(uvec2 player_map_pos, vec2 player_world_pos)
 	visible_rooms.clear();
 	mark_as_visible(player_map_pos);
 	auto check_point = [&](uvec2 tile) {
-		if (!map_generator->is_on_map(tile)) {
+		if (!map_generator->is_on_map(tile) || (tile.x > MapUtility::map_down_right.x || tile.y > MapUtility::map_down_right.y)) {
 			return;
 		}
 		process_tile(player_world_pos, tile);
