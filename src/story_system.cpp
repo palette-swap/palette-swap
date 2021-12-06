@@ -80,15 +80,17 @@ void StorySystem::step()
 	}
 
 	CutScene c = registry.get<CutScene>(current_cutscene_entity);
-	if (!registry.get<UIGroup>(c.ui_entity).visible && animations->boss_intro_complete(current_cutscene_entity)) {
+	if (animations->boss_intro_complete(current_cutscene_entity)) {
 		if (registry.any_of<RenderRequest>(c.actual_entity)) {
 			registry.get<RenderRequest>(c.actual_entity).visible = true;
 		}
+	}
+	if (!registry.get<UIGroup>(c.ui_entity).visible && animations->boss_intro_complete(current_cutscene_entity)) {
 
 		if (registry.any_of<Enemy>(c.actual_entity)) {
 			registry.get<Enemy>(c.actual_entity).active = true;
 		}
-		//registry.destroy(current_cutscene_entity);
+		// registry.destroy(current_cutscene_entity);
 		registry.remove<CutScene>(current_cutscene_entity);
 		current_cutscene_entity = entt::null;
 	}
@@ -144,7 +146,6 @@ void StorySystem::proceed_conversation()
 	Entity text_entity = group.first_elements.at(static_cast<size_t>(UILayer::Content));
 	Text& text_comp = registry.get<Text>(text_entity);
 	text_comp.text = "";
-
 }
 
 void StorySystem::render_text_each_frame()
@@ -193,6 +194,7 @@ void StorySystem::load_next_level()
 		registry.remove_if_exists<RoomTrigger>(entity);
 		registry.remove_if_exists<RadiusTrigger>(entity);
 		registry.remove<CutScene>(entity);
+		registry.destroy(entity);
 		current_cutscene_entity = entt::null;
 		this->text_frames.clear();
 		this->conversations.clear();
@@ -203,7 +205,11 @@ void StorySystem::load_next_level()
 		if (enemy.type == EnemyType::Titho) {
 			vec2 position = registry.get<MapPosition>(entity).position;
 			Entity entry_entity = animations->create_boss_entry_entity(enemy.type, position);
-			create_radius_cutscene(entry_entity, 10.f, CutSceneType::BossEntry, boss_cutscene_texts[(size_t)enemy.type - (size_t)EnemyType::KingMush], entity);
+			create_radius_cutscene(entry_entity,
+								   10.f,
+								   CutSceneType::BossEntry,
+								   boss_cutscene_texts[(size_t)enemy.type - (size_t)EnemyType::KingMush],
+								   entity);
 		}
 	}
 
