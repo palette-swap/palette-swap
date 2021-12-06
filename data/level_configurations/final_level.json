@@ -13,7 +13,7 @@
       "team": 3,
       "danger_rating": 4,
       "loot_multiplier": 3,
-      "type": 16,
+      "type": 17,
       "tile_area": [ 3, 3 ],
       "tile_center": [ 1, 1 ],
       "state": 0,
