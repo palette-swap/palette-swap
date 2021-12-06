@@ -66,3 +66,11 @@ void MapUtility::LevelGenConf::deserialize(const std::string& prefix, const rapi
 		room_difficulty = room_difficulty_value->GetUint();
 	}
 }
+
+const std::set<uint8_t>& MapUtility::floor_tiles()
+{
+	const static std::set<uint8_t> floor_tiles(
+		{0, 4, 5, 6, 7, 8, 16, 24, 32, 40, 52}
+	);
+	return floor_tiles;
+}

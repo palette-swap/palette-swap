@@ -4,9 +4,16 @@
 #include "rapidjson/document.h"
 #include "rapidjson/rapidjson.h"
 
+#include <set>
+
 namespace MapUtility {
 static constexpr uint8_t num_predefined_rooms = 8;
 static constexpr uint8_t num_predefined_levels = 1;
+
+// common tiles used by map generater and map generator system
+static const uint8_t next_level_tile = 14;
+static const uint8_t last_level_tile = 15;
+const std::set<uint8_t>& floor_tiles();
 
 // 10*10 grid used to represent map layout
 using MapLayout = std::array<std::array<MapUtility::RoomID, MapUtility::room_size>, MapUtility::room_size>;

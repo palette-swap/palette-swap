@@ -10,13 +10,6 @@ class UISystem;
 #include <array>
 #include <set>
 
-namespace MapUtility {
-//////////////////////////////////////////
-// Defines different types of tiles
-const uint8_t tile_next_level = 14;
-const uint8_t tile_last_level = 15;
-} // namespace MapUtility
-
 // Manages and store the generated maps
 class MapGeneratorSystem {
 private:

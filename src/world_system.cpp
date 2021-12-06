@@ -614,24 +614,14 @@ void WorldSystem::move_player(Direction direction)
 	// Allows player to run if all checks have been passed, inputs running direction as an animation event
 	animations->player_running_animation(player, map_pos.position, new_pos);
 
-<<<<<<< HEAD
-	// Temp update for arrow position
-	if (!player_arrow_fired) {
-		arrow_position.position += (vec2(new_pos) - vec2(map_pos.position)) * MapUtility::tile_size;
-	}
-
 	MapGeneratorSystem::MoveState move_ret = map_generator->move_player_to_tile(map_pos.position, new_pos);
 	if (move_ret == MapGeneratorSystem::MoveState::Failed) {
 		return;
 	}
 
-	turns->complete_team_action(player);
-=======
-	map_pos.position = new_pos;
 	end_player_turn();
 
 	return_arrow_to_player();
->>>>>>> master
 
 	// TODO: move the logics to map generator system
 	if (move_ret == MapGeneratorSystem::MoveState::NextLevel) {

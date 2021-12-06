@@ -143,8 +143,6 @@ static Direction opposite_direction(Direction d)
 const static uint8_t solid_block_tile = 12;
 const static uint8_t floor_tile = 0;
 const static uint8_t void_tile = 10;
-const static uint8_t next_level_tile = 14;
-const static uint8_t last_level_tile = 15;
 
 const static uint8_t door_tile = 60;
 const static uint8_t cracked_wall_tile = 56;
@@ -164,7 +162,7 @@ const static std::map<TileID, AnimatedTile> animated_tiles = {
 	{48, AnimatedTile({true, false, 48, ColorState::Red, 1 })}, // locked chest
 };
 
-const static std::array<uint8_t, 11> floor_tiles = { 0, 4, 5, 6, 7, 8, 16, 24, 32, 40, 52 }; 
+const static std::vector<uint8_t> floor_tiles_vec(floor_tiles().begin(), floor_tiles().end());
 const static std::array<uint8_t, 2> obstacle_tiles = { 27, 35 };
 
 // masks to define the property of a certain tile, use values out of uint8 to avoid duplications 
@@ -257,8 +255,8 @@ static void place_tile_at_entrance(Direction entrance_direction, RoomLayout & ro
 // randomly generate a floor tile from given floor tiles
 const static uint8_t generate_random_floor_tile(std::default_random_engine & random_eng)
 {
-	std::uniform_int_distribution<int> floor_tile_dist(0, floor_tiles.size() - 1);
-	return static_cast<uint8_t>(floor_tiles.at(floor_tile_dist(random_eng)));
+	std::uniform_int_distribution<int> floor_tile_dist(0, floor_tiles_vec.size() - 1);
+	return static_cast<uint8_t>(floor_tiles_vec.at(floor_tile_dist(random_eng)));
 }
 
 const static uint8_t generate_random_obstacle_tile(std::default_random_engine & random_eng)
@@ -951,14 +949,14 @@ void MapGenerator::generate_enemies(PathNode * curr_room,
 	for (int room_row = 0; room_row < room_size; room_row++) {
 		for (int room_col = 0; room_col < room_size; room_col++) {
 			int room_index = room_row * room_size + room_col;
-			if (enemies_dist(enemies_random_eng_red) && room_layout.at(room_index) % 8 == 0) {
+			if (enemies_dist(enemies_random_eng_red) && (floor_tiles().find(room_layout.at(room_index)) != floor_tiles().end())) {
 				add_enemy_to_level_snapshot(
 					level_snap_shot,
 					ColorState::Red,
 					static_cast<EnemyType>(enemy_types_dist(enemies_random_eng_red)),
 					uvec2(room_map_col * room_size + room_col, room_map_row * room_size + room_row));
 			}
-			if (enemies_dist(enemies_random_eng_blue) && room_layout.at(room_index) % 8 == 0) {
+			if (enemies_dist(enemies_random_eng_blue) && (floor_tiles().find(room_layout.at(room_index)) != floor_tiles().end())) {
 				add_enemy_to_level_snapshot(
 					level_snap_shot,
 					ColorState::Blue,

@@ -288,11 +288,7 @@ static bool is_grass_tile(TileID tile_id)
 }
 static bool is_floor_tile(TileID tile_id)
 {
-	// floor are the first col of the sprite sheet
-	const static std::set<uint8_t> floor_tiles(
-		{0, 4, 5, 6, 7, 8, 16, 24, 32, 40, 52}
-	);
-	return floor_tiles.find(tile_id) != floor_tiles.end();
+	return floor_tiles().find(tile_id) != floor_tiles().end();
 }
 static bool is_door_tile(TileID tile_id)
 {
@@ -300,11 +296,11 @@ static bool is_door_tile(TileID tile_id)
 }
 static bool is_next_level_tile(TileID tile_id)
 {
-	return tile_id == tile_next_level;
+	return tile_id == next_level_tile;
 }
 static bool is_last_level_tile(TileID tile_id)
 {
-	return tile_id == tile_last_level;
+	return tile_id == last_level_tile;
 }
 static bool is_locked_chest_tile(TileID tile_id)
 {

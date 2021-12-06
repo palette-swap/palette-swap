@@ -578,7 +578,6 @@ constexpr std::array<ivec2, (size_t)Resource::Count> resource_textures = {
 	ivec2(0, 4), //
 	ivec2(1, 4), //
 	ivec2(0, 6), //
->>>>>>> master
 };
 
 struct Inventory {
