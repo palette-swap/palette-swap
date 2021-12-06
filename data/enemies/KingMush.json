@@ -1,5 +1,7 @@
 {
   "type": 15,
+  "danger_rating": 4,
+  "loot_multiplier": 3,
   "state": 0,
   "radius": 10,
   "speed": 0,

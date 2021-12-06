@@ -4,19 +4,41 @@
 
 #include "geometry.hpp"
 
-void UISystem::on_key(int key, int action, int /*mod*/)
+void UISystem::on_key(int key, int action, int /*mod*/, dvec2 mouse_screen_pos)
 {
-	if (!registry.get<UIGroup>(groups[(size_t)Groups::MainMenu]).visible) {
-		if (action == GLFW_PRESS && key == GLFW_KEY_I) {
-			if (player_can_act()) {
-				switch_to_group(groups[(size_t)Groups::Inventory]);
-				tutorials->destroy_tooltip(TutorialTooltip::ItemPickedUp);
-			} else {
-				switch_to_group(groups[(size_t)Groups::HUD]);
-			}
-		}
-		if (action == GLFW_PRESS && key == GLFW_KEY_ESCAPE) {
+	if (!game_in_progress()) {
+		return;
+	}
+
+	if (action == GLFW_PRESS && key == GLFW_KEY_I) {
+		if (!is_group_visible(Groups::Inventory)) {
+			switch_to_group(groups[(size_t)Groups::Inventory]);
+			tutorials->destroy_tooltip(TutorialTooltip::ItemPickedUp);
+		} else {
 			switch_to_group(groups[(size_t)Groups::HUD]);
+		}
+	}
+	if (action == GLFW_PRESS && key == GLFW_KEY_ESCAPE) {
+		if (player_can_act()) {
+			switch_to_group(groups[(size_t)Groups::PauseMenu]);
+		} else {
+			switch_to_group(groups[(size_t)Groups::HUD]);
+		}
+	}
+
+	if (action == GLFW_PRESS && key == GLFW_KEY_D && is_group_visible(Groups::Inventory)) {
+		for (auto [entity, draggable, element, screen_pos, interact_area] :
+			 registry.view<Draggable, UIElement, ScreenPosition, InteractArea>().each()) {
+			if (element.visible
+				&& Geometry::Rectangle(screen_pos.position, interact_area.size).contains(vec2(mouse_screen_pos))) {
+				loot->drop_item(registry.get<MapPosition>(registry.view<Player>().front()).position,
+								registry.get<Item>(entity).item_template);
+				insert_into_slot(entt::null, draggable.container);
+				registry.get<UISlot>(draggable.container).contents = entt::null;
+				UIGroup::remove_element(element.group, entity, UILayer::Content);
+				registry.destroy(entity);
+				break;
+			}
 		}
 	}
 
@@ -67,10 +89,16 @@ void UISystem::try_settle_held()
 
 void UISystem::switch_to_group(Entity group)
 {
+	if (group == entt::null || registry.get<UIGroup>(group).visible) {
+		return;
+	}
 	bool was_inventory = registry.get<UIGroup>(groups[(size_t)Groups::Inventory]).visible;
 	try_settle_held();
 	destroy_tooltip();
 	for (auto [entity, other_group] : registry.view<UIGroup>().each()) {
+		if (other_group.visible && entity != group && entity != groups[(size_t)Groups::Tooltips]) {
+			previous_group = entity;
+		}
 		other_group.visible = entity == group || entity == groups[(size_t)Groups::Tooltips];
 	}
 	if (group == groups[(size_t)Groups::HUD]) {
@@ -83,8 +111,11 @@ void UISystem::switch_to_group(Entity group)
 	}
 	if (group == groups[(size_t)Groups::Inventory]) {
 		tutorials->trigger_tooltip(TutorialTooltip::OpenedInventory, entt::null);
+		tutorials->destroy_tooltip(TutorialTooltip::ItemPickedUp);
 	}
 }
+
+bool UISystem::is_group_visible(Groups group) { return registry.get<UIGroup>(groups[(size_t)group]).visible; }
 
 void UISystem::destroy_tooltip()
 {
@@ -107,8 +138,56 @@ void UISystem::align_tooltip(vec2 new_pos)
 	text.alignment_x = (new_pos.x > .5) ? Alignment::End : Alignment::Start;
 	text.alignment_y = (new_pos.y > .5) ? Alignment::End : Alignment::Start;
 
-	registry.get<ScreenPosition>(tooltip).position
-		= new_pos + vec2(0, .03 * (int)text.alignment_y);
+	registry.get<ScreenPosition>(tooltip).position = new_pos + vec2(0, .03 * (int)text.alignment_y);
+}
+
+void UISystem::destroy_attack_preview()
+{
+	if (!registry.valid(attack_preview)) {
+		return;
+	}
+
+	UIGroup::remove_element(groups[(size_t)Groups::HUD], attack_preview);
+	registry.destroy(attack_preview);
+	attack_preview = entt::null;
+}
+
+void UISystem::update_attack_preview(uvec2 mouse_map_pos)
+{
+	static constexpr vec2 base_size = vec2(MapUtility::tile_size) / vec2(window_default_size);
+	Attack& attack = get_current_attack();
+	Entity player = registry.view<Player>().front();
+	if (!attack.can_reach(player, mouse_map_pos)) {
+		destroy_attack_preview();
+		return;
+	}
+	uvec2 player_pos = registry.get<MapPosition>(player).position;
+
+	if (attack_preview == entt::null) {
+		attack_preview = registry.create();
+		registry.emplace<MapPosition>(attack_preview, mouse_map_pos);
+		registry.emplace<Background>(attack_preview);
+		vec2 distance = ivec2(mouse_map_pos - player_pos);
+		registry.emplace<UIRenderRequest>(
+			attack_preview,
+			TEXTURE_ASSET_ID::TEXTURE_COUNT,
+			attack.pattern == AttackPattern::Rectangle ? EFFECT_ASSET_ID::RECTANGLE : EFFECT_ASSET_ID::OVAL,
+			GEOMETRY_BUFFER_ID::LINE,
+			base_size * vec2(attack.parallel_size * 2 - 1, attack.perpendicular_size * 2 - 1)
+				/ renderer->get_screen_scale(),
+			atan2f(distance.y, distance.x));
+		registry.emplace<UIRectangle>(attack_preview, .8f, vec4(0));
+		UIGroup::add_element(groups[(size_t)Groups::HUD],
+							 attack_preview,
+							 registry.emplace<UIElement>(attack_preview, groups[(size_t)Groups::HUD], true));
+	} else {
+		registry.get<MapPosition>(attack_preview).position = mouse_map_pos;
+		vec2 distance = ivec2(mouse_map_pos - player_pos);
+		UIRenderRequest& request = registry.get<UIRenderRequest>(attack_preview);
+		request.angle = atan2f(distance.y, distance.x);
+		request.size = base_size * vec2(attack.parallel_size * 2 - 1, attack.perpendicular_size * 2 - 1)
+			/ renderer->get_screen_scale();
+	}
 }
 
 bool UISystem::can_insert_into_slot(Entity item, Entity container)
@@ -174,6 +253,10 @@ void UISystem::do_action(Button& button)
 		switch_to_group(button.action_target);
 		break;
 	}
+	case ButtonAction::GoToPreviousGroup: {
+		switch_to_group(previous_group);
+		break;
+	}
 	case ButtonAction::TryHeal:
 	case ButtonAction::TryMana: {
 		Inventory& inventory = registry.get<Inventory>(button.action_target);
@@ -194,6 +277,10 @@ void UISystem::do_action(Button& button)
 	case ButtonAction::TryPalette: {
 		try_change_color();
 		tutorials->destroy_tooltip(TutorialTooltip::UseResource);
+		break;
+	}
+	case ButtonAction::RestartGame: {
+		restart_world();
 		break;
 	}
 	default:
@@ -218,9 +305,8 @@ bool UISystem::on_left_click(int action, dvec2 mouse_screen_pos)
 			 registry.view<UIElement, ScreenPosition, UIRenderRequest, Button>().each()) {
 			vec2 size_scale = request.size * ((request.used_effect == EFFECT_ASSET_ID::RECTANGLE) ? 1.f : .5f);
 			Geometry::Rectangle button_rect = Geometry::Rectangle(
-				pos.position
-					+ vec2((float)request.alignment_x, (float)request.alignment_y) * .5f * size_scale,
-				 size_scale);
+				pos.position + vec2((float)request.alignment_x, (float)request.alignment_y) * .5f * size_scale,
+				size_scale);
 			if (element.visible && registry.get<UIGroup>(element.group).visible
 				&& button_rect.contains(vec2(mouse_screen_pos))) {
 				do_action(button);
@@ -235,6 +321,8 @@ bool UISystem::on_left_click(int action, dvec2 mouse_screen_pos)
 
 void UISystem::on_mouse_move(vec2 mouse_screen_pos)
 {
+	uvec2 mouse_map_pos
+		= MapUtility::world_position_to_map_position(renderer->screen_position_to_world_position(mouse_screen_pos));
 	if (held_under_mouse != entt::null) {
 		registry.get<ScreenPosition>(held_under_mouse).position = mouse_screen_pos;
 		return;
@@ -253,9 +341,7 @@ void UISystem::on_mouse_move(vec2 mouse_screen_pos)
 			on_target = Geometry::Rectangle(pos->position, registry.get<UIRenderRequest>(target).size)
 							.contains(mouse_screen_pos);
 		} else if (MapPosition* pos = registry.try_get<MapPosition>(target)) {
-			on_target = MapUtility::world_position_to_map_position(
-							renderer->screen_position_to_world_position(mouse_screen_pos))
-				== pos->position;
+			on_target = mouse_map_pos == pos->position;
 		}
 		if (on_target) {
 			align_tooltip(mouse_screen_pos);
@@ -280,8 +366,11 @@ void UISystem::on_mouse_move(vec2 mouse_screen_pos)
 		}
 	}
 	if (player_can_act()) {
-		uvec2 mouse_map_pos
-			= MapUtility::world_position_to_map_position(renderer->screen_position_to_world_position(mouse_screen_pos));
+		if (debugging.in_debug_mode && has_current_attack() && get_current_attack().targeting_type == TargetingType::Adjacent) {
+			update_attack_preview(mouse_map_pos);
+		} else {
+			destroy_attack_preview();
+		}
 		for (auto [entity, item, pos, request] : registry.view<Item, MapPosition, RenderRequest>().each()) {
 			if (request.visible && pos.position == mouse_map_pos) {
 				create_tooltip(item.get_description(false), entity);
@@ -297,7 +386,12 @@ void UISystem::on_mouse_move(vec2 mouse_screen_pos)
 	}
 }
 
-bool UISystem::player_can_act() { return registry.get<UIGroup>(groups[(size_t)Groups::HUD]).visible; }
+bool UISystem::player_can_act() { return is_group_visible(Groups::HUD); }
+
+bool UISystem::game_in_progress()
+{
+	return is_group_visible(Groups::HUD) || is_group_visible(Groups::Inventory) || is_group_visible(Groups::PauseMenu);
+}
 
 bool UISystem::has_current_attack() const
 {
@@ -351,11 +445,17 @@ void UISystem::update_resource_count()
 	}
 }
 
+void UISystem::end_game(bool victory)
+{
+	switch_to_group(groups.at((size_t)(victory ? Groups::VictoryScreen : Groups::DeathScreen)));
+}
+
 void UISystem::set_current_attack(Slot slot, size_t attack)
 {
 	current_attack_slot = (Slot)slot;
 	current_attack = attack;
 	registry.get<Text>(attack_display).text = make_attack_display_text();
+	destroy_attack_preview();
 }
 
 std::string UISystem::make_attack_display_text()
