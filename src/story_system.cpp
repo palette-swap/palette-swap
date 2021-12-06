@@ -174,5 +174,11 @@ void StorySystem::load_next_level() {
 			auto entry_entity = animations->create_boss_entry_entity(EnemyType::Titho, position);
 			create_cutscene(entry_entity, entity, CutSceneType::BossEntry, 350, "This is the boss. Beat it!");
 		}
+
+		if (enemy.type == EnemyType::Dragon) {
+			vec2 position = registry.get<MapPosition>(entity).position;
+			auto entry_entity = animations->create_boss_entry_entity(EnemyType::Dragon, position);
+			create_cutscene(entry_entity, entity, CutSceneType::BossEntry, 350, "This is the boss. Beat it!");
+		}
 	}
 }

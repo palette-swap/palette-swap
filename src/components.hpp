@@ -120,8 +120,9 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 	TITHO_ENTRY = TITHO_ATTACKS + 1,
 	DRAGON = TITHO_ENTRY + 1,
 	DRAGON_ATTACKS = DRAGON + 1,
+	DRAGON_ENTRY = DRAGON_ATTACKS + 1,
 	//NPCS
-	GUIDE = DRAGON_ATTACKS + 1,
+	GUIDE = DRAGON_ENTRY + 1,
 	// Misc Assets
 	CANNONBALL = GUIDE + 1,
 	SPELLS = CANNONBALL + 1,
@@ -161,6 +162,7 @@ static constexpr std::array<vec2, texture_count> scaling_factors = {
 	vec2(MapUtility::tile_size * 5, MapUtility::tile_size * 5),
 	vec2(MapUtility::tile_size * 5, MapUtility::tile_size * 5),
 	vec2(MapUtility::tile_size * 3, MapUtility::tile_size * 3),
+	vec2(MapUtility::tile_size * 5, MapUtility::tile_size * 5),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size * 0.5, MapUtility::tile_size * 0.5),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
@@ -658,7 +660,7 @@ const std::array<AnimationProfile, static_cast<int>(EnemyType::EnemyCount)> enem
 const std::map<EnemyType, BossEntryAnimation> boss_type_entry_animation_map {
 	{ EnemyType::KingMush, BossEntryAnimation { TEXTURE_ASSET_ID::KING_MUSH_ENTRY, 32 } },
 	{ EnemyType::Titho, BossEntryAnimation { TEXTURE_ASSET_ID::TITHO_ENTRY, 48 } },
-	{ EnemyType::Dragon, BossEntryAnimation { TEXTURE_ASSET_ID::TITHO_ENTRY, 48 } },
+	{ EnemyType::Dragon, BossEntryAnimation { TEXTURE_ASSET_ID::DRAGON_ENTRY, 42 } },
 };
 
 const std::array<int, (size_t)EnemyState::EnemyStateCount> enemy_state_to_animation_state = {
