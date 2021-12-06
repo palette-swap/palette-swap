@@ -60,73 +60,75 @@ void AISystem::step(float /*elapsed_ms*/)
 				ColorState active_world_color = turns->get_active_color();
 				if (((uint8_t)active_world_color & (uint8_t)enemy.team) > 0) {
 
-			ColorState active_world_color = turns->get_active_color();
-			if (((uint8_t)active_world_color & (uint8_t)enemy.team) > 0) {
+					ColorState active_world_color = turns->get_active_color();
+					if (((uint8_t)active_world_color & (uint8_t)enemy.team) > 0) {
 
-				if (combat->get_decrement_effect(enemy_entity, Effect::Stun) > 0) {
-					continue;
-				}
+						if (combat->get_decrement_effect(enemy_entity, Effect::Stun) > 0) {
+							continue;
+						}
 
-					switch (enemy.behaviour) {
+						switch (enemy.behaviour) {
 
-					// Small Enemy Behaviours (State Machines)
-					case EnemyBehaviour::Dummy:
-						execute_dummy_sm(enemy_entity);
-						break;
+						// Small Enemy Behaviours (State Machines)
+						case EnemyBehaviour::Dummy:
+							execute_dummy_sm(enemy_entity);
+							break;
 
-					case EnemyBehaviour::Basic:
-						execute_basic_sm(enemy_entity);
-						break;
+						case EnemyBehaviour::Basic:
+							execute_basic_sm(enemy_entity);
+							break;
 
-					case EnemyBehaviour::Cowardly:
-						execute_cowardly_sm(enemy_entity);
-						break;
+						case EnemyBehaviour::Cowardly:
+							execute_cowardly_sm(enemy_entity);
+							break;
 
-					case EnemyBehaviour::Defensive:
-						execute_defensive_sm(enemy_entity);
-						break;
+						case EnemyBehaviour::Defensive:
+							execute_defensive_sm(enemy_entity);
+							break;
 
-					case EnemyBehaviour::Aggressive:
-						execute_aggressive_sm(enemy_entity);
-						break;
+						case EnemyBehaviour::Aggressive:
+							execute_aggressive_sm(enemy_entity);
+							break;
 
-					// Boss Enemy Behaviours (Behaviour Trees)
-					case EnemyBehaviour::Summoner:
-					case EnemyBehaviour::WeaponMaster: {
-						// If a boss entity occurs for the 1st time, create its corresponding behaviour tree &
-						// initialize.
-						if ((bosses.find(enemy_entity) == bosses.end())) {
-							if (enemy.behaviour == EnemyBehaviour::Summoner) {
-								bosses[enemy_entity] = SummonerTree::summoner_tree_factory(this);
-							} else if (enemy.behaviour == EnemyBehaviour::WeaponMaster) {
-								bosses[enemy_entity] = WeaponMasterTree::weapon_master_tree_factory(this);
+						// Boss Enemy Behaviours (Behaviour Trees)
+						case EnemyBehaviour::Summoner:
+						case EnemyBehaviour::WeaponMaster: {
+							// If a boss entity occurs for the 1st time, create its corresponding behaviour tree &
+							// initialize.
+							if ((bosses.find(enemy_entity) == bosses.end())) {
+								if (enemy.behaviour == EnemyBehaviour::Summoner) {
+									bosses[enemy_entity] = SummonerTree::summoner_tree_factory(this);
+								} else if (enemy.behaviour == EnemyBehaviour::WeaponMaster) {
+									bosses[enemy_entity] = WeaponMasterTree::weapon_master_tree_factory(this);
+								}
+								bosses[enemy_entity]->init(enemy_entity);
 							}
-							bosses[enemy_entity]->init(enemy_entity);
+
+							// Run the behaviour tree of a boss.
+							if (bosses[enemy_entity]->process(enemy_entity, this) != BTState::Running) {
+								bosses[enemy_entity]->init(enemy_entity);
+							}
+							break;
 						}
 
-						// Run the behaviour tree of a boss.
-						if (bosses[enemy_entity]->process(enemy_entity, this) != BTState::Running) {
-							bosses[enemy_entity]->init(enemy_entity);
+						default:
+							throw std::runtime_error("Invalid enemy behaviour.");
 						}
-						break;
 					}
 
-					default:
-						throw std::runtime_error("Invalid enemy behaviour.");
-					}
+					combat->apply_decrement_per_turn_effects(enemy_entity);
 				}
-
-				combat->apply_decrement_per_turn_effects(enemy_entity);
+				
 			}
-		}
 
+		}
 		turns->complete_team_action(enemy_team);
 	}
 
-	// Debugging for the shortest paths of enemies.
-	if (debugging.in_debug_mode) {
-		draw_pathing_debug();
-	}
+		// Debugging for the shortest paths of enemies.
+		if (debugging.in_debug_mode) {
+			draw_pathing_debug();
+		}
 }
 
 void AISystem::do_attack_callback(const Entity& attacker, const Entity& target)
