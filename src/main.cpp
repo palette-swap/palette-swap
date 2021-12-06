@@ -41,14 +41,14 @@ int main()
 	// Turn System
 	std::shared_ptr<TurnSystem> turns = std::make_shared<TurnSystem>();
 
-	// Map system
-	std::shared_ptr<MapGeneratorSystem> map = std::make_shared<MapGeneratorSystem>(turns);
-
 	// Animation System
 	std::shared_ptr<AnimationSystem> animations = std::make_shared<AnimationSystem>();
 
 	// UI System
 	std::shared_ptr<UISystem> ui = std::make_shared<UISystem>(debugging);
+
+	// Map system
+	std::shared_ptr<MapGeneratorSystem> map = std::make_shared<MapGeneratorSystem>(turns, ui, loot);
 
 	// Story System
 	std::shared_ptr<StorySystem> stories = std::make_shared<StorySystem>(animations);
@@ -94,6 +94,7 @@ int main()
 		physics.step(elapsed_ms, window_width_px, window_height_px);
 		world.handle_collisions();
 		animations->update_animations(elapsed_ms, turns->get_inactive_color());
+		map->step(elapsed_ms);
 		turns->step();
 		lighting.step(elapsed_ms);
 		renderer.draw();

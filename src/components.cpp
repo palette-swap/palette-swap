@@ -381,6 +381,27 @@ void Stats::deserialize(const std::string& prefix, const rapidjson::Document& js
 	base_attack.deserialize(prefix + "/attack", json);
 }
 
+void Item::serialize(const std::string& prefix, rapidjson::Document& json) const
+{
+	// note: this can cause problem depending on entt's implementations, but since item templates are created at the beginning, it should be relatively safe
+	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/item_template").c_str()), static_cast<uint32_t>(item_template));
+}
+void Item::deserialize(const std::string& prefix, const rapidjson::Document& json)
+{
+	const auto* item_template_value = get_and_assert_value_from_json(prefix + "/item_template", json);
+	item_template = static_cast<Entity>(item_template_value->GetUint());
+}
+
+void ResourcePickup::serialize(const std::string& prefix, rapidjson::Document& json) const
+{
+	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/resource").c_str()), static_cast<int>(resource));
+}
+void ResourcePickup::deserialize(const std::string& prefix, const rapidjson::Document& json)
+{
+	const auto* resource_value = get_and_assert_value_from_json(prefix + "/resource", json);
+	resource = static_cast<Resource>(resource_value->GetInt());
+}
+
 bool operator==(const Text& t1, const Text& t2) { return t1.text == t2.text && t1.font_size == t2.font_size; }
 
 void Collision::add(Entity parent, Entity child)

@@ -46,6 +46,7 @@ void UISystem::restart_game()
 		create_ui_counter(groups[(size_t)Groups::HUD], Resource::HealthPotion, ivec2(0, 4), 1, vec2(.29f, .05125f)),
 		create_ui_counter(groups[(size_t)Groups::HUD], Resource::ManaPotion, ivec2(1, 4), 1, vec2(.325f, .05125f)),
 		create_ui_counter(groups[(size_t)Groups::HUD], Resource::PaletteSwap, ivec2(0, 6), 3, vec2(.36f, .05125f)),
+		create_ui_counter(groups[(size_t)Groups::HUD], Resource::Key, ivec2(2, 4), 1, vec2(.41f, .05125f)),
 	};
 	registry.emplace<TutorialTarget>(resource_displays.at(1), TutorialTooltip::UseResource);
 	// Attack Display
