@@ -221,6 +221,7 @@ private:
 	};
 	std::unordered_map<Text, TextData> text_buffers = {};
 	std::unordered_map<unsigned int, TTF_Font*> fonts = {};
+	std::unordered_map<unsigned int, TTF_Font*> cursive_fonts = {};
 
 	std::shared_ptr<MapGeneratorSystem> map_generator;
 

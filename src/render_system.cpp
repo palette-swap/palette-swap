@@ -155,15 +155,24 @@ RenderSystem::TextData RenderSystem::generate_text(const Text& text, bool cursiv
 
 	// Check if we have the font in the right size, otherwise load it
 	TTF_Font* font = nullptr;
-	auto font_itr = fonts.find(text.font_size);
-	if (font_itr != fonts.end()) {
-		font = font_itr->second;
+	if (cursive) {
+		auto font_itr = cursive_fonts.find(text.font_size);
+		if (font_itr != cursive_fonts.end()) {
+			font = font_itr->second;
+		} else {
+			font = cursive_fonts
+					   .emplace(text.font_size,
+								TTF_OpenFont(fonts_path("Gwendolyn-Regular.ttf").c_str(), text.font_size))
+					   .first->second;
+		}
 	} else {
-		font = fonts
-				   .emplace(text.font_size,
-							TTF_OpenFont(fonts_path(cursive ? "Gwendolyn-Regular.ttf" : "VT323-Regular.ttf").c_str(),
-										 text.font_size))
-				   .first->second;
+		auto font_itr = fonts.find(text.font_size);
+		if (font_itr != fonts.end()) {
+			font = font_itr->second;
+		} else {
+			font = fonts.emplace(text.font_size, TTF_OpenFont(fonts_path("VT323-Regular.ttf").c_str(), text.font_size))
+					   .first->second;
+		}
 	}
 
 	const std::string& string = text.text;
