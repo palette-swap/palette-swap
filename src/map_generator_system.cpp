@@ -18,10 +18,12 @@ using namespace MapUtility;
 
 MapGeneratorSystem::MapGeneratorSystem(std::shared_ptr<TurnSystem> turns,
 									   std::shared_ptr<UISystem> ui_system,
-									   std::shared_ptr<LootSystem> loot_system)
+									   std::shared_ptr<LootSystem> loot_system,
+									   std::shared_ptr<SoLoud::Soloud> so_loud)
 	: turns(std::move(turns))
 	, ui_system(std::move(ui_system))
 	, loot_system(std::move(loot_system))
+	, so_loud(std::move(so_loud))
 {
 	init();
 }
@@ -32,6 +34,8 @@ void MapGeneratorSystem::init()
 	load_generated_level_configurations();
 	load_final_level();
 	current_level = -1;
+
+	spike_wav.load(audio_path("spike.wav").c_str());
 }
 
 void MapGeneratorSystem::load_predefined_level_configurations()
@@ -292,6 +296,8 @@ static bool is_next_level_tile(TileID tile_id) { return tile_id == next_level_ti
 static bool is_last_level_tile(TileID tile_id) { return tile_id == last_level_tile; }
 static bool is_locked_chest_tile(TileID tile_id) { return tile_id == 48; }
 static bool is_chest_tile(TileID tile_id) { return tile_id == 44; }
+static bool is_spike_tile(TileID tile_id) {return 28 <= tile_id && tile_id < 32; }
+static bool is_fire_tile(TileID tile_id) {return 36 <= tile_id && tile_id < 40; }
 
 static bool is_wall_tile(TileID tile_id)
 {
@@ -829,7 +835,11 @@ MapGeneratorSystem::MoveState MapGeneratorSystem::move_player_to_tile(uvec2 from
 			current_animated_tile->second.activated = true;
 		}
 
-		if (is_trap_tile(current_animated_tile->second.tile_id)) {
+		if (is_spike_tile(current_animated_tile->second.tile_id)) {
+			so_loud->play(spike_wav);
+			registry.get<Stats>(player_entity).health -= 5;
+		}
+		if (is_fire_tile(current_animated_tile->second.tile_id)) {
 			registry.get<Stats>(player_entity).health -= 10;
 		}
 	}

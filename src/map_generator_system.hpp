@@ -12,6 +12,8 @@ class UISystem;
 #include <array>
 #include <set>
 
+#include "soloud_wav.h"
+
 // Manages and store the generated maps
 class MapGeneratorSystem {
 private:
@@ -117,11 +119,17 @@ private:
 	std::shared_ptr<UISystem> ui_system;
 	std::shared_ptr<LootSystem> loot_system;
 	std::shared_ptr<TurnSystem> turns;
+	std::shared_ptr<SoLoud::Soloud> so_loud;
+
+	// Sound effects
+	SoLoud::Wav spike_wav;
+	SoLoud::Wav fire_spell_wav;
 
 public:
 	explicit MapGeneratorSystem(std::shared_ptr<TurnSystem> turns,
 								std::shared_ptr<UISystem> ui_system,
-								std::shared_ptr<LootSystem> loot_system);
+								std::shared_ptr<LootSystem> loot_system,
+								std::shared_ptr<SoLoud::Soloud> so_loud);
 	void init();
 
 	// Get the current level mapping
