@@ -156,6 +156,7 @@ Entity create_guide( uvec2 map_pos)
 {
 	auto entity = registry.create();
 
+	registry.emplace<Guide>(entity);
 	registry.emplace<MapPosition>(entity, map_pos);
 
 	// Sets animation and display colours for the guide. Currently makes her transparent for "narrative" elements

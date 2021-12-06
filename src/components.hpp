@@ -285,6 +285,9 @@ const std::array<EnemyType, ((size_t)EnemyType::EnemyCount - (size_t)EnemyType::
 	EnemyType::Titho,
 };
 
+const std::array<std::string, ((size_t)EnemyType::EnemyCount - (size_t)EnemyType::KingMush)> boss_cutscene_texts
+	= { "King Mush is here!", "Titho is here!" };
+
 enum class EnemyBehaviour {
 	// Small Enemy Behaviours (State Machines)
 	Dummy = 0,
@@ -338,6 +341,7 @@ struct Enemy {
 	uint radius = 3;
 	uint speed = 1;
 	uint attack_range = 1;
+	bool active = true;
 
 	void serialize(const std::string& prefix, rapidjson::Document& json) const;
 	void deserialize(const std::string& prefix, const rapidjson::Document& json, bool load_from_file = true);
@@ -975,10 +979,13 @@ struct Button {
 	Entity action_target;
 };
 
+
+struct Guide {
+};
 enum class CutSceneType {
 	BossEntry = 0,
-	ItemDrop = BossEntry + 1,
-	Count = ItemDrop + 1,
+	NPCEntry = BossEntry + 1,
+	Count = NPCEntry + 1,
 };
 
 struct RoomTrigger {
@@ -993,4 +1000,5 @@ struct CutScene {
 	CutSceneType type;
 	Entity ui_entity;
 	std::string texts;
+	Entity actual_entity;
 };
