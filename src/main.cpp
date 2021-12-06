@@ -10,6 +10,7 @@
 #include "animation_system.hpp"
 #include "combat_system.hpp"
 #include "lighting_system.hpp"
+#include "loot_system.hpp"
 #include "map_generator_system.hpp"
 #include "physics_system.hpp"
 #include "render_system.hpp"
@@ -29,6 +30,11 @@ int main()
 	std::shared_ptr<SoLoud::Soloud> so_loud = std::make_shared<SoLoud::Soloud>();
 	so_loud->init();
 
+	Debug debugging;
+
+	// Loot System
+	std::shared_ptr<LootSystem> loot = std::make_shared<LootSystem>();
+
 	// Combat System
 	std::shared_ptr<CombatSystem> combat = std::make_shared<CombatSystem>();
 
@@ -42,7 +48,7 @@ int main()
 	std::shared_ptr<AnimationSystem> animations = std::make_shared<AnimationSystem>();
 
 	// UI System
-	std::shared_ptr<UISystem> ui = std::make_shared<UISystem>();
+	std::shared_ptr<UISystem> ui = std::make_shared<UISystem>(debugging);
 
 	// Story System
 	std::shared_ptr<StorySystem> stories = std::make_shared<StorySystem>(animations);
@@ -51,12 +57,11 @@ int main()
 	std::shared_ptr<TutorialSystem> tutorials = std::make_shared<TutorialSystem>();
 
 	// Global systems
-	Debug debugging;
-	WorldSystem world(debugging, combat, map, turns, animations, ui, so_loud, stories, tutorials);
+	WorldSystem world(debugging, animations, combat, loot, map, stories, turns, tutorials, ui, so_loud);
 	LightingSystem lighting;
 	RenderSystem renderer(debugging, lighting);
 	PhysicsSystem physics(debugging, map);
-	AISystem ai(debugging, combat, map, turns, animations, so_loud);
+	AISystem ai(debugging, animations, combat, lighting, map, turns, so_loud);
 
 	// Initializing window
 	GLFWwindow* window = world.create_window(window_width_px, window_height_px);

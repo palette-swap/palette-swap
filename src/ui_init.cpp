@@ -1,13 +1,21 @@
 #include "ui_init.hpp"
 #include "ui_system.hpp"
 
+UISystem::UISystem(Debug& debugging): debugging(debugging) {
+
+}
+
 void UISystem::init(RenderSystem* render_system,
+					std::shared_ptr<LootSystem> loot_system,
 					std::shared_ptr<TutorialSystem> tutorial_system,
-					std::function<void()> try_change_color)
+					std::function<void()> try_change_color,
+					std::function<void()> restart_world)
 {
 	renderer = render_system;
+	loot = std::move(loot_system);
 	tutorials = std::move(tutorial_system);
 	this->try_change_color = std::move(try_change_color);
+	this->restart_world = std::move(restart_world);
 }
 
 void UISystem::restart_game()
@@ -17,9 +25,12 @@ void UISystem::restart_game()
 
 	held_under_mouse = entt::null;
 	destroy_tooltip();
+	attack_preview = entt::null;
+	
+	previous_group = entt::null;
 
 	for (size_t i = 0; i < (size_t)Groups::Count; i++) {
-		groups.at(i) = create_ui_group(i > 1, (Groups)i);
+		groups.at(i) = create_ui_group(i == (size_t)Groups::MainMenu, (Groups)i);
 	}
 
 	Entity player = registry.view<Player>().front();
@@ -34,7 +45,7 @@ void UISystem::restart_game()
 	resource_displays = {
 		create_ui_counter(groups[(size_t)Groups::HUD], Resource::HealthPotion, ivec2(0, 4), 1, vec2(.29f, .05125f)),
 		create_ui_counter(groups[(size_t)Groups::HUD], Resource::ManaPotion, ivec2(1, 4), 1, vec2(.325f, .05125f)),
-		create_ui_counter(groups[(size_t)Groups::HUD], Resource::PaletteSwap, ivec2(0, 5), 3, vec2(.36f, .05125f)),
+		create_ui_counter(groups[(size_t)Groups::HUD], Resource::PaletteSwap, ivec2(0, 6), 3, vec2(.36f, .05125f)),
 	};
 	registry.emplace<TutorialTarget>(resource_displays.at(1), TutorialTooltip::UseResource);
 	// Attack Display
@@ -104,6 +115,103 @@ void UISystem::restart_game()
 				  ButtonAction::SwitchToGroup,
 				  groups[(size_t)Groups::HUD],
 				  "Start");
+	create_button(groups[(size_t)Groups::MainMenu],
+				  vec2(.5, .65),
+				  vec2(.1, .1),
+				  vec4(.1, .1, .1, 1),
+				  ButtonAction::SwitchToGroup,
+				  groups[(size_t)Groups::Help],
+				  "Help");
+
+	// Pause Menu Background
+	create_background(groups[(size_t)Groups::PauseMenu], vec2(.5, .5), vec2(1, 1), 1.f, vec4(0, 0, 0, .5));
+
+	// Pause Menu
+	Entity paused = create_ui_text(
+		groups[(size_t)Groups::PauseMenu], vec2(.5, .2), "PAUSED", Alignment::Center, Alignment::Center, 120);
+	registry.get<Text>(paused).border = 12;
+	create_button(groups[(size_t)Groups::PauseMenu],
+				  vec2(.5, .45),
+				  vec2(.1, .1),
+				  vec4(.1, .1, .1, 1),
+				  ButtonAction::SwitchToGroup,
+				  groups[(size_t)Groups::HUD],
+				  "Resume");
+	create_button(groups[(size_t)Groups::PauseMenu],
+				  vec2(.5, .6),
+				  vec2(.1, .1),
+				  vec4(.1, .1, .1, 1),
+				  ButtonAction::SwitchToGroup,
+				  groups[(size_t)Groups::Help],
+				  "Help");
+	create_button(groups[(size_t)Groups::PauseMenu],
+				  vec2(.5, .75),
+				  vec2(.1, .1),
+				  vec4(.1, .1, .1, 1),
+				  ButtonAction::RestartGame,
+				  entt::null,
+				  "Restart");
+
+	// Death Screen Background
+	create_background(groups[(size_t)Groups::DeathScreen], vec2(.5, .5), vec2(1, 1), 1.f, vec4(0, 0, 0, .5));
+
+	// Death Screen
+	Entity you_died = create_ui_text(
+		groups[(size_t)Groups::DeathScreen], vec2(.5, .25), "YOU DIED", Alignment::Center, Alignment::Start, 120);
+	registry.get<Text>(you_died).border = 12;
+	create_button(groups[(size_t)Groups::DeathScreen],
+				  vec2(.5, .5),
+				  vec2(.1, .1),
+				  vec4(.1, .1, .1, 1),
+				  ButtonAction::RestartGame,
+				  entt::null,
+				  "Restart");
+
+	// Victory Screen Background
+	create_background(groups[(size_t)Groups::VictoryScreen], vec2(.5, .5), vec2(1, 1), 1.f, vec4(1, 1, 1, 1));
+
+	// Victory Screen
+	Entity you_won = create_ui_text(
+		groups[(size_t)Groups::VictoryScreen], vec2(.5, .25), "YOU WON!", Alignment::Center, Alignment::Start, 120);
+	registry.get<Text>(you_won).border = 12;
+	create_button(groups[(size_t)Groups::VictoryScreen],
+				  vec2(.5, .5),
+				  vec2(.1, .1),
+				  vec4(.1, .1, .1, 1),
+				  ButtonAction::RestartGame,
+				  entt::null,
+				  "Restart");
+
+	// Help Background
+	create_background(groups[(size_t)Groups::Help], vec2(.5, .5), vec2(1, 1), 1.f, vec4(0, 0, 0, 1));
+
+	// Help
+	Entity help
+		= create_ui_text(groups[(size_t)Groups::Help], vec2(.5, .15), "HELP", Alignment::Center, Alignment::Center, 120);
+	registry.get<Text>(help).border = 12;
+	create_button(groups[(size_t)Groups::Help],
+				  vec2(.02 * window_height_px / window_width_px, .02),
+				  vec2(.07 * window_height_px / window_width_px, .07),
+				  vec4(.1, .1, .1, 1),
+				  ButtonAction::GoToPreviousGroup,
+				  entt::null,
+				  "X",
+				  48u,
+				  Alignment::Start,
+				  Alignment::Start);
+	static constexpr std::string_view help_text = 1 + R"(
+                ==In Game==
+WASD                 -                  Move
+Left Click           -                Attack
+H                    - Consume Health Potion
+SPACE                -          Palette Swap
+SHIFT                -           Pickup Item
+               ==Inventory==
+Mouse Over + D       -                  Drop
+                 ==Menus==
+I                    -             Inventory
+ESC                  -                 Pause)";
+	create_ui_text(groups[(size_t)Groups::Help], vec2(.5, .6), help_text, Alignment::Center, Alignment::Center, 60);
 }
 
 Entity create_ui_group(bool visible, Groups identifier)

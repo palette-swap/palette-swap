@@ -36,60 +36,61 @@ class RenderSystem {
 	// and then uses path to grab sprites, stats, and behaviour
 	// Make sure these paths remain in sync with the associated enumerators.
 	const std::array<std::string, texture_count> texture_paths = {
-			textures_path("./01-Player/Player Spritesheet.png"),
-			textures_path("./03-Small Enemies/TrainingDummy/Dummy Spritesheet.png"),
-			textures_path("./03-Small Enemies/Slime/Slime Spritesheet.png"),
-			textures_path("./03-Small Enemies/Living Armor/Living Armor Spritesheet.png"),
-			textures_path("./03-Small Enemies/Treeant/Treeant Spritesheet.png"),
-			textures_path("./03-Small Enemies/Raven/Raven Spritesheet.png"),
-			textures_path("./03-Small Enemies/Wraith/Wraith Spritesheet.png"),
-			textures_path("./03-Small Enemies/Drake/Drake Spritesheet.png"),
-			textures_path("./03-Small Enemies/Mushroom/Mushroom Spritesheet.png"),
-			textures_path("./03-Small Enemies/Spider/Spider Spritesheet.png"),
-			textures_path("./03-Small Enemies/Clone/Clone Spritesheet.png"),
-			textures_path("./03-Small Enemies/Sword Soldier/Sword Soldier Spritesheet.png"),
-			textures_path("./03-Small Enemies/Spear Soldier/Spear Soldier Spritesheet.png"),
-			textures_path("./03-Small Enemies/Apparition/Apparition Spritesheet.png"),
-			textures_path("./03-Small Enemies/Kobold Warrior/Kobold Warrior Spritesheet.png"),
-			textures_path("./03-Small Enemies/Kobold Mage/Kobold Mage Spritesheet.png"),
-			textures_path("./02-Bosses/King Mush/King Mush Spritesheet.png"),
-			textures_path("./02-Bosses/King Mush/King Mush Attack Spritesheet.png"),
-			textures_path("./02-Bosses/King Mush/King Mush Entry Animation.png"),
-			textures_path("./02-Bosses/Titho/Titho Spritesheet.png"),
-			textures_path("./02-Bosses/Titho/Titho Attack Spritesheet.png"),
-			textures_path("./02-Bosses/Titho/Titho Entry Animation.png"),
-			textures_path("./04-NPCs/Guide/Guide Spritesheet.png"),
-			textures_path("cannon_ball.png"),
-			textures_path("/01-Player/Spell Spritesheet.png"),
-			textures_path("tile_set_red.png"),
-			textures_path("tile_set_blue.png"),
-			textures_path("help.png"),
-			textures_path("End Screen.png"),
-			textures_path("Icons.png"),
-	
+		textures_path("./01-Player/Player Spritesheet.png"),
+		textures_path("./03-Small Enemies/TrainingDummy/Dummy Spritesheet.png"),
+		textures_path("./03-Small Enemies/Slime/Slime Spritesheet.png"),
+		textures_path("./03-Small Enemies/Living Armor/Living Armor Spritesheet.png"),
+		textures_path("./03-Small Enemies/Treeant/Treeant Spritesheet.png"),
+		textures_path("./03-Small Enemies/Raven/Raven Spritesheet.png"),
+		textures_path("./03-Small Enemies/Wraith/Wraith Spritesheet.png"),
+		textures_path("./03-Small Enemies/Drake/Drake Spritesheet.png"),
+		textures_path("./03-Small Enemies/Mushroom/Mushroom Spritesheet.png"),
+		textures_path("./03-Small Enemies/Spider/Spider Spritesheet.png"),
+		textures_path("./03-Small Enemies/Clone/Clone Spritesheet.png"),
+		textures_path("./03-Small Enemies/Sword Soldier/Sword Soldier Spritesheet.png"),
+		textures_path("./03-Small Enemies/Spear Soldier/Spear Soldier Spritesheet.png"),
+		textures_path("./03-Small Enemies/Apparition/Apparition Spritesheet.png"),
+		textures_path("./03-Small Enemies/Kobold Warrior/Kobold Warrior Spritesheet.png"),
+		textures_path("./03-Small Enemies/Kobold Mage/Kobold Mage Spritesheet.png"),
+		textures_path("./02-Bosses/King Mush/King Mush Spritesheet.png"),
+		textures_path("./02-Bosses/King Mush/King Mush Attack Spritesheet.png"),
+		textures_path("./02-Bosses/King Mush/King Mush Entry Animation.png"),
+		textures_path("./02-Bosses/Titho/Titho Spritesheet.png"),
+		textures_path("./02-Bosses/Titho/Titho Attack Spritesheet.png"),
+		textures_path("./02-Bosses/Titho/Titho Entry Animation.png"),
+		textures_path("./04-NPCs/Guide/Guide Spritesheet.png"),
+		textures_path("cannon_ball.png"),
+		textures_path("/01-Player/Spell Spritesheet.png"),
+		textures_path("tile_set_red.png"),
+		textures_path("tile_set_blue.png"),
+		textures_path("help.png"),
+		textures_path("End Screen.png"),
+		textures_path("Icons.png"),
 	};
 
 	std::array<GLuint, effect_count> effects = {};
 	// Make sure these paths remain in sync with the associated enumerators.
+	// see damage_type_names for comment explanation
 	const std::array<std::string, effect_count> effect_paths = {
-		shader_path("line"),
-		shader_path("rectangle"),
-		shader_path("enemy"), 
-		shader_path("player"),
-		shader_path("death"),
-		shader_path("boss_intro"),
-		shader_path("health_bar"),
-		shader_path("fancy_bar"),
-		shader_path("textured"),
-		shader_path("spritesheet"),
-		shader_path("spell"),
-		shader_path("aoe"),
-		shader_path("water"),
-		shader_path("tilemap"),
-		shader_path("text_bubble"),
-		shader_path("light"),
-		shader_path("light_triangles"),
-		shader_path("lighting"),
+		shader_path("line"),			//
+		shader_path("rectangle"),		//
+		shader_path("oval"),			//
+		shader_path("enemy"),			//
+		shader_path("player"),			//
+		shader_path("death"),			//
+		shader_path("boss_intro"),		//
+		shader_path("health_bar"),		//
+		shader_path("fancy_bar"),		//
+		shader_path("textured"),		//
+		shader_path("spritesheet"),		//
+		shader_path("spell"),			//
+		shader_path("aoe"),				//
+		shader_path("water"),			//
+		shader_path("tilemap"),			//
+		shader_path("text_bubble"),		//
+		shader_path("light"),			//
+		shader_path("light_triangles"), //
+		shader_path("lighting"),		//
 	};
 
 	// TODO: move these constants into animation system most likely, need to finalize
@@ -124,6 +125,8 @@ public:
 
 	// Draw UI entities over top
 	void draw_ui(const mat3& projection);
+	void toggle_lighting();
+	void set_lighting(bool enabled);
 
 	mat3 create_projection_matrix();
 	vec2 mouse_pos_to_screen_pos(dvec2 mouse_pos) const;
@@ -184,7 +187,7 @@ private:
 	void draw_ui_element(Entity entity, const UIRenderRequest& ui_render_request, const mat3& projection);
 	void draw_stat_bar(
 		Transform transform, const Stats& stats, const mat3& projection, bool fancy, float ratio, Entity entity);
-	void draw_rectangle(Entity entity, Transform transform, vec2 scale, const mat3& projection);
+	void draw_rectangle(EFFECT_ASSET_ID asset, Entity entity, Transform transform, vec2 scale, const mat3& projection);
 	void draw_text(Entity entity, const Text& text, const mat3& projection);
 	void draw_line(Entity entity, const Line& line, const mat3& projection);
 	void draw_map(const mat3& projection, ColorState color);
@@ -221,6 +224,7 @@ private:
 	// Lighting System
 	LightingSystem& lighting;
 	bool applying_lighting = true;
+	bool use_lighting = true;
 
 	// Window handle
 	GLFWwindow* window = nullptr;
