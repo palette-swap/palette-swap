@@ -211,6 +211,16 @@ void StorySystem::load_next_level()
 								   boss_cutscene_texts[(size_t)enemy.type - (size_t)EnemyType::KingMush],
 								   entity);
 		}
+
+		if (enemy.type == EnemyType::KingMush) {
+			vec2 position = registry.get<MapPosition>(entity).position;
+			Entity entry_entity = animations->create_boss_entry_entity(enemy.type, position);
+			create_room_cutscene(entry_entity,
+								 CutSceneType::BossEntry,
+								 boss_cutscene_texts[(size_t)enemy.type - (size_t)EnemyType::KingMush],
+								 entity);
+		}
+
 	}
 
 	for (auto [entity] : registry.view<Guide>().each()) {
