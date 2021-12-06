@@ -1125,16 +1125,9 @@ const std::array<std::vector<std::string>, 4>
 			std::string("that all your efforts have meant something?"),
 			std::string("That slaying my subordinates..."),
 			std::string("in any way inconveniences me?"),
-			std::string("Impudent whelp, I am the master of time! Your efforts will mean nothing and your victories "
-						"will crumble before you eyes."),
-			std::string("Impudent whelp, I am the master of time! Your efforts will mean nothing and your victories "
-						"will crumble before you eyes."),
-			std::string("Impudent whelp, I am the master of time! Your efforts will mean nothing and your victories "
-					"will crumble before you eyes."),
-			std::string("Impudent whelp, I am the master of time! Your efforts will mean nothing and your victories "
-					"will crumble before you eyes."),
-			std::string("Impudent whelp, I am the master of time! Your efforts will mean nothing and your victories "
-					"will crumble before you eyes."),
-			std::string("Now grovel, worm, and witness the power of a god!"),
+			std::string("Impudent whelp!"),
+			std::string("Your efforts will mean nothing"),
+			std::string("Now grovel, worm"),
+			std::string("Witness the power of a god!"),
 		},
 	};
