@@ -157,6 +157,10 @@ void Enemy::serialize(const std::string& prefix, rapidjson::Document& json) cons
 {
 	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/team").c_str()), static_cast<int>(team));
 	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/type").c_str()), static_cast<int>(type));
+	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/danger_rating").c_str()), danger_rating);
+	if (loot_multiplier != 1) {
+		rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/loot_multiplier").c_str()), loot_multiplier);
+	}
 	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/state").c_str()), static_cast<int>(state));
 	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/radius").c_str()), radius);
 	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/speed").c_str()), speed);
@@ -167,24 +171,58 @@ void Enemy::serialize(const std::string& prefix, rapidjson::Document& json) cons
 
 void Enemy::deserialize(const std::string& prefix, const rapidjson::Document& json, bool load_from_file)
 {
+	// Enemy Type
 	const auto* type_value = get_and_assert_value_from_json(prefix + "/type", json);
 	type = static_cast<EnemyType>(type_value->GetInt());
+
+	// Danger Rating
+	const auto* danger_rating_value = get_and_assert_value_from_json(prefix + "/danger_rating", json);
+	danger_rating = danger_rating_value->GetUint();
+	assert(danger_rating <= max_danger_rating);
+
+	// Loot Multiplier (Optional)
+	const auto* loot_multiplier_value = rapidjson::GetValueByPointer(json, rapidjson::Pointer((prefix + "/loot_multiplier").c_str()));
+	if (loot_multiplier_value != nullptr) {
+		loot_multiplier = loot_multiplier_value->GetUint();
+	}
+
+	// State
 	const auto* state_value = get_and_assert_value_from_json(prefix + "/state", json);
 	state = static_cast<EnemyState>(state_value->GetInt());
+
+	// Detection Radius
 	const auto* radius_value = get_and_assert_value_from_json(prefix + "/radius", json);
 	radius = radius_value->GetInt();
+
+	// Movement Speed
 	const auto* speed_value = get_and_assert_value_from_json(prefix + "/speed", json);
 	speed = speed_value->GetInt();
+
+	// Attack Range
 	const auto* attack_range_value = get_and_assert_value_from_json(prefix + "/attack_range", json);
 	attack_range = attack_range_value->GetInt();
 	if (load_from_file) {
+		// Team
 		const auto* team_value = get_and_assert_value_from_json(prefix + "/team", json);
 		team = static_cast<ColorState>(team_value->GetInt());
+		// Nest Position
 		const auto* nest_pos_x = get_and_assert_value_from_json(prefix + "/nest_position/x", json);
 		nest_map_pos.x = nest_pos_x->GetInt();
 		const auto* nest_pos_y = get_and_assert_value_from_json(prefix + "/nest_position/y", json);
 		nest_map_pos.y = nest_pos_y->GetInt();
 	}
+}
+
+bool Attack::can_reach(Entity attacker, uvec2 target) const
+{
+	if (targeting_type == TargetingType::Adjacent) {
+		ivec2 distance_vec = abs(ivec2(target - registry.get<MapPosition>(attacker).position));
+		int distance = abs(distance_vec.x - distance_vec.y) + min(distance_vec.x, distance_vec.y) * 3 / 2;
+		if (distance > range) {
+			return false;
+		}
+	}
+	return true;
 }
 
 bool Attack::is_in_range(uvec2 source, uvec2 target, uvec2 pos) const
@@ -341,6 +379,27 @@ void Stats::deserialize(const std::string& prefix, const rapidjson::Document& js
 	const auto* evasion_value = get_and_assert_value_from_json(prefix + "/evasion", json);
 	evasion = evasion_value->GetInt();
 	base_attack.deserialize(prefix + "/attack", json);
+}
+
+void Item::serialize(const std::string& prefix, rapidjson::Document& json) const
+{
+	// note: this can cause problem depending on entt's implementations, but since item templates are created at the beginning, it should be relatively safe
+	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/item_template").c_str()), static_cast<uint32_t>(item_template));
+}
+void Item::deserialize(const std::string& prefix, const rapidjson::Document& json)
+{
+	const auto* item_template_value = get_and_assert_value_from_json(prefix + "/item_template", json);
+	item_template = static_cast<Entity>(item_template_value->GetUint());
+}
+
+void ResourcePickup::serialize(const std::string& prefix, rapidjson::Document& json) const
+{
+	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/resource").c_str()), static_cast<int>(resource));
+}
+void ResourcePickup::deserialize(const std::string& prefix, const rapidjson::Document& json)
+{
+	const auto* resource_value = get_and_assert_value_from_json(prefix + "/resource", json);
+	resource = static_cast<Resource>(resource_value->GetInt());
 }
 
 bool operator==(const Text& t1, const Text& t2) { return t1.text == t2.text && t1.font_size == t2.font_size; }

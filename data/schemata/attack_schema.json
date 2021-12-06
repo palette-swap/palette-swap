@@ -7,12 +7,16 @@
     "name": {
       "type": "string"
     },
+    "cost": {
+      "type": "integer",
+      "minimum": 0
+    },
     "mana_cost": {
       "type": "integer"
     },
     "range": {
       "type": "integer",
-      "minimum": 1
+      "minimum": 0
     },
     "targeting_type": {
       "enum": [
@@ -62,7 +66,8 @@
         "Fire",
         "Cold",
         "Earth",
-        "Wind"
+        "Wind",
+        "Light"
       ]
     },
     "effects": {
@@ -74,8 +79,13 @@
             "enum": [
               "Shove",
               "Stun",
-              "EvasionDown",
-              "Immobilize"
+              "Disarm",
+              "Entangle",
+              "Weaken",
+              "Immobilize",
+              "Crit",
+              "Bleed",
+              "Burn"
             ]
           },
           "chance": {

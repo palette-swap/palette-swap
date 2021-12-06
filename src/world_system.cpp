@@ -18,30 +18,33 @@
 
 // Create the world
 WorldSystem::WorldSystem(Debug& debugging,
-						 std::shared_ptr<CombatSystem> combat,
-						 std::shared_ptr<MapGeneratorSystem> map,
-						 std::shared_ptr<TurnSystem> turns,
 						 std::shared_ptr<AnimationSystem> animations,
-						 std::shared_ptr<UISystem> ui,
-						 std::shared_ptr<SoLoud::Soloud> so_loud,
+						 std::shared_ptr<CombatSystem> combat,
+						 std::shared_ptr<LootSystem> loot,
+						 std::shared_ptr<MapGeneratorSystem> map,
 						 std::shared_ptr<StorySystem> story,
-						 std::shared_ptr<TutorialSystem> tutorials)
+						 std::shared_ptr<TurnSystem> turns,
+						 std::shared_ptr<TutorialSystem> tutorials,
+						 std::shared_ptr<UISystem> ui,
+						 std::shared_ptr<SoLoud::Soloud> so_loud)
 
 	: debugging(debugging)
-	, so_loud(std::move(so_loud))
 	, bgm_red()
 	, bgm_blue()
 	, rng(std::make_shared<std::default_random_engine>(std::default_random_engine(std::random_device()())))
 	, animations(std::move(animations))
 	, combat(std::move(combat))
+	, loot(std::move(loot))
 	, map_generator(std::move(map))
-	, turns(std::move(turns))
-	, ui(std::move(ui))
 	, story(std::move(story))
+	, turns(std::move(turns))
 	, tutorials(std::move(tutorials))
+	, ui(std::move(ui))
+	, so_loud(std::move(so_loud))
 {
-	this->combat->init(rng, this->animations, this->map_generator, this->tutorials);
-	this->combat->on_pickup([this](const Entity& item, size_t slot) { this->ui->add_to_inventory(item, slot); });
+	this->combat->init(rng, this->animations, this->loot, this->map_generator, this->tutorials);
+	this->loot->init(rng, this->tutorials);
+	this->loot->on_pickup([this](const Entity& item, size_t slot) { this->ui->add_to_inventory(item, slot); });
 	this->combat->on_death([this](const Entity& /*entity*/) { this->ui->update_resource_count(); });
 	this->ui->on_show_world([this]() { return_arrow_to_player(); });
 }
@@ -138,7 +141,8 @@ GLFWwindow* WorldSystem::create_window(int width, int height)
 void WorldSystem::init(RenderSystem* renderer_arg)
 {
 	this->renderer = renderer_arg;
-	ui->init(renderer_arg, tutorials, [this]() { try_change_color(); });
+	ui->init(
+		renderer_arg, loot, tutorials, [this]() { try_change_color(); }, [this]() { restart_game(); });
 	animations->init(renderer_arg);
 
 	// Playing background music indefinitely
@@ -153,8 +157,6 @@ void WorldSystem::init(RenderSystem* renderer_arg)
 // Update our game world
 bool WorldSystem::step(float elapsed_ms_since_last_update)
 {
-	// Get the screen dimensions
-
 	// Remove debug info from the last step
 	auto debug_view = registry.view<DebugComponent>();
 	registry.destroy(debug_view.begin(), debug_view.end());
@@ -162,12 +164,16 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	// Processing the player state
 	assert(registry.size<ScreenState>() <= 1);
 
+	// Player is stunned.
+	if (turns->ready_to_act(player) && combat->get_decrement_effect(player, Effect::Stun) > 0) {
+		end_player_turn();
+	}
 	if ((registry.get<Stats>(player).health <= 0) && turns->ready_to_act(player)) {
-		restart_game();
+		ui->end_game(false);
 		return true;
 	}
 	if (end_of_game && turns->ready_to_act(player)) {
-		restart_game();
+		ui->end_game(true);
 		return true;
 	}
 
@@ -183,7 +189,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 			if (entity == player_arrow) {
 				registry.remove<ResolvedProjectile>(entity);
 				player_arrow_fired = false;
-				turns->complete_team_action(player);
+				end_player_turn();
 				return_arrow_to_player();
 			} else {
 				registry.destroy(entity);
@@ -199,6 +205,9 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 // Reset the world state to its initial state
 void WorldSystem::restart_game()
 {
+	so_loud->seek(bgm_red, 0);
+	so_loud->seek(bgm_blue, 0);
+
 	// Debugging for memory/component leaks
 	std::cout << "Alive: " << registry.alive() << std::endl;
 	printf("Restarting\n");
@@ -243,8 +252,8 @@ void WorldSystem::restart_game()
 	vec2 player_location = MapUtility::map_position_to_world_position(player_starting_point);
 	player_arrow = create_arrow(player_location);
 
-	// Restart the CombatSystem
-	combat->restart_game();
+	// Restart the LootSystem
+	loot->restart_game();
 
 	//Entity boss_entry_entity = animations->create_boss_entry_entity(EnemyType::KingMush, player_starting_point + uvec2(10, 2));
 	// Restart the UISystem
@@ -312,28 +321,25 @@ void WorldSystem::return_arrow_to_player()
 {
 	dvec2 mouse_pos = {};
 	glfwGetCursorPos(window, &mouse_pos.x, &mouse_pos.y);
-	on_mouse_move(vec2(mouse_pos));
+	on_mouse_move(mouse_pos);
 }
 
 // On key callback
 void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 {
 	// Player is stunned.
-	if (turns->ready_to_act(player)) {
-		if (Stunned* stunned = registry.try_get<Stunned>(player)) {
-			if (--(stunned->rounds) <= 0) {
-				registry.erase<Stunned>(player);
-			}
-			turns->skip_team_action(player);
-			return;
-		}
+	if (turns->ready_to_act(player) && combat->get_decrement_effect(player, Effect::Stun) > 0) {
+		end_player_turn();
 	}
 
 	if (check_debug_keys(key, action, mod)) {
 		return;
 	}
 	if (turns->ready_to_act(player)) {
-		ui->on_key(key, action, mod);
+		// Get screen position of mouse
+		dvec2 mouse_screen_pixels_pos = {};
+		glfwGetCursorPos(window, &mouse_screen_pixels_pos.x, &mouse_screen_pixels_pos.y);
+		ui->on_key(key, action, mod, renderer->mouse_pos_to_screen_pos(mouse_screen_pixels_pos));
 	}
 	if (!ui->player_can_act()) {
 		return;
@@ -352,7 +358,7 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 			Attack& current_attack = ui->get_current_attack();
 			EffectRenderRequest& arrow_render = registry.get<EffectRenderRequest>(player_arrow);
 
-			if (current_attack.damage_type == DamageType::Physical) {
+			if (current_attack.mana_cost == 0) {
 				animations->player_idle_animation(player);
 				arrow_render.visible = false;
 			} else {
@@ -385,16 +391,19 @@ void WorldSystem::on_key(int key, int /*scancode*/, int action, int mod)
 			break;
 		}
 		case GLFW_KEY_LEFT_SHIFT: {
-			if (turns->ready_to_act(player) && (combat->try_pickup_items(player) || map_generator->interact_with_surrounding_tile(player))) {
+			if (!turns->ready_to_act(player)) break;
+			if (loot->try_pickup_items(player)) {
 				tutorials->destroy_tooltip(TutorialTooltip::ItemDropped);
-				turns->skip_team_action(player);
+				end_player_turn();
+			} else if (map_generator->interact_with_surrounding_tile(player)) {
+				end_player_turn();
 			}
 			break;
 		}
 		case GLFW_KEY_H: {
 			if (turns->ready_to_act(player) && combat->try_drink_potion(player)) {
 				ui->update_resource_count();
-				turns->skip_team_action(player);
+				end_player_turn();
 			}
 		}
 		default:
@@ -412,6 +421,11 @@ bool WorldSystem::check_debug_keys(int key, int action, int mod)
 		restart_game();
 	}
 
+	// Toggle Lighting
+	if (action == GLFW_RELEASE && (mod & GLFW_MOD_ALT) != 0 && key == GLFW_KEY_F) {
+		renderer->toggle_lighting();
+	}
+
 	// God mode
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_ALT) != 0 && key == GLFW_KEY_G) {
 		Stats& stats = registry.get<Stats>(player);
@@ -423,7 +437,7 @@ bool WorldSystem::check_debug_keys(int key, int action, int mod)
 	// Drop loot on your current location
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_ALT) != 0 && key == GLFW_KEY_L) {
 		uvec2 pos = registry.get<MapPosition>(player).position;
-		combat->drop_loot(pos);
+		loot->drop_loot(pos, -1.f);
 	}
 
 	// Give more resources
@@ -460,6 +474,7 @@ bool WorldSystem::check_debug_keys(int key, int action, int mod)
 		if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_M) {
 			is_editing_map = false;
 			map_generator->stop_editing_level();
+			renderer->set_lighting(true);
 			return false;
 		}
 
@@ -525,6 +540,7 @@ bool WorldSystem::check_debug_keys(int key, int action, int mod)
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_M) {
 		is_editing_map = true;
 		map_generator->start_editing_level();
+		renderer->set_lighting(false);
 		return true;
 	}
 	return false;
@@ -538,7 +554,7 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 	vec2 mouse_screen_pos = renderer->mouse_pos_to_screen_pos(mouse_position);
 	if (ui->player_can_act() && !player_arrow_fired) {
 
-		vec2 mouse_world_position = renderer->screen_position_to_world_position(mouse_screen_pos);
+		vec2 mouse_world_pos = renderer->screen_position_to_world_position(mouse_screen_pos);
 
 		Velocity& arrow_velocity = registry.get<Velocity>(player_arrow);
 		WorldPosition& arrow_position = registry.get<WorldPosition>(player_arrow);
@@ -547,7 +563,7 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 		vec2 player_screen_position = MapUtility::map_position_to_world_position(player_map_position.position);
 
 		// Calculated Euclidean difference between player and arrow
-		vec2 eucl_diff = mouse_world_position - player_screen_position;
+		vec2 eucl_diff = mouse_world_pos - player_screen_position;
 
 		// Calculates arrow position based on position of mouse relative to player
 		vec2 new_arrow_position = normalize(eucl_diff) * spell_distance_from_player + player_screen_position;
@@ -567,16 +583,11 @@ void WorldSystem::move_player(Direction direction)
 	}
 
 	// Player is immobilized.
-	if (Immobilized* immobilized = registry.try_get<Immobilized>(player)) {
-		if (--(immobilized->rounds) <= 0) {
-			registry.erase<Immobilized>(player);
-		}
-		turns->skip_team_action(player);
-		return;
+	if (turns->ready_to_act(player) && combat->get_decrement_effect(player, Effect::Immobilize) > 0) {
+		end_player_turn();
 	}
 
 	MapPosition& map_pos = registry.get<MapPosition>(player);
-	WorldPosition& arrow_position = registry.get<WorldPosition>(player_arrow);
 	uvec2 new_pos = map_pos.position;
 
 	if (direction == Direction::Left && map_pos.position.x > 0) {
@@ -603,23 +614,33 @@ void WorldSystem::move_player(Direction direction)
 	// Allows player to run if all checks have been passed, inputs running direction as an animation event
 	animations->player_running_animation(player, map_pos.position, new_pos);
 
-	// Temp update for arrow position
-	if (!player_arrow_fired) {
-		arrow_position.position += (vec2(new_pos) - vec2(map_pos.position)) * MapUtility::tile_size;
-	}
-
 	MapGeneratorSystem::MoveState move_ret = map_generator->move_player_to_tile(map_pos.position, new_pos);
 	if (move_ret == MapGeneratorSystem::MoveState::Failed) {
 		return;
 	}
 
-	turns->complete_team_action(player);
+	end_player_turn();
+
+	return_arrow_to_player();
 
 	// TODO: move the logics to map generator system
 	if (move_ret == MapGeneratorSystem::MoveState::NextLevel) {
 		story->load_next_level();
 	}
 	story->check_cutscene();
+}
+
+void WorldSystem::end_player_turn()
+{
+	if (turns->get_active_team() != player) {
+		return;
+	}
+	combat->apply_decrement_per_turn_effects(player);
+	if (turns->ready_to_act(player)) {
+		turns->skip_team_action(player);
+	} else {
+		turns->complete_team_action(player);
+	}
 }
 
 void WorldSystem::try_change_color()
@@ -653,14 +674,8 @@ void WorldSystem::try_change_color()
 void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 {
 	// Player is stunned.
-	if (turns->ready_to_act(player)) {
-		if (Stunned* stunned = registry.try_get<Stunned>(player)) {
-			if (--(stunned->rounds) <= 0) {
-				registry.erase<Stunned>(player);
-			}
-			turns->skip_team_action(player);
-			return;
-		}
+	if (turns->ready_to_act(player) && combat->get_decrement_effect(player, Effect::Stun) > 0) {
+		end_player_turn();
 	}
 
 	if (story->in_cutscene()) {
@@ -692,6 +707,7 @@ void WorldSystem::on_mouse_scroll(float offset)
 {
 	if (ui->player_can_act()) {
 		this->renderer->scale_on_scroll(offset);
+		return_arrow_to_player();
 	}
 }
 
@@ -759,5 +775,5 @@ void WorldSystem::try_adjacent_attack(Attack& attack)
 	if (combat->do_attack(player, attack, mouse_map_pos)) {
 		so_loud->play(light_sword_wav);
 	}
-	turns->complete_team_action(player);
+	end_player_turn();
 }
