@@ -1,5 +1,7 @@
 {
   "type": 16,
+  "tile_area": [ 3, 3 ],
+  "tile_center": [ 1, 1 ],
   "state": 0,
   "radius": 10,
   "speed": 0,

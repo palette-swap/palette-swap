@@ -1,5 +1,7 @@
 {
   "type": 15,
+  "tile_area": [ 3, 3 ],
+  "tile_center": [ 1, 1 ],
   "danger_rating": 4,
   "loot_multiplier": 3,
   "state": 0,
