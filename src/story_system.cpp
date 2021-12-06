@@ -208,7 +208,7 @@ void StorySystem::load_next_level()
 			create_radius_cutscene(entry_entity,
 								   10.f,
 								   CutSceneType::BossEntry,
-								   boss_cutscene_texts[(size_t)enemy.type - (size_t)EnemyType::KingMush],
+								   boss_cutscene_texts[(size_t)enemy.type - (size_t)EnemyType::Titho],
 								   entity);
 		}
 
