@@ -79,7 +79,7 @@ template <typename ColorExclusive> bool CombatSystem::is_valid_attack(Entity att
 		return false;
 	}
 	uvec2 attacker_pos = registry.get<MapPosition>(attacker).position;
-	auto view = registry.view<MapPosition, Enemy, Stats>(entt::exclude<ColorExclusive>);
+	auto view = registry.view<MapPosition, Enemy, Stats>(entt::exclude<ColorExclusive, Environmental>);
 	for (const Entity target_entity : view) {
 		if (target_entity != attacker
 			&& attack.is_in_range(attacker_pos, target, view.template get<MapPosition>(target_entity).position)) {
@@ -87,7 +87,7 @@ template <typename ColorExclusive> bool CombatSystem::is_valid_attack(Entity att
 			return true;
 		}
 	}
-	auto view_big = registry.view<MapPosition, MapHitbox, Enemy, Stats>(entt::exclude<ColorExclusive>);
+	auto view_big = registry.view<MapPosition, MapHitbox, Enemy, Stats>(entt::exclude<ColorExclusive, Environmental>);
 	for (const Entity target_entity : view_big) {
 		for (auto square : MapUtility::MapArea(view_big.template get<MapPosition>(target_entity),
 											   view_big.template get<MapHitbox>(target_entity))) {
@@ -126,11 +126,11 @@ template <typename ColorExclusive> bool CombatSystem::do_attack(Entity attacker,
 		}
 		return false;
 	};
-	auto view = registry.view<MapPosition, Enemy, Stats>(entt::exclude<MapHitbox, ColorExclusive>);
+	auto view = registry.view<MapPosition, Enemy, Stats>(entt::exclude<MapHitbox, ColorExclusive, Environmental>);
 	for (const Entity target_entity : view) {
 		try_attack(target_entity, view.template get<MapPosition>(target_entity).position);
 	}
-	auto view_big = registry.view<MapPosition, MapHitbox, Enemy, Stats>(entt::exclude<ColorExclusive>);
+	auto view_big = registry.view<MapPosition, MapHitbox, Enemy, Stats>(entt::exclude<ColorExclusive, Environmental>);
 	for (const Entity target_entity : view_big) {
 		for (auto square : MapUtility::MapArea(view_big.template get<MapPosition>(target_entity),
 											   view_big.template get<MapHitbox>(target_entity))) {
@@ -223,11 +223,13 @@ void CombatSystem::kill(Entity attacker_entity, Entity target_entity)
 
 	// TODO: Animate death
 	animations->set_enemy_death_animation(target_entity);
-	registry.destroy(target_entity);
 
 	for (const auto& callback : death_callbacks) {
 		callback(target_entity);
 	}
+
+	// TODO: Animate death
+	registry.destroy(target_entity);
 }
 
 void CombatSystem::on_attack(

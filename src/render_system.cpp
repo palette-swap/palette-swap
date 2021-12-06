@@ -147,7 +147,7 @@ void RenderSystem::prepare_for_spritesheet(TEXTURE_ASSET_ID texture, vec2 offset
 	gl_has_errors();
 }
 
-RenderSystem::TextData RenderSystem::generate_text(const Text& text)
+RenderSystem::TextData RenderSystem::generate_text(const Text& text, bool cursive)
 {
 	TextData text_data = {};
 	// Texture creation
@@ -159,7 +159,10 @@ RenderSystem::TextData RenderSystem::generate_text(const Text& text)
 	if (font_itr != fonts.end()) {
 		font = font_itr->second;
 	} else {
-		font = fonts.emplace(text.font_size, TTF_OpenFont(fonts_path("VT323-Regular.ttf").c_str(), text.font_size))
+		font = fonts
+				   .emplace(text.font_size,
+							TTF_OpenFont(fonts_path(cursive ? "Gwendolyn-Regular.ttf" : "VT323-Regular.ttf").c_str(),
+										 text.font_size))
 				   .first->second;
 	}
 
@@ -426,7 +429,11 @@ void RenderSystem::draw_effect(Entity entity, const EffectRenderRequest& render_
 	}
 
 	if (render_request.used_effect == EFFECT_ASSET_ID::AOE) {
+		
 		AOESquare& aoe_status = registry.get<AOESquare>(entity);
+		if (!aoe_status.actual_attack_displayed) {
+			transform.scale(vec2(1 / 3.f, 1 / 3.f));
+		}
 		GLint actual_aoe = glGetUniformLocation(program, "actual_aoe");
 		glUniform1i(actual_aoe, static_cast<GLint>(aoe_status.actual_attack_displayed));
 	}
@@ -647,7 +654,7 @@ void RenderSystem::draw_text(Entity entity, const Text& text, const mat3& projec
 	auto text_data = text_buffers.find(text);
 
 	if (text_data == text_buffers.end()) {
-		TextData new_text_data = generate_text(text);
+		TextData new_text_data = generate_text(text, registry.any_of<Cursive>(entity));
 		text_data = text_buffers.emplace(text, new_text_data).first;
 	}
 

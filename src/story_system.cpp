@@ -220,6 +220,15 @@ void StorySystem::load_next_level()
 								 boss_cutscene_texts[(size_t)enemy.type - (size_t)EnemyType::KingMush],
 								 entity);
 		}
+		if (enemy.type == EnemyType::Dragon) {
+			vec2 position = registry.get<MapPosition>(entity).position;
+			auto entry_entity = animations->create_boss_entry_entity(EnemyType::Dragon, position);
+			create_radius_cutscene(entry_entity,
+								   10.f,
+								   CutSceneType::BossEntry,
+								   boss_cutscene_texts[(size_t)enemy.type - (size_t)EnemyType::KingMush],
+								   entity);
+		}
 
 	}
 
