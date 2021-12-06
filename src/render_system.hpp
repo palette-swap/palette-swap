@@ -76,6 +76,7 @@ class RenderSystem {
 		shader_path("rectangle"),
 		shader_path("enemy"), 
 		shader_path("player"),
+		shader_path("death"),
 		shader_path("boss_intro"),
 		shader_path("health_bar"),
 		shader_path("fancy_bar"),
