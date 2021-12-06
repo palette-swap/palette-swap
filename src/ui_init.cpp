@@ -158,10 +158,11 @@ void UISystem::restart_game()
 
 	// Death Screen
 	Entity you_died = create_ui_text(
-		groups[(size_t)Groups::DeathScreen], vec2(.5, .25), "YOU DIED", Alignment::Center, Alignment::Start, 120);
-	registry.get<Text>(you_died).border = 12;
+		groups[(size_t)Groups::DeathScreen], vec2(.5, .25), "You Died", Alignment::Center, Alignment::Start, 120);
+	registry.get<Text>(you_died).border = 24;
+	registry.emplace<Cursive>(you_died);
 	create_button(groups[(size_t)Groups::DeathScreen],
-				  vec2(.5, .5),
+				  vec2(.5, .65),
 				  vec2(.1, .1),
 				  vec4(.1, .1, .1, 1),
 				  ButtonAction::RestartGame,
@@ -173,10 +174,11 @@ void UISystem::restart_game()
 
 	// Victory Screen
 	Entity you_won = create_ui_text(
-		groups[(size_t)Groups::VictoryScreen], vec2(.5, .25), "YOU WON!", Alignment::Center, Alignment::Start, 120);
-	registry.get<Text>(you_won).border = 12;
+		groups[(size_t)Groups::VictoryScreen], vec2(.5, .25), "You Won!", Alignment::Center, Alignment::Start, 120);
+	registry.get<Text>(you_won).border = 24;
+	registry.emplace<Cursive>(you_won);
 	create_button(groups[(size_t)Groups::VictoryScreen],
-				  vec2(.5, .5),
+				  vec2(.5, .65),
 				  vec2(.1, .1),
 				  vec4(.1, .1, .1, 1),
 				  ButtonAction::RestartGame,

@@ -1044,6 +1044,9 @@ struct Text {
 	size_t border = 0;
 };
 
+struct Cursive {
+};
+
 extern bool operator==(const Text& t1, const Text& t2);
 
 template <> struct std::hash<Text> {

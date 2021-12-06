@@ -176,7 +176,9 @@ void AISystem::step(float /*elapsed_ms*/)
 					throw std::runtime_error("Invalid enemy behaviour.");
 				}
 
-				combat->apply_decrement_per_turn_effects(enemy_entity);
+				if (registry.valid(enemy_entity)) {
+					combat->apply_decrement_per_turn_effects(enemy_entity);
+				}
 			}
 		}
 
