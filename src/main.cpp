@@ -51,7 +51,7 @@ int main()
 	std::shared_ptr<MapGeneratorSystem> map = std::make_shared<MapGeneratorSystem>(turns, ui, loot);
 
 	// Story System
-	std::shared_ptr<StorySystem> stories = std::make_shared<StorySystem>(animations);
+	std::shared_ptr<StorySystem> stories = std::make_shared<StorySystem>(animations, map);
 
 	// Tutorial System
 	std::shared_ptr<TutorialSystem> tutorials = std::make_shared<TutorialSystem>();

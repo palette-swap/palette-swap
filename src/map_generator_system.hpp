@@ -5,6 +5,7 @@
 #include "loot_system.hpp"
 #include "map_generator.hpp"
 #include "map_utility.hpp"
+#include "world_init.hpp"
 class TurnSystem;
 class UISystem;
 

@@ -354,6 +354,7 @@ struct Enemy {
 	uint radius = 3;
 	uint speed = 1;
 	uint attack_range = 1;
+	bool active = true;
 
 	uint danger_rating = 0;
 	uint loot_multiplier = 1;
@@ -691,19 +692,19 @@ constexpr std::array<AnimationProfile, static_cast<int>(EnemyType::EnemyCount)> 
 	AnimationProfile { TEXTURE_ASSET_ID::DUMMY, 0.f }, 
 	AnimationProfile { TEXTURE_ASSET_ID::SLIME, 0.2f }, 
 	AnimationProfile { TEXTURE_ASSET_ID::RAVEN, 0.f },
-	AnimationProfile { TEXTURE_ASSET_ID::ARMOR, 0.f }, 
-	AnimationProfile { TEXTURE_ASSET_ID::TREEANT, 0.f }, 
+	AnimationProfile { TEXTURE_ASSET_ID::ARMOR, 0.f },
+	AnimationProfile { TEXTURE_ASSET_ID::TREEANT, 0.f },
 	AnimationProfile { TEXTURE_ASSET_ID::WRAITH, 0.1f },
-	AnimationProfile { TEXTURE_ASSET_ID::DRAKE, 0.1f }, 
-	AnimationProfile { TEXTURE_ASSET_ID::MUSHROOM, 0.2f }, 
+	AnimationProfile { TEXTURE_ASSET_ID::DRAKE, 0.1f },
+	AnimationProfile { TEXTURE_ASSET_ID::MUSHROOM, 0.2f },
 	AnimationProfile { TEXTURE_ASSET_ID::SPIDER, 0.2f },
-	AnimationProfile { TEXTURE_ASSET_ID::CLONE, 0.f }, 
+	AnimationProfile { TEXTURE_ASSET_ID::CLONE, 0.f },
 	AnimationProfile { TEXTURE_ASSET_ID::SWORD_SOLDIER, 0.f },
 	AnimationProfile { TEXTURE_ASSET_ID::SPEAR_SOLDIER, 0.f },
 	AnimationProfile { TEXTURE_ASSET_ID::APPARITION, 0.f },
 	AnimationProfile { TEXTURE_ASSET_ID::KOBOLD_WARRIOR, 0.f },
 	AnimationProfile { TEXTURE_ASSET_ID::KOBOLD_MAGE, 0.f },
-	AnimationProfile { TEXTURE_ASSET_ID::KING_MUSH, 0.f }, 
+	AnimationProfile { TEXTURE_ASSET_ID::KING_MUSH, 0.f },
 	AnimationProfile { TEXTURE_ASSET_ID::TITHO, 0.f },
 	AnimationProfile { TEXTURE_ASSET_ID::DRAGON, 0.f },
 	AnimationProfile { TEXTURE_ASSET_ID::DRAGON, 0.f },
@@ -781,7 +782,7 @@ struct TransientEventAnimation {
 };
 
 // Denotes that an animation event should stop being displayed after completion, but not erased
-// Currently used for boss AOEs, as well as boss intro animations 
+// Currently used for boss AOEs, as well as boss intro animations
 struct UndisplayEventAnimation {
 	int frame = 0;
 };
@@ -1074,14 +1075,59 @@ struct Button {
 	Entity action_target;
 };
 
+
+struct Guide {
+};
 enum class CutSceneType {
-	BossEntry
+	BossEntry = 0,
+	NPCEntry = BossEntry + 1,
+	Count = NPCEntry + 1,
+};
+
+struct RoomTrigger {
+};
+
+struct RadiusTrigger {
+	// radius is based on number of TILE
+	float radius;
 };
 // CutScene
 struct CutScene {
-	Entity actual_entity;
-	Entity cutscene_ui;
 	CutSceneType type;
-	float radius;
-	std::string texts;
+	Entity ui_entity;
+	std::vector<std::string> texts;
+	Entity actual_entity;
 };
+
+const std::array<std::vector<std::string>, 4>
+	boss_cutscene_texts = {
+		std::vector<std::string> {
+			std::string("Hmm? How did this ruffian find their way"),
+			std::string("into my kingly chambers?"),
+			std::string("Wait, there is only one possible"),
+			std::string(" explanation for this..."),
+			std::string("An ASSASSIN?!"),
+			std::string("Guards, to me!"),
+			std::string("Defend your new king!"),
+		},
+		std::vector<std::string> {
+			std::string("Ah, it's you again! It has been too long"),
+			std::string("Do you think you will defeat my master this time?"),
+			std::string("Or perhaps I shall have the honor of "),
+			std::string("drawing your blood first."),
+			std::string("Now, ON YOUR GUARD."),
+		},
+		std::vector<std::string> {
+			std::string("And here you are at last."),
+			std::string("Finally at the end of"),
+			std::string("your vainglorious crusade."),
+			std::string("Tell me, do you truly believe"),
+			std::string("that all your efforts have meant something?"),
+			std::string("That slaying my subordinates..."),
+			std::string("in any way inconveniences me?"),
+			std::string("Impudent whelp!"),
+			std::string("Your efforts will mean nothing"),
+			std::string("Now grovel, worm"),
+			std::string("Witness the power of a god!"),
+		},
+	};

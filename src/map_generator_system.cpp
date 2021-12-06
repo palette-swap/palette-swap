@@ -197,9 +197,10 @@ static void load_enemy(unsigned int enemy_index, const rapidjson::Document& json
 	if (found != enemy_type_bosses.end()) {
 		enemy_animation.max_frames = 8;
 		enemy_animation.speed_adjustment = 0.6f;
-		visible = true;
+		visible = false;
 		registry.emplace<Boss>(entity);
 		registry.emplace<Light>(entity, 4.f * MapUtility::tile_size);
+		enemy_component.active = false;
 	} else {
 		enemy_animation.max_frames = 4;
 		enemy_animation.travel_offset = enemy_profile.travel_offset;
@@ -667,6 +668,7 @@ void MapGeneratorSystem::load_level(int level)
 			create_picture();
 		}
 		registry.get<RenderRequest>(help_picture).visible = true;
+		create_guide(registry.get<MapPosition>(player).position + uvec2(2, 2));
 	}
 }
 
@@ -692,6 +694,8 @@ void MapGeneratorSystem::clear_level()
 		if (registry.valid(help_picture) && registry.any_of<RenderRequest>(help_picture)) {
 			registry.get<RenderRequest>(help_picture).visible = false;
 		}
+		auto guide_view = registry.view<Guide>();
+		registry.destroy(guide_view.begin(), guide_view.end());
 	}
 	animated_room_buffer.clear();
 }

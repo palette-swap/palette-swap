@@ -181,12 +181,13 @@ RenderSystem::TextData RenderSystem::generate_text(const Text& text, bool cursiv
 		// Render the text using SDL
 		SDL_Surface* surface = TTF_RenderText_Blended_Wrapped(
 			font, string.substr(start, (end == -1) ? end : end - start).c_str(), SDL_Color({ 255, 255, 255, 255 }), static_cast<Uint32>(screen_size.x));
-		text_data.texture_width = max(text_data.texture_width, surface->w);
-		text_data.texture_height += surface->h;
 		if (surface == nullptr) {
 			fprintf(stderr, "Error TTF_RenderText %s\n", text.text.c_str());
-			return text_data;
+			break;
+			//return text_data;
 		}
+		text_data.texture_width = max(text_data.texture_width, surface->w);
+		text_data.texture_height += surface->h;
 		surfaces.push_back(surface);
 
 		if (end == -1) {

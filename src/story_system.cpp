@@ -5,15 +5,18 @@
 void StorySystem::restart_game()
 {
 	current_cutscene_entity = entt::null;
-	boss_created = false;
 	for (auto [entity, cutscene] : registry.view<CutScene>().each()) {
-		registry.destroy(cutscene.cutscene_ui);
+		registry.destroy(cutscene.ui_entity);
 		registry.destroy(entity);
 	}
+
+	this->load_next_level();
 }
 
-StorySystem::StorySystem(std::shared_ptr<AnimationSystem> animation_sys_ptr)
+StorySystem::StorySystem(std::shared_ptr<AnimationSystem> animation_sys_ptr,
+						 std::shared_ptr<MapGeneratorSystem> map_system_ptr)
 	: animations(std::move(animation_sys_ptr))
+	, map_system(std::move(map_system_ptr))
 {
 }
 
@@ -22,7 +25,9 @@ bool StorySystem::in_cutscene() { return current_cutscene_entity != entt::null; 
 void StorySystem::on_mouse_click(int /*button*/, int action)
 {
 	if (action == GLFW_PRESS) {
-		proceed_conversation();
+		if (this->text_frames.empty()) {
+			proceed_conversation();
+		}
 	}
 }
 
@@ -30,19 +35,44 @@ void StorySystem::on_key(int /*key*/, int action, int /*mod*/)
 {
 	// TODO: handle story on key: basically press any key will make the conversation proceed
 	if (action == GLFW_PRESS) {
-		proceed_conversation();
+		if (this->text_frames.empty()) {
+			proceed_conversation();		
+		}
 	}
 }
 
 void StorySystem::check_cutscene()
 {
 	Entity player = registry.view<Player>().front();
-	vec2 player_pos = MapUtility::map_position_to_world_position(registry.get<MapPosition>(player).position);
-	for (auto [entity, cutscene] : registry.view<CutScene>().each()) {
-		vec2 trigger_pos = MapUtility::map_position_to_world_position(registry.get<MapPosition>(entity).position);
-		if (length(trigger_pos - player_pos) <= cutscene.radius) {
+	uvec2 player_map_pos = registry.get<MapPosition>(player).position;
+	vec2 player_world_pos = MapUtility::map_position_to_world_position(player_map_pos);
+
+	for (auto [entity, radius_trigger] : registry.view<RadiusTrigger>().each()) {
+		uvec2 trigger_map_pos = registry.get<MapPosition>(entity).position;
+		vec2 trigger_pos = MapUtility::map_position_to_world_position(trigger_map_pos);
+		if (length(trigger_pos - player_world_pos) <= radius_trigger.radius * MapUtility::tile_size) {
 			current_cutscene_entity = entity;
-			trigger_cutscene(cutscene, trigger_pos);
+			CutScene c = registry.get<CutScene>(entity);
+			trigger_cutscene(c);
+			registry.remove<RadiusTrigger>(entity);
+		}
+	}
+
+	// TODO: check if player and trigger's entity is in the same room
+	for (auto [entity] : registry.view<RoomTrigger>().each()) {
+		uvec2 trigger_map_pos = registry.get<MapPosition>(entity).position;
+		MapUtility::RoomID player_room_idx = map_system->current_map()
+												 .at(player_map_pos.y / MapUtility::room_size)
+												 .at(player_map_pos.x / MapUtility::room_size);
+		MapUtility::RoomID trigger_room_idx = map_system->current_map()
+												  .at(trigger_map_pos.y / MapUtility::room_size)
+												  .at(trigger_map_pos.x / MapUtility::room_size);
+
+		if (player_room_idx == trigger_room_idx) {
+			current_cutscene_entity = entity;
+			CutScene c = registry.get<CutScene>(entity);
+			trigger_cutscene(c);
+			registry.remove<RoomTrigger>(entity);
 		}
 	}
 }
@@ -53,44 +83,52 @@ void StorySystem::step()
 		return;
 	}
 
-	if (animations->boss_intro_complete(current_cutscene_entity) && !boss_created) {
-		Entity actual_entity = registry.get<CutScene>(current_cutscene_entity).actual_entity;
-		registry.get<RenderRequest>(actual_entity).visible = true;
-		boss_created = true;
-	}
 	CutScene c = registry.get<CutScene>(current_cutscene_entity);
-	if (!registry.get<UIGroup>(c.cutscene_ui).visible && animations->boss_intro_complete(current_cutscene_entity)) {
-		registry.destroy(current_cutscene_entity);
+	if (animations->boss_intro_complete(current_cutscene_entity)) {
+		if (registry.any_of<RenderRequest>(c.actual_entity)) {
+			registry.get<RenderRequest>(c.actual_entity).visible = true;
+		}
+	}
+	if (!registry.get<UIGroup>(c.ui_entity).visible && animations->boss_intro_complete(current_cutscene_entity)) {
+
+		if (registry.any_of<Enemy>(c.actual_entity)) {
+			registry.get<Enemy>(c.actual_entity).active = true;
+		}
+		// registry.destroy(current_cutscene_entity);
+		registry.remove<CutScene>(current_cutscene_entity);
 		current_cutscene_entity = entt::null;
-		boss_created = false;
 	}
 	render_text_each_frame();
 }
 
-void StorySystem::trigger_cutscene(CutScene& c, const vec2& trigger_pos)
+void StorySystem::trigger_cutscene(CutScene& c)
 {
-
-	std::stringstream ss(c.texts);
-	int word_count = 0;
-	std::string buff;
-	std::string acc;
-	while (getline(ss, buff, ' ')) {
-		acc += buff + " ";
-		if (++word_count >= max_word_in_conversation) {
-			conversations.push_back(acc);
-			acc = "";
-			word_count = 0;
-		}
-	}
-	conversations.push_back(acc);
 	trigger_animation(c.type);
-	trigger_conversation(trigger_pos);
+	conversations.insert(conversations.begin(), c.texts.begin(), c.texts.end());
+	trigger_conversation();
+	/*if (!c.texts.empty()) {
+		std::stringstream ss(c.texts);
+		int total_char_count = 0;
+		std::string buff;
+		std::string acc;
+		while (getline(ss, buff, ' ')) {
+			acc += buff + " ";
+			total_char_count += buff.length();
+			if (total_char_count >= max_word_in_conversation) {
+				conversations.push_back(acc);
+				acc = "";
+				total_char_count = 0;
+			}
+		}
+		conversations.push_back(acc);
+		trigger_conversation();
+	}*/
 }
 
 void StorySystem::proceed_conversation()
 {
 	CutScene& c = registry.get<CutScene>(current_cutscene_entity);
-	Entity ui_entity = c.cutscene_ui;
+	Entity ui_entity = c.ui_entity;
 
 	if (conversations.empty() && text_frames.empty()) {
 		registry.get<UIGroup>(ui_entity).visible = false;
@@ -107,16 +145,11 @@ void StorySystem::proceed_conversation()
 	for (char c : text_in_frame) {
 		text_frames.emplace_back(1, c);
 	}
-}
 
-bool StorySystem::in_cutscene_animation()
-{
-	assert(current_cutscene_entity != entt::null);
-	if (registry.any_of<Animation>(current_cutscene_entity)) {
-		Animation a = registry.get<Animation>(current_cutscene_entity);
-		return a.frame <= a.max_frames - 2;
-	}
-	return false;
+	UIGroup group = registry.get<UIGroup>(c.ui_entity);
+	Entity text_entity = group.first_elements.at(static_cast<size_t>(UILayer::Content));
+	Text& text_comp = registry.get<Text>(text_entity);
+	text_comp.text = "";
 }
 
 void StorySystem::render_text_each_frame()
@@ -125,7 +158,7 @@ void StorySystem::render_text_each_frame()
 		return;
 	}
 	CutScene c = registry.get<CutScene>(current_cutscene_entity);
-	UIGroup group = registry.get<UIGroup>(c.cutscene_ui);
+	UIGroup group = registry.get<UIGroup>(c.ui_entity);
 	Entity text_entity = group.first_elements.at(static_cast<size_t>(UILayer::Content));
 	Text& text_comp = registry.get<Text>(text_entity);
 
@@ -138,14 +171,11 @@ void StorySystem::render_text_each_frame()
 	}
 }
 
-void StorySystem::trigger_conversation(const vec2& trigger_pos)
+void StorySystem::trigger_conversation()
 {
 	CutScene c = registry.get<CutScene>(current_cutscene_entity);
-	Entity camera = registry.view<Camera>().front();
-	WorldPosition& camera_world_pos = registry.get<WorldPosition>(camera);
-	UIGroup& ui_group = registry.get<UIGroup>(c.cutscene_ui);
+	UIGroup& ui_group = registry.get<UIGroup>(c.ui_entity);
 	ui_group.visible = true;
-	camera_world_pos.position = trigger_pos;
 	proceed_conversation();
 }
 
@@ -161,24 +191,53 @@ void StorySystem::trigger_animation(CutSceneType type)
 	}
 }
 
-void StorySystem::load_next_level() { 
-	for (auto [entity, enemy] : registry.view<Enemy>().each()) {
-		if (enemy.type == EnemyType::KingMush) {
-			vec2 position = registry.get<MapPosition>(entity).position;
-			auto entry_entity = animations->create_boss_entry_entity(EnemyType::KingMush, position);
-			create_cutscene(entry_entity, entity, CutSceneType::BossEntry, 350, "This is the boss. Beat it!");
-		}
-		
+// TODO: Delete after integration with map system, only for testing
+void StorySystem::load_next_level()
+{
+	for (auto [entity, cutscene] : registry.view<CutScene>().each()) {
+		registry.remove_if_exists<RoomTrigger>(entity);
+		registry.remove_if_exists<RadiusTrigger>(entity);
+		registry.remove<CutScene>(entity);
+		registry.destroy(entity);
+		current_cutscene_entity = entt::null;
+		this->text_frames.clear();
+		this->conversations.clear();
+	}
+
+	for (auto [entity] : registry.view<Boss>().each()) {
+		Enemy enemy = registry.get<Enemy>(entity);
 		if (enemy.type == EnemyType::Titho) {
 			vec2 position = registry.get<MapPosition>(entity).position;
-			auto entry_entity = animations->create_boss_entry_entity(EnemyType::Titho, position);
-			create_cutscene(entry_entity, entity, CutSceneType::BossEntry, 350, "This is the boss. Beat it!");
+			Entity entry_entity = animations->create_boss_entry_entity(enemy.type, position);
+			create_radius_cutscene(entry_entity,
+								   10.f,
+								   CutSceneType::BossEntry,
+								   boss_cutscene_texts[(size_t)enemy.type - (size_t)EnemyType::Titho],
+								   entity);
 		}
 
+		if (enemy.type == EnemyType::KingMush) {
+			vec2 position = registry.get<MapPosition>(entity).position;
+			Entity entry_entity = animations->create_boss_entry_entity(enemy.type, position);
+			create_room_cutscene(entry_entity,
+								 CutSceneType::BossEntry,
+								 boss_cutscene_texts[(size_t)enemy.type - (size_t)EnemyType::KingMush],
+								 entity);
+		}
 		if (enemy.type == EnemyType::Dragon) {
 			vec2 position = registry.get<MapPosition>(entity).position;
 			auto entry_entity = animations->create_boss_entry_entity(EnemyType::Dragon, position);
-			create_cutscene(entry_entity, entity, CutSceneType::BossEntry, 350, "This is the boss. Beat it!");
+			create_radius_cutscene(entry_entity,
+								   10.f,
+								   CutSceneType::BossEntry,
+								   boss_cutscene_texts[(size_t)enemy.type - (size_t)EnemyType::KingMush],
+								   entity);
 		}
+
+	}
+
+	for (auto [entity] : registry.view<Guide>().each()) {
+		vec2 position = registry.get<MapPosition>(entity).position;
+		create_radius_cutscene(entity, 10.f, CutSceneType::NPCEntry, help_texts, entity);
 	}
 }
