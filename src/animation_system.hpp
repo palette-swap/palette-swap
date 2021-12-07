@@ -22,7 +22,7 @@ static constexpr int enemy_num_frames = 4;
 static constexpr float enemy_attack_speed = 1.2f;
 static constexpr float enemy_tile_travel_time_ms = 100.f;
 static constexpr int enemy_death_total_frames = 4; 
-static constexpr float enemy_death_animation_speed = 0.4f;
+static constexpr float enemy_death_animation_speed = 0.5f;
 
 // These values are used for the default setting for the player
 static constexpr int player_num_frames = 6;

@@ -29,7 +29,7 @@ uniform float height_offset = 0.f;
 
 // Value for maximum folding length
 uniform float max_fold_length = 0.25f;
-uniform float cut_distortion = 0.25f;
+uniform float cut_distortion = 0.20f;
 uniform int direction = 1;
 
 void main()
