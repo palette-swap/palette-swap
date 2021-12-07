@@ -198,15 +198,9 @@ void AnimationSystem::set_enemy_death_animation(const Entity& enemy)
 		player_y_rel = 1.f;
 	}
 
-	printf("%f", player_x_rel);
-	printf("%f", player_y_rel);
-
 	DeathDeformation& enemy_deformation = registry.emplace<DeathDeformation>(enemy_death_entity);
 	enemy_deformation.side_direction = player_x_rel;
 	enemy_deformation.height_direction = player_y_rel;
-
-	printf("%f", enemy_deformation.side_direction);
-	printf("%f", enemy_deformation.height_direction);
 
 	// Copies over enemy animation states from previous animation
 	AnimationSystem::copy_animation_settings(enemy_animation, enemy_death_animation);
