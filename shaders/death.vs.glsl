@@ -24,8 +24,13 @@ uniform float num_states = 8;
 uniform int frame;
 uniform int state;
 
+uniform float side_offset = 0.f;
+uniform float height_offset = 0.f;
+
 // Value for maximum folding length
 uniform float max_fold_length = 0.25f;
+uniform float cut_distortion = 0.5f;
+uniform int direction = 1;
 
 void main()
 {
@@ -50,15 +55,19 @@ void main()
 	if (frame >= 1) {
 		if ((texcoord.y - top_side)/height <= 0.3) {
 			distort_position.y += max_fold_length * abs((texcoord.y - (top_side + max_fold_length)))/max_fold_length;
-			distort_position.x += max_fold_length/2 * abs((texcoord.y - (top_side + max_fold_length)))/max_fold_length;
 		}
 
 		if ((texcoord.y - top_side)/height >= 0.7) {
 			distort_position.y -= max_fold_length * abs((texcoord.y - (bottom_side - max_fold_length)))/max_fold_length;
-			distort_position.x -= max_fold_length/2 * abs((texcoord.y - (top_side + max_fold_length)))/max_fold_length;
 		} else {
-			distort_position.y += max_fold_length/2 * abs((texcoord.y - (bottom_side - max_fold_length)))/max_fold_length;
-			distort_position.x -= max_fold_length/2 * abs((texcoord.y - (top_side + max_fold_length)))/max_fold_length;
+
+			if (side_offset > 0 ) {
+				distort_position.x += side_offset * direction * cut_distortion * abs((texcoord.x - (right_side - max_fold_length)))/max_fold_length;
+			} else {
+				distort_position.x += side_offset * direction * cut_distortion * abs((texcoord.x - (right_side - max_fold_length)))/max_fold_length;
+			}
+			
+			distort_position.y +=  height_offset * cut_distortion * abs((texcoord.y - (top_side + max_fold_length)))/max_fold_length;
 		}
 	}
 
@@ -66,15 +75,18 @@ void main()
 	if (frame >= 3) {
 		if ((texcoord.x - left_side)/width <= 0.3) {
 			distort_position.x += max_fold_length * abs((texcoord.x - (left_side + max_fold_length)))/max_fold_length;
-			distort_position.y += max_fold_length/2 * abs((texcoord.y - (top_side + max_fold_length)))/max_fold_length;
 		}
 
 		if ((texcoord.x - left_side)/width >= 0.7) {
 			distort_position.x -= max_fold_length * abs((texcoord.x - (right_side - max_fold_length)))/max_fold_length;
-			distort_position.y -= max_fold_length/2 * abs((texcoord.y - (top_side + max_fold_length)))/max_fold_length;
 		} else {
-			distort_position.y -= max_fold_length/2 * abs((texcoord.y - (bottom_side - max_fold_length)))/max_fold_length;
-			distort_position.x += max_fold_length/2 * abs((texcoord.y - (top_side + max_fold_length)))/max_fold_length;
+			if (side_offset > 0 ) {
+				distort_position.x += side_offset * direction * cut_distortion * abs((texcoord.x - (right_side - max_fold_length)))/max_fold_length;
+			} else {
+				distort_position.x += side_offset * direction * cut_distortion * abs((texcoord.x - (right_side - max_fold_length)))/max_fold_length;
+			}
+
+			distort_position.y +=  height_offset * cut_distortion * abs((texcoord.y - (top_side + max_fold_length)))/max_fold_length;
 		}
 	}
 
