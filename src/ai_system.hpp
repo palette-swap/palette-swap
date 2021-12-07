@@ -217,7 +217,7 @@ private:
 		BTState process(Entity e, AISystem* ai) override
 		{
 			debug_log("Debug: SummonVictims.process\n");
-
+			ai->animations->set_enemy_facing_player(e);
 			ai->switch_enemy_state(e, EnemyState::Idle);
 			ai->animations->boss_event_animation(e, m_animation);
 			ai->so_loud->play(summon_effect);
@@ -305,7 +305,7 @@ private:
 		BTState process(Entity e, AISystem* ai) override
 		{
 			debug_log("Debug: AOEAttack.process\n");
-
+			ai->animations->set_enemy_facing_player(e);
 			if (!is_charged) {
 				// Charging
 				is_charged = true;
@@ -391,7 +391,7 @@ private:
 		BTState process(Entity e, AISystem* ai) override
 		{
 			debug_log("Debug: AOEAttack.process\n");
-
+			ai->animations->set_enemy_facing_player(e);
 			if (!is_charged) {
 				// Charging
 				ai->animations->set_enemy_state(e, charge_state);
@@ -444,11 +444,14 @@ private:
 						}
 					}
 				}
+
 				// Create AOE stats.
+				
 				return handle_process_result(prepare_aoe(e, ai, aoe_area));
 			}
 			// Release AOE.
 			return handle_process_result(release_aoe(e, ai));
+
 		}
 
 	private:
@@ -487,7 +490,7 @@ private:
 		BTState process(Entity e, AISystem* ai) override
 		{
 			debug_log("Debug: AOEConeAttack.process\n");
-
+			ai->animations->set_enemy_facing_player(e);
 			if (!is_charged) {
 				// Charging
 				is_charged = true;
@@ -806,6 +809,7 @@ private:
 			debug_log("Debug: DoNothing.process\n");
 
 			ai->switch_enemy_state(e, EnemyState::Idle);
+			ai->animations->set_enemy_facing_player(e);
 			ai->animations->boss_event_animation(e, aoe_attack_state);
 
 			return handle_process_result(BTState::Success);
@@ -1094,7 +1098,6 @@ private:
 			selector_active->add_precond_and_child(
 				[p](Entity /*e*/) { return ((p->get_process_count()+2) % 5 == 0); }, std::move(aoe_sequence)
 			);
-			
 
 			auto wild_surge = std::make_unique<AOERandomAttack>("Dragon Roar.wav", 5, 3, e, 10, 8);
 			selector_active->add_precond_and_child(
