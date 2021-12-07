@@ -142,6 +142,15 @@ void StorySystem::proceed_conversation()
 	std::string text_in_frame = conversations.front();
 	conversations.pop_front();
 
+	int length = text_in_frame.length();
+	int last_index = max_line_len;
+
+	while (last_index < length++) {
+		last_index = text_in_frame.find_last_of(' ', last_index);
+		text_in_frame.replace(last_index, 1, "\n");
+		last_index += max_line_len + 1;
+	}
+
 	for (char c : text_in_frame) {
 		text_frames.emplace_back(1, c);
 	}
@@ -166,9 +175,9 @@ void StorySystem::render_text_each_frame()
 	text_frames.pop_front();
 
 	text_comp.text += text_per_frame;
-	if (text_comp.text.length() != 0 && text_comp.text.length() % max_line_len == 0) {
-		text_comp.text += "\n";
-	}
+	//if (text_comp.text.length() != 0 && text_comp.text.length() % max_line_len == 0) {
+	//	text_comp.text += "\n";
+	//}
 }
 
 void StorySystem::trigger_conversation()

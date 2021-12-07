@@ -44,7 +44,7 @@ private:
 		= { std::string("You know..."),
 			std::string("I'm no longer here"),
 			std::string("I can't stop you from going forward..."),
-			std::string("but know that you don't have to keep    going...for me"),
+			std::string("but know that you don't have to keep going...for me"),
 			std::string("This road will eventually end"),
 			std::string("But yours has not"),
 			std::string("There are still people worth protecting"),
