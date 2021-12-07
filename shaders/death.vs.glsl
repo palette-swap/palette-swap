@@ -61,7 +61,6 @@ void main()
 			distort_position.y -= max_fold_length * abs((texcoord.y - (bottom_side - max_fold_length)))/max_fold_length;
 		} else {
 
-
 		}
 	}
 
@@ -73,24 +72,22 @@ void main()
 
 		if ((texcoord.x - left_side)/width >= 0.7) {
 			distort_position.x -= max_fold_length * abs((texcoord.x - (right_side - max_fold_length)))/max_fold_length;
-		} else {
-//			if (side_offset > 0 ) {
-//				distort_position.x += side_offset * direction * cut_distortion * abs((texcoord.x - (right_side - max_fold_length)))/max_fold_length;
-//			} else {
-//				distort_position.x += side_offset * direction * cut_distortion * abs((texcoord.x - (right_side - max_fold_length)))/max_fold_length;
-//			}
-//
-//			distort_position.y +=  height_offset * cut_distortion * abs((texcoord.y - (top_side + max_fold_length)))/max_fold_length;
-		}
+		} 
 	}
 
-	if (side_offset > 0 ) {
-			distort_position.x += frame * side_offset * direction * cut_distortion * abs((texcoord.x - (right_side - max_fold_length)))/max_fold_length;
-	} else {
-			distort_position.x += frame * side_offset * direction * cut_distortion * abs((texcoord.x - (right_side - max_fold_length)))/max_fold_length;
+	float x_prop = (texcoord.x - left_side)/width;
+	float y_prop = (texcoord.y - top_side)/height;
+
+	if (x_prop > 0.3 && x_prop < 0.7) {
+		distort_position.y += frame * height_offset * cut_distortion;
 	}
-			
-	distort_position.y += frame * height_offset * cut_distortion * abs((texcoord.y - (top_side + max_fold_length)))/max_fold_length;
+	if (y_prop > 0.3 && y_prop < 0.7) {
+		if (side_offset > 0 ) {
+			distort_position.x += frame * side_offset * direction * cut_distortion;
+		} else {
+			distort_position.x += frame * side_offset * direction * cut_distortion;
+		}
+	}
 
 	// Creates output positions
 	vec3 pos = projection * transform * vec3(distort_position.xy, 1.0);
