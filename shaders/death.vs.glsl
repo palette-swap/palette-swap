@@ -29,7 +29,7 @@ uniform float height_offset = 0.f;
 
 // Value for maximum folding length
 uniform float max_fold_length = 0.25f;
-uniform float cut_distortion = 0.5f;
+uniform float cut_distortion = 0.25f;
 uniform int direction = 1;
 
 void main()
@@ -61,13 +61,7 @@ void main()
 			distort_position.y -= max_fold_length * abs((texcoord.y - (bottom_side - max_fold_length)))/max_fold_length;
 		} else {
 
-			if (side_offset > 0 ) {
-				distort_position.x += side_offset * direction * cut_distortion * abs((texcoord.x - (right_side - max_fold_length)))/max_fold_length;
-			} else {
-				distort_position.x += side_offset * direction * cut_distortion * abs((texcoord.x - (right_side - max_fold_length)))/max_fold_length;
-			}
-			
-			distort_position.y +=  height_offset * cut_distortion * abs((texcoord.y - (top_side + max_fold_length)))/max_fold_length;
+
 		}
 	}
 
@@ -80,15 +74,23 @@ void main()
 		if ((texcoord.x - left_side)/width >= 0.7) {
 			distort_position.x -= max_fold_length * abs((texcoord.x - (right_side - max_fold_length)))/max_fold_length;
 		} else {
-			if (side_offset > 0 ) {
-				distort_position.x += side_offset * direction * cut_distortion * abs((texcoord.x - (right_side - max_fold_length)))/max_fold_length;
-			} else {
-				distort_position.x += side_offset * direction * cut_distortion * abs((texcoord.x - (right_side - max_fold_length)))/max_fold_length;
-			}
-
-			distort_position.y +=  height_offset * cut_distortion * abs((texcoord.y - (top_side + max_fold_length)))/max_fold_length;
+//			if (side_offset > 0 ) {
+//				distort_position.x += side_offset * direction * cut_distortion * abs((texcoord.x - (right_side - max_fold_length)))/max_fold_length;
+//			} else {
+//				distort_position.x += side_offset * direction * cut_distortion * abs((texcoord.x - (right_side - max_fold_length)))/max_fold_length;
+//			}
+//
+//			distort_position.y +=  height_offset * cut_distortion * abs((texcoord.y - (top_side + max_fold_length)))/max_fold_length;
 		}
 	}
+
+	if (side_offset > 0 ) {
+			distort_position.x += frame * side_offset * direction * cut_distortion * abs((texcoord.x - (right_side - max_fold_length)))/max_fold_length;
+	} else {
+			distort_position.x += frame * side_offset * direction * cut_distortion * abs((texcoord.x - (right_side - max_fold_length)))/max_fold_length;
+	}
+			
+	distort_position.y += frame * height_offset * cut_distortion * abs((texcoord.y - (top_side + max_fold_length)))/max_fold_length;
 
 	// Creates output positions
 	vec3 pos = projection * transform * vec3(distort_position.xy, 1.0);
