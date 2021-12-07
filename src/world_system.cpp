@@ -142,7 +142,7 @@ void WorldSystem::init(RenderSystem* renderer_arg)
 {
 	this->renderer = renderer_arg;
 	ui->init(
-		renderer_arg, loot, tutorials, [this]() { try_change_color(); }, [this]() { restart_game(); });
+		renderer_arg, loot, tutorials, story, [this]() { try_change_color(); }, [this]() { restart_game(); });
 	animations->init(renderer_arg);
 
 	// Playing background music indefinitely

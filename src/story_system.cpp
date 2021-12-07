@@ -78,15 +78,15 @@ void StorySystem::step()
 
 	if (registry.any_of<CutScene>(current_cutscene_entity)) {
 		CutScene c = registry.get<CutScene>(current_cutscene_entity);
-		if (!registry.get<UIGroup>(c.ui_entity).visible && (!this->text_frames.empty() || !this->conversations.empty())) {
+		/*if (!registry.get<UIGroup>(c.ui_entity).visible && (!this->text_frames.empty() || !this->conversations.empty())) {
 			registry.get<UIGroup>(c.ui_entity).visible = true;
-		}
+		}*/
 		if (animations->boss_intro_complete(current_cutscene_entity)) {
 			if (registry.any_of<RenderRequest>(c.actual_entity)) {
 				registry.get<RenderRequest>(c.actual_entity).visible = true;
 			}
 		}
-		if (!registry.get<UIGroup>(c.ui_entity).visible && animations->boss_intro_complete(current_cutscene_entity)) {
+		if (animations->boss_intro_complete(current_cutscene_entity) && this->conversations.empty() && this->text_frames.empty()) {
 
 			if (registry.any_of<Enemy>(c.actual_entity)) {
 				registry.get<Enemy>(c.actual_entity).active = true;
@@ -257,9 +257,13 @@ void StorySystem::load_level(uint level)
 void StorySystem::clear_level() {
 
 	for (auto [entity, cutscene] : registry.view<CutScene>().each()) {
+		UIGroup& group = registry.get<UIGroup>(cutscene.ui_entity);
 		registry.remove_if_exists<RoomTrigger>(entity);
 		registry.remove_if_exists<RadiusTrigger>(entity);
-		registry.get<UIGroup>(cutscene.ui_entity).visible = false;
+		group.visible = false;
+		Entity text_entity = group.first_elements.at(static_cast<size_t>(UILayer::Content));
+		Text& text_comp = registry.get<Text>(text_entity);
+		text_comp.text = "";
 		registry.remove<CutScene>(entity);
 		registry.destroy(entity);
 	}

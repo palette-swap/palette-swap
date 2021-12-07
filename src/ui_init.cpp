@@ -1,19 +1,22 @@
 #include "ui_init.hpp"
 #include "ui_system.hpp"
 
-UISystem::UISystem(Debug& debugging): debugging(debugging) {
-
+UISystem::UISystem(Debug& debugging)
+	: debugging(debugging)
+{
 }
 
 void UISystem::init(RenderSystem* render_system,
 					std::shared_ptr<LootSystem> loot_system,
 					std::shared_ptr<TutorialSystem> tutorial_system,
+					std::shared_ptr<StorySystem> story_system,
 					std::function<void()> try_change_color,
 					std::function<void()> restart_world)
 {
 	renderer = render_system;
 	loot = std::move(loot_system);
 	tutorials = std::move(tutorial_system);
+	story = std::move(story_system);
 	this->try_change_color = std::move(try_change_color);
 	this->restart_world = std::move(restart_world);
 }
@@ -26,7 +29,7 @@ void UISystem::restart_game()
 	held_under_mouse = entt::null;
 	destroy_tooltip();
 	attack_preview = entt::null;
-	
+
 	previous_group = entt::null;
 
 	for (size_t i = 0; i < (size_t)Groups::Count; i++) {
@@ -90,15 +93,15 @@ void UISystem::restart_game()
 
 	// Close Inventory button
 	Entity close_inventory = create_button(groups[(size_t)Groups::Inventory],
-				  vec2(.02 * window_height_px / window_width_px, .02),
-				  vec2(.07 * window_height_px / window_width_px, .07),
-				  vec4(.1, .1, .1, 1),
-				  ButtonAction::SwitchToGroup,
-				  groups[(size_t)Groups::HUD],
-				  "X",
-				  48u,
-				  Alignment::Start,
-				  Alignment::Start);
+										   vec2(.02 * window_height_px / window_width_px, .02),
+										   vec2(.07 * window_height_px / window_width_px, .07),
+										   vec4(.1, .1, .1, 1),
+										   ButtonAction::SwitchToGroup,
+										   groups[(size_t)Groups::HUD],
+										   "X",
+										   48u,
+										   Alignment::Start,
+										   Alignment::Start);
 	registry.emplace<TutorialTarget>(close_inventory, TutorialTooltip::OpenedInventory);
 
 	// Menu background
@@ -189,8 +192,8 @@ void UISystem::restart_game()
 	create_background(groups[(size_t)Groups::Help], vec2(.5, .5), vec2(1, 1), 1.f, vec4(0, 0, 0, 1));
 
 	// Help
-	Entity help
-		= create_ui_text(groups[(size_t)Groups::Help], vec2(.5, .15), "HELP", Alignment::Center, Alignment::Center, 120);
+	Entity help = create_ui_text(
+		groups[(size_t)Groups::Help], vec2(.5, .15), "HELP", Alignment::Center, Alignment::Center, 120);
 	registry.get<Text>(help).border = 12;
 	create_button(groups[(size_t)Groups::Help],
 				  vec2(.02 * window_height_px / window_width_px, .02),
@@ -215,6 +218,10 @@ Mouse Over + D       -                  Drop
 I                    -             Inventory
 ESC                  -                 Pause)";
 	create_ui_text(groups[(size_t)Groups::Help], vec2(.5, .6), help_text, Alignment::Center, Alignment::Center, 60);
+
+	// story ui
+	create_background(groups[(size_t)Groups::Story], vec2(.5, .9), vec2(.6, .2), .5, vec4(.1, .1, .6, 1));
+	create_ui_text(groups[(size_t)Groups::Story], vec2(0.25, .8), "", Alignment::Start, Alignment::Start, 48);
 }
 
 Entity create_ui_group(bool visible, Groups identifier)
@@ -248,17 +255,17 @@ Entity create_ui_counter(Entity group, Resource resource, ivec2 offset, int size
 {
 	Entity player = registry.view<Player>().front();
 	Entity entity = create_ui_text(group,
-										   pos + vec2(0, .01),
+								   pos + vec2(0, .01),
 								   std::to_string(registry.get<Inventory>(player).resources.at((size_t)resource)),
 								   Alignment::Center,
 								   Alignment::Center,
 								   64u);
 	registry.get<Color>(entity).color = vec3(.7, 1, .7);
 	Entity pot = create_ui_icon(group,
-									   offset,
-									   vec2(MapUtility::tile_size * static_cast<float>(size)),
-									   pos,
-									   4.f * vec2(MapUtility::tile_size) / vec2(window_default_size));
+								offset,
+								vec2(MapUtility::tile_size * static_cast<float>(size)),
+								pos,
+								4.f * vec2(MapUtility::tile_size) / vec2(window_default_size));
 	size_t action = (size_t)ButtonAction::TryHeal + (size_t)resource;
 	registry.emplace<Button>(pot, entity, (ButtonAction)action, player);
 	return entity;
