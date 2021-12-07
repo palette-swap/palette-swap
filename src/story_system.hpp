@@ -34,6 +34,7 @@ private:
 	void proceed_conversation();
 	void render_text_each_frame();
 	void trigger_conversation();
+	void skip_current_cutscene();
 
 	// max text length for one conversation
 	static constexpr uint max_line_len = 40;

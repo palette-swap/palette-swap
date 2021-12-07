@@ -20,17 +20,22 @@ StorySystem::StorySystem(std::shared_ptr<AnimationSystem> animation_sys_ptr,
 {
 }
 
-bool StorySystem::in_cutscene() { 
+bool StorySystem::in_cutscene()
+{
 	return current_cutscene_entity != entt::null && registry.valid(current_cutscene_entity);
 }
 
-void StorySystem::on_key(int key, int action, int /*mod*/)
+void StorySystem::on_key(int key, int action, int mod)
 {
 	// TODO: handle story on key: basically press any key will make the conversation proceed
 	if (action == GLFW_PRESS && key == GLFW_KEY_ENTER) {
 		if (this->text_frames.empty()) {
-			proceed_conversation();		
+			proceed_conversation();
 		}
+	}
+
+	if (mod == GLFW_MOD_CONTROL && key == GLFW_KEY_ENTER) {
+		skip_current_cutscene();
 	}
 }
 
@@ -83,7 +88,8 @@ void StorySystem::step()
 				registry.get<RenderRequest>(c.actual_entity).visible = true;
 			}
 		}
-		if (animations->boss_intro_complete(current_cutscene_entity) && this->conversations.empty() && this->text_frames.empty()) {
+		if (animations->boss_intro_complete(current_cutscene_entity) && this->conversations.empty()
+			&& this->text_frames.empty()) {
 
 			if (registry.any_of<Enemy>(c.actual_entity)) {
 				registry.get<Enemy>(c.actual_entity).active = true;
@@ -93,7 +99,6 @@ void StorySystem::step()
 		}
 		render_text_each_frame();
 	}
-	
 }
 
 void StorySystem::trigger_cutscene(CutScene& c)
@@ -157,6 +162,29 @@ void StorySystem::trigger_conversation()
 	proceed_conversation();
 }
 
+void StorySystem::skip_current_cutscene()
+{
+	if (!in_cutscene()) {
+		return;
+	}
+	auto entity = current_cutscene_entity;
+	if (registry.any_of<CutScene>(entity)) {
+		CutScene& c = registry.get<CutScene>(entity);
+		UIGroup& group = registry.get<UIGroup>(c.ui_entity);
+		registry.remove_if_exists<RoomTrigger>(entity);
+		registry.remove_if_exists<RadiusTrigger>(entity);
+		group.visible = false;
+		Entity text_entity = group.first_elements.at(static_cast<size_t>(UILayer::Content));
+		Text& text_comp = registry.get<Text>(text_entity);
+		text_comp.text = "";
+		registry.remove<CutScene>(entity);
+	}
+
+	this->text_frames.clear();
+	this->conversations.clear();
+	current_cutscene_entity = entt::null;
+}
+
 void StorySystem::trigger_animation(CutSceneType type)
 {
 	assert(current_cutscene_entity != entt::null);
@@ -178,7 +206,6 @@ void StorySystem::load_next_level()
 	}
 
 	load_level(++current_level);
-	
 }
 
 void StorySystem::load_last_level()
@@ -234,7 +261,8 @@ void StorySystem::load_level(uint level)
 	}
 }
 
-void StorySystem::clear_level() {
+void StorySystem::clear_level()
+{
 
 	for (auto [entity, cutscene] : registry.view<CutScene>().each()) {
 		UIGroup& group = registry.get<UIGroup>(cutscene.ui_entity);
@@ -251,9 +279,10 @@ void StorySystem::clear_level() {
 	if (current_cutscene_entity != entt::null && registry.valid(current_cutscene_entity)) {
 		registry.remove_all(current_cutscene_entity);
 		current_cutscene_entity = entt::null;
-		this->text_frames.clear();
-		this->conversations.clear();
 	}
+
+	this->text_frames.clear();
+	this->conversations.clear();
 
 	auto guide_view = registry.view<Guide>();
 	registry.destroy(guide_view.begin(), guide_view.end());
