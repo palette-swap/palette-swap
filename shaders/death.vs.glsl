@@ -51,29 +51,6 @@ void main()
 	// Slight sinusoidal distortion
 	distort_position.x += 0.1 * sin(time/2);
 
-	// Creates initial folding effect along bottom and top sets of vertices
-	if (frame >= 1) {
-		if ((texcoord.y - top_side)/height <= 0.3) {
-			distort_position.y += max_fold_length * abs((texcoord.y - (top_side + max_fold_length)))/max_fold_length;
-		}
-
-		if ((texcoord.y - top_side)/height >= 0.7) {
-			distort_position.y -= max_fold_length * abs((texcoord.y - (bottom_side - max_fold_length)))/max_fold_length;
-		} else {
-
-		}
-	}
-
-	// Creates final folding effect from left and right side of vertices
-	if (frame >= 3) {
-		if ((texcoord.x - left_side)/width <= 0.3) {
-			distort_position.x += max_fold_length * abs((texcoord.x - (left_side + max_fold_length)))/max_fold_length;
-		}
-
-		if ((texcoord.x - left_side)/width >= 0.7) {
-			distort_position.x -= max_fold_length * abs((texcoord.x - (right_side - max_fold_length)))/max_fold_length;
-		} 
-	}
 
 	float x_prop = (texcoord.x - left_side)/width;
 	float y_prop = (texcoord.y - top_side)/height;
