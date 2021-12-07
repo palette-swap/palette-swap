@@ -88,8 +88,6 @@ public:
 	void update_animations(float elapsed_ms, ColorState inactive_color);	
 	// Sets direction for an animated sprite, such that it faces either left or right
 	void set_sprite_direction(const Entity& sprite, Sprite_Direction direction);
-	// Sets an enemy to be facing the direction of the player
-	void set_enemy_facing_player(const Entity& enemy);
 	// Triggers an animation to display that an entity has taken damage
 	// For now, this is just a colour change. Will change in next version however
 	void damage_animation(const Entity& entity);
