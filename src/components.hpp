@@ -1102,10 +1102,8 @@ struct CutScene {
 const std::array<std::vector<std::string>, 4>
 	boss_cutscene_texts = {
 		std::vector<std::string> {
-			std::string("Hmm? How did this ruffian find their way"),
-			std::string("into my kingly chambers?"),
-			std::string("Wait, there is only one possible"),
-			std::string(" explanation for this..."),
+			std::string("Hmm? How did this ruffian find their way into my kingly chambers?"),
+			std::string("Wait, there is only one possible explanation for this..."),
 			std::string("An ASSASSIN?!"),
 			std::string("Guards, to me!"),
 			std::string("Defend your new king!"),
@@ -1113,20 +1111,18 @@ const std::array<std::vector<std::string>, 4>
 		std::vector<std::string> {
 			std::string("Ah, it's you again! It has been too long"),
 			std::string("Do you think you will defeat my master this time?"),
-			std::string("Or perhaps I shall have the honor of "),
-			std::string("drawing your blood first."),
+			std::string("Or perhaps I shall have the honor of drawing your blood first."),
 			std::string("Now, ON YOUR GUARD."),
 		},
 		std::vector<std::string> {
 			std::string("And here you are at last."),
-			std::string("Finally at the end of"),
-			std::string("your vainglorious crusade."),
+			std::string("Finally at the end of your vainglorious crusade."),
 			std::string("Tell me, do you truly believe"),
 			std::string("that all your efforts have meant something?"),
 			std::string("That slaying my subordinates..."),
 			std::string("in any way inconveniences me?"),
 			std::string("Impudent whelp!"),
-			std::string("Your efforts will mean nothing"),
+			std::string("Your efforts will mean nothing."),
 			std::string("Now grovel, worm"),
 			std::string("Witness the power of a god!"),
 		},
