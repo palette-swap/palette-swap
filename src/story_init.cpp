@@ -4,7 +4,7 @@
 
 Entity create_ui_for_conversation()
 {
-	auto ui_group = create_ui_group(false);
+	auto ui_group = create_ui_group(false, Groups::HUD);
 	create_background(ui_group, vec2(.5, .9), vec2(.6, .2), .5, vec4(.1, .1, .6, 1));
 	create_ui_text(ui_group, text_init_pos, "", Alignment::Start, Alignment::Start, 48);
 	return ui_group;

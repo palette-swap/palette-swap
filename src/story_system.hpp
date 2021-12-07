@@ -16,12 +16,14 @@ public:
 	explicit StorySystem(std::shared_ptr<AnimationSystem> animation_sys_ptr,
 						 std::shared_ptr<MapGeneratorSystem> map_system_ptr);
 	bool in_cutscene();
-	void on_mouse_click(int button, int action);
 	void on_key(int key, int action, int /*mod*/);
 	void check_cutscene();
 	void step();
 	void trigger_animation(CutSceneType type);
 	void load_next_level();
+	void load_last_level();
+	void load_level(uint level);
+	void clear_level();
 	void restart_game();
 
 private:
@@ -39,6 +41,7 @@ private:
 
 	std::shared_ptr<AnimationSystem> animations;
 	std::shared_ptr<MapGeneratorSystem> map_system;
+	uint current_level = -1;
 
 	std::vector<std::string> help_texts
 		= { std::string("You know..."),

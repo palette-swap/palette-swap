@@ -674,7 +674,6 @@ void MapGeneratorSystem::load_level(int level)
 			create_picture();
 		}
 		registry.get<RenderRequest>(help_picture).visible = true;
-		create_guide(registry.get<MapPosition>(player).position + uvec2(2, 2));
 	}
 }
 
@@ -700,8 +699,6 @@ void MapGeneratorSystem::clear_level()
 		if (registry.valid(help_picture) && registry.any_of<RenderRequest>(help_picture)) {
 			registry.get<RenderRequest>(help_picture).visible = false;
 		}
-		auto guide_view = registry.view<Guide>();
-		registry.destroy(guide_view.begin(), guide_view.end());
 	}
 	animated_room_buffer.clear();
 }

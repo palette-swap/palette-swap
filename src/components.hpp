@@ -973,7 +973,8 @@ enum class Groups {
 	DeathScreen = Help + 1,
 	VictoryScreen = DeathScreen + 1,
 	Tooltips = VictoryScreen + 1,
-	Count = Tooltips + 1,
+	Story = Tooltips + 1,
+	Count = Story + 1,
 };
 
 struct UIGroup {

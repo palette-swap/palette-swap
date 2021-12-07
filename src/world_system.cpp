@@ -535,7 +535,7 @@ bool WorldSystem::check_debug_keys(int key, int action, int mod)
 		if (!map_generator->load_last_level()) {
 			return false;
 		}
-		story->load_next_level();
+		story->load_last_level();
 		return_arrow_to_player();
 	}
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) != 0 && key == GLFW_KEY_M) {
@@ -679,10 +679,6 @@ void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 		end_player_turn();
 	}
 
-	if (story->in_cutscene()) {
-		story->on_mouse_click(button, action);
-		return;
-	}
 
 	if (button == GLFW_MOUSE_BUTTON_LEFT) {
 		// Get screen position of mouse
