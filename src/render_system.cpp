@@ -447,13 +447,6 @@ void RenderSystem::draw_effect(Entity entity, const EffectRenderRequest& render_
 		glUniform1i(actual_aoe, static_cast<GLint>(aoe_status.actual_attack_displayed));
 	}
 	if (render_request.used_effect == EFFECT_ASSET_ID::DEATH) {
-		DeathDeformation& death_deformation = registry.get<DeathDeformation>(entity);
-		GLfloat side_offest = glGetUniformLocation(program, "side_offset");
-		glUniform1f(side_offest, static_cast<GLfloat>(death_deformation.side_direction));
-		GLfloat height_offset = glGetUniformLocation(program, "height_offset");
-		glUniform1f(height_offset, static_cast<GLfloat>(death_deformation.height_direction));
-		GLint direction = glGetUniformLocation(program, "direction");
-		glUniform1i(direction, static_cast<GLint>(animation.direction));
 		transform.scale({ animation.direction, 1 });
 	}
 
