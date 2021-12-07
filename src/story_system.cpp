@@ -78,9 +78,6 @@ void StorySystem::step()
 
 	if (registry.any_of<CutScene>(current_cutscene_entity)) {
 		CutScene c = registry.get<CutScene>(current_cutscene_entity);
-		/*if (!registry.get<UIGroup>(c.ui_entity).visible && (!this->text_frames.empty() || !this->conversations.empty())) {
-			registry.get<UIGroup>(c.ui_entity).visible = true;
-		}*/
 		if (animations->boss_intro_complete(current_cutscene_entity)) {
 			if (registry.any_of<RenderRequest>(c.actual_entity)) {
 				registry.get<RenderRequest>(c.actual_entity).visible = true;
@@ -104,23 +101,6 @@ void StorySystem::trigger_cutscene(CutScene& c)
 	trigger_animation(c.type);
 	conversations.insert(conversations.begin(), c.texts.begin(), c.texts.end());
 	trigger_conversation();
-	/*if (!c.texts.empty()) {
-		std::stringstream ss(c.texts);
-		int total_char_count = 0;
-		std::string buff;
-		std::string acc;
-		while (getline(ss, buff, ' ')) {
-			acc += buff + " ";
-			total_char_count += buff.length();
-			if (total_char_count >= max_word_in_conversation) {
-				conversations.push_back(acc);
-				acc = "";
-				total_char_count = 0;
-			}
-		}
-		conversations.push_back(acc);
-		trigger_conversation();
-	}*/
 }
 
 void StorySystem::proceed_conversation()
