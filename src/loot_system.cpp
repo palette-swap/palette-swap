@@ -118,7 +118,7 @@ void LootSystem::drop_loot(uvec2 center_position, float mode_tier, uint count)
 		bool all_dropped = looted >= loot_count;
 		std::uniform_int_distribution<size_t> drop_chance(1 + loot_misses, 9);
 		size_t result = drop_chance(*rng);
-		if (result <= 1 || (all_dropped && result <= 4)) {
+		if (result <= 3 || (all_dropped && result <= 4)) {
 			loot_misses++;
 			continue;
 		}

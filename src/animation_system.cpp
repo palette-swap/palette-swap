@@ -66,20 +66,6 @@ void AnimationSystem::set_sprite_direction(const Entity& sprite, Sprite_Directio
 	}
 }
 
-void AnimationSystem::set_enemy_facing_player(const Entity& enemy)
-{
-	const Entity& player = registry.view<Player>().front();
-	MapPosition& player_position = registry.get<MapPosition>(player);
-	MapPosition& enemy_position = registry.get<MapPosition>(enemy);
-
-	uint distance = player_position.position.x - enemy_position.position.x;
-
-	Sprite_Direction direction = (distance > 0)? Sprite_Direction::SPRITE_LEFT : Sprite_Direction::SPRITE_RIGHT;
-
-	set_sprite_direction(enemy, direction);
-
-}
-
 void AnimationSystem::damage_animation(const Entity& entity)
 {
 	if (!registry.any_of<EventAnimation>(entity)) {
