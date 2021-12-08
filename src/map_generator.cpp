@@ -831,6 +831,7 @@ void MapGenerator::generate_big_room(PathNode* starting_node,
 									 RoomGenerationEngines& random_engs,
 									 int& max_keys_obtained)
 {
+	level_conf.big_rooms.emplace_back(std::set<RoomID>());
 	// room layout ordered as following:
 	//    -----------------
 	//    |   0    |   1   |
@@ -946,6 +947,8 @@ void MapGenerator::generate_big_room(PathNode* starting_node,
 		level_conf.map_layout.at(starting_node->position / map_size + i / 2)
 			.at(starting_node->position % map_size + i % 2)
 			= static_cast<RoomID>(level_conf.room_layouts.size() - 1);
+
+		level_conf.big_rooms.back().emplace(static_cast<RoomID>(level_conf.room_layouts.size() - 1));
 
 		level_conf.animated_tiles_red.emplace_back(std::map<int, AnimatedTile>());
 		level_conf.animated_tiles_blue.emplace_back(std::map<int, AnimatedTile>());

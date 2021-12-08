@@ -134,6 +134,9 @@ public:
 	// Get the current level mapping
 	const MapUtility::MapLayout& current_map() const;
 
+	// Get current room the player is in, return a list of rooms as big room is considered as a room
+	const std::set<MapUtility::RoomID>& get_room_at_position(uvec2 pos) const;
+
 	// Check if a position is within the bounds of the current level
 	bool is_on_map(uvec2 pos) const;
 

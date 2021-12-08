@@ -64,11 +64,10 @@ void StorySystem::check_cutscene()
 		MapUtility::RoomID player_room_idx = map_system->current_map()
 												 .at(player_map_pos.y / MapUtility::room_size)
 												 .at(player_map_pos.x / MapUtility::room_size);
-		MapUtility::RoomID trigger_room_idx = map_system->current_map()
-												  .at(trigger_map_pos.y / MapUtility::room_size)
-												  .at(trigger_map_pos.x / MapUtility::room_size);
 
-		if (player_room_idx == trigger_room_idx) {
+		const std::set<MapUtility::RoomID> & trigger_room_idxes = map_system->get_room_at_position(trigger_map_pos);
+
+		if (trigger_room_idxes.find(player_room_idx) != trigger_room_idxes.end()) {
 			current_cutscene_entity = entity;
 			CutScene c = registry.get<CutScene>(entity);
 			trigger_cutscene(c);

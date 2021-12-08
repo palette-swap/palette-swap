@@ -261,6 +261,18 @@ const std::vector<MapUtility::RoomLayout>& MapGeneratorSystem::get_level_room_la
 
 const MapLayout& MapGeneratorSystem::current_map() const { return get_level_layout(current_level); }
 
+const std::set<MapUtility::RoomID>& MapGeneratorSystem::get_room_at_position(uvec2 pos) const
+{
+	RoomID room_index = current_map().at(pos.y / room_size).at(pos.x / room_size);
+	for (int i = 0; i < level_configurations.at(current_level).big_rooms.size(); i ++) {
+		const std::set<RoomID> & connected_rooms = level_configurations.at(current_level).big_rooms.at(i);
+		if (connected_rooms.find(room_index) != connected_rooms.end()) {
+			return connected_rooms;
+		}
+	}
+	return std::set<RoomID>({room_index});
+}
+
 bool MapGeneratorSystem::is_on_map(uvec2 pos) const
 {
 	return pos.y / room_size < current_map().size() && pos.x / room_size < current_map().at(0).size();
