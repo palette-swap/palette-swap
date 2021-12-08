@@ -168,7 +168,7 @@ static constexpr std::array<vec2, texture_count> scaling_factors = {
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size* MapUtility::room_size, MapUtility::tile_size* MapUtility::room_size),
 	vec2(MapUtility::tile_size* MapUtility::room_size, MapUtility::tile_size* MapUtility::room_size),
-	vec2(MapUtility::tile_size* MapUtility::room_size * 3, MapUtility::tile_size* MapUtility::room_size * 2),
+	vec2(MapUtility::tile_size* MapUtility::room_size * 5, MapUtility::tile_size* MapUtility::room_size * 2),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 };
@@ -630,7 +630,7 @@ struct Inventory {
 	static constexpr size_t inventory_size = 12;
 	std::array<Entity, inventory_size> inventory;
 	SlotList<Entity> equipped;
-	std::array<size_t, (size_t)Resource::Count> resources = { 3, 1, 3, 2 };
+	std::array<size_t, (size_t)Resource::Count> resources = { 3, 1, 3, 0 };
 	Inventory()
 		: inventory()
 		, equipped()

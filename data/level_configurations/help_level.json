@@ -8,6 +8,29 @@
       "y": 48
     }
   },
+  "resources": [
+    {
+      "resource": 3,
+      "position": {
+        "x": 62,
+        "y": 51
+      }
+    },
+    {
+      "resource": 3,
+      "position": {
+        "x": 64,
+        "y": 54
+      }
+    },
+    {
+      "resource": 3,
+      "position": {
+        "x": 64,
+        "y": 55
+      }
+    }
+  ],
   "enemies": [
     {
       "team": 1,
@@ -18,12 +41,12 @@
       "speed": 0,
       "attack_range": 0,
       "nest_position": {
-        "x": 54,
-        "y": 43
+        "x": 46,
+        "y": 53
       },
       "position": {
-        "x": 54,
-        "y": 43
+        "x": 46,
+        "y": 53
       },
       "stats": {
         "health": 50,
@@ -53,12 +76,12 @@
       "speed": 0,
       "attack_range": 0,
       "nest_position": {
-        "x": 54,
-        "y": 45
+        "x": 46,
+        "y": 55
       },
       "position": {
-        "x": 54,
-        "y": 45
+        "x": 46,
+        "y": 55
       },
       "stats": {
         "health": 50,
@@ -88,12 +111,12 @@
       "speed": 0,
       "attack_range": 0,
       "nest_position": {
-        "x": 62,
-        "y": 44
+        "x": 49,
+        "y": 54
       },
       "position": {
-        "x": 62,
-        "y": 44
+        "x": 49,
+        "y": 54
       },
       "stats": {
         "health": 50,
@@ -123,82 +146,12 @@
       "speed": 0,
       "attack_range": 0,
       "nest_position": {
-        "x": 54,
-        "y": 47
+        "x": 53,
+        "y": 52
       },
       "position": {
-        "x": 54,
-        "y": 47
-      },
-      "stats": {
-        "health": 50,
-        "health_max": 50,
-        "mana": 0,
-        "mana_max": 0,
-        "to_hit_bonus": 0,
-        "damage_bonus": 0,
-        "evasion": 0,
-        "attack": {
-          "name": "",
-          "to_hit_min": 0,
-          "to_hit_max": 0,
-          "damage_min": 0,
-          "damage_max": 0,
-          "damage_type": 0,
-          "targeting_type": 0
-        }
-      }
-    },
-    {
-      "team": 2,
-      "type": 0,
-      "danger_rating": 0,
-      "state": 0,
-      "radius": 0,
-      "speed": 0,
-      "attack_range": 0,
-      "nest_position": {
-        "x": 54,
-        "y": 49
-      },
-      "position": {
-        "x": 54,
-        "y": 49
-      },
-      "stats": {
-        "health": 50,
-        "health_max": 50,
-        "mana": 0,
-        "mana_max": 0,
-        "to_hit_bonus": 0,
-        "damage_bonus": 0,
-        "evasion": 0,
-        "attack": {
-          "name": "",
-          "to_hit_min": 0,
-          "to_hit_max": 0,
-          "damage_min": 0,
-          "damage_max": 0,
-          "damage_type": 0,
-          "targeting_type": 0
-        }
-      }
-    },
-    {
-      "team": 2,
-      "type": 0,
-      "danger_rating": 0,
-      "state": 1,
-      "radius": 0,
-      "speed": 0,
-      "attack_range": 0,
-      "nest_position": {
-        "x": 62,
-        "y": 48
-      },
-      "position": {
-        "x": 62,
-        "y": 48
+        "x": 53,
+        "y": 52
       },
       "stats": {
         "health": 50,

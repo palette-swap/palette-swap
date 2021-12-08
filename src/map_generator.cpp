@@ -183,13 +183,7 @@ const static uint8_t locked_chest_tile = 48;
 // TODO:remove chest tile from trap tiles
 const static std::array<uint8_t, 3> trap_tiles = { 28, 36, 44 };
 const static std::map<TileID, AnimatedTile> animated_tiles = {
-	{ 28,
-	  AnimatedTile({
-		  true,
-		  false,
-		  28,
-		  ColorState::All,
-	  }) },																  // spike
+	{ 28, AnimatedTile({ true, false, 28, ColorState::All }) },           // spike
 	{ 36, AnimatedTile({ false, true, 36, ColorState::All }) },			  // fire
 	{ 52, AnimatedTile({ true, false, 52, ColorState::All, -1, 1.0f }) }, // grass
 	{ 44, AnimatedTile({ true, false, 44, ColorState::Red, 1 }) },		  // chest
