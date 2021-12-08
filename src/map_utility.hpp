@@ -15,6 +15,28 @@ static const uint8_t next_level_tile = 14;
 static const uint8_t last_level_tile = 15;
 const std::set<uint8_t>& floor_tiles();
 
+// 8 * 8 sprite sheet
+constexpr uint8_t tile_sprite_sheet_size = 8;
+
+const inline std::set<uint8_t>& wall_tiles()
+{
+	const static std::set<uint8_t> wall_tiles(
+		{ 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 15, 17, 18, 19, 23, 25, 26, 27, 33, 35, 41, 42, 43 });
+	return wall_tiles;
+}
+bool is_trap_tile(TileID tile_id);
+inline bool is_grass_tile(TileID tile_id) { return (52 <= tile_id && tile_id < 56); }
+inline bool is_floor_tile(TileID tile_id) { return floor_tiles().find(tile_id) != floor_tiles().end(); }
+inline bool is_door_tile(TileID tile_id) { return (60 <= tile_id && tile_id < 64); }
+inline bool is_next_level_tile(TileID tile_id) { return tile_id == next_level_tile; }
+inline bool is_last_level_tile(TileID tile_id) { return tile_id == last_level_tile; }
+inline bool is_locked_chest_tile(TileID tile_id) { return tile_id == 48; }
+inline bool is_chest_tile(TileID tile_id) { return tile_id == 44; }
+inline bool is_spike_tile(TileID tile_id) { return 28 <= tile_id && tile_id < 32; }
+inline bool is_fire_tile(TileID tile_id) { return 36 <= tile_id && tile_id < 40; }
+
+bool is_wall_tile(TileID tile_id);
+
 // 10*10 grid used to represent map layout
 using MapLayout = std::array<std::array<MapUtility::RoomID, MapUtility::room_size>, MapUtility::room_size>;
 // room_layouts that contains generated rooms, each element is a 10*10 array that defines each tile textures in the

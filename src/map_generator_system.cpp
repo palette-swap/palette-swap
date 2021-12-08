@@ -278,67 +278,6 @@ bool MapGeneratorSystem::is_on_map(uvec2 pos) const
 	return pos.y / room_size < current_map().size() && pos.x / room_size < current_map().at(0).size();
 }
 
-// 8 * 8 sprite sheet
-static const uint8_t tile_sprite_sheet_size = 8;
-
-static const std::set<uint8_t>& wall_tiles()
-{
-	const static std::set<uint8_t> wall_tiles(
-		{ 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 15, 17, 18, 19, 23, 25, 26, 27, 33, 35, 41, 42, 43 });
-	return wall_tiles;
-}
-static bool is_trap_tile(TileID tile_id)
-{
-	// trap tiles are animated, 4 frames each, and occupies a rectangle on the sprite sheet
-	const int trap_tile_start_id = 28;
-	const int num_trap_tiles = 2;
-
-	const int trap_tile_start_row = trap_tile_start_id / tile_sprite_sheet_size;
-	const int trap_tile_start_col = trap_tile_start_id % tile_sprite_sheet_size;
-
-	return ((trap_tile_start_row <= (tile_id / tile_sprite_sheet_size)
-			 && (tile_id / tile_sprite_sheet_size) <= trap_tile_start_row + num_trap_tiles - 1)
-			&& (trap_tile_start_col <= (tile_id % tile_sprite_sheet_size)
-				&& (tile_id % tile_sprite_sheet_size) <= trap_tile_start_col + 4 - 1));
-}
-static bool is_grass_tile(TileID tile_id) { return (52 <= tile_id && tile_id < 56); }
-static bool is_floor_tile(TileID tile_id) { return floor_tiles().find(tile_id) != floor_tiles().end(); }
-static bool is_door_tile(TileID tile_id) { return (60 <= tile_id && tile_id < 64); }
-static bool is_next_level_tile(TileID tile_id) { return tile_id == next_level_tile; }
-static bool is_last_level_tile(TileID tile_id) { return tile_id == last_level_tile; }
-static bool is_locked_chest_tile(TileID tile_id) { return tile_id == 48; }
-static bool is_chest_tile(TileID tile_id) { return tile_id == 44; }
-static bool is_spike_tile(TileID tile_id) {return 28 <= tile_id && tile_id < 32; }
-static bool is_fire_tile(TileID tile_id) {return 36 <= tile_id && tile_id < 40; }
-
-static bool is_wall_tile(TileID tile_id)
-{
-	int tile_row = tile_id / tile_sprite_sheet_size;
-	int tile_col = tile_id % tile_sprite_sheet_size;
-	if (0 <= tile_row && tile_row < 4 && 1 <= tile_col && tile_col <= 3) {
-		return true;
-	}
-
-	const static std::set<uint8_t> blocking_tiles({
-		20,
-		21,
-		22,
-		23, // torch
-		44,
-		45,
-		46,
-		47, // chest
-		60,
-		61,
-		62, // door
-		56,
-		57,
-		58, // cracked wall
-	});
-
-	return blocking_tiles.find(tile_id) != blocking_tiles.end();
-}
-
 bool MapGeneratorSystem::walkable(uvec2 pos) const
 {
 	if (!is_on_map(pos)) {

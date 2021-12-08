@@ -72,3 +72,46 @@ const std::set<uint8_t>& MapUtility::floor_tiles()
 	const static std::set<uint8_t> floor_tiles({ 0, 4, 5, 6, 7, 8, 16, 24, 32, 40, 52 });
 	return floor_tiles;
 }
+
+bool MapUtility::is_trap_tile(TileID tile_id)
+{
+	// trap tiles are animated, 4 frames each, and occupies a rectangle on the sprite sheet
+	const int trap_tile_start_id = 28;
+	const int num_trap_tiles = 2;
+
+	const int trap_tile_start_row = trap_tile_start_id / tile_sprite_sheet_size;
+	const int trap_tile_start_col = trap_tile_start_id % tile_sprite_sheet_size;
+
+	return ((trap_tile_start_row <= (tile_id / tile_sprite_sheet_size)
+			 && (tile_id / tile_sprite_sheet_size) <= trap_tile_start_row + num_trap_tiles - 1)
+			&& (trap_tile_start_col <= (tile_id % tile_sprite_sheet_size)
+				&& (tile_id % tile_sprite_sheet_size) <= trap_tile_start_col + 4 - 1));
+}
+
+bool MapUtility::is_wall_tile(TileID tile_id)
+{
+	int tile_row = tile_id / tile_sprite_sheet_size;
+	int tile_col = tile_id % tile_sprite_sheet_size;
+	if (0 <= tile_row && tile_row < 4 && 1 <= tile_col && tile_col <= 3) {
+		return true;
+	}
+
+	const static std::set<uint8_t> blocking_tiles({
+		20,
+		21,
+		22,
+		23, // torch
+		44,
+		45,
+		46,
+		47, // chest
+		60,
+		61,
+		62, // door
+		56,
+		57,
+		58, // cracked wall
+	});
+
+	return blocking_tiles.find(tile_id) != blocking_tiles.end();
+}
