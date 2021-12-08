@@ -21,8 +21,8 @@ static constexpr float damage_animation_speed = 1;
 static constexpr int enemy_num_frames = 4;
 static constexpr float enemy_attack_speed = 1.2f;
 static constexpr float enemy_tile_travel_time_ms = 100.f;
-static constexpr int enemy_death_total_frames = 4;
-static constexpr float enemy_death_animation_speed = 0.4f;
+static constexpr int enemy_death_total_frames = 4; 
+static constexpr float enemy_death_animation_speed = 0.5f;
 
 // These values are used for the default setting for the player
 static constexpr int player_num_frames = 6;
@@ -76,8 +76,6 @@ static constexpr vec4 default_enemy_blue = { 1, 1, 2, 1 };
 static constexpr vec4 damage_color = { 5, 5, 5, 1 };
 
 
-
-
 class AnimationSystem {
 
 public:
@@ -88,6 +86,8 @@ public:
 	void update_animations(float elapsed_ms, ColorState inactive_color);	
 	// Sets direction for an animated sprite, such that it faces either left or right
 	void set_sprite_direction(const Entity& sprite, Sprite_Direction direction);
+	// Sets an enemy to be facing the direction of the player
+	void set_enemy_facing_player(const Entity& enemy);
 	// Triggers an animation to display that an entity has taken damage
 	// For now, this is just a colour change. Will change in next version however
 	void damage_animation(const Entity& entity);

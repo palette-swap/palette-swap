@@ -66,6 +66,20 @@ void AnimationSystem::set_sprite_direction(const Entity& sprite, Sprite_Directio
 	}
 }
 
+void AnimationSystem::set_enemy_facing_player(const Entity& enemy)
+{
+	const Entity& player = registry.view<Player>().front();
+	MapPosition& player_position = registry.get<MapPosition>(player);
+	MapPosition& enemy_position = registry.get<MapPosition>(enemy);
+
+	uint distance = player_position.position.x - enemy_position.position.x;
+
+	Sprite_Direction direction = (distance > 0)? Sprite_Direction::SPRITE_LEFT : Sprite_Direction::SPRITE_RIGHT;
+
+	set_sprite_direction(enemy, direction);
+
+}
+
 void AnimationSystem::damage_animation(const Entity& entity)
 {
 	if (!registry.any_of<EventAnimation>(entity)) {
@@ -179,6 +193,28 @@ void AnimationSystem::set_enemy_death_animation(const Entity& enemy)
 		enemy_death_entity, enemy_render.used_texture, EFFECT_ASSET_ID::DEATH, GEOMETRY_BUFFER_ID::DEATH, true);
 
 	Animation& enemy_death_animation = registry.emplace<Animation>(enemy_death_entity);
+
+	// Gets player's location for comparing location to dead enemy
+	uvec2 player_map_pos = registry.get<MapPosition>(registry.view<Player>().front()).position;
+
+	float player_x_rel = 0.f;
+	float player_y_rel = 0.f;
+
+	if (player_map_pos.x > position.position.x) {
+		player_x_rel = -1.f;
+	} else if (player_map_pos.x < position.position.x) {
+		player_x_rel = 1.f;
+	}
+
+	if (player_map_pos.y > position.position.y) {
+		player_y_rel = -1.f;
+	} else if (player_map_pos.y < position.position.y) {
+		player_y_rel = 1.f;
+	}
+
+	DeathDeformation& enemy_deformation = registry.emplace<DeathDeformation>(enemy_death_entity);
+	enemy_deformation.side_direction = player_x_rel;
+	enemy_deformation.height_direction = player_y_rel;
 
 	// Copies over enemy animation states from previous animation
 	AnimationSystem::copy_animation_settings(enemy_animation, enemy_death_animation);
