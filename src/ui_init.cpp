@@ -211,7 +211,7 @@ WASD                 -                  Move
 Left Click           -                Attack
 H                    - Consume Health Potion
 SPACE                -          Palette Swap
-SHIFT                -           Pickup Item
+SHIFT                -              Interact
                ==Inventory==
 Mouse Over + D       -                  Drop
                  ==Menus==

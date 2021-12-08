@@ -1031,7 +1031,9 @@ enum class TutorialTooltip {
 	UseResource = ItemPickedUp + 1,
 	ReadyToEquip = UseResource + 1,
 	OpenedInventory = ReadyToEquip + 1,
-	Count = OpenedInventory + 1,
+	ChestSeen = OpenedInventory + 1,
+	LockedSeen = ChestSeen + 1,
+	Count = LockedSeen + 1,
 };
 
 struct TutorialTarget {

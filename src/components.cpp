@@ -377,8 +377,8 @@ void Stats::deserialize(const std::string& prefix, const rapidjson::Document& js
 		to_hit_weapons = to_hit_bonus_value->HasMember("Weapons") ? (*to_hit_bonus_value)["Weapons"].GetInt() : 0;
 		to_hit_spells = to_hit_bonus_value->HasMember("Spells") ? (*to_hit_bonus_value)["Spells"].GetInt() : 0;
 	}
-	const auto* damage_bonus_value = get_and_assert_value_from_json(prefix + "/damage_bonus", json);
-	if (damage_bonus_value->IsInt()) {
+	const auto* damage_bonus_value = rapidjson::GetValueByPointer(json, rapidjson::Pointer((prefix + "/damage_bonus").c_str()));
+	if (damage_bonus_value && damage_bonus_value->IsInt()) {
 		damage_bonus.fill(damage_bonus_value->GetInt());
 	}
 	const auto* evasion_value = get_and_assert_value_from_json(prefix + "/evasion", json);

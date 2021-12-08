@@ -719,7 +719,7 @@ void WorldSystem::try_fire_projectile(Attack& attack)
 		|| !turns->execute_team_action(player)) {
 		return;
 	}
-	tutorials->trigger_tooltip(TutorialTooltip::UseResource, entt::null);
+	tutorials->trigger_tooltip(TutorialTooltip::UseResource);
 	player_arrow_fired = true;
 	// Arrow becomes a projectile the moment it leaves the player, not while it's direction is being selected
 	ActiveProjectile& arrow_projectile = registry.emplace<ActiveProjectile>(player_arrow, player);
