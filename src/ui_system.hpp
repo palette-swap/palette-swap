@@ -5,6 +5,7 @@
 #include "loot_system.hpp"
 #include "render_system.hpp"
 #include "tutorial_system.hpp"
+#include "story_system.hpp"
 
 class UISystem {
 public:
@@ -14,6 +15,7 @@ public:
 	void init(RenderSystem* render_system,
 			  std::shared_ptr<LootSystem> loot_system,
 			  std::shared_ptr<TutorialSystem> tutorial_system,
+			  std::shared_ptr<StorySystem> story,
 			  std::function<void()> change_color,
 			  std::function<void()> restart_world);
 
@@ -86,6 +88,7 @@ private:
 	RenderSystem* renderer;
 	std::shared_ptr<LootSystem> loot;
 	std::shared_ptr<TutorialSystem> tutorials;
+	std::shared_ptr<StorySystem> story;
 	std::function<void()> try_change_color;
 	std::function<void()> restart_world;
 

@@ -23,6 +23,9 @@ void UISystem::on_key(int key, int action, int /*mod*/, dvec2 mouse_screen_pos)
 			switch_to_group(groups[(size_t)Groups::PauseMenu]);
 		} else {
 			switch_to_group(groups[(size_t)Groups::HUD]);
+			if (story->in_cutscene()) {
+				registry.get<UIGroup>(groups[(size_t)Groups::Story]).visible = true;
+			}
 		}
 	}
 
@@ -104,6 +107,9 @@ void UISystem::switch_to_group(Entity group)
 	if (group == groups[(size_t)Groups::HUD]) {
 		for (auto& callback : show_world_callbacks) {
 			callback();
+		}
+		if (story->in_cutscene()) {
+			registry.get<UIGroup>(groups[(size_t)Groups::Story]).visible = true;
 		}
 		if (was_inventory) {
 			tutorials->destroy_tooltip(TutorialTooltip::OpenedInventory);
@@ -366,7 +372,8 @@ void UISystem::on_mouse_move(vec2 mouse_screen_pos)
 		}
 	}
 	if (player_can_act()) {
-		if (debugging.in_debug_mode && has_current_attack() && get_current_attack().targeting_type == TargetingType::Adjacent) {
+		if (debugging.in_debug_mode && has_current_attack()
+			&& get_current_attack().targeting_type == TargetingType::Adjacent) {
 			update_attack_preview(mouse_map_pos);
 		} else {
 			destroy_attack_preview();

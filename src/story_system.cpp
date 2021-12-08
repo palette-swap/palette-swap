@@ -20,24 +20,22 @@ StorySystem::StorySystem(std::shared_ptr<AnimationSystem> animation_sys_ptr,
 {
 }
 
-bool StorySystem::in_cutscene() { return current_cutscene_entity != entt::null; }
-
-void StorySystem::on_mouse_click(int /*button*/, int action)
+bool StorySystem::in_cutscene()
 {
-	if (action == GLFW_PRESS) {
+	return current_cutscene_entity != entt::null && registry.valid(current_cutscene_entity);
+}
+
+void StorySystem::on_key(int key, int action, int mod)
+{
+	// TODO: handle story on key: basically press any key will make the conversation proceed
+	if (action == GLFW_PRESS && key == GLFW_KEY_ENTER) {
 		if (this->text_frames.empty()) {
 			proceed_conversation();
 		}
 	}
-}
 
-void StorySystem::on_key(int /*key*/, int action, int /*mod*/)
-{
-	// TODO: handle story on key: basically press any key will make the conversation proceed
-	if (action == GLFW_PRESS) {
-		if (this->text_frames.empty()) {
-			proceed_conversation();		
-		}
+	if (mod == GLFW_MOD_CONTROL && key == GLFW_KEY_ENTER) {
+		skip_current_cutscene();
 	}
 }
 
@@ -82,22 +80,24 @@ void StorySystem::step()
 		return;
 	}
 
-	CutScene c = registry.get<CutScene>(current_cutscene_entity);
-	if (animations->boss_intro_complete(current_cutscene_entity)) {
-		if (registry.any_of<RenderRequest>(c.actual_entity)) {
-			registry.get<RenderRequest>(c.actual_entity).visible = true;
+	if (registry.any_of<CutScene>(current_cutscene_entity)) {
+		CutScene c = registry.get<CutScene>(current_cutscene_entity);
+		if (animations->boss_intro_complete(current_cutscene_entity)) {
+			if (registry.any_of<RenderRequest>(c.actual_entity)) {
+				registry.get<RenderRequest>(c.actual_entity).visible = true;
+			}
 		}
-	}
-	if (!registry.get<UIGroup>(c.ui_entity).visible && animations->boss_intro_complete(current_cutscene_entity)) {
+		if (animations->boss_intro_complete(current_cutscene_entity) && this->conversations.empty()
+			&& this->text_frames.empty()) {
 
-		if (registry.any_of<Enemy>(c.actual_entity)) {
-			registry.get<Enemy>(c.actual_entity).active = true;
+			if (registry.any_of<Enemy>(c.actual_entity)) {
+				registry.get<Enemy>(c.actual_entity).active = true;
+			}
+			registry.remove<CutScene>(current_cutscene_entity);
+			current_cutscene_entity = entt::null;
 		}
-		// registry.destroy(current_cutscene_entity);
-		registry.remove<CutScene>(current_cutscene_entity);
-		current_cutscene_entity = entt::null;
+		render_text_each_frame();
 	}
-	render_text_each_frame();
 }
 
 void StorySystem::trigger_cutscene(CutScene& c)
@@ -105,23 +105,6 @@ void StorySystem::trigger_cutscene(CutScene& c)
 	trigger_animation(c.type);
 	conversations.insert(conversations.begin(), c.texts.begin(), c.texts.end());
 	trigger_conversation();
-	/*if (!c.texts.empty()) {
-		std::stringstream ss(c.texts);
-		int total_char_count = 0;
-		std::string buff;
-		std::string acc;
-		while (getline(ss, buff, ' ')) {
-			acc += buff + " ";
-			total_char_count += buff.length();
-			if (total_char_count >= max_word_in_conversation) {
-				conversations.push_back(acc);
-				acc = "";
-				total_char_count = 0;
-			}
-		}
-		conversations.push_back(acc);
-		trigger_conversation();
-	}*/
 }
 
 void StorySystem::proceed_conversation()
@@ -187,6 +170,29 @@ void StorySystem::trigger_conversation()
 	proceed_conversation();
 }
 
+void StorySystem::skip_current_cutscene()
+{
+	if (!in_cutscene()) {
+		return;
+	}
+	auto entity = current_cutscene_entity;
+	if (registry.any_of<CutScene>(entity)) {
+		CutScene& c = registry.get<CutScene>(entity);
+		UIGroup& group = registry.get<UIGroup>(c.ui_entity);
+		registry.remove_if_exists<RoomTrigger>(entity);
+		registry.remove_if_exists<RadiusTrigger>(entity);
+		group.visible = false;
+		Entity text_entity = group.first_elements.at(static_cast<size_t>(UILayer::Content));
+		Text& text_comp = registry.get<Text>(text_entity);
+		text_comp.text = "";
+		registry.remove<CutScene>(entity);
+	}
+
+	this->text_frames.clear();
+	this->conversations.clear();
+	current_cutscene_entity = entt::null;
+}
+
 void StorySystem::trigger_animation(CutSceneType type)
 {
 	assert(current_cutscene_entity != entt::null);
@@ -202,16 +208,30 @@ void StorySystem::trigger_animation(CutSceneType type)
 // TODO: Delete after integration with map system, only for testing
 void StorySystem::load_next_level()
 {
-	for (auto [entity, cutscene] : registry.view<CutScene>().each()) {
-		registry.remove_if_exists<RoomTrigger>(entity);
-		registry.remove_if_exists<RadiusTrigger>(entity);
-		registry.remove<CutScene>(entity);
-		registry.destroy(entity);
-		current_cutscene_entity = entt::null;
-		this->text_frames.clear();
-		this->conversations.clear();
+
+	if (current_level != -1) {
+		clear_level();
 	}
 
+	load_level(++current_level);
+}
+
+void StorySystem::load_last_level()
+{
+	if (current_level == 0) {
+		fprintf(stderr, "is already on first level");
+		return;
+	}
+	clear_level();
+	load_level(--current_level);
+}
+
+void StorySystem::load_level(uint level)
+{
+	if (level == 0) {
+		Entity player = registry.view<Player>().front();
+		create_guide(registry.get<MapPosition>(player).position + uvec2(2, 2));
+	}
 	for (auto [entity] : registry.view<Boss>().each()) {
 		Enemy enemy = registry.get<Enemy>(entity);
 		if (enemy.type == EnemyType::Titho) {
@@ -241,11 +261,37 @@ void StorySystem::load_next_level()
 								   boss_cutscene_texts[(size_t)enemy.type - (size_t)EnemyType::KingMush],
 								   entity);
 		}
-
 	}
 
 	for (auto [entity] : registry.view<Guide>().each()) {
 		vec2 position = registry.get<MapPosition>(entity).position;
 		create_radius_cutscene(entity, 10.f, CutSceneType::NPCEntry, help_texts, entity);
 	}
+}
+
+void StorySystem::clear_level()
+{
+
+	for (auto [entity, cutscene] : registry.view<CutScene>().each()) {
+		UIGroup& group = registry.get<UIGroup>(cutscene.ui_entity);
+		registry.remove_if_exists<RoomTrigger>(entity);
+		registry.remove_if_exists<RadiusTrigger>(entity);
+		group.visible = false;
+		Entity text_entity = group.first_elements.at(static_cast<size_t>(UILayer::Content));
+		Text& text_comp = registry.get<Text>(text_entity);
+		text_comp.text = "";
+		registry.remove<CutScene>(entity);
+		registry.destroy(entity);
+	}
+
+	if (current_cutscene_entity != entt::null && registry.valid(current_cutscene_entity)) {
+		registry.remove_all(current_cutscene_entity);
+		current_cutscene_entity = entt::null;
+	}
+
+	this->text_frames.clear();
+	this->conversations.clear();
+
+	auto guide_view = registry.view<Guide>();
+	registry.destroy(guide_view.begin(), guide_view.end());
 }
