@@ -212,9 +212,9 @@ void UISystem::insert_into_slot(Entity item, Entity container)
 	} else if (EquipSlot* equip_slot = registry.try_get<EquipSlot>(container)) {
 		// Apply any item bonuses
 		// Not sure if there's a better place to put this?
-		registry.get<Stats>(player).apply(inventory.equipped.at((size_t)equip_slot->slot), false);
+		StatBoosts::apply(inventory.equipped.at((size_t)equip_slot->slot), player, false);
 		inventory.equipped.at((size_t)equip_slot->slot) = actual_item;
-		registry.get<Stats>(player).apply(inventory.equipped.at((size_t)equip_slot->slot), true);
+		StatBoosts::apply(inventory.equipped.at((size_t)equip_slot->slot), player, true);
 	}
 }
 

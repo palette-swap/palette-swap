@@ -1,0 +1,143 @@
+[
+    {
+        "name": "Spellbreaker's Amulet",
+        "tier": 4,
+        "slots": ["Amulet"],
+        "stat_boosts": {
+            "to_hit": {
+                "Weapons": 5,
+                "Spells": -5
+            },
+            "damage": {
+                "Physical": 5,
+                "Fire": -5,
+                "Cold": -5,
+                "Earth": -5,
+                "Wind": -5
+            },
+            "mana": -75
+        },
+        "texture_offset": [0, 5]
+    },
+    {
+        "name": "Wizard's Amulet",
+        "tier": 4,
+        "slots": ["Amulet"],
+        "stat_boosts": {
+            "to_hit": {
+                "Weapons": -10,
+                "Spells": 5
+            },
+            "damage": {
+                "Physical": -10,
+                "Fire": 5,
+                "Cold": 5,
+                "Earth": 5,
+                "Wind": 5
+            },
+            "mana": 150
+        },
+        "texture_offset": [1, 5]
+    },
+    {
+        "name": "Feather Amulet",
+        "tier": 5,
+        "slots": ["Amulet"],
+        "stat_boosts": {
+            "evasion": 10,
+            "health": -50
+        },
+        "texture_offset": [2, 5]
+    },
+    {
+        "name": "Boulder Amulet",
+        "tier": 5,
+        "slots": ["Amulet"],
+        "stat_boosts": {
+            "evasion": -10,
+            "damage_mods": {
+                "Physical": -8,
+                "Earth": -999
+            }
+        },
+        "texture_offset": [3, 5]
+    },
+    {
+        "name": "Chess Amulet",
+        "tier": 2,
+        "slots": ["Amulet"],
+        "stat_boosts": {
+            "evasion": -999,
+            "luck": -999,
+            "to_hit": {
+                "Weapons": 999,
+                "Spells": 999
+            }
+        },
+        "texture_offset": [4, 5]
+    },
+    {
+        "name": "Amulet of Fire",
+        "tier": 3,
+        "slots": ["Amulet"],
+        "stat_boosts": {
+            "damage": {
+                "Fire": 5,
+                "Cold": -5
+            },
+            "damage_mods": {
+                "Fire": -5,
+                "Cold": 5
+            }
+        },
+        "texture_offset": [5, 5]
+    },
+    {
+        "name": "Amulet of Cold",
+        "tier": 3,
+        "slots": ["Amulet"],
+        "stat_boosts": {
+            "damage": {
+                "Cold": 5,
+                "Fire": -5
+            },
+            "damage_mods": {
+                "Cold": -5,
+                "Fire": 5
+            }
+        },
+        "texture_offset": [6, 5]
+    },
+    {
+        "name": "Amulet of Earth",
+        "tier": 3,
+        "slots": ["Amulet"],
+        "stat_boosts": {
+            "damage": {
+                "Earth": 5,
+                "Wind": -5
+            },
+            "damage_mods": {
+                "Earth": -5,
+                "Wind": 5
+            }
+        },
+        "texture_offset": [7, 5]
+    },
+    {
+        "name": "Amulet of Wind",
+        "tier": 3,
+        "slots": ["Amulet"],
+        "stat_boosts": {
+            "damage": {
+                "Wind": 5,
+                "Earth": -5
+            },
+            "damage_mods": {
+                "Wind": -5,
+                "Earth": 5
+            }
+        },
+        "texture_offset": [8, 5]
+    }
+]

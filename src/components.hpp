@@ -473,6 +473,7 @@ struct Attack {
 
 	Entity effects = entt::null;
 
+	int turn_cost = 1;
 	int mana_cost = 0;
 
 	bool can_reach(Entity attacker, uvec2 target) const;
@@ -540,10 +541,11 @@ struct Stats {
 	int mana_max = 100;
 
 	// Each time an attack is made, this flat amount is added to the attack total
-	int to_hit_bonus = 10;
+	int to_hit_weapons = 10;
+	int to_hit_spells = 10;
 
 	// Each time damage is calculated, this flat amount is added to the damage total
-	int damage_bonus = 5;
+	DamageTypeList<int> damage_bonus = { 5 };
 
 	// This number is compared to an attack total to see if it hits.
 	// It hits if attack_total >= evasion
@@ -558,22 +560,30 @@ struct Stats {
 	// A negative modifeir is a resistance, like an iron golem being resistant to sword cuts
 	DamageTypeList<int> damage_modifiers = { 0 };
 
-	void apply(Entity entity, bool applying);
-
 	void serialize(const std::string& prefix, rapidjson::Document& json) const;
 	void deserialize(const std::string& prefix, const rapidjson::Document& json);
+};
+
+struct PlayerStats {
+	// Improves drop chances and drop quality
+	int luck = 0;
 };
 
 struct StatBoosts {
 	int health = 0;
 	int mana = 0;
-	int to_hit_bonus = 0;
-	int damage_bonus = 0;
+	int luck = 0;
+	int light = 0;
+	int to_hit_weapons = 0;
+	int to_hit_spells = 0;
+	DamageTypeList<int> damage_bonus = { 0 };
 	int evasion = 0;
 	DamageTypeList<int> damage_modifiers = { 0 };
 	void deserialize(const rapidjson::GenericObject<false, rapidjson::Value>& boosts);
 
 	std::string get_description() const;
+
+	static void apply(Entity boosts, Entity target, bool applying);
 };
 
 enum class Slot {

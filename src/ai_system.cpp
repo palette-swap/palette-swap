@@ -579,7 +579,9 @@ void AISystem::become_powerup(const Entity& entity, bool flag)
 		enemy.radius *= 2;
 		enemy.attack_range *= 2;
 
-		stats.damage_bonus *= 2;
+		for (size_t type = 0; type < (size_t)DamageType::Count; type++) {
+			stats.damage_bonus.at(type) *= 2;
+		}
 
 		base_attack.damage_min *= 2;
 		base_attack.damage_max *= 2;
@@ -587,7 +589,9 @@ void AISystem::become_powerup(const Entity& entity, bool flag)
 		enemy.radius /= 2;
 		enemy.attack_range /= 2;
 
-		stats.damage_bonus /= 2;
+		for (size_t type = 0; type < (size_t)DamageType::Count; type++) {
+			stats.damage_bonus.at(type) /= 2;
+		}
 
 		base_attack.damage_min /= 2;
 		base_attack.damage_max /= 2;

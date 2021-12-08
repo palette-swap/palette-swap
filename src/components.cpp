@@ -287,6 +287,9 @@ void Attack::deserialize(const rapidjson::GenericObject<false, rapidjson::Value>
 	if (attack_json.HasMember("mana_cost")) {
 		mana_cost = attack_json["mana_cost"].GetInt();
 	}
+	if (attack_json.HasMember("cost")) {
+		turn_cost = attack_json["cost"].GetInt();
+	}
 	if (attack_json.HasMember("range")) {
 		range = attack_json["range"].GetInt();
 	}
@@ -329,37 +332,31 @@ void Attack::deserialize(const rapidjson::GenericObject<false, rapidjson::Value>
 	}
 }
 
-void Stats::apply(Entity entity, bool applying) {
-	if (entity == entt::null) {
-		return;
-	}
-	StatBoosts* stat_boosts = registry.try_get<StatBoosts>(entity);
-	if (stat_boosts == nullptr) {
-		return;
-	}
-	int applying_mult = (applying) ? 1 : -1;
-	health_max += stat_boosts->health * applying_mult;
-	mana_max += stat_boosts->mana * applying_mult;
-	to_hit_bonus += stat_boosts->to_hit_bonus * applying_mult;
-	damage_bonus += stat_boosts->damage_bonus * applying_mult;
-	evasion += stat_boosts->evasion * applying_mult;
-	for (size_t i = 0; i < damage_modifiers.size(); i++) {
-		damage_modifiers.at(i) += stat_boosts->damage_modifiers.at(i) * applying_mult;
-	}
-}
-
 void Stats::serialize(const std::string& prefix, rapidjson::Document& json) const
 {
 	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/health").c_str()), health);
 	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/health_max").c_str()), health_max);
 	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/mana").c_str()), mana);
 	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/mana_max").c_str()), mana_max);
-	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/to_hit_bonus").c_str()), to_hit_bonus);
-	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/damage_bonus").c_str()), damage_bonus);
+	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/to_hit_bonus/Weapons").c_str()), to_hit_weapons);
+	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/to_hit_bonus/Spells").c_str()), to_hit_spells);
 	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/evasion").c_str()), evasion);
 
 	base_attack.serialize(prefix + "/attack", json);
-	// damage_modifiers don't seem to be needed here?
+	for (size_t type = 0; type < (size_t)DamageType::Count; type++) {
+		int bonus = damage_bonus.at(type);
+		if (bonus != 0) {
+			std::string path = prefix + "/damage_bonus/";
+			path += damage_type_names.at(type);
+			rapidjson::SetValueByPointer(json, rapidjson::Pointer(path.c_str()), bonus);
+		}
+		int mod = damage_modifiers.at(type);
+		if (mod != 0) {
+			std::string path = prefix + "/damage_mods/";
+			path += damage_type_names.at(type);
+			rapidjson::SetValueByPointer(json, rapidjson::Pointer(path.c_str()), mod);
+		}
+	}
 }
 
 void Stats::deserialize(const std::string& prefix, const rapidjson::Document& json)
@@ -373,12 +370,35 @@ void Stats::deserialize(const std::string& prefix, const rapidjson::Document& js
 	const auto* mana_max_value = get_and_assert_value_from_json(prefix + "/mana_max", json);
 	mana_max = mana_max_value->GetInt();
 	const auto* to_hit_bonus_value = get_and_assert_value_from_json(prefix + "/to_hit_bonus", json);
-	to_hit_bonus = to_hit_bonus_value->GetInt();
+	if (to_hit_bonus_value->IsInt()) {
+		to_hit_weapons = to_hit_bonus_value->GetInt();
+		to_hit_spells = to_hit_bonus_value->GetInt();
+	} else {
+		to_hit_weapons = to_hit_bonus_value->HasMember("Weapons") ? (*to_hit_bonus_value)["Weapons"].GetInt() : 0;
+		to_hit_spells = to_hit_bonus_value->HasMember("Spells") ? (*to_hit_bonus_value)["Spells"].GetInt() : 0;
+	}
 	const auto* damage_bonus_value = get_and_assert_value_from_json(prefix + "/damage_bonus", json);
-	damage_bonus = damage_bonus_value->GetInt();
+	if (damage_bonus_value->IsInt()) {
+		damage_bonus.fill(damage_bonus_value->GetInt());
+	}
 	const auto* evasion_value = get_and_assert_value_from_json(prefix + "/evasion", json);
 	evasion = evasion_value->GetInt();
 	base_attack.deserialize(prefix + "/attack", json);
+	for (size_t type = 0; type < (size_t)DamageType::Count; type++) {
+		std::string path = prefix + "/damage_bonus/";
+		path += damage_type_names.at(type);
+		const auto* bonus = rapidjson::GetValueByPointer(json, rapidjson::Pointer(path.c_str()));
+		if (bonus != nullptr && bonus->IsInt()) {
+			damage_bonus.at(type) = bonus->GetInt();
+		}
+
+		path = prefix + "/damage_mods/";
+		path += damage_type_names.at(type);
+		const auto* mod = rapidjson::GetValueByPointer(json, rapidjson::Pointer(path.c_str()));
+		if (mod != nullptr && mod->IsInt()) {
+			damage_modifiers.at(type) = mod->GetInt();
+		}
+	}
 }
 
 void Item::serialize(const std::string& prefix, rapidjson::Document& json) const
@@ -509,11 +529,27 @@ void StatBoosts::deserialize(const rapidjson::GenericObject<false, rapidjson::Va
 	if (boosts.HasMember("mana")) {
 		mana = boosts["mana"].GetInt();
 	}
+	if (boosts.HasMember("luck")) {
+		luck = boosts["luck"].GetInt();
+	}
+	if (boosts.HasMember("light")) {
+		light = boosts["light"].GetInt();
+	}
 	if (boosts.HasMember("to_hit")) {
-		to_hit_bonus = boosts["to_hit"].GetInt();
+		if (boosts["to_hit"].HasMember("Weapons")) {
+			to_hit_weapons = boosts["to_hit"]["Weapons"].GetInt();
+		}
+		if (boosts["to_hit"].HasMember("Spells")) {
+			to_hit_spells = boosts["to_hit"]["Spells"].GetInt();
+		}
 	}
 	if (boosts.HasMember("damage")) {
-		damage_bonus = boosts["damage"].GetInt();
+		auto damage_json = boosts["damage"].GetObj();
+		for (size_t i = 0; i < damage_type_names.size(); i++) {
+			if (damage_json.HasMember(damage_type_names.at(i).data())) {
+				damage_bonus.at(i) = damage_json[damage_type_names.at(i).data()].GetInt();
+			}
+		}
 	}
 	if (boosts.HasMember("evasion")) {
 		evasion = boosts["evasion"].GetInt();
@@ -550,7 +586,7 @@ std::string Item::get_description(bool detailed) const
 	return description;
 }
 
-std::string int_to_signed_string(int i) { return ((i >= 0) ? '+' : '-') + std::to_string(i); }
+std::string int_to_signed_string(int i) {return ((i >= 0) ? '+' : '-') + std::to_string(abs(i)); }
 
 std::string StatBoosts::get_description() const
 {
@@ -561,11 +597,23 @@ std::string StatBoosts::get_description() const
 	if (mana != 0) {
 		description += "\n" + int_to_signed_string(mana) + " mana";
 	}
-	if (to_hit_bonus != 0) {
-		description += "\n" + int_to_signed_string(to_hit_bonus) + " to hit";
+	if (luck != 0) {
+		description += "\n" + int_to_signed_string(luck) + " luck";
 	}
-	if (damage_bonus != 0) {
-		description += "\n" + int_to_signed_string(damage_bonus) + " dmg";
+	if (to_hit_weapons != 0) {
+		description += "\n" + int_to_signed_string(to_hit_weapons) + " to weapon hit";
+	}
+	if (to_hit_spells != 0) {
+		description += "\n" + int_to_signed_string(to_hit_spells) + " to spell hit";
+	}
+	for (size_t i = 0; i < (size_t)DamageType::Count; i++) {
+		if (damage_bonus.at(i) == 0) {
+			continue;
+		}
+		description
+			+= "\n" + int_to_signed_string(damage_bonus.at(i)) + " ";
+		description += damage_type_names.at(i);
+		description += " dmg";
 	}
 	if (evasion != 0) {
 		description += "\n" + int_to_signed_string(evasion) + " evasion";
@@ -581,6 +629,30 @@ std::string StatBoosts::get_description() const
 	return description;
 }
 
+void StatBoosts::apply(Entity boosts, Entity target, bool applying)
+{
+	if (boosts == entt::null) {
+		return;
+	}
+	StatBoosts* stat_boosts = registry.try_get<StatBoosts>(boosts);
+	if (stat_boosts == nullptr) {
+		return;
+	}
+	Stats& stats = registry.get<Stats>(target);
+	int applying_mult = (applying) ? 1 : -1;
+	stats.health_max += stat_boosts->health * applying_mult;
+	stats.mana_max += stat_boosts->mana * applying_mult;
+	stats.to_hit_weapons += stat_boosts->to_hit_weapons * applying_mult;
+	stats.to_hit_spells += stat_boosts->to_hit_spells * applying_mult;
+	stats.evasion += stat_boosts->evasion * applying_mult;
+	for (size_t i = 0; i < stats.damage_modifiers.size(); i++) {
+		stats.damage_bonus.at(i) += stat_boosts->damage_bonus.at(i) * applying_mult;
+		stats.damage_modifiers.at(i) += stat_boosts->damage_modifiers.at(i) * applying_mult;
+	}
+	registry.get<PlayerStats>(target).luck += stat_boosts->luck * applying_mult;
+	registry.get<Light>(target).radius += static_cast<float>(stat_boosts->light * applying_mult) * MapUtility::tile_size;
+}
+
 std::string Weapon::get_description() {
 	std::string description = "\n-Attacks-";
 	for (auto attack_entity : given_attacks) {
@@ -594,6 +666,9 @@ std::string Attack::get_description() const {
 	std::string description = name + "\n  ";
 	if (mana_cost != 0) {
 		description += to_string(mana_cost) + " mana\n  ";
+	}
+	if (turn_cost > 1) {
+		description += to_string(turn_cost) + " turns\n  ";
 	}
 
 	// To hit

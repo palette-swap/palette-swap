@@ -116,6 +116,9 @@ template <typename ColorExclusive> bool CombatSystem::do_attack(Entity attacker,
 	if (!attack.can_reach(attacker, target) || registry.get<Stats>(attacker).mana < attack.mana_cost) {
 		return false;
 	}
+	if (attack.turn_cost > 1) {
+		registry.get_or_emplace<ActiveConditions>(attacker).conditions.at((size_t)Effect::Stun) = attack.turn_cost - 1;
+	}
 	registry.get<Stats>(attacker).mana -= attack.mana_cost;
 	bool success = false;
 	uvec2 attacker_pos = registry.get<MapPosition>(attacker).position;
@@ -175,7 +178,8 @@ bool CombatSystem::do_attack(Entity attacker_entity, Attack& attack, Entity targ
 	Stats& target = registry.get<Stats>(target_entity);
 	// Roll a random to hit between min and max (inclusive), add attacker's to_hit_bonus and subtract disarmed amount
 	std::uniform_int_distribution<int> attack_roller(attack.to_hit_min, attack.to_hit_max);
-	int attack_roll = attack_roller(*rng) + attacker.to_hit_bonus - get_effect(attacker_entity, Effect::Disarm);
+	int hit_bonus = (attack.mana_cost != 0) ? attacker.to_hit_spells : attacker.to_hit_weapons;
+	int attack_roll = attack_roller(*rng) + hit_bonus - get_effect(attacker_entity, Effect::Disarm);
 
 	// It hits if the attack roll is >= the target's evasion minus entangled amount
 	bool success = attack_roll >= target.evasion - get_effect(target_entity, Effect::Entangle);
@@ -183,8 +187,9 @@ bool CombatSystem::do_attack(Entity attacker_entity, Attack& attack, Entity targ
 		// Roll a random damage between min and max (inclusive), then
 		// add attacker's damage_bonus and the target's damage_modifiers, take away weakened amount
 		std::uniform_int_distribution<int> damage_roller(attack.damage_min, attack.damage_max);
-		int dmg = max(damage_roller(*rng) + attacker.damage_bonus - get_effect(attacker_entity, Effect::Weaken)
-						  + target.damage_modifiers[static_cast<int>(attack.damage_type)],
+		size_t type = static_cast<size_t>(attack.damage_type);
+		int dmg = max(damage_roller(*rng) + attacker.damage_bonus.at(type) - get_effect(attacker_entity, Effect::Weaken)
+						  + target.damage_modifiers[type],
 					  0);
 		target.health -= dmg;
 		do_attack_effects(attacker_entity, attack, target_entity, dmg);
