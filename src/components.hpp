@@ -826,6 +826,11 @@ const std::map<EnemyType, TEXTURE_ASSET_ID> boss_type_attack_spritesheet {
 	{ EnemyType::AOERingGen, TEXTURE_ASSET_ID::DRAGON_ATTACKS },
 };
 
+struct DeathDeformation {
+	float side_direction = 0;
+	float height_direction = 0;
+};
+
 struct RoomAnimation {
 	uvec2 start_tile;
 	float dist_per_second = MapUtility::tile_size * 6.f;
