@@ -52,6 +52,9 @@ struct LevelConfiguration {
 	// animated tiles per room, index by room id then tile position in room
 	std::vector<std::map<int /*tile position in room*/, AnimatedTile>> animated_tiles_red;
 	std::vector<std::map<int /*tile position in room*/, AnimatedTile>> animated_tiles_blue;
+
+	// big rooms in current level
+	std::vector<std::set<RoomID>> big_rooms;
 };
 
 // Per-Level generation configuation, used as the metadata for generating a level,
@@ -78,7 +81,7 @@ struct LevelGenConf {
 	// enemy properties
 	double enemies_density = 0.5;
 
-	unsigned int room_difficulty = 10;
+	unsigned int level_difficulty = 1;
 
 	void serialize(const std::string& prefix, rapidjson::Document& json) const;
 	void deserialize(const std::string& prefix, const rapidjson::Document& json);

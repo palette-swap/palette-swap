@@ -261,6 +261,18 @@ const std::vector<MapUtility::RoomLayout>& MapGeneratorSystem::get_level_room_la
 
 const MapLayout& MapGeneratorSystem::current_map() const { return get_level_layout(current_level); }
 
+const std::set<MapUtility::RoomID>& MapGeneratorSystem::get_room_at_position(uvec2 pos) const
+{
+	RoomID room_index = current_map().at(pos.y / room_size).at(pos.x / room_size);
+	for (int i = 0; i < level_configurations.at(current_level).big_rooms.size(); i ++) {
+		const std::set<RoomID> & connected_rooms = level_configurations.at(current_level).big_rooms.at(i);
+		if (connected_rooms.find(room_index) != connected_rooms.end()) {
+			return connected_rooms;
+		}
+	}
+	return std::set<RoomID>({room_index});
+}
+
 bool MapGeneratorSystem::is_on_map(uvec2 pos) const
 {
 	return pos.y / room_size < current_map().size() && pos.x / room_size < current_map().at(0).size();
@@ -1235,23 +1247,23 @@ void MapGeneratorSystem::decrease_enemy_density()
 	std::cout << "Current enemy density: " << curr_conf.enemies_density << std::endl;
 	regenerate_map();
 }
-void MapGeneratorSystem::increase_room_difficulty()
+void MapGeneratorSystem::increase_level_difficulty()
 {
 	LevelGenConf& curr_conf = level_generation_confs.at(current_level - num_predefined_levels);
-	if (curr_conf.room_difficulty == INT_MAX) {
+	if (curr_conf.level_difficulty == INT_MAX) {
 		return;
 	}
-	curr_conf.room_difficulty++;
-	std::cout << "Current room difficulty: " << curr_conf.room_difficulty << std::endl;
+	curr_conf.level_difficulty++;
+	std::cout << "Current level difficulty: " << curr_conf.level_difficulty << std::endl;
 	regenerate_map();
 }
-void MapGeneratorSystem::decrease_room_difficulty()
+void MapGeneratorSystem::decrease_level_difficulty()
 {
 	LevelGenConf& curr_conf = level_generation_confs.at(current_level - num_predefined_levels);
-	if (curr_conf.room_difficulty == 1) {
+	if (curr_conf.level_difficulty == 1) {
 		return;
 	}
-	curr_conf.room_difficulty--;
-	std::cout << "Current room difficulty: " << curr_conf.room_difficulty << std::endl;
+	curr_conf.level_difficulty--;
+	std::cout << "Current level difficulty: " << curr_conf.level_difficulty << std::endl;
 	regenerate_map();
 }
