@@ -27,15 +27,22 @@ bool StorySystem::in_cutscene()
 
 void StorySystem::on_key(int key, int action, int mod)
 {
-	// TODO: handle story on key: basically press any key will make the conversation proceed
-	if (action == GLFW_PRESS && key == GLFW_KEY_ENTER) {
+	if (mod == GLFW_MOD_CONTROL && key == GLFW_KEY_ENTER) {
+		auto entity = current_cutscene_entity;
+		if (registry.any_of<CutScene>(entity)) {
+			CutScene& c = registry.get<CutScene>(entity);
+			UIGroup& group = registry.get<UIGroup>(c.ui_entity);
+			group.visible = false;
+			this->conversations.clear();
+			this->text_frames.clear();
+		}
+		return;
+	}
+
+	if (action == GLFW_PRESS && key != GLFW_KEY_ESCAPE) {
 		if (this->text_frames.empty()) {
 			proceed_conversation();
 		}
-	}
-
-	if (mod == GLFW_MOD_CONTROL && key == GLFW_KEY_ENTER) {
-		skip_current_cutscene();
 	}
 }
 
@@ -93,8 +100,8 @@ void StorySystem::step()
 			if (registry.any_of<Enemy>(c.actual_entity)) {
 				registry.get<Enemy>(c.actual_entity).active = true;
 			}
-			registry.remove<CutScene>(current_cutscene_entity);
-			current_cutscene_entity = entt::null;
+			//registry.remove<CutScene>(current_cutscene_entity);
+			//current_cutscene_entity = entt::null;
 		}
 		render_text_each_frame();
 	}
@@ -113,7 +120,7 @@ void StorySystem::proceed_conversation()
 	Entity ui_entity = c.ui_entity;
 
 	if (conversations.empty() && text_frames.empty()) {
-		registry.get<UIGroup>(ui_entity).visible = false;
+		cleanup_current_cutscene();
 		return;
 	}
 
@@ -170,7 +177,7 @@ void StorySystem::trigger_conversation()
 	proceed_conversation();
 }
 
-void StorySystem::skip_current_cutscene()
+void StorySystem::cleanup_current_cutscene()
 {
 	if (!in_cutscene()) {
 		return;
@@ -186,10 +193,19 @@ void StorySystem::skip_current_cutscene()
 		Text& text_comp = registry.get<Text>(text_entity);
 		text_comp.text = "";
 		registry.remove<CutScene>(entity);
+		if (registry.any_of<RenderRequest>(c.actual_entity)) {
+			registry.get<RenderRequest>(c.actual_entity).visible = true;
+		}
+		if (registry.any_of<Enemy>(c.actual_entity)) {
+			registry.get<Enemy>(c.actual_entity).active = true;
+		}
 	}
 
 	this->text_frames.clear();
 	this->conversations.clear();
+
+
+	
 	current_cutscene_entity = entt::null;
 }
 
