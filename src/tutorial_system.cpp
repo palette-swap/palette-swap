@@ -78,7 +78,7 @@ void TutorialSystem::trigger_tooltip(TutorialTooltip tip, vec2 pos)
 		break;
 	}
 	case TutorialTooltip::LockedSeen: {
-		message = "SHIFT to open\nFind keys in blue";
+		message = "SHIFT to open\nFind keys across dimensions";
 		alignments.second = Alignment::End;
 		group = UIGroup::find(Groups::HUD);
 		break;
