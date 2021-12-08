@@ -66,6 +66,10 @@ void AnimationSystem::set_sprite_direction(const Entity& sprite, Sprite_Directio
 	}
 }
 
+void set_enemy_facing_player(const Entity& enemy) {
+
+}
+
 void AnimationSystem::damage_animation(const Entity& entity)
 {
 	if (!registry.any_of<EventAnimation>(entity)) {

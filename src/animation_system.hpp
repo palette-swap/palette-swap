@@ -76,8 +76,6 @@ static constexpr vec4 default_enemy_blue = { 1, 1, 2, 1 };
 static constexpr vec4 damage_color = { 5, 5, 5, 1 };
 
 
-
-
 class AnimationSystem {
 
 public:
