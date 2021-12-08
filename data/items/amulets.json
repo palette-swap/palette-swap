@@ -68,6 +68,7 @@
         "slots": ["Amulet"],
         "stat_boosts": {
             "evasion": -999,
+            "luck": -999,
             "to_hit": {
                 "Weapons": 999,
                 "Spells": 999

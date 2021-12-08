@@ -80,13 +80,13 @@
         "slots": ["Armor"],
         "stat_boosts": {
             "evasion": 5,
+            "luck": 5,
             "damage_mods": {
                 "Physical": -4,
                 "Fire": -10,
                 "Earth": -10,
                 "Light": 10
-            },
-            "health": 25
+            }
         },
         "texture_offset": [8, 2]
     }
