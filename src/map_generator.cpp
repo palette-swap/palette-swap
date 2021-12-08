@@ -14,7 +14,7 @@ using namespace MapUtility;
 // Enemy templates, stored in order of dangerousness, i.e. last enemy is the most dangerous one
 static std::array<rapidjson::Document, (size_t)EnemyType::EnemyCount - 1> enemy_templates;
 
-static const int num_bosses = 3;
+static const int num_bosses = enemy_type_bosses.size();
 static bool enemy_templates_loaded = false;
 
 // room templates
