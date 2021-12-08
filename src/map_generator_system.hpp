@@ -85,9 +85,6 @@ private:
 
 	int current_level = 0;
 
-	// get the tile texture id, of the position on the current level
-	MapUtility::TileID get_tile_id_from_map_pos(uvec2 pos) const;
-
 	std::vector<uvec2> bfs(Entity entity, uvec2 start_pos, uvec2 target) const;
 
 	// Take current level snapshot
@@ -119,15 +116,17 @@ private:
 	std::shared_ptr<UISystem> ui_system;
 	std::shared_ptr<LootSystem> loot_system;
 	std::shared_ptr<TurnSystem> turns;
+	std::shared_ptr<TutorialSystem> tutorials;
 	std::shared_ptr<SoLoud::Soloud> so_loud;
 
 	// Sound effects
 	SoLoud::Wav spike_wav;
 
 public:
-	explicit MapGeneratorSystem(std::shared_ptr<TurnSystem> turns,
+	explicit MapGeneratorSystem(std::shared_ptr<LootSystem> loot_system,
+								std::shared_ptr<TurnSystem> turns,
+								std::shared_ptr<TutorialSystem> tutorials,
 								std::shared_ptr<UISystem> ui_system,
-								std::shared_ptr<LootSystem> loot_system,
 								std::shared_ptr<SoLoud::Soloud> so_loud);
 	void init();
 
@@ -155,6 +154,9 @@ public:
 	std::vector<uvec2> shortest_path(Entity entity, uvec2 start, uvec2 target, bool use_a_star = true) const;
 
 	MapUtility::TileID get_tile_id_from_room(int level, MapUtility::RoomID room_id, uint8_t row, uint8_t col) const;
+
+	// get the tile texture id, of the position on the current level
+	MapUtility::TileID get_tile_id_from_map_pos(uvec2 pos) const;
 
 	// states after we attempted to move the player
 	// TODO: should be able to remove this once moved story system to map system

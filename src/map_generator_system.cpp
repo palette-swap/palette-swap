@@ -16,13 +16,15 @@
 
 using namespace MapUtility;
 
-MapGeneratorSystem::MapGeneratorSystem(std::shared_ptr<TurnSystem> turns,
+MapGeneratorSystem::MapGeneratorSystem(std::shared_ptr<LootSystem> loot_system,
+									   std::shared_ptr<TurnSystem> turns,
+									   std::shared_ptr<TutorialSystem> tutorials,
 									   std::shared_ptr<UISystem> ui_system,
-									   std::shared_ptr<LootSystem> loot_system,
 									   std::shared_ptr<SoLoud::Soloud> so_loud)
-	: turns(std::move(turns))
+	: loot_system(std::move(loot_system))
+	, turns(std::move(turns))
+	, tutorials(std::move(tutorials))
 	, ui_system(std::move(ui_system))
-	, loot_system(std::move(loot_system))
 	, so_loud(std::move(so_loud))
 {
 	init();
@@ -276,67 +278,6 @@ const std::set<MapUtility::RoomID>& MapGeneratorSystem::get_room_at_position(uve
 bool MapGeneratorSystem::is_on_map(uvec2 pos) const
 {
 	return pos.y / room_size < current_map().size() && pos.x / room_size < current_map().at(0).size();
-}
-
-// 8 * 8 sprite sheet
-static const uint8_t tile_sprite_sheet_size = 8;
-
-static const std::set<uint8_t>& wall_tiles()
-{
-	const static std::set<uint8_t> wall_tiles(
-		{ 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 15, 17, 18, 19, 23, 25, 26, 27, 33, 35, 41, 42, 43 });
-	return wall_tiles;
-}
-static bool is_trap_tile(TileID tile_id)
-{
-	// trap tiles are animated, 4 frames each, and occupies a rectangle on the sprite sheet
-	const int trap_tile_start_id = 28;
-	const int num_trap_tiles = 2;
-
-	const int trap_tile_start_row = trap_tile_start_id / tile_sprite_sheet_size;
-	const int trap_tile_start_col = trap_tile_start_id % tile_sprite_sheet_size;
-
-	return ((trap_tile_start_row <= (tile_id / tile_sprite_sheet_size)
-			 && (tile_id / tile_sprite_sheet_size) <= trap_tile_start_row + num_trap_tiles - 1)
-			&& (trap_tile_start_col <= (tile_id % tile_sprite_sheet_size)
-				&& (tile_id % tile_sprite_sheet_size) <= trap_tile_start_col + 4 - 1));
-}
-static bool is_grass_tile(TileID tile_id) { return (52 <= tile_id && tile_id < 56); }
-static bool is_floor_tile(TileID tile_id) { return floor_tiles().find(tile_id) != floor_tiles().end(); }
-static bool is_door_tile(TileID tile_id) { return (60 <= tile_id && tile_id < 64); }
-static bool is_next_level_tile(TileID tile_id) { return tile_id == next_level_tile; }
-static bool is_last_level_tile(TileID tile_id) { return tile_id == last_level_tile; }
-static bool is_locked_chest_tile(TileID tile_id) { return tile_id == 48; }
-static bool is_chest_tile(TileID tile_id) { return tile_id == 44; }
-static bool is_spike_tile(TileID tile_id) {return 28 <= tile_id && tile_id < 32; }
-static bool is_fire_tile(TileID tile_id) {return 36 <= tile_id && tile_id < 40; }
-
-static bool is_wall_tile(TileID tile_id)
-{
-	int tile_row = tile_id / tile_sprite_sheet_size;
-	int tile_col = tile_id % tile_sprite_sheet_size;
-	if (0 <= tile_row && tile_row < 4 && 1 <= tile_col && tile_col <= 3) {
-		return true;
-	}
-
-	const static std::set<uint8_t> blocking_tiles({
-		20,
-		21,
-		22,
-		23, // torch
-		44,
-		45,
-		46,
-		47, // chest
-		60,
-		61,
-		62, // door
-		56,
-		57,
-		58, // cracked wall
-	});
-
-	return blocking_tiles.find(tile_id) != blocking_tiles.end();
 }
 
 bool MapGeneratorSystem::walkable(uvec2 pos) const
@@ -846,10 +787,12 @@ MapGeneratorSystem::MoveState MapGeneratorSystem::move_player_to_tile(uvec2 from
 
 		if (is_spike_tile(current_animated_tile->second.tile_id)) {
 			so_loud->play(spike_wav);
-			registry.get<Stats>(player_entity).health -= 5;
+			Stats& stats = registry.get<Stats>(player_entity);
+			stats.health -= max(0, 5 + stats.damage_modifiers.at((size_t)DamageType::Physical));
 		}
 		if (is_fire_tile(current_animated_tile->second.tile_id)) {
-			registry.get<Stats>(player_entity).health -= 10;
+			Stats& stats = registry.get<Stats>(player_entity);
+			stats.health -= max(0, 10 + stats.damage_modifiers.at((size_t)DamageType::Fire));
 		}
 	}
 
@@ -900,6 +843,7 @@ bool MapGeneratorSystem::interact_with_surrounding_tile(Entity player)
 				}
 				inventory.resources.at((size_t)Resource::Key)--;
 				ui_system->update_resource_count();
+				tutorials->destroy_tooltip(TutorialTooltip::LockedSeen);
 			}
 			if (is_locked_chest_tile(animated_tile->second.tile_id)) {
 				if (inventory.resources.at((size_t)Resource::Key) == 0) {
@@ -908,9 +852,11 @@ bool MapGeneratorSystem::interact_with_surrounding_tile(Entity player)
 				inventory.resources.at((size_t)Resource::Key)--;
 				ui_system->update_resource_count();
 				loot_system->drop_loot(player_position, 4.0, 2);
+				tutorials->destroy_tooltip(TutorialTooltip::LockedSeen);
 			}
 			if (is_chest_tile(animated_tile->second.tile_id)) {
 				loot_system->drop_loot(player_position, 2.0, 1);
+				tutorials->destroy_tooltip(TutorialTooltip::ChestSeen);
 			}
 
 			animated_tile->second.activated = true;

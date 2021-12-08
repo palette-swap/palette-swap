@@ -41,6 +41,9 @@ int main()
 	// Turn System
 	std::shared_ptr<TurnSystem> turns = std::make_shared<TurnSystem>();
 
+	// Tutorial System
+	std::shared_ptr<TutorialSystem> tutorials = std::make_shared<TutorialSystem>();
+
 	// Animation System
 	std::shared_ptr<AnimationSystem> animations = std::make_shared<AnimationSystem>();
 
@@ -48,17 +51,14 @@ int main()
 	std::shared_ptr<UISystem> ui = std::make_shared<UISystem>(debugging);
 
 	// Map system
-	std::shared_ptr<MapGeneratorSystem> map = std::make_shared<MapGeneratorSystem>(turns, ui, loot, so_loud);
+	std::shared_ptr<MapGeneratorSystem> map = std::make_shared<MapGeneratorSystem>(loot, turns, tutorials, ui, so_loud);
 
 	// Story System
 	std::shared_ptr<StorySystem> stories = std::make_shared<StorySystem>(animations, map);
 
-	// Tutorial System
-	std::shared_ptr<TutorialSystem> tutorials = std::make_shared<TutorialSystem>();
-
 	// Global systems
 	WorldSystem world(debugging, animations, combat, loot, map, stories, turns, tutorials, ui, so_loud);
-	LightingSystem lighting;
+	LightingSystem lighting(tutorials);
 	RenderSystem renderer(debugging, lighting);
 	PhysicsSystem physics(debugging, map);
 	AISystem ai(debugging, animations, combat, lighting, map, turns, so_loud);
