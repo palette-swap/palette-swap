@@ -116,15 +116,17 @@ private:
 	std::shared_ptr<UISystem> ui_system;
 	std::shared_ptr<LootSystem> loot_system;
 	std::shared_ptr<TurnSystem> turns;
+	std::shared_ptr<TutorialSystem> tutorials;
 	std::shared_ptr<SoLoud::Soloud> so_loud;
 
 	// Sound effects
 	SoLoud::Wav spike_wav;
 
 public:
-	explicit MapGeneratorSystem(std::shared_ptr<TurnSystem> turns,
+	explicit MapGeneratorSystem(std::shared_ptr<LootSystem> loot_system,
+								std::shared_ptr<TurnSystem> turns,
+								std::shared_ptr<TutorialSystem> tutorials,
 								std::shared_ptr<UISystem> ui_system,
-								std::shared_ptr<LootSystem> loot_system,
 								std::shared_ptr<SoLoud::Soloud> so_loud);
 	void init();
 

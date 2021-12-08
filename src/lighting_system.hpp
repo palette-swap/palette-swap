@@ -3,6 +3,7 @@
 #include "components.hpp"
 
 #include "map_generator_system.hpp"
+#include "tutorial_system.hpp"
 
 #include <glm/gtx/hash.hpp>
 #include <unordered_set>
@@ -12,8 +13,14 @@
 class LightingSystem {
 
 	std::shared_ptr<MapGeneratorSystem> map_generator;
+	std::shared_ptr<TutorialSystem> tutorials;
 
 public:
+	explicit LightingSystem(std::shared_ptr<TutorialSystem> tutorials)
+		: tutorials(tutorials)
+	{
+	}
+
 	// Initialize the window
 	void init(std::shared_ptr<MapGeneratorSystem> map);
 

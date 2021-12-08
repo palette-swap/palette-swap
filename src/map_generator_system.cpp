@@ -16,13 +16,15 @@
 
 using namespace MapUtility;
 
-MapGeneratorSystem::MapGeneratorSystem(std::shared_ptr<TurnSystem> turns,
+MapGeneratorSystem::MapGeneratorSystem(std::shared_ptr<LootSystem> loot_system,
+									   std::shared_ptr<TurnSystem> turns,
+									   std::shared_ptr<TutorialSystem> tutorials,
 									   std::shared_ptr<UISystem> ui_system,
-									   std::shared_ptr<LootSystem> loot_system,
 									   std::shared_ptr<SoLoud::Soloud> so_loud)
-	: turns(std::move(turns))
+	: loot_system(std::move(loot_system))
+	, turns(std::move(turns))
+	, tutorials(std::move(tutorials))
 	, ui_system(std::move(ui_system))
-	, loot_system(std::move(loot_system))
 	, so_loud(std::move(so_loud))
 {
 	init();
@@ -839,6 +841,7 @@ bool MapGeneratorSystem::interact_with_surrounding_tile(Entity player)
 				}
 				inventory.resources.at((size_t)Resource::Key)--;
 				ui_system->update_resource_count();
+				tutorials->destroy_tooltip(TutorialTooltip::LockedSeen);
 			}
 			if (is_locked_chest_tile(animated_tile->second.tile_id)) {
 				if (inventory.resources.at((size_t)Resource::Key) == 0) {
@@ -847,9 +850,11 @@ bool MapGeneratorSystem::interact_with_surrounding_tile(Entity player)
 				inventory.resources.at((size_t)Resource::Key)--;
 				ui_system->update_resource_count();
 				loot_system->drop_loot(player_position, 4.0, 2);
+				tutorials->destroy_tooltip(TutorialTooltip::LockedSeen);
 			}
 			if (is_chest_tile(animated_tile->second.tile_id)) {
 				loot_system->drop_loot(player_position, 2.0, 1);
+				tutorials->destroy_tooltip(TutorialTooltip::ChestSeen);
 			}
 
 			animated_tile->second.activated = true;

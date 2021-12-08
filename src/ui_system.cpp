@@ -116,7 +116,7 @@ void UISystem::switch_to_group(Entity group)
 		}
 	}
 	if (group == groups[(size_t)Groups::Inventory]) {
-		tutorials->trigger_tooltip(TutorialTooltip::OpenedInventory, entt::null);
+		tutorials->trigger_tooltip(TutorialTooltip::OpenedInventory);
 		tutorials->destroy_tooltip(TutorialTooltip::ItemPickedUp);
 	}
 }

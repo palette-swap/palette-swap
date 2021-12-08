@@ -4,7 +4,10 @@
 
 #include <glm/gtx/rotate_vector.hpp>
 
-void LightingSystem::init(std::shared_ptr<MapGeneratorSystem> map) { this->map_generator = std::move(map); }
+void LightingSystem::init(std::shared_ptr<MapGeneratorSystem> map)
+{
+	this->map_generator = std::move(map);
+}
 
 void light_tile(uvec2 pos)
 {
@@ -358,6 +361,37 @@ void LightingSystem::update_visible()
 			} else {
 				room.visible = true;
 				registry.emplace<RoomAnimation>(entity, tile);
+			}
+		}
+	}
+	if (!tutorials->has_triggered(TutorialTooltip::ChestSeen)
+		|| !tutorials->has_triggered(TutorialTooltip::LockedSeen)) {
+		vec2 player_pos;
+		Entity player = registry.view<Player>().front();
+		if (WorldPosition* world_pos = registry.try_get<WorldPosition>(player)) {
+			player_pos = world_pos->position;
+		} else {
+			player_pos = MapUtility::map_position_to_world_position(registry.get<MapPosition>(player).position);
+		}
+		auto check_player_distance = [player, player_pos](const uvec2& tile) {
+			return glm::distance(MapUtility::map_position_to_world_position(tile), player_pos)
+				<= registry.get<Light>(player).radius;
+		};
+
+		for (const auto& tile : visible_tiles)
+		{
+			MapUtility::TileID id = map_generator->get_tile_id_from_map_pos(tile);
+			if (MapUtility::is_chest_tile(id)) {
+				if (!check_player_distance(tile)) {
+					continue;
+				}
+				tutorials->trigger_tooltip(TutorialTooltip::ChestSeen, tile);
+			}
+			if (MapUtility::is_locked_chest_tile(id) || MapUtility::is_door_tile(id)) {
+				if (!check_player_distance(tile)) {
+					continue;
+				}
+				tutorials->trigger_tooltip(TutorialTooltip::LockedSeen, tile);
 			}
 		}
 	}

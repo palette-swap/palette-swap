@@ -87,7 +87,7 @@ bool LootSystem::try_pickup_items(Entity player)
 					for (const auto& callback : pickup_callbacks) {
 						callback(inventory.inventory.at(i), i);
 					}
-					tutorials->trigger_tooltip(TutorialTooltip::ItemPickedUp, entt::null);
+					tutorials->trigger_tooltip(TutorialTooltip::ItemPickedUp);
 					return true;
 				}
 			}
