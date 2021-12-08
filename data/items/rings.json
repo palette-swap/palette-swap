@@ -1,0 +1,67 @@
+[
+    {
+        "name": "Ring of Luck",
+        "tier": 1,
+        "slots": ["Ring"],
+        "stat_boosts": {
+            "luck": 10
+        },
+        "texture_offset": [12, 1]
+    },
+    {
+        "name": "Ring of Vitality",
+        "tier": 2,
+        "slots": ["Ring"],
+        "stat_boosts": {
+            "health": 50
+        },
+        "texture_offset": [0, 1]
+    },
+    {
+        "name": "Ring of Wizardry",
+        "tier": 2,
+        "slots": ["Ring"],
+        "stat_boosts": {
+            "to_hit": {
+                "Spells": 3
+            },
+            "mana": 50
+        },
+        "texture_offset": [2, 1]
+    },
+    {
+        "name": "Right of Night Vision",
+        "tier": 2,
+        "slots": ["Ring"],
+        "stat_boosts": {
+            "light": 5
+        },
+        "texture_offset": [13, 1]
+    },
+    {
+        "name": "Ring of Strength",
+        "tier": 3,
+        "slots": ["Ring"],
+        "stat_boosts": {
+            "to_hit": {
+                "Weapons": 3
+            },
+            "damage": {
+                "Physical": 3
+            }
+        },
+        "texture_offset": [1, 1]
+    },
+    {
+        "name": "Ring of Fortitude",
+        "tier": 3,
+        "slots": ["Ring"],
+        "stat_boosts": {
+            "evasion": 3,
+            "damage_mods": {
+                "Physical": 3
+            }
+        },
+        "texture_offset": [5, 1]
+    }
+]

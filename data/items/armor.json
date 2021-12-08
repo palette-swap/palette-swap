@@ -30,5 +30,64 @@
             }
         },
         "texture_offset": [2, 2]
+    },
+    {
+        "name": "Shadow Plate",
+        "tier": 4,
+        "slots": ["Armor"],
+        "stat_boosts": {
+            "evasion": 7,
+            "damage_mods": {
+                "Physical": 5
+            }
+        },
+        "texture_offset": [3, 2]
+    },
+    {
+        "name": "Amorphous Plate",
+        "tier": 4,
+        "slots": ["Armor"],
+        "stat_boosts": {
+            "evasion": 3,
+            "damage_mods": {
+                "Fire": 4,
+                "Cold": 4,
+                "Earth": 4,
+                "Wind": 4
+            }
+        },
+        "texture_offset": [6, 2]
+    },
+    {
+        "name": "Holy Mail",
+        "tier": 5,
+        "slots": ["Armor"],
+        "stat_boosts": {
+            "evasion": 5,
+            "damage_mods": {
+                "Physical": -3,
+                "Cold": -10,
+                "Wind": -10,
+                "Light": -999
+            },
+            "health": 25
+        },
+        "texture_offset": [4, 2]
+    },
+    {
+        "name": "Fiend Armor",
+        "tier": 5,
+        "slots": ["Armor"],
+        "stat_boosts": {
+            "evasion": 5,
+            "damage_mods": {
+                "Physical": -4,
+                "Fire": -10,
+                "Earth": -10,
+                "Light": 10
+            },
+            "health": 25
+        },
+        "texture_offset": [8, 2]
     }
 ]

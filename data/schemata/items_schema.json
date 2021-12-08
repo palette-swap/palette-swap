@@ -41,11 +41,31 @@
           "mana": {
             "type": "integer"
           },
-          "to_hit": {
+          "luck": {
             "type": "integer"
           },
-          "damage": {
+          "light": {
             "type": "integer"
+          },
+          "to_hit": {
+            "type": "object",
+            "patternProperties": {
+              "^(Weapons|Spells)$": {
+                "type": "integer"
+              }
+            },
+            "minProperties": 1,
+            "additionalProperties": false
+          },
+          "damage": {
+            "type": "object",
+            "patternProperties": {
+              "^(Physical|Fire|Cold|Earth|Wind|Light)$": {
+                "type": "integer"
+              }
+            },
+            "minProperties": 1,
+            "additionalProperties": false
           },
           "evasion": {
             "type": "integer"
@@ -53,7 +73,7 @@
           "damage_mods": {
             "type": "object",
             "patternProperties": {
-              "^(Physical|Fire|Cold|Earth|Wind)$": {
+              "^(Physical|Fire|Cold|Earth|Wind|Light)$": {
                 "type": "integer"
               }
             },
@@ -61,7 +81,8 @@
             "additionalProperties": false
           }
         },
-        "minProperties": 1
+        "minProperties": 1,
+        "additionalProperties": false
       },
       "texture_offset": {
         "type": "array",
