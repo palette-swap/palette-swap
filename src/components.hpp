@@ -473,6 +473,7 @@ struct Attack {
 
 	Entity effects = entt::null;
 
+	int turn_cost = 1;
 	int mana_cost = 0;
 
 	bool can_reach(Entity attacker, uvec2 target) const;

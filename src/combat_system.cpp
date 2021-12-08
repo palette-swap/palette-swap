@@ -116,6 +116,9 @@ template <typename ColorExclusive> bool CombatSystem::do_attack(Entity attacker,
 	if (!attack.can_reach(attacker, target) || registry.get<Stats>(attacker).mana < attack.mana_cost) {
 		return false;
 	}
+	if (attack.turn_cost > 1) {
+		registry.get_or_emplace<ActiveConditions>(attacker).conditions.at((size_t)Effect::Stun) = attack.turn_cost - 1;
+	}
 	registry.get<Stats>(attacker).mana -= attack.mana_cost;
 	bool success = false;
 	uvec2 attacker_pos = registry.get<MapPosition>(attacker).position;

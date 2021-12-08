@@ -287,6 +287,9 @@ void Attack::deserialize(const rapidjson::GenericObject<false, rapidjson::Value>
 	if (attack_json.HasMember("mana_cost")) {
 		mana_cost = attack_json["mana_cost"].GetInt();
 	}
+	if (attack_json.HasMember("cost")) {
+		turn_cost = attack_json["cost"].GetInt();
+	}
 	if (attack_json.HasMember("range")) {
 		range = attack_json["range"].GetInt();
 	}
@@ -663,6 +666,9 @@ std::string Attack::get_description() const {
 	std::string description = name + "\n  ";
 	if (mana_cost != 0) {
 		description += to_string(mana_cost) + " mana\n  ";
+	}
+	if (turn_cost > 1) {
+		description += to_string(turn_cost) + " turns\n  ";
 	}
 
 	// To hit
