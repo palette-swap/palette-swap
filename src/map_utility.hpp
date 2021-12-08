@@ -32,6 +32,7 @@ inline bool is_next_level_tile(TileID tile_id) { return tile_id == next_level_ti
 inline bool is_last_level_tile(TileID tile_id) { return tile_id == last_level_tile; }
 inline bool is_locked_chest_tile(TileID tile_id) { return tile_id == 48; }
 inline bool is_chest_tile(TileID tile_id) { return tile_id == 44; }
+inline bool is_torch_tile(TileID tile_id) { return 20 <= tile_id && tile_id < 24; }
 inline bool is_spike_tile(TileID tile_id) { return 28 <= tile_id && tile_id < 32; }
 inline bool is_fire_tile(TileID tile_id) { return 36 <= tile_id && tile_id < 40; }
 
