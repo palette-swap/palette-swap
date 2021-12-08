@@ -125,7 +125,7 @@ void LightingSystem::process_tile(vec2 player_world_pos, uvec2 tile)
 {
 	MapUtility::TileID tile_id = map_generator->get_tile_id_from_map_pos(tile);
 	bool is_solid = !map_generator->walkable(tile) && !MapUtility::is_torch_tile(tile_id)
-		&& !MapUtility::is_chest_tile(tile_id) && !MapUtility::is_locked_chest_tile(tile_id);
+		&& !MapUtility::is_any_chest_tile(tile_id);
 	auto min_angle = glm::pi<double>();
 	auto max_angle = -glm::pi<double>();
 	int side = 0;
