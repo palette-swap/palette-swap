@@ -100,11 +100,13 @@ void LootSystem::drop_loot(uvec2 center_position, float mode_tier, uint count)
 {
 	// Initial Drop rates are as follows
 	// 1-2: Nothing
+	static constexpr size_t init_min = 3;
 	//  3 : Mana Potion
 	// 4-5: Health Potion
 	// 6-9: Item Drop
 	// If all items have dropped, only drop health potions as follows:
 	// 1-4: Nothing
+	static constexpr size_t late_min = 5;
 	// 5-6: Mana Potion
 	// 7-9: Health Potion
 
@@ -113,12 +115,28 @@ void LootSystem::drop_loot(uvec2 center_position, float mode_tier, uint count)
 		ivec2(0, 0), ivec2(1, 0),	ivec2(-1, 0), ivec2(0, 1),	ivec2(0, -1),
 		ivec2(1, 1), ivec2(-1, -1), ivec2(-1, 1), ivec2(1, -1),
 	};
+	int luck = registry.get<PlayerStats>(registry.view<Player>().front()).luck;
+	// Success is luck_chance >= 0, so for luck = 10 this is 50%, 20 is 67%, etc.
+	std::uniform_real_distribution<float> luck_chance(-1, static_cast<float>(luck) / 10.f);
+	// Luck improve item tier
+	if (luck_chance(*rng) >= 0) {
+		mode_tier = min(mode_tier + 1, static_cast<float>(get_max_tier()));
+	}
+	// Lucky random chance for an extra drop
+	if (luck_chance(*rng) >= 0) {
+		count += 1;
+	}
+
 	for (uint i = 0; i < count; i++) {
 		uvec2 position = uvec2(ivec2(center_position) + next_tile.at(i % 9));
 		bool all_dropped = looted >= loot_count;
-		std::uniform_int_distribution<size_t> drop_chance(1 + loot_misses, 9);
+
+		// Luck sometimes guarantees a drop
+		size_t lucky = luck_chance(*rng) >= 0 ? (all_dropped ? late_min : init_min) : 0; 
+
+		std::uniform_int_distribution<size_t> drop_chance(max(1 + loot_misses, lucky), 9);
 		size_t result = drop_chance(*rng);
-		if (result <= 3 || (all_dropped && result <= 4)) {
+		if (result < init_min || (all_dropped && result <= late_min)) {
 			loot_misses++;
 			continue;
 		}

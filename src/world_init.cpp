@@ -8,6 +8,7 @@ Entity create_player(uvec2 pos)
 	registry.emplace<Player>(entity);
 	registry.emplace<MapPosition>(entity, pos);
 	registry.emplace<Stats>(entity);
+	registry.emplace<PlayerStats>(entity);
 
 	// Light up around the player
 	registry.emplace<Light>(entity, MapUtility::tile_size * 7.5f);

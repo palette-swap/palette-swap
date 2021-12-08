@@ -563,6 +563,11 @@ struct Stats {
 	void deserialize(const std::string& prefix, const rapidjson::Document& json);
 };
 
+struct PlayerStats {
+	// Improves drop chances and drop quality
+	int luck = 0;
+};
+
 struct StatBoosts {
 	int health = 0;
 	int mana = 0;

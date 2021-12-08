@@ -526,6 +526,9 @@ void StatBoosts::deserialize(const rapidjson::GenericObject<false, rapidjson::Va
 	if (boosts.HasMember("mana")) {
 		mana = boosts["mana"].GetInt();
 	}
+	if (boosts.HasMember("luck")) {
+		luck = boosts["luck"].GetInt();
+	}
 	if (boosts.HasMember("light")) {
 		light = boosts["light"].GetInt();
 	}
@@ -591,6 +594,9 @@ std::string StatBoosts::get_description() const
 	if (mana != 0) {
 		description += "\n" + int_to_signed_string(mana) + " mana";
 	}
+	if (luck != 0) {
+		description += "\n" + int_to_signed_string(luck) + " luck";
+	}
 	if (to_hit_weapons != 0) {
 		description += "\n" + int_to_signed_string(to_hit_weapons) + " to weapon hit";
 	}
@@ -640,6 +646,7 @@ void StatBoosts::apply(Entity boosts, Entity target, bool applying)
 		stats.damage_bonus.at(i) += stat_boosts->damage_bonus.at(i) * applying_mult;
 		stats.damage_modifiers.at(i) += stat_boosts->damage_modifiers.at(i) * applying_mult;
 	}
+	registry.get<PlayerStats>(target).luck += stat_boosts->luck * applying_mult;
 	registry.get<Light>(target).radius += static_cast<float>(stat_boosts->light * applying_mult) * MapUtility::tile_size;
 }
 
