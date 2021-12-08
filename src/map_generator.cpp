@@ -14,8 +14,6 @@ using namespace MapUtility;
 // Enemy templates, stored in order of dangerousness, i.e. last enemy is the most dangerous one
 static std::array<rapidjson::Document, (size_t)EnemyType::EnemyCount - 1> enemy_templates;
 
-// ordered list in terms of enemy danger rates
-static std::array<EnemyType, (size_t)EnemyType::EnemyCount - 1> enemy_danger_to_type;
 static const int num_bosses = 3;
 static bool enemy_templates_loaded = false;
 
@@ -59,10 +57,6 @@ static void load_enemies_from_file()
 		std::string enemy_i = buffer.str();
 
 		enemy_templates.at(i).Parse(enemy_i.c_str());
-	}
-
-	for (size_t i = 0; i < enemy_danger_to_type.size(); i ++) {
-		enemy_danger_to_type.at(i) = static_cast<EnemyType>(i);
 	}
 
 	// sort templates based on danger rating
