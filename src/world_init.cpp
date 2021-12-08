@@ -64,7 +64,7 @@ Entity create_enemy(ColorState team, EnemyType type, uvec2 map_pos)
 	Stats& stats = registry.emplace<Stats>(entity);
 	stats.health = 50;
 	stats.health_max = 50;
-	stats.to_hit_bonus = 6;
+	stats.to_hit_weapons = stats.to_hit_spells = 6;
 	stats.evasion = 12;
 	stats.base_attack.damage_min = 5;
 	stats.base_attack.damage_max = 15;
@@ -185,7 +185,7 @@ Entity create_aoe_emitter(ColorState team, uvec2 map_pos)
 	Stats& stats = registry.emplace<Stats>(entity);
 	stats.health = 50;
 	stats.health_max = 50;
-	stats.to_hit_bonus = 6;
+	stats.to_hit_weapons = stats.to_hit_spells = 6;
 	stats.evasion = 12;
 	stats.base_attack.damage_min = 5;
 	stats.base_attack.damage_max = 15;

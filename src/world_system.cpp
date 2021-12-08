@@ -431,8 +431,9 @@ bool WorldSystem::check_debug_keys(int key, int action, int mod)
 	if (action == GLFW_RELEASE && (mod & GLFW_MOD_ALT) != 0 && key == GLFW_KEY_G) {
 		Stats& stats = registry.get<Stats>(player);
 		stats.evasion = 100000;
-		stats.to_hit_bonus = 100000;
-		stats.damage_bonus = 100000;
+		stats.to_hit_weapons = stats.to_hit_spells = 100000;
+		stats.damage_bonus.fill(100000);
+		stats.damage_modifiers.fill(-100000);
 	}
 
 	// Drop loot on your current location

@@ -333,7 +333,9 @@ private:
 			Stats& aoe_stats = registry.get<Stats>(e);
 			aoe_stats.base_attack.damage_min *= 2;
 			aoe_stats.base_attack.damage_max *= 2;
-			aoe_stats.damage_bonus *= 2;
+			for (size_t type = 0; type < (size_t)DamageType::Count; type++) {
+				aoe_stats.damage_bonus.at(type) *= 2;
+			}
 
 			Enemy& enemy = registry.get<Enemy>(e);
 
