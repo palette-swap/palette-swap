@@ -787,10 +787,12 @@ MapGeneratorSystem::MoveState MapGeneratorSystem::move_player_to_tile(uvec2 from
 
 		if (is_spike_tile(current_animated_tile->second.tile_id)) {
 			so_loud->play(spike_wav);
-			registry.get<Stats>(player_entity).health -= 5;
+			Stats& stats = registry.get<Stats>(player_entity);
+			stats.health -= max(0, 5 + stats.damage_modifiers.at((size_t)DamageType::Physical));
 		}
 		if (is_fire_tile(current_animated_tile->second.tile_id)) {
-			registry.get<Stats>(player_entity).health -= 10;
+			Stats& stats = registry.get<Stats>(player_entity);
+			stats.health -= max(0, 10 + stats.damage_modifiers.at((size_t)DamageType::Fire));
 		}
 	}
 
