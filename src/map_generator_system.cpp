@@ -1235,23 +1235,23 @@ void MapGeneratorSystem::decrease_enemy_density()
 	std::cout << "Current enemy density: " << curr_conf.enemies_density << std::endl;
 	regenerate_map();
 }
-void MapGeneratorSystem::increase_room_difficulty()
+void MapGeneratorSystem::increase_level_difficulty()
 {
 	LevelGenConf& curr_conf = level_generation_confs.at(current_level - num_predefined_levels);
-	if (curr_conf.room_difficulty == INT_MAX) {
+	if (curr_conf.level_difficulty == INT_MAX) {
 		return;
 	}
-	curr_conf.room_difficulty++;
-	std::cout << "Current room difficulty: " << curr_conf.room_difficulty << std::endl;
+	curr_conf.level_difficulty++;
+	std::cout << "Current level difficulty: " << curr_conf.level_difficulty << std::endl;
 	regenerate_map();
 }
-void MapGeneratorSystem::decrease_room_difficulty()
+void MapGeneratorSystem::decrease_level_difficulty()
 {
 	LevelGenConf& curr_conf = level_generation_confs.at(current_level - num_predefined_levels);
-	if (curr_conf.room_difficulty == 1) {
+	if (curr_conf.level_difficulty == 1) {
 		return;
 	}
-	curr_conf.room_difficulty--;
-	std::cout << "Current room difficulty: " << curr_conf.room_difficulty << std::endl;
+	curr_conf.level_difficulty--;
+	std::cout << "Current level difficulty: " << curr_conf.level_difficulty << std::endl;
 	regenerate_map();
 }

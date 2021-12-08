@@ -214,6 +214,6 @@ public:
 	void decrease_room_smoothness();
 	void increase_enemy_density();
 	void decrease_enemy_density();
-	void increase_room_difficulty();
-	void decrease_room_difficulty();
+	void increase_level_difficulty();
+	void decrease_level_difficulty();
 };

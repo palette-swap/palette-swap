@@ -11,8 +11,12 @@
 
 using namespace MapUtility;
 
-// Enemy templates
-static std::array<rapidjson::Document, (size_t)EnemyType::EnemyCount> enemy_templates;
+// Enemy templates, stored in order of dangerousness, i.e. last enemy is the most dangerous one
+static std::array<rapidjson::Document, (size_t)EnemyType::EnemyCount - 1> enemy_templates;
+
+// ordered list in terms of enemy danger rates
+static std::array<EnemyType, (size_t)EnemyType::EnemyCount - 1> enemy_danger_to_type;
+static const int num_bosses = 3;
 static bool enemy_templates_loaded = false;
 
 // room templates
@@ -56,6 +60,16 @@ static void load_enemies_from_file()
 
 		enemy_templates.at(i).Parse(enemy_i.c_str());
 	}
+
+	for (size_t i = 0; i < enemy_danger_to_type.size(); i ++) {
+		enemy_danger_to_type.at(i) = static_cast<EnemyType>(i);
+	}
+
+	// sort templates based on danger rating
+	std::sort(enemy_templates.begin(), enemy_templates.end() - num_bosses, [](const rapidjson::Document & left, const rapidjson::Document & right) {
+		assert(left.HasMember("danger_rating") && right.HasMember("danger_rating"));
+		return left["danger_rating"].GetInt() < right["danger_rating"].GetInt();
+	});
 }
 
 static void load_room_templates()
@@ -87,7 +101,7 @@ RoomLayout MapGenerator::get_template_room_layout(MapGenerator::RoomType room_ty
 }
 
 static void
-add_enemy_to_level_snapshot(rapidjson::Document& level_snap_shot, ColorState team, EnemyType type, uvec2 map_pos)
+add_enemy_to_level_snapshot(rapidjson::Document& level_snap_shot, ColorState team, int enemy_index, uvec2 map_pos)
 {
 	if (!enemy_templates_loaded) {
 		load_enemies_from_file();
@@ -99,20 +113,22 @@ add_enemy_to_level_snapshot(rapidjson::Document& level_snap_shot, ColorState tea
 		level_snap_shot.AddMember("enemies", enemy_array, level_snap_shot.GetAllocator());
 	}
 
-	Enemy enemy_type;
-	enemy_type.deserialize("", enemy_templates.at(static_cast<size_t>(type)), false);
-	enemy_type.team = team;
-	enemy_type.type = type;
-	enemy_type.nest_map_pos = map_pos;
+	EnemyType enemy_type = static_cast<EnemyType>(enemy_templates.at(enemy_index)["type"].GetInt());
+
+	Enemy enemy;
+	enemy.deserialize("", enemy_templates.at(enemy_index), false);
+	enemy.team = team;
+	enemy.type = enemy_type;
+	enemy.nest_map_pos = map_pos;
 
 	Stats enemy_stats;
-	enemy_stats.deserialize("/stats", enemy_templates.at(static_cast<size_t>(type)));
+	enemy_stats.deserialize("/stats", enemy_templates.at(enemy_index));
 
 	MapPosition map_position(map_pos);
 
-	rapidjson::SizeType enemy_index = level_snap_shot["enemies"].Size();
-	std::string enemy_prefix = "/enemies/" + std::to_string(enemy_index);
-	enemy_type.serialize(enemy_prefix, level_snap_shot);
+	rapidjson::SizeType enemy_i = level_snap_shot["enemies"].Size();
+	std::string enemy_prefix = "/enemies/" + std::to_string(enemy_i);
+	enemy.serialize(enemy_prefix, level_snap_shot);
 	enemy_stats.serialize(enemy_prefix + "/stats", level_snap_shot);
 	map_position.serialize(enemy_prefix, level_snap_shot);
 }
@@ -942,6 +958,8 @@ void MapGenerator::generate_big_room(PathNode* starting_node,
 	}
 }
 
+static const int max_level_difficulty = 5;
+
 void MapGenerator::generate_enemies(PathNode* curr_room,
 									MapUtility::LevelGenConf level_gen_conf,
 									const MapUtility::RoomLayout& room_layout,
@@ -957,10 +975,17 @@ void MapGenerator::generate_enemies(PathNode* curr_room,
 														  static_cast<int>(EnemyType::EnemyCount) - 2);
 		// spawn a boss
 		EnemyType boss_to_spawn = static_cast<EnemyType>(boss_type_dist(enemies_random_eng_red));
+
+		// hard-code the first boss encounters
+		if (level_gen_conf.level_difficulty == 2) {
+			boss_to_spawn = EnemyType::KingMush;
+		} else if (level_gen_conf.level_difficulty == 3) {
+			boss_to_spawn = EnemyType::Titho;
+		}
 		add_enemy_to_level_snapshot(
 			level_snap_shot,
 			ColorState::All,
-			boss_to_spawn,
+			static_cast<int>(boss_to_spawn),
 			uvec2(room_map_col * room_size + room_size - 1, room_map_row * room_size + room_size - 1));
 		// rotate blue eng to keep them even
 		enemies_random_eng_blue.discard(1);
@@ -980,18 +1005,23 @@ void MapGenerator::generate_enemies(PathNode* curr_room,
 	// generate enemies
 	std::bernoulli_distribution enemies_dist(max_enemies_density * level_gen_conf.enemies_density * enemy_gen_scaling);
 
-	// We don't spawn clone enemies
-	std::uniform_int_distribution<int> enemy_types_dist(1, static_cast<int>(EnemyType::KoboldMage));
+	std::normal_distribution<> enemy_spawn_dist(static_cast<double>(level_gen_conf.level_difficulty) / max_level_difficulty * (enemy_templates.size() - num_bosses), 2);
 
 	for (int room_row = 0; room_row < room_size; room_row++) {
 		for (int room_col = 0; room_col < room_size; room_col++) {
 			int room_index = room_row * room_size + room_col;
+
+			// choose a random enemy to spawn, don't spawn bosses and dummies
+			int enemy_index_red = std::round(enemy_spawn_dist(enemies_random_eng_red));
+			enemy_index_red = (enemy_index_red < 1) ? 1 : (enemy_index_red >= (enemy_templates.size() - num_bosses)) ? enemy_templates.size() - num_bosses - 1 : enemy_index_red;
+			int enemy_index_blue = std::round(enemy_spawn_dist(enemies_random_eng_blue));
+			enemy_index_blue = (enemy_index_blue < 1) ? 1 : (enemy_index_blue >= (enemy_templates.size() - num_bosses)) ? enemy_templates.size() - num_bosses - 1 : enemy_index_blue;
 			if (enemies_dist(enemies_random_eng_red)
 				&& (floor_tiles().find(room_layout.at(room_index)) != floor_tiles().end())) {
 				add_enemy_to_level_snapshot(
 					level_snap_shot,
 					ColorState::Red,
-					static_cast<EnemyType>(enemy_types_dist(enemies_random_eng_red)),
+					enemy_index_red,
 					uvec2(room_map_col * room_size + room_col, room_map_row * room_size + room_row));
 			}
 			if (enemies_dist(enemies_random_eng_blue)
@@ -999,7 +1029,7 @@ void MapGenerator::generate_enemies(PathNode* curr_room,
 				add_enemy_to_level_snapshot(
 					level_snap_shot,
 					ColorState::Blue,
-					static_cast<EnemyType>(enemy_types_dist(enemies_random_eng_blue)),
+					enemy_index_blue,
 					uvec2(room_map_col * room_size + room_col, room_map_row * room_size + room_row));
 			}
 		}
@@ -1265,7 +1295,7 @@ LevelConfiguration MapGenerator::generate_level(LevelGenConf level_gen_conf, boo
 								 visited_rooms,
 								 random_eng,
 								 RoomType::Critical,
-								 level_gen_conf.room_difficulty > 1)) {
+								 level_gen_conf.level_difficulty > 1)) {
 		fprintf(stderr, "Couldn't generate a path with length %d", level_gen_conf.level_path_length);
 		assert(0);
 	}

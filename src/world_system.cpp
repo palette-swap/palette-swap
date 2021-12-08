@@ -518,9 +518,9 @@ bool WorldSystem::check_debug_keys(int key, int action, int mod)
 		} else if (key == GLFW_KEY_H && (action == GLFW_RELEASE)) {
 			map_generator->decrease_enemy_density();
 		} else if (key == GLFW_KEY_U && (action == GLFW_RELEASE)) {
-			map_generator->increase_room_difficulty();
+			map_generator->increase_level_difficulty();
 		} else if (key == GLFW_KEY_I && (action == GLFW_RELEASE)) {
-			map_generator->decrease_room_difficulty();
+			map_generator->decrease_level_difficulty();
 		} 
 		return true;
 	}
