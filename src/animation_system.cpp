@@ -156,7 +156,28 @@ void AnimationSystem::enemy_attack_animation(const Entity& enemy)
 		enemy_animation.state = static_cast<int>(EnemyAnimationEvents::Attack);
 		enemy_animation.frame = 0;
 		enemy_animation.speed_adjustment = enemy_attack_speed;
+
+		if (!registry.any_of<Boss>(enemy)) {
+			this->enemy_remote_attack(enemy);
+		}
 	}
+}
+
+void AnimationSystem::enemy_remote_attack(const Entity& enemy) 
+{
+	auto enemy_remote_attack = registry.create();
+
+	uvec2 player_map_pos = registry.get<MapPosition>(registry.view<Player>().front()).position;
+	TEXTURE_ASSET_ID enemy_attack_asset = registry.get<RenderRequest>(enemy).used_texture;
+
+	registry.emplace<MapPosition>(enemy_remote_attack, player_map_pos);
+	registry.emplace<TransientEventAnimation>(enemy_remote_attack);
+	registry.emplace<EffectRenderRequest>(
+		enemy_remote_attack, enemy_attack_asset, EFFECT_ASSET_ID::ENEMY, GEOMETRY_BUFFER_ID::SMALL_SPRITE, true);
+	Animation& enemy_remote_animation = registry.emplace<Animation>(enemy_remote_attack);
+	enemy_remote_animation.max_frames = enemy_num_frames;
+	enemy_remote_animation.state = enemy_remote_attack_state;
+	enemy_remote_animation.speed_adjustment = enemy_remote_speed;
 }
 
 void AnimationSystem::enemy_tile_transition(const Entity& enemy, uvec2 map_start_point, uvec2 map_end_point)

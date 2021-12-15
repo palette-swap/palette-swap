@@ -19,7 +19,9 @@ static constexpr float damage_animation_speed = 1;
 // Currently this number is used for all enemies animation frames (a total of 4)
 // Moving forward the animation frames by enemy type may change
 static constexpr int enemy_num_frames = 4;
+static constexpr int enemy_remote_attack_state = 7;
 static constexpr float enemy_attack_speed = 1.2f;
+static constexpr float enemy_remote_speed = 0.6f;
 static constexpr float enemy_tile_travel_time_ms = 100.f;
 static constexpr int enemy_death_total_frames = 4; 
 static constexpr float enemy_death_animation_speed = 0.5f;
@@ -100,6 +102,8 @@ public:
 	void set_enemy_state(const Entity& enemy, int state);
 	// triggers an enemy attack animation
 	void enemy_attack_animation(const Entity& enemy);
+	// triggers a remote enemy attack animation display (ie flames used by a mage)
+	void enemy_remote_attack(const Entity& enemy);
 	// transition animation between tiles for an enemy
 	void enemy_tile_transition(const Entity& enemy, uvec2 map_start_point, uvec2 map_end_point);
 	// Creates an enemy death animation, will delete once animation is complete
