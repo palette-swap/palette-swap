@@ -751,6 +751,8 @@ void WorldSystem::try_fire_projectile(Attack& attack)
 	default:
 		break;
 	}
+
+	animations->player_specific_spell(player, ui->get_current_attack().damage_type);
 }
 
 void WorldSystem::try_adjacent_attack(Attack& attack)

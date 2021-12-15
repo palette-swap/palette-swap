@@ -29,10 +29,13 @@ static constexpr float enemy_death_animation_speed = 0.5f;
 // These values are used for the default setting for the player
 static constexpr int player_num_frames = 6;
 static constexpr int player_weapon_states = 2;
-static constexpr float player_animation_speed = 1.2f;
+static constexpr float player_animation_speed = 0.6f;
+static constexpr int player_spells_spritesheet_offset = 4;
+
 
 // Used for animation event speeds for the player
 static constexpr float player_melee_speed = 2.f;
+static constexpr float player_spell_fire_speed = 0.8f;
 static constexpr float player_heavy_melee_speed = 1.f;
 static constexpr float player_running_speed = 5.f;
 static constexpr float player_blue_red_switch_speed = 1;
@@ -119,6 +122,8 @@ public:
 	void player_idle_animation(const Entity& player);
 	// Sets player's animation to spellcast
 	void player_spellcast_animation(const Entity& player);
+	// Casts a specific spell based on the spell equipped
+	void player_specific_spell(const Entity& player, DamageType damage_type);
 	// Toggles player's weapon selection
 	void player_toggle_weapon(const Entity& player);
 	// Toggles player's spell_arrow
