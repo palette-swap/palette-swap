@@ -480,6 +480,79 @@ void RenderSystem::draw_effect(Entity entity, const EffectRenderRequest& render_
 	draw_triangles(transform, projection);
 }
 
+void RenderSystem::draw_condition(Entity entity, int condition_index, float condition_offset, const mat3& projection)
+{
+	uvec2 tile;
+	Transform transform = get_transform(entity, &tile);
+
+	transform.translate(condition_offset * CombatEffectOffest);
+	transform.scale(scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::COMBAT_CONDS)));
+	
+
+	const auto used_effect_enum = (GLuint)EFFECT_ASSET_ID::COMBAT_COND;
+	assert(used_effect_enum != (GLuint)EFFECT_ASSET_ID::EFFECT_COUNT);
+	const auto program = (GLuint)effects.at(used_effect_enum);
+
+	if (!lighting.is_visible(tile)) {
+		return;
+	}
+
+	// Setting shaders
+	glUseProgram(program);
+	gl_has_errors();
+
+	int vbo_ibo_offset = 0;
+
+	const GLuint vbo = vertex_buffers.at((int)GEOMETRY_BUFFER_ID::SMALL_SPRITE + vbo_ibo_offset);
+	const GLuint ibo = index_buffers.at((int)GEOMETRY_BUFFER_ID::SMALL_SPRITE + vbo_ibo_offset);
+
+	// Setting vertex and index buffers
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+	gl_has_errors();
+
+
+
+	GLint in_position_loc = glGetAttribLocation(program, "in_position");
+	GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
+	gl_has_errors();
+	assert(in_texcoord_loc >= 0);
+
+	glEnableVertexAttribArray(in_position_loc);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(SmallSpriteVertex), nullptr);
+	gl_has_errors();
+
+	glEnableVertexAttribArray(in_texcoord_loc);
+	glVertexAttribPointer(
+		in_texcoord_loc,
+		2,
+		GL_FLOAT,
+		GL_FALSE,
+		sizeof(SmallSpriteVertex),
+		(void*)sizeof(vec3)); // NOLINT(performance-no-int-to-ptr,cppcoreguidelines-pro-type-cstyle-cast)
+	// Enabling and binding texture to slot 0
+	glActiveTexture(GL_TEXTURE0);
+	gl_has_errors();
+
+	// Updates time in shader program
+	GLint time_uloc = glGetUniformLocation(program, "time");
+	glUniform1f(time_uloc, (float)(glfwGetTime() * 10.0f));
+
+	// Updates frame for entity
+	GLint state_loc = glGetUniformLocation(program, "state");
+	glUniform1i(state_loc, condition_index);
+	gl_has_errors();
+
+	GLuint texture_id = texture_gl_handles.at((GLuint)TEXTURE_ASSET_ID::COMBAT_CONDS);
+
+	glBindTexture(GL_TEXTURE_2D, texture_id);
+	gl_has_errors();
+
+	prepare_for_lit_entity(program);
+
+	draw_triangles(transform, projection);
+}
+
 void RenderSystem::draw_ui_element(Entity entity, const UIRenderRequest& ui_render_request, const mat3& projection)
 {
 	Transform transform = get_transform(entity);
@@ -1139,16 +1212,31 @@ void RenderSystem::draw()
 		draw_stat_bar(transform, stats, projection_2d, fancy, scale.x / scale.y, entity);
 	};
 
+	auto combat_conditions_lambda = [&](Entity entity, RenderRequest& combat_entity_render, ActiveConditions& combat_conditions) {
+		if (combat_entity_render.visible) {
+			float condition_offset = 0.f;
+			for (size_t condition_index = 0; condition_index < num_conditions; condition_index++) {
+				if (combat_conditions.conditions.at(condition_index) != 0) {
+					draw_condition(entity, condition_index, condition_offset, projection_2d);
+					condition_offset += 1.f;
+				}
+			}
+		}
+	};
+
 	// Renders entities + healthbars depending on which state we are in
 	if (inactive_color == ColorState::Red) {
 		registry.view<RenderRequest>(entt::exclude<Background, RedExclusive>).each(render_requests_lambda);
 		registry.view<RenderRequest, Stats, Enemy>(entt::exclude<RedExclusive>).each(health_group_lambda);
+		registry.view<RenderRequest, ActiveConditions>(entt::exclude<RedExclusive>).each(combat_conditions_lambda);
 	} else if (inactive_color == ColorState::Blue) {
 		registry.view<RenderRequest>(entt::exclude<Background, BlueExclusive>).each(render_requests_lambda);
 		registry.view<RenderRequest, Stats, Enemy>(entt::exclude<BlueExclusive>).each(health_group_lambda);
+		registry.view<RenderRequest, ActiveConditions>(entt::exclude<BlueExclusive>).each(combat_conditions_lambda);
 	} else {
 		registry.view<RenderRequest>().each(render_requests_lambda);
 		registry.view<RenderRequest, Stats, Enemy>().each(health_group_lambda);
+		registry.view<RenderRequest, ActiveConditions>().each(combat_conditions_lambda);
 	}
 
 	// Renders effects (ie spells), intended to be overlayed on top of regular render effects
@@ -1159,6 +1247,8 @@ void RenderSystem::draw()
 			draw_effect(entity, effect_render_request, projection_2d);
 		}
 	}
+
+
 
 	if (use_lighting) {
 		draw_lighting(projection_2d);

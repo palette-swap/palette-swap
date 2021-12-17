@@ -64,11 +64,12 @@ class RenderSystem {
 			textures_path("./04-NPCs/Guide/Guide Spritesheet.png"),
 			textures_path("cannon_ball.png"),
 			textures_path("/01-Player/Spell Spritesheet.png"),
-      textures_path("Tilesets/tile_set_red.png"),
-      textures_path("Tilesets/tile_set_blue.png"),
+			textures_path("Tilesets/tile_set_red.png"),
+			textures_path("Tilesets/tile_set_blue.png"),
 			textures_path("help.png"),
 			textures_path("End Screen.png"),
 			textures_path("Icons.png"),
+			textures_path("Combat Conditions.png"),
 	};
 
 	std::array<GLuint, effect_count> effects = {};
@@ -94,6 +95,7 @@ class RenderSystem {
 		shader_path("light"),			//
 		shader_path("light_triangles"), //
 		shader_path("lighting"),		//
+		shader_path("combat_cond"),		//
 	};
 
 	// TODO: move these constants into animation system most likely, need to finalize
@@ -187,6 +189,7 @@ private:
 	// Internal drawing functions for each entity type
 	void draw_textured_mesh(Entity entity, const RenderRequest& render_request, const mat3& projection);
 	void draw_effect(Entity entity, const EffectRenderRequest& render_request, const mat3& projection);
+	void draw_condition(Entity entity, int condition_index, float condition_offset, const mat3& projection);
 	void draw_ui_element(Entity entity, const UIRenderRequest& ui_render_request, const mat3& projection);
 	void draw_stat_bar(
 		Transform transform, const Stats& stats, const mat3& projection, bool fancy, float ratio, Entity entity);
