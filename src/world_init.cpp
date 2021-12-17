@@ -42,7 +42,7 @@ Entity create_player(uvec2 pos)
 	Animation& player_animation = registry.emplace<Animation>(entity);
 	player_animation.max_frames = 6;
 	player_animation.state = 0;
-	player_animation.speed_adjustment = 0.5f;
+	player_animation.speed_adjustment = 0.4f;
 
 	registry.emplace<Color>(entity, vec3(1, 1, 1));
 	registry.emplace<PlayerInactivePerception>(entity);

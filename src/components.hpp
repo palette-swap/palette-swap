@@ -69,6 +69,9 @@ struct SmallSpriteVertex {
 	vec2 texcoord;
 };
 
+// Offset for combat effects rendered onto each entity based on index of effect for an entity
+const vec2 combat_effect_offset = vec2(MapUtility::tile_size / 4, 0);
+
 /**
  * The following enumerators represent global identifiers refering to graphic
  * assets. For example TEXTURE_ASSET_ID are the identifiers of each texture
@@ -131,7 +134,8 @@ enum class TEXTURE_ASSET_ID : uint8_t {
 	HELP_PIC = TILE_SET_BLUE + 1,
 	END_PIC = HELP_PIC + 1,
 	ICONS = END_PIC + 1,
-	TEXTURE_COUNT = ICONS + 1,
+	COMBAT_CONDS = ICONS + 1,
+	TEXTURE_COUNT = COMBAT_CONDS + 1,
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 
@@ -171,6 +175,7 @@ static constexpr std::array<vec2, texture_count> scaling_factors = {
 	vec2(MapUtility::tile_size* MapUtility::room_size * 5, MapUtility::tile_size* MapUtility::room_size * 2),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
 	vec2(MapUtility::tile_size, MapUtility::tile_size),
+	vec2(MapUtility::tile_size, MapUtility::tile_size),
 };
 
 enum class EFFECT_ASSET_ID {
@@ -193,7 +198,8 @@ enum class EFFECT_ASSET_ID {
 	LIGHT = TEXT_BUBBLE + 1,
 	LIGHT_TRIANGLES = LIGHT + 1,
 	LIGHTING = LIGHT_TRIANGLES + 1,
-	EFFECT_COUNT = LIGHTING + 1,
+	COMBAT_COND = LIGHTING + 1,
+	EFFECT_COUNT = COMBAT_COND + 1,
 };
 constexpr int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 
