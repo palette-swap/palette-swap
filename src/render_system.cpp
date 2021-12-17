@@ -485,7 +485,7 @@ void RenderSystem::draw_condition(Entity entity, int condition_index, float cond
 	uvec2 tile;
 	Transform transform = get_transform(entity, &tile);
 
-	transform.translate(condition_offset * CombatEffectOffest);
+	transform.translate(condition_offset * combat_effect_offset);
 	transform.scale(scaling_factors.at(static_cast<int>(TEXTURE_ASSET_ID::COMBAT_CONDS)));
 	
 

@@ -70,7 +70,7 @@ struct SmallSpriteVertex {
 };
 
 // Offset for combat effects rendered onto each entity based on index of effect for an entity
-const vec2 CombatEffectOffest = vec2(MapUtility::tile_size / 4, 0);
+const vec2 combat_effect_offset = vec2(MapUtility::tile_size / 4, 0);
 
 /**
  * The following enumerators represent global identifiers refering to graphic
