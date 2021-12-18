@@ -95,8 +95,10 @@ void MapGeneratorSystem::load_predefined_level_configurations()
 		level_configurations.at(i).animated_tiles_blue.resize(predefined_room_paths.size());
 	}
 
-	level_configurations.at(0).animated_tiles_red.at(7).emplace(34, AnimatedTile({ true, false, 60, ColorState::All, 1 }));
-	level_configurations.at(0).animated_tiles_blue.at(7).emplace(34, AnimatedTile({ true, false, 60, ColorState::All, 1 }));
+	level_configurations.at(0).animated_tiles_red.at(7).emplace(34,
+																AnimatedTile({ true, false, 60, ColorState::All, 1 }));
+	level_configurations.at(0).animated_tiles_blue.at(7).emplace(34,
+																 AnimatedTile({ true, false, 60, ColorState::All, 1 }));
 }
 
 void MapGeneratorSystem::load_final_level()
@@ -134,6 +136,9 @@ void MapGeneratorSystem::load_final_level()
 
 	level_conf.animated_tiles_red.resize(predefined_room_paths.size());
 	level_conf.animated_tiles_blue.resize(predefined_room_paths.size());
+
+	level_conf.animated_tiles_red.at(7).emplace(34, AnimatedTile({ true, false, 60, ColorState::All, 1 }));
+	level_conf.animated_tiles_blue.at(7).emplace(34, AnimatedTile({ true, false, 60, ColorState::All, 1 }));
 
 	level_configurations.emplace_back(level_conf);
 }
