@@ -7,6 +7,7 @@
   "speed": 0,
   "attack_range": 10,
   "danger_rating": 5,
+  "loot_multiplier": 4,
   "stats": {
     "health": 60,
     "health_max": 100,
