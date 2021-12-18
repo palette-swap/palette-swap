@@ -74,7 +74,7 @@ void AnimationSystem::set_enemy_facing_player(const Entity& enemy)
 
 	uint distance = player_position.position.x - enemy_position.position.x;
 
-	Sprite_Direction direction = (distance > 0)? Sprite_Direction::SPRITE_LEFT : Sprite_Direction::SPRITE_RIGHT;
+	Sprite_Direction direction = (distance > 0) ? Sprite_Direction::SPRITE_LEFT : Sprite_Direction::SPRITE_RIGHT;
 
 	set_sprite_direction(enemy, direction);
 
@@ -452,6 +452,7 @@ bool AnimationSystem::boss_intro_complete(const Entity& boss_entity)
 
 void AnimationSystem::boss_event_animation(const Entity& boss, int event_state) {
 	Animation& enemy_animation = registry.get<Animation>(boss);
+	set_enemy_facing_player(boss);
 
 	if (!registry.any_of<EventAnimation>(boss)) {
 		EventAnimation& enemy_attack = registry.emplace<EventAnimation>(boss);
@@ -633,6 +634,7 @@ void AnimationSystem::copy_animation_settings(Animation& original, Animation& co
 	copy.state = original.state;
 	copy.display_color = original.display_color;
 }
+
 
 void AnimationSystem::camera_update_position()
 {
