@@ -913,13 +913,21 @@ struct MapPosition {
 		assert(position.x <= MapUtility::map_down_right.x && position.y <= MapUtility::map_down_right.y);
 	};
 
-	void serialize(const std::string& prefix, rapidjson::Document& json) const;
+	void serialize(Entity entity, const std::string& prefix, rapidjson::Document& json) const;
 	void deserialize(Entity entity, const std::string& prefix, const rapidjson::Document& json);
 };
 
 struct MapHitbox {
 	uvec2 area;
 	uvec2 center;
+
+	static constexpr std::array<std::string_view, 4> data_points
+		= { "/tile_area/0", "/tile_area/1", "/tile_center/0", "/tile_center/1" };
+
+	static void pass_through(const std::string& source_prefix,
+							 rapidjson::Document& source,
+							 const std::string& dest_prefix,
+							 rapidjson::Document& dest);
 };
 
 // Represents the screen position,

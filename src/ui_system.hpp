@@ -3,6 +3,7 @@
 #include "components.hpp"
 
 #include "loot_system.hpp"
+#include "music_system.hpp"
 #include "render_system.hpp"
 #include "tutorial_system.hpp"
 #include "story_system.hpp"
@@ -14,6 +15,7 @@ public:
 
 	void init(RenderSystem* render_system,
 			  std::shared_ptr<LootSystem> loot_system,
+			  std::shared_ptr<MusicSystem> music_system,
 			  std::shared_ptr<TutorialSystem> tutorial_system,
 			  std::shared_ptr<StorySystem> story,
 			  std::function<void()> change_color,
@@ -87,6 +89,7 @@ private:
 
 	RenderSystem* renderer;
 	std::shared_ptr<LootSystem> loot;
+	std::shared_ptr<MusicSystem> music;
 	std::shared_ptr<TutorialSystem> tutorials;
 	std::shared_ptr<StorySystem> story;
 	std::function<void()> try_change_color;

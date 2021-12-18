@@ -96,7 +96,7 @@ bool LootSystem::try_pickup_items(Entity player)
 	return false;
 }
 
-void LootSystem::drop_loot(uvec2 center_position, float mode_tier, uint count)
+void LootSystem::drop_loot(uvec2 center_position, float mode_tier, uint count, bool level_key)
 {
 	// Initial Drop rates are as follows
 	// 1-2: Nothing
@@ -127,8 +127,12 @@ void LootSystem::drop_loot(uvec2 center_position, float mode_tier, uint count)
 		count += 1;
 	}
 
+	if (level_key) {
+		drop_resource_pickup(center_position, Resource::Key);
+	}
+
 	for (uint i = 0; i < count; i++) {
-		uvec2 position = uvec2(ivec2(center_position) + next_tile.at(i % 9));
+		uvec2 position = uvec2(ivec2(center_position) + next_tile.at((i + (level_key ? 1 : 0)) % 9));
 		bool all_dropped = looted >= loot_count;
 
 		// Luck sometimes guarantees a drop

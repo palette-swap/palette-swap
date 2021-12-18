@@ -1,10 +1,12 @@
 #pragma once
 
-#include "animation_system.hpp"
-#include "map_generator_system.hpp"
 #include "components.hpp"
 #include "story_init.hpp"
 #include "world_init.hpp"
+
+#include "animation_system.hpp"
+#include "map_generator_system.hpp"
+#include "music_system.hpp"
 
 #include <deque>
 #include <memory>
@@ -13,8 +15,10 @@
 class StorySystem {
 
 public:
-	explicit StorySystem(std::shared_ptr<AnimationSystem> animation_sys_ptr,
-						 std::shared_ptr<MapGeneratorSystem> map_system_ptr);
+	explicit StorySystem(std::shared_ptr<AnimationSystem> animations,
+						 std::shared_ptr<MapGeneratorSystem> map,
+						 std::shared_ptr<MusicSystem> music);
+
 	bool in_cutscene();
 	void on_key(int key, int action, int /*mod*/);
 	void check_cutscene();
@@ -42,18 +46,18 @@ private:
 
 	std::shared_ptr<AnimationSystem> animations;
 	std::shared_ptr<MapGeneratorSystem> map_system;
+	std::shared_ptr<MusicSystem> music;
+
 	uint current_level = -1;
 
-	std::vector<std::string> help_texts
-		= { std::string("You know..."),
-			std::string("I'm no longer here"),
-			std::string("I can't stop you from going forward..."),
-			std::string("but know that you don't have to keep going...for me"),
-			std::string("This road will eventually end"),
-			std::string("But yours has not"),
-			std::string("There are still people worth protecting"),
-			std::string("These demons will keep haunting you"),
-			std::string("No matter where you choose to run"),
-			std::string("Face them")};
-
+	std::vector<std::string> help_texts = { std::string("You know..."),
+											std::string("I'm no longer here"),
+											std::string("I can't stop you from going forward..."),
+											std::string("but know that you don't have to keep going...for me"),
+											std::string("This road will eventually end"),
+											std::string("But yours has not"),
+											std::string("There are still people worth protecting"),
+											std::string("These demons will keep haunting you"),
+											std::string("No matter where you choose to run"),
+											std::string("Face them") };
 };

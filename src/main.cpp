@@ -12,6 +12,7 @@
 #include "lighting_system.hpp"
 #include "loot_system.hpp"
 #include "map_generator_system.hpp"
+#include "music_system.hpp"
 #include "physics_system.hpp"
 #include "render_system.hpp"
 #include "story_system.hpp"
@@ -31,6 +32,9 @@ int main()
 	so_loud->init();
 
 	Debug debugging;
+
+	// Music System
+	std::shared_ptr<MusicSystem> music = std::make_shared<MusicSystem>(so_loud);
 
 	// Loot System
 	std::shared_ptr<LootSystem> loot = std::make_shared<LootSystem>();
@@ -54,10 +58,10 @@ int main()
 	std::shared_ptr<MapGeneratorSystem> map = std::make_shared<MapGeneratorSystem>(loot, turns, tutorials, ui, so_loud);
 
 	// Story System
-	std::shared_ptr<StorySystem> stories = std::make_shared<StorySystem>(animations, map);
+	std::shared_ptr<StorySystem> stories = std::make_shared<StorySystem>(animations, map, music);
 
 	// Global systems
-	WorldSystem world(debugging, animations, combat, loot, map, stories, turns, tutorials, ui, so_loud);
+	WorldSystem world(debugging, animations, combat, loot, map, music, stories, turns, tutorials, ui, so_loud);
 	LightingSystem lighting(tutorials);
 	RenderSystem renderer(debugging, lighting);
 	PhysicsSystem physics(debugging, map);
@@ -96,6 +100,7 @@ int main()
 		animations->update_animations(elapsed_ms, turns->get_inactive_color());
 		map->step(elapsed_ms);
 		turns->step();
+		music->step(elapsed_ms);
 		lighting.step(elapsed_ms);
 		renderer.draw();
 	}

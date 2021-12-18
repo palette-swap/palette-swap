@@ -95,27 +95,33 @@ void UISystem::switch_to_group(Entity group)
 	if (group == entt::null || registry.get<UIGroup>(group).visible) {
 		return;
 	}
-	bool was_inventory = registry.get<UIGroup>(groups[(size_t)Groups::Inventory]).visible;
+	Groups group_id = registry.get<UIGroup>(group).identifier;
+	Groups previous_group_id = Groups::Count;
 	try_settle_held();
 	destroy_tooltip();
 	for (auto [entity, other_group] : registry.view<UIGroup>().each()) {
-		if (other_group.visible && entity != group && entity != groups[(size_t)Groups::Tooltips]) {
+		if (other_group.visible && entity != group && other_group.identifier != Groups::Tooltips) {
 			previous_group = entity;
+			previous_group_id = other_group.identifier;
 		}
-		other_group.visible = entity == group || entity == groups[(size_t)Groups::Tooltips];
+		other_group.visible = entity == group || other_group.identifier == Groups::Tooltips;
 	}
-	if (group == groups[(size_t)Groups::HUD]) {
+	if (group_id == Groups::HUD) {
 		for (auto& callback : show_world_callbacks) {
 			callback();
 		}
 		if (story->in_cutscene()) {
 			registry.get<UIGroup>(groups[(size_t)Groups::Story]).visible = true;
 		}
-		if (was_inventory) {
+		if (previous_group_id == Groups::Inventory) {
 			tutorials->destroy_tooltip(TutorialTooltip::OpenedInventory);
+		} else {
+			PlayerInactivePerception& player_perception
+				= registry.get<PlayerInactivePerception>(registry.view<Player>().front());
+			music->set_world(player_perception.inactive == ColorState::Blue ? MusicSystem::MusicState::RedWorld
+																			: MusicSystem::MusicState::BlueWorld);
 		}
-	}
-	if (group == groups[(size_t)Groups::Inventory]) {
+	} else if (group_id == Groups::Inventory) {
 		tutorials->trigger_tooltip(TutorialTooltip::OpenedInventory);
 		tutorials->destroy_tooltip(TutorialTooltip::ItemPickedUp);
 	}
@@ -455,6 +461,7 @@ void UISystem::update_resource_count()
 void UISystem::end_game(bool victory)
 {
 	switch_to_group(groups.at((size_t)(victory ? Groups::VictoryScreen : Groups::DeathScreen)));
+	music->set_state(victory ? MusicSystem::MusicState::YouWon : MusicSystem::MusicState::YouDied);
 }
 
 void UISystem::set_current_attack(Slot slot, size_t attack)

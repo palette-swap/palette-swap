@@ -13,10 +13,12 @@ void StorySystem::restart_game()
 	this->load_next_level();
 }
 
-StorySystem::StorySystem(std::shared_ptr<AnimationSystem> animation_sys_ptr,
-						 std::shared_ptr<MapGeneratorSystem> map_system_ptr)
-	: animations(std::move(animation_sys_ptr))
-	, map_system(std::move(map_system_ptr))
+StorySystem::StorySystem(std::shared_ptr<AnimationSystem> animations,
+						 std::shared_ptr<MapGeneratorSystem> map,
+						 std::shared_ptr<MusicSystem> music)
+	: animations(std::move(animations))
+	, map_system(std::move(map))
+	, music(std::move(music))
 {
 }
 
@@ -70,7 +72,7 @@ void StorySystem::check_cutscene()
 												 .at(player_map_pos.y / MapUtility::room_size)
 												 .at(player_map_pos.x / MapUtility::room_size);
 
-		const std::set<MapUtility::RoomID> & trigger_room_idxes = map_system->get_room_at_position(trigger_map_pos);
+		const std::set<MapUtility::RoomID>& trigger_room_idxes = map_system->get_room_at_position(trigger_map_pos);
 
 		if (trigger_room_idxes.find(player_room_idx) != trigger_room_idxes.end()) {
 			current_cutscene_entity = entity;
@@ -100,8 +102,8 @@ void StorySystem::step()
 			if (registry.any_of<Enemy>(c.actual_entity)) {
 				registry.get<Enemy>(c.actual_entity).active = true;
 			}
-			//registry.remove<CutScene>(current_cutscene_entity);
-			//current_cutscene_entity = entt::null;
+			// registry.remove<CutScene>(current_cutscene_entity);
+			// current_cutscene_entity = entt::null;
 		}
 		render_text_each_frame();
 	}
@@ -164,7 +166,7 @@ void StorySystem::render_text_each_frame()
 	text_frames.pop_front();
 
 	text_comp.text += text_per_frame;
-	//if (text_comp.text.length() != 0 && text_comp.text.length() % max_line_len == 0) {
+	// if (text_comp.text.length() != 0 && text_comp.text.length() % max_line_len == 0) {
 	//	text_comp.text += "\n";
 	//}
 }
@@ -204,8 +206,6 @@ void StorySystem::cleanup_current_cutscene()
 	this->text_frames.clear();
 	this->conversations.clear();
 
-
-	
 	current_cutscene_entity = entt::null;
 }
 
@@ -215,6 +215,7 @@ void StorySystem::trigger_animation(CutSceneType type)
 	switch (type) {
 	case CutSceneType::BossEntry:
 		animations->trigger_full_boss_intro(current_cutscene_entity);
+		music->set_state(MusicSystem::MusicState::BossBattle, true);
 		break;
 	default:
 		break;
