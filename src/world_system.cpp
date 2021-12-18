@@ -676,19 +676,18 @@ void WorldSystem::try_change_color()
 // TODO: Integrate into turn state to only enable if player's turn is on
 void WorldSystem::on_mouse_click(int button, int action, int /*mods*/)
 {
-	// Player is stunned.
-	if (turns->ready_to_act(player) && combat->get_decrement_effect(player, Effect::Stun) > 0) {
-		end_player_turn();
-	}
-
-
 	if (button == GLFW_MOUSE_BUTTON_LEFT) {
 		// Get screen position of mouse
 		dvec2 mouse_screen_pixels_pos = {};
 		glfwGetCursorPos(window, &mouse_screen_pixels_pos.x, &mouse_screen_pixels_pos.y);
 		bool used = ui->on_left_click(action, renderer->mouse_pos_to_screen_pos(mouse_screen_pixels_pos));
 
-		if (!used && ui->player_can_act() && action == GLFW_PRESS) {
+		if (!used && ui->player_can_act() && action == GLFW_PRESS && !story->in_cutscene()) {
+			// Player is stunned.
+			if (turns->ready_to_act(player) && combat->get_decrement_effect(player, Effect::Stun) > 0) {
+				end_player_turn();
+				return;
+			}
 			if (turns->get_active_team() != player || !ui->has_current_attack()) {
 				return;
 			}
