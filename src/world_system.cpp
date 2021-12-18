@@ -135,7 +135,7 @@ void WorldSystem::init(RenderSystem* renderer_arg)
 {
 	this->renderer = renderer_arg;
 	ui->init(
-		renderer_arg, loot, tutorials, story, [this]() { try_change_color(); }, [this]() { restart_game(); });
+		renderer_arg, loot, music, tutorials, story, [this]() { try_change_color(); }, [this]() { restart_game(); });
 	animations->init(renderer_arg);
 
 	// Set all states to default
@@ -250,6 +250,9 @@ void WorldSystem::restart_game()
 
 	// Restart the TutorialSystem
 	tutorials->restart_game();
+
+	// Restart the MusicSystem
+	music->restart_game();
 	
 	turns->set_active_color(ColorState::Red);
 	animations->player_red_blue_animation(player, ColorState::Red);
@@ -602,6 +605,10 @@ void WorldSystem::move_player(Direction direction)
 
 	MapGeneratorSystem::MoveState move_ret = map_generator->move_player_to_tile(map_pos.position, new_pos);
 	if (move_ret == MapGeneratorSystem::MoveState::Failed) {
+		return;
+	} else if (move_ret == MapGeneratorSystem::MoveState::EndOfGame) {
+		end_player_turn();
+		ui->end_game(true);
 		return;
 	}
 

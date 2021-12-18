@@ -8,6 +8,7 @@ UISystem::UISystem(Debug& debugging)
 
 void UISystem::init(RenderSystem* render_system,
 					std::shared_ptr<LootSystem> loot_system,
+					std::shared_ptr<MusicSystem> music_system,
 					std::shared_ptr<TutorialSystem> tutorial_system,
 					std::shared_ptr<StorySystem> story_system,
 					std::function<void()> try_change_color,
@@ -15,6 +16,7 @@ void UISystem::init(RenderSystem* render_system,
 {
 	renderer = render_system;
 	loot = std::move(loot_system);
+	music = std::move(music_system);
 	tutorials = std::move(tutorial_system);
 	story = std::move(story_system);
 	this->try_change_color = std::move(try_change_color);
@@ -173,7 +175,8 @@ void UISystem::restart_game()
 				  "Restart");
 
 	// Victory Screen Background
-	create_background(groups[(size_t)Groups::VictoryScreen], vec2(.5, .5), vec2(1, 1), 1.f, vec4(1, 1, 1, 1));
+	create_background(groups[(size_t)Groups::VictoryScreen], vec2(.25, .5), vec2(.5, 1), 1.f, vec4(.6, .1, .1, 1));
+	create_background(groups[(size_t)Groups::VictoryScreen], vec2(.75, .5), vec2(.5, 1), 1.f, vec4(.1, .1, .6, 1));
 
 	// Victory Screen
 	Entity you_won = create_ui_text(
