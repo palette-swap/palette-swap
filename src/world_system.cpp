@@ -22,6 +22,7 @@ WorldSystem::WorldSystem(Debug& debugging,
 						 std::shared_ptr<CombatSystem> combat,
 						 std::shared_ptr<LootSystem> loot,
 						 std::shared_ptr<MapGeneratorSystem> map,
+						 std::shared_ptr<MusicSystem> music,
 						 std::shared_ptr<StorySystem> story,
 						 std::shared_ptr<TurnSystem> turns,
 						 std::shared_ptr<TutorialSystem> tutorials,
@@ -29,18 +30,17 @@ WorldSystem::WorldSystem(Debug& debugging,
 						 std::shared_ptr<SoLoud::Soloud> so_loud)
 
 	: debugging(debugging)
-	, bgm_red()
-	, bgm_blue()
+	, so_loud(std::move(so_loud))
 	, rng(std::make_shared<std::default_random_engine>(std::default_random_engine(std::random_device()())))
 	, animations(std::move(animations))
 	, combat(std::move(combat))
 	, loot(std::move(loot))
 	, map_generator(std::move(map))
+	, music(std::move(music))
 	, story(std::move(story))
 	, turns(std::move(turns))
 	, tutorials(std::move(tutorials))
 	, ui(std::move(ui))
-	, so_loud(std::move(so_loud))
 {
 	this->combat->init(rng, this->animations, this->loot, this->map_generator, this->tutorials);
 	this->loot->init(rng, this->tutorials);
@@ -121,13 +121,6 @@ GLFWwindow* WorldSystem::create_window(int width, int height)
 	glfwSetWindowSizeLimits(window, GLFW_DONT_CARE, GLFW_DONT_CARE, GLFW_DONT_CARE, GLFW_DONT_CARE);
 	glfwSetFramebufferSizeCallback(window, resize_redirect);
 
-	//////////////////////////////////////
-	// Loading music and sounds with SDL
-	bgm_red_wav.load(audio_path("henry_martin.wav").c_str());
-	bgm_red_wav.setLooping(true);
-	bgm_blue_wav.load(audio_path("famous_flower_of_serving_men.wav").c_str());
-	bgm_blue_wav.setLooping(true);
-
 	light_sword_wav.load(audio_path("sword1.wav").c_str());
 	fire_spell_wav.load(audio_path("fireball.wav").c_str());
 	ice_spell_wav.load(audio_path("ice.wav").c_str());
@@ -144,11 +137,6 @@ void WorldSystem::init(RenderSystem* renderer_arg)
 	ui->init(
 		renderer_arg, loot, tutorials, story, [this]() { try_change_color(); }, [this]() { restart_game(); });
 	animations->init(renderer_arg);
-
-	// Playing background music indefinitely
-	bgm_red = so_loud->play(bgm_red_wav);
-	bgm_blue = so_loud->play(bgm_blue_wav, 0.f);
-	fprintf(stderr, "Loaded music\n");
 
 	// Set all states to default
 	restart_game();
@@ -205,8 +193,6 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 // Reset the world state to its initial state
 void WorldSystem::restart_game()
 {
-	so_loud->seek(bgm_red, 0);
-	so_loud->seek(bgm_blue, 0);
 
 	// Debugging for memory/component leaks
 	std::cout << "Alive: " << registry.alive() << std::endl;
@@ -266,8 +252,6 @@ void WorldSystem::restart_game()
 	tutorials->restart_game();
 	
 	turns->set_active_color(ColorState::Red);
-	so_loud->fadeVolume(bgm_red, -1, .25);
-	so_loud->fadeVolume(bgm_blue, 0, .25);
 	animations->player_red_blue_animation(player, ColorState::Red);
 	animations->set_all_inactive_colours(ColorState::Blue);
 
@@ -663,8 +647,9 @@ void WorldSystem::try_change_color()
 		inventory.resources.at((size_t)Resource::PaletteSwap)--;
 		ui->update_resource_count();
 
-		so_loud->fadeVolume((inactive_color == ColorState::Red ? bgm_red : bgm_blue), -1, .25);
-		so_loud->fadeVolume((inactive_color == ColorState::Red ? bgm_blue : bgm_red), 0, .25);
+		music->set_world((inactive_color == ColorState::Red) ? MusicSystem::MusicState::RedWorld
+																: MusicSystem::MusicState::BlueWorld);
+
 		animations->player_red_blue_animation(player, inactive_color);
 	}
 
