@@ -107,7 +107,7 @@ add_enemy_to_level_snapshot(rapidjson::Document& level_snap_shot, ColorState tea
 		level_snap_shot.AddMember("enemies", enemy_array, level_snap_shot.GetAllocator());
 	}
 
-	EnemyType enemy_type = static_cast<EnemyType>(enemy_templates.at(enemy_index)["type"].GetInt());
+	auto enemy_type = static_cast<EnemyType>(enemy_templates.at(enemy_index)["type"].GetInt());
 
 	Enemy enemy;
 	enemy.deserialize("", enemy_templates.at(enemy_index), false);
@@ -124,7 +124,8 @@ add_enemy_to_level_snapshot(rapidjson::Document& level_snap_shot, ColorState tea
 	std::string enemy_prefix = "/enemies/" + std::to_string(enemy_i);
 	enemy.serialize(enemy_prefix, level_snap_shot);
 	enemy_stats.serialize(enemy_prefix + "/stats", level_snap_shot);
-	map_position.serialize(enemy_prefix, level_snap_shot);
+	map_position.serialize(entt::null, enemy_prefix, level_snap_shot);
+	MapHitbox::pass_through("", enemy_templates.at(enemy_index), enemy_prefix, level_snap_shot);
 }
 
 static void add_key_to_level_snapshot(rapidjson::Document& level_snap_shot, uvec2 map_pos)
@@ -141,7 +142,7 @@ static void add_key_to_level_snapshot(rapidjson::Document& level_snap_shot, uvec
 	resource_pickup.serialize(resource_prefix, level_snap_shot);
 
 	MapPosition map_position(map_pos);
-	map_position.serialize(resource_prefix, level_snap_shot);
+	map_position.serialize(entt::null, resource_prefix, level_snap_shot);
 }
 
 ////////////////////////////////////

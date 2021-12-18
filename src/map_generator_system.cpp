@@ -474,7 +474,7 @@ void MapGeneratorSystem::snapshot_level()
 	for (auto [entity, enemy, map_position, stats] : registry.view<Enemy, MapPosition, Stats>().each()) {
 		std::string enemy_prefix = "/enemies/" + std::to_string(i++);
 		enemy.serialize(enemy_prefix, level_snapshot);
-		map_position.serialize(enemy_prefix, level_snapshot);
+		map_position.serialize(entity, enemy_prefix, level_snapshot);
 		stats.serialize(enemy_prefix + "/stats", level_snapshot);
 	}
 
@@ -513,20 +513,21 @@ void MapGeneratorSystem::snapshot_level()
 	}
 
 	// save player position
-	registry.get<MapPosition>(registry.view<Player>().front()).serialize("/player", level_snapshot);
+	Entity player = registry.view<Player>().front();
+	registry.get<MapPosition>(player).serialize(player, "/player", level_snapshot);
 
 	int item_index = 0;
 	for (auto [entity, item, map_position] : registry.view<Item, MapPosition>().each()) {
 		std::string item_prefix = "/items/" + std::to_string(i++);
 		item.serialize(item_prefix, level_snapshot);
-		map_position.serialize(item_prefix, level_snapshot);
+		map_position.serialize(entity, item_prefix, level_snapshot);
 	}
 
 	int resource_index = 0;
 	for (auto [entity, resource_pickup, map_position] : registry.view<ResourcePickup, MapPosition>().each()) {
 		std::string resource_index = "/resources/" + std::to_string(i++);
 		resource_pickup.serialize(resource_index, level_snapshot);
-		map_position.serialize(resource_index, level_snapshot);
+		map_position.serialize(entity, resource_index, level_snapshot);
 	}
 
 	rapidjson::StringBuffer buffer;

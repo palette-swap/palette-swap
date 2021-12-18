@@ -131,10 +131,19 @@ static const rapidjson::Value* get_and_assert_value_from_json(const std::string&
 	return value;
 }
 
-void MapPosition::serialize(const std::string& prefix, rapidjson::Document& json) const
+void MapPosition::serialize(Entity entity, const std::string& prefix, rapidjson::Document& json) const
 {
 	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/position/x").c_str()), position.x);
 	rapidjson::SetValueByPointer(json, rapidjson::Pointer((prefix + "/position/y").c_str()), position.y);
+	if (entity != entt::null) {
+		if (MapHitbox* hitbox = registry.try_get<MapHitbox>(entity)) {
+			uvec4 data = uvec4(hitbox->area, hitbox->center);
+			for (size_t i = 0; i < MapHitbox::data_points.size(); i++) {
+				rapidjson::SetValueByPointer(
+					json, rapidjson::Pointer((prefix + MapHitbox::data_points.at(i).data()).c_str()), data[i]);
+			}
+		}
+	}
 }
 
 void MapPosition::deserialize(Entity entity, const std::string& prefix, const rapidjson::Document& json)
@@ -728,4 +737,19 @@ void BigRoom::add_room(Entity big_room, Entity room)
 	element.big_room = big_room;
 	element.next_room = big_room_component.first_room;
 	big_room_component.first_room = room;
+}
+
+void MapHitbox::pass_through(const std::string& source_prefix,
+							 rapidjson::Document& source,
+							 const std::string& dest_prefix,
+							 rapidjson::Document& dest)
+{
+
+	const auto* location = get_and_assert_value_from_json(source_prefix, source);
+	if (location->HasMember("tile_area") && location->HasMember("tile_center")) {
+		for (auto data_point : data_points) {
+			uint value = get_and_assert_value_from_json(source_prefix + data_point.data(), source)->GetUint();
+			rapidjson::SetValueByPointer(dest, rapidjson::Pointer((dest_prefix + data_point.data()).c_str()), value);
+		}
+	}
 }
