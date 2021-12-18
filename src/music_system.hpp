@@ -10,6 +10,8 @@ public:
 
 	void restart_game();
 
+	void step(double elapsed_ms_since_last_update);
+
 	enum class MusicState {
 		BlueWorld = 0,
 		RedWorld = BlueWorld + 1,
@@ -20,6 +22,8 @@ public:
 		SmallVictory = YouDied + 1,
 		Count = SmallVictory + 1,
 	};
+
+	void transition_to_state(MusicState transition, MusicState state);
 
 	void set_state(MusicState state, bool situational = false);
 
@@ -39,10 +43,13 @@ private:
 	SoLoud::handle curr_situational_music = SoLoud::SO_NO_ERROR;
 
 	MusicState curr_situational_state = MusicState::Count;
+	MusicState after_transition_state = MusicState::Count;
+	double transition_time_ms = 0;
 
 	std::shared_ptr<SoLoud::Soloud> so_loud;
 
 	static constexpr SoLoud::time fade_time = .35;
+	static constexpr SoLoud::time transition_fade_time = .8;
 
 	static constexpr std::array<std::string_view, (size_t)MusicState::Count> music_file_paths = {
 		"famous_flower_of_serving_men.wav",

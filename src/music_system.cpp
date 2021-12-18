@@ -18,9 +18,43 @@ void MusicSystem::restart_game()
 	curr_situational_music = SoLoud::SO_NO_ERROR;
 	curr_state = MusicState::Count;
 	curr_situational_state = MusicState::Count;
+	transition_time_ms = 0;
+	after_transition_state = MusicState::Count;
 
 	// Start the title music
 	set_state(MusicSystem::MusicState::Title);
+}
+
+void MusicSystem::step(double elapsed_ms_since_last_update)
+{
+	if (after_transition_state != MusicState::Count) {
+		transition_time_ms -= elapsed_ms_since_last_update;
+		if (transition_time_ms <= 0) {
+			// Disable current situation
+			curr_situational_music = SoLoud::SO_NO_ERROR;
+			curr_situational_state = MusicState::Count;
+
+			// Start the next track
+			SoLoud::handle prev = curr_music;
+			set_state(after_transition_state);
+
+			// Fade twice as slow
+			so_loud->fadeVolume(curr_music, -1, transition_fade_time);
+			so_loud->fadeVolume(prev, 0, transition_fade_time);
+
+			// Reset tracking
+			after_transition_state = MusicState::Count;
+			transition_time_ms = 0;
+		}
+	}
+}
+
+void MusicSystem::transition_to_state(MusicState transition, MusicState state) {
+	auto transition_value = (size_t)transition;
+	set_state(transition, true);
+	SoLoud::time length = music_files.at(transition_value).getLength() - transition_fade_time;
+	after_transition_state = state;
+	transition_time_ms = length * 1000.0;
 }
 
 void MusicSystem::set_state(MusicState state, bool situational)

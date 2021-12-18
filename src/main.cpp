@@ -100,6 +100,7 @@ int main()
 		animations->update_animations(elapsed_ms, turns->get_inactive_color());
 		map->step(elapsed_ms);
 		turns->step();
+		music->step(elapsed_ms);
 		lighting.step(elapsed_ms);
 		renderer.draw();
 	}
