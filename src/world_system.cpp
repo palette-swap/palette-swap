@@ -654,6 +654,7 @@ void WorldSystem::try_change_color()
 		inventory.resources.at((size_t)Resource::PaletteSwap)--;
 		ui->update_resource_count();
 
+		// Only switches to the other song if it's not a boss fight or something
 		music->set_world((inactive_color == ColorState::Red) ? MusicSystem::MusicState::RedWorld
 																: MusicSystem::MusicState::BlueWorld);
 

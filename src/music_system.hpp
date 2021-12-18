@@ -25,6 +25,8 @@ public:
 
 	void set_world(MusicState state);
 
+	bool is_curr_situational() const;
+
 private:
 
 	MusicState curr_state = MusicState::Count;
@@ -34,6 +36,9 @@ private:
 	// Note that 0, the default value, is never a potential channel name, so we can use it to represent no handle
 	SoLoud::handle curr_music = SoLoud::SO_NO_ERROR;
 	SoLoud::handle other_color_music = SoLoud::SO_NO_ERROR;
+	SoLoud::handle curr_situational_music = SoLoud::SO_NO_ERROR;
+
+	MusicState curr_situational_state = MusicState::Count;
 
 	std::shared_ptr<SoLoud::Soloud> so_loud;
 

@@ -15,7 +15,9 @@ void MusicSystem::restart_game()
 	so_loud->stopAll();
 	curr_music = SoLoud::SO_NO_ERROR;
 	other_color_music = SoLoud::SO_NO_ERROR;
+	curr_situational_music = SoLoud::SO_NO_ERROR;
 	curr_state = MusicState::Count;
+	curr_situational_state = MusicState::Count;
 
 	// Start the title music
 	set_state(MusicSystem::MusicState::Title);
@@ -33,6 +35,10 @@ void MusicSystem::set_state(MusicState state, bool situational)
 	// Red-Blue Switch
 	bool color_switch = state_value < 2;
 	if (color_switch) {
+		so_loud->stop(curr_situational_music);
+		curr_situational_state = MusicState::Count;
+		curr_situational_music = SoLoud::SO_NO_ERROR;
+
 		if (other_color_music != SoLoud::SO_NO_ERROR) {
 			// Already ready to go, swap them
 			handle = other_color_music;
@@ -42,6 +48,15 @@ void MusicSystem::set_state(MusicState state, bool situational)
 			handle = so_loud->play(music_files.at(state_value), 0.f);
 			other_color_music = so_loud->play(music_files.at((state_value + 1) % 2), 0.f);
 		}
+	} else if (situational) {
+		if (curr_situational_music != SoLoud::SO_NO_ERROR && curr_situational_state == state) {
+			handle = curr_situational_music;
+			so_loud->setPause(handle, false);
+		} else {
+			curr_situational_state = state;
+			handle = so_loud->play(music_files.at(state_value), 0.f);
+		}
+		curr_situational_music = handle;
 	} else {
 		handle = so_loud->play(music_files.at(state_value), 0.f);
 	}
@@ -53,7 +68,11 @@ void MusicSystem::set_state(MusicState state, bool situational)
 		so_loud->stop(other_color_music);
 		other_color_music = SoLoud::SO_NO_ERROR;
 
+		if (curr_situational_music != SoLoud::SO_NO_ERROR && !situational) {
+			so_loud->schedulePause(curr_music, fade_time);
+		} else {
 			so_loud->scheduleStop(curr_music, fade_time);
+		}
 	}
 
 	curr_music = handle;
@@ -63,6 +82,17 @@ void MusicSystem::set_state(MusicState state, bool situational)
 void MusicSystem::set_world(MusicState state)
 {
 	// Only colors allowed here
+	if ((size_t)state >= 2 || curr_state == curr_situational_state) {
+		return;
+	}
+	if (is_curr_situational()) {
+		so_loud->fadeVolume(curr_music, 0, fade_time);
+		so_loud->fadeVolume(curr_situational_music, -1, fade_time);
+		so_loud->setPause(curr_situational_music, false);
+		so_loud->scheduleStop(curr_music, fade_time);
+		curr_music = curr_situational_music;
+		return;
+	}
 	set_state(state);
 }
 
