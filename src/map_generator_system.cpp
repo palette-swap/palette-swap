@@ -698,6 +698,7 @@ void MapGeneratorSystem::load_initial_level()
 {
 	if (current_level != -1) {
 		clear_level();
+		level_configurations.clear();
 		init();
 	}
 	load_level(0);
